@@ -7,31 +7,40 @@ I am continuing my UCL MSc project with Chattermill.
 
 Please communicate with me in Chinese, but keep all code, comments, docstrings, README content, and project documentation in English. The code will be reviewed by Aji, so keep implementation concise, readable, and easy to inspect.
 
-Local workspace:
-C:\Msc_DSML\Msc_Project
+Local workspace path options:
+- Current/new machine: D:\Msc_Project
+- Previous/alternate machine: C:\Msc_DSML\Msc_Project
 
-GitHub working folder:
-C:\Msc_DSML\Msc_Project\msc-project-chattermill-topic-classification
+Path fallback rule:
+- Use `D:\Msc_Project` first on the current machine.
+- If a `D:\Msc_Project` path does not exist, replace only the root with `C:\Msc_DSML\Msc_Project` and retry.
+
+GitHub working folder options:
+- D:\Msc_Project\msc-project-chattermill-topic-classification
+- C:\Msc_DSML\Msc_Project\msc-project-chattermill-topic-classification
 
 Private GitHub repo:
 https://github.com/jl701/msc-project-chattermill-topic-classification
 
-Local FABSA export:
-C:\Msc_DSML\Msc_Project\Project_Preparation\Public_Datasets\FABSA
+Local FABSA export options:
+- D:\Msc_Project\Project_Preparation\Public_Datasets\FABSA
+- C:\Msc_DSML\Msc_Project\Project_Preparation\Public_Datasets\FABSA
 
 Project title:
 Open-vocabulary Topic Classification with LLMs
 
-Before doing new work, please inspect these files:
+Before doing new work, please inspect these files. If a `D:\Msc_Project` path is unavailable, use the path fallback rule above:
 
-1. C:\Msc_DSML\Msc_Project\msc-project-chattermill-topic-classification\PROJECT_OVERVIEW.md
-2. C:\Msc_DSML\Msc_Project\msc-project-chattermill-topic-classification\docs\aji_feedback_2026_06_16.md
-3. C:\Msc_DSML\Msc_Project\msc-project-chattermill-topic-classification\docs\evaluation_protocol.md
-4. C:\Msc_DSML\Msc_Project\msc-project-chattermill-topic-classification\docs\closed_topic_baselines.md
-5. C:\Msc_DSML\Msc_Project\msc-project-chattermill-topic-classification\docs\generalisation_baselines.md
-6. C:\Msc_DSML\Msc_Project\msc-project-chattermill-topic-classification\docs\qwen_feasibility.md
-7. C:\Msc_DSML\Msc_Project\msc-project-chattermill-topic-classification\docs\handoff_notes_2026_06_16.md
-8. C:\Msc_DSML\Msc_Project\msc-project-chattermill-topic-classification\docs\heldout_aspect_error_analysis.md
+1. D:\Msc_Project\msc-project-chattermill-topic-classification\PROJECT_OVERVIEW.md
+2. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\aji_feedback_2026_06_16.md
+3. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\evaluation_protocol.md
+4. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\closed_topic_baselines.md
+5. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\generalisation_baselines.md
+6. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\qwen_feasibility.md
+7. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\handoff_notes_2026_06_16.md
+8. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\heldout_aspect_error_analysis.md
+9. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\aji_updates_2026_06_21.md
+10. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\experiment_log.md
 
 Current confirmed project context:
 
@@ -54,6 +63,16 @@ Aji's confirmed direction:
 - Open-topic should use candidate labels at inference.
 - The model should select from canonical labels and should not freely invent topic names.
 - Qwen full experiments should wait for better GPU access; local QLoRA is only for smoke tests.
+
+Latest Aji update from 2026-06-21:
+
+- Keep the overall held-out aspect protocol; do not redesign it from scratch.
+- Before heavy Qwen fine-tuning, rotate held-out aspects. The next robustness experiment should be leave-one-aspect-out across the 12 FABSA aspects and report the spread.
+- Treat label-masked vs example-filtered as an ablation about incomplete-label noise. Label-masked can keep text containing a held-out aspect while removing that aspect from supervision, creating false-negative or censored-label noise. Example-filtered removes these rows, giving cleaner but smaller training data.
+- The current lexical and candidate-aspect cross-encoder baselines use global sentiment: one document-level polarity is applied to all selected aspects. This is a limitation for FABSA because sentiment is per-aspect. Add aspect-conditioned sentiment or joint aspect+sentiment pair scoring after LOAO.
+- Full Qwen fine-tuning remains parked until stronger GPU access is clearer.
+- Aji provided access to Chattermill's Gemini Vertex AI endpoint through an OpenAI-compatible API. Do not store the key in the repo. Use it for hosted LLM baselines after the LOAO robustness work is started.
+- The GitHub branch issue has been fixed: remote `main` now points to the full setup commit, and local `main` tracks `origin/main`.
 
 Current implemented split protocols:
 
@@ -145,12 +164,26 @@ Held-out aspect error analysis:
 
 Qwen feasibility:
 - Model: Qwen/Qwen3-4B-Instruct-2507
-- Local RTX 5050 Laptop GPU, 8 GB VRAM.
+- Previous local pilot was on an RTX 5050 Laptop GPU, 8 GB VRAM.
+- Current new machine has NVIDIA GeForce GTX 1660 Ti with Max-Q Design, 6 GB VRAM.
 - 4-bit QLoRA with rank-8 LoRA runs locally.
 - Results are only on the first 100 validation rows, not full validation/test.
 - Zero-shot first-100 validation pair micro F1: 0.541
 - Best local LoRA pilot first-100 validation pair micro F1: 0.762
 - Use local Qwen only for smoke tests until proper GPU access is available.
+
+Gemini / Vertex AI access:
+- Aji provided an OpenAI-compatible endpoint:
+  - `OPENAI_BASE_URL=https://llm-api.datascience.chattermill.xyz/v1`
+  - `OPENAI_API_KEY` should be set locally only; never commit it.
+- Recommended models:
+  - `vertex_ai/gemini-2.5-flash` as the default fast/cheap baseline.
+  - `vertex_ai/gemini-2.5-pro` as the most capable baseline.
+  - `vertex_ai/gemini-2.5-flash-lite` as the cheapest/lowest-latency baseline.
+- The `vertex_ai/` prefix is required.
+- Models are served in `europe-west4`; unsupported-region models can return 404.
+- Initial budget is $100 per key; exhausted budget returns 429.
+- Use enough `max_tokens` because Gemini 2.5 may spend tokens thinking first.
 
 Important repository hygiene:
 
@@ -159,9 +192,16 @@ Important repository hygiene:
 - Public FABSA can be inspected locally, but do not commit full copied data files unless explicitly approved.
 - Current project files may still be uncommitted locally, so check `git status` before making changes.
 
+Experiment logging rule:
+
+- After every meaningful experiment, implementation change, or evaluation run, update `docs/experiment_log.md`.
+- Record the code/protocol change, dataset split, model or baseline, exact command, output location, headline/supporting metrics, interpretation, limitations, and next step.
+- Commit only concise documentation summaries, not local generated outputs or credentials.
+
 Useful commands:
 
 ```powershell
+.\.venv\Scripts\Activate.ps1
 python -m unittest discover -s tests
 python .\scripts\analyse_split_candidates.py
 python .\scripts\build_fabsa_splits.py
@@ -177,10 +217,12 @@ python .\scripts\prepare_qwen_heldout_aspect_sft_data.py --strategy both --promp
 Recommended next steps:
 
 1. First inspect the repo and confirm the current state with `git status`.
-2. If I ask to publish the setup, help me commit/push the clean code and documentation, without committing outputs or data.
-3. If I ask to continue experiments, the preferred next step is full Qwen candidate-label fine-tuning on a stronger GPU using the indexed held-out-aspect SFT/evaluation files.
-4. If strong GPU access is still unavailable, add another non-LLM label-aware held-out-aspect baseline, such as a bi-encoder or NLI-style candidate-label model.
-5. Keep local Qwen runs to smoke tests and data-format checks unless I explicitly ask for a slow local pilot.
+2. If I ask to continue experiments, the preferred next step is leave-one-aspect-out held-out aspect evaluation across all 12 FABSA aspects.
+3. Preserve `label_masked` and `example_filtered`, and report spread across aspects.
+4. After LOAO, improve the global sentiment component with aspect-conditioned sentiment or joint aspect+sentiment candidate scoring.
+5. Add a Gemini OpenAI-compatible hosted LLM baseline using the indexed candidate-label output format.
+6. Keep full Qwen fine-tuning parked until stronger GPU access is available.
+7. If I ask to publish changes, commit/push only clean code and documentation, without committing outputs, data, credentials, checkpoints, or generated artifacts.
 
 Please start by summarising what you find in the current docs and repo state, then propose the next concrete plan before implementing.
 ```
