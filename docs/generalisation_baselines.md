@@ -14,6 +14,8 @@ Headline metric: **pair samples F1**. Pair micro F1 and pair macro F1 are report
 | Held-out organisation | DistilBERT | 0.7575 | 0.7600 | 0.4035 | 0.7986 |
 | Held-out aspect, label-masked | Candidate-label lexical TF-IDF + global sentiment | 0.4698 | 0.4667 | 0.3703 | 0.5302 |
 | Held-out aspect, example-filtered | Candidate-label lexical TF-IDF + global sentiment | 0.4626 | 0.4596 | 0.3703 | 0.5231 |
+| Held-out aspect, label-masked | Candidate-label lexical TF-IDF + aspect-conditioned sentiment | 0.4520 | 0.4491 | 0.3425 | 0.5302 |
+| Held-out aspect, example-filtered | Candidate-label lexical TF-IDF + aspect-conditioned sentiment | 0.4389 | 0.4351 | 0.3422 | 0.5231 |
 | Held-out aspect, label-masked | Candidate-aspect cross-encoder + global sentiment | 0.5595 | 0.5462 | 0.4267 | 0.6419 |
 | Held-out aspect, example-filtered | Candidate-aspect cross-encoder + global sentiment | 0.5816 | 0.5646 | 0.4538 | 0.6835 |
 | Held-out aspect | Qwen3-4B-Instruct indexed zero-shot | 0.5374 | 0.5300 | 0.4374 | 0.6340 |
@@ -103,6 +105,23 @@ This is a lower-bound baseline. It can use candidate label names, but it cannot 
 
 The two strategies are close. Label-masked training is slightly stronger, which is expected because it keeps more training data.
 
+Aji later flagged that the global sentiment step is not ideal because FABSA sentiment is aspect-level, not document-level. An aspect-conditioned sentiment variant was therefore added:
+
+1. Select candidate aspects using the same lexical aspect selector.
+2. Predict sentiment separately for each selected `(feedback text, candidate aspect)` pair.
+3. Combine each selected aspect with its own predicted sentiment.
+
+This is methodologically cleaner for mixed-sentiment reviews, but the current lightweight TF-IDF Logistic Regression implementation did not improve the fixed three-aspect lexical lower bound:
+
+| Sentiment Mode | Strategy | Train Rows | Test Pair Samples F1 | Test Pair Micro F1 | Test Pair Macro F1 | Sentiment Accuracy When Gold Aspect Predicted |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| Global | Label-masked | 7,632 | 0.4698 | 0.4667 | 0.3703 | 0.8867 |
+| Global | Example-filtered | 6,495 | 0.4626 | 0.4596 | 0.3703 | 0.8851 |
+| Aspect-conditioned | Label-masked | 7,632 | 0.4520 | 0.4491 | 0.3425 | 0.8533 |
+| Aspect-conditioned | Example-filtered | 6,495 | 0.4389 | 0.4351 | 0.3422 | 0.8378 |
+
+The aspect-conditioned result should not be read as evidence against per-aspect sentiment modelling. It only shows that this simple bag-of-words/character TF-IDF sentiment classifier is weaker than the global sentiment prior on the current fixed held-out-aspect lexical setup. It remains the right direction for stronger models and for mixed-sentiment correctness.
+
 A stronger label-aware non-LLM baseline was added after the lexical lower bound. It trains a DistilBERT cross-encoder to score `(feedback text, candidate aspect)` relevance using only seen-aspect supervision, then combines selected candidate aspects with a global TF-IDF Logistic Regression sentiment classifier. Evaluation remains held-out-only: validation/test targets include only labels for the held-out aspects.
 
 The model consumes canonical candidate aspects at inference and does not generate topic names.
@@ -139,8 +158,10 @@ All-row lexical LOAO test spread across 12 held-out aspects. With sample-F1 thre
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
 | Sample F1 | Label-masked | 0.1299 | 0.2304 | 0.1458 | 0.8857 | 77.5362 |
 | Sample F1 | Example-filtered | 0.1288 | 0.2345 | 0.1495 | 0.8777 | 77.4207 |
-| Micro F1 | Label-masked | 0.0926 | 0.3635 | 0.3912 | 0.4883 | 18.5728 |
-| Micro F1 | Example-filtered | 0.0903 | 0.3780 | 0.3778 | 0.4895 | 17.4753 |
+| Micro F1, global sentiment | Label-masked | 0.0926 | 0.3635 | 0.3912 | 0.4883 | 18.5728 |
+| Micro F1, global sentiment | Example-filtered | 0.0903 | 0.3780 | 0.3778 | 0.4895 | 17.4753 |
+| Micro F1, aspect-conditioned sentiment | Label-masked | 0.0883 | 0.3511 | 0.3811 | 0.4700 | 18.5728 |
+| Micro F1, aspect-conditioned sentiment | Example-filtered | 0.0842 | 0.3576 | 0.3627 | 0.4541 | 16.7034 |
 
 Positive-row lexical LOAO is much higher, but it should be treated as a sentiment diagnostic rather than a true aspect-selection evaluation because each fold has only one candidate aspect and every evaluated row contains it.
 
@@ -174,7 +195,7 @@ The closed-topic DistilBERT result remains the strongest current benchmark on th
 
 The held-out organisation traditional result is close to the closed-topic traditional baseline on pair samples F1, but pair macro F1 drops. The held-out-organisation DistilBERT run gives a clear improvement over the traditional model, but its macro F1 remains lower than closed-topic DistilBERT. This suggests that domain shift is still hurting long-tail labels even when overall performance is strong.
 
-The held-out aspect results are much lower than the closed-topic and held-out-organisation results, as expected. A fixed-output supervised classifier is not a meaningful model for unseen labels. The candidate-aspect cross-encoder is a stronger first label-aware baseline and improves substantially over the lexical lower bound. Qwen indexed zero-shot is competitive but does not yet beat the best held-out-aspect test score. The next useful step is full Qwen candidate-label fine-tuning once GPU resources are clearer.
+The held-out aspect results are much lower than the closed-topic and held-out-organisation results, as expected. A fixed-output supervised classifier is not a meaningful model for unseen labels. The candidate-aspect cross-encoder is a stronger first label-aware baseline and improves substantially over the lexical lower bound. Qwen indexed zero-shot is competitive but does not yet beat the best held-out-aspect test score. The global sentiment component has now been ablated against a lightweight aspect-conditioned sentiment model; the next non-LLM improvement should use a stronger aspect-conditioned sentiment classifier or move to joint aspect+sentiment pair scoring. Full Qwen candidate-label fine-tuning should still wait until GPU resources are clearer.
 
 See `docs/heldout_aspect_error_analysis.md` for row-level error analysis.
 
@@ -184,6 +205,12 @@ Run the default generalisation baselines:
 
 ```powershell
 python .\scripts\run_generalisation_baselines.py
+```
+
+The current default held-out-aspect lexical sentiment mode is aspect-conditioned. To reproduce the original global-sentiment lexical lower bound, pass:
+
+```powershell
+python .\scripts\run_generalisation_baselines.py --protocol heldout-aspect --sentiment-mode global --output-dir .\outputs\baselines\generalisation_global_sentiment_rerun
 ```
 
 Run the refined held-out organisation SVM grid:
@@ -201,7 +228,7 @@ python .\scripts\run_transformer_baseline.py --protocol heldout-org --epochs 10 
 Run the candidate-aspect cross-encoder held-out-aspect baseline:
 
 ```powershell
-python .\scripts\run_aspect_label_aware_baseline.py --strategy both --epochs 3 --batch-size 32 --eval-batch-size 96 --learning-rate 2e-5 --negatives-per-positive 3 --output-dir .\outputs\baselines\aspect_label_aware_lr2e-5_ep3_neg3
+python .\scripts\run_aspect_label_aware_baseline.py --strategy both --sentiment-mode global --epochs 3 --batch-size 32 --eval-batch-size 96 --learning-rate 2e-5 --negatives-per-positive 3 --output-dir .\outputs\baselines\aspect_label_aware_lr2e-5_ep3_neg3
 ```
 
 Run the Qwen indexed zero-shot held-out-aspect smoke test:

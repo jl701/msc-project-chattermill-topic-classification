@@ -306,3 +306,114 @@ Validation:
 ### Next Step
 
 Use all-row LOAO with micro-F1 threshold selection as the main detection diagnostic, while still reporting pair samples F1 as the headline metric. The next modelling improvement remains aspect-conditioned sentiment or joint aspect+sentiment pair scoring.
+
+## 2026-06-21: Aspect-Conditioned Sentiment Pipeline
+
+### Purpose
+
+- Address Aji's concern that the earlier held-out-aspect baselines used one global document-level sentiment and applied it to every selected aspect.
+- Add a cleaner per-aspect sentiment option: `(review text, candidate aspect) -> sentiment`.
+- Keep the old global sentiment path available as an ablation and reproducibility baseline.
+
+### Code Or Protocol Changes
+
+- Updated `src/msc_project/baselines/candidate_label.py`:
+  - added `aspect_conditioned` and `global` sentiment modes
+  - added `AspectConditionedSentimentModel`
+  - added `train_aspect_conditioned_sentiment_model`
+  - added reusable sentiment lookup and pair-construction helpers
+  - changed `CandidateLexicalBaseline` default sentiment mode to `aspect_conditioned`
+- Updated `scripts/run_generalisation_baselines.py`:
+  - added `--sentiment-mode`
+  - threaded sentiment mode into the held-out-aspect lexical baseline
+- Updated `scripts/run_aspect_label_aware_baseline.py`:
+  - added `--sentiment-mode`
+  - switched candidate-aspect cross-encoder pair construction to use per-candidate sentiment lookup
+- Updated `scripts/run_loao_heldout_aspect.py`:
+  - added `--sentiment-mode`
+  - included `sentiment_mode` in LOAO result tables and aggregation
+- Added `tests/test_candidate_label_sentiment.py`.
+
+### Setup
+
+- Dataset: FABSA public train/validation/test export.
+- Main changed model: candidate-label lexical TF-IDF aspect selector + aspect-conditioned TF-IDF Logistic Regression sentiment classifier.
+- The global sentiment classifier was rerun to confirm that the code change preserved the original lower-bound results.
+- Full cross-encoder LOAO was not run; only a tiny cross-encoder smoke test was run because full local DistilBERT LOAO is too slow on the GTX 1660 Ti Max-Q 6 GB GPU.
+
+### Commands
+
+```powershell
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+.\.venv\Scripts\python.exe .\scripts\run_generalisation_baselines.py --protocol heldout-aspect --strategy both --sentiment-mode aspect_conditioned --output-dir .\outputs\baselines\generalisation_aspect_conditioned_sentiment
+.\.venv\Scripts\python.exe .\scripts\run_generalisation_baselines.py --protocol heldout-aspect --strategy both --sentiment-mode global --output-dir .\outputs\baselines\generalisation_global_sentiment_rerun
+.\.venv\Scripts\python.exe .\scripts\run_loao_heldout_aspect.py --baseline lexical --strategy both --sentiment-mode aspect_conditioned --selection-metric pair_micro_f1 --output-dir .\outputs\baselines\loao_heldout_aspect_lexical_aspect_conditioned_micro_selection
+.\.venv\Scripts\python.exe .\scripts\run_loao_heldout_aspect.py --baseline lexical --strategy both --sentiment-mode aspect_conditioned --eval-row-scope containing_heldout --ensure-one --output-dir .\outputs\baselines\loao_heldout_aspect_lexical_aspect_conditioned_positive_rows
+.\.venv\Scripts\python.exe .\scripts\run_aspect_label_aware_baseline.py --strategy label_masked --sentiment-mode aspect_conditioned --train-limit 100 --eval-limit 100 --epochs 1 --batch-size 8 --eval-batch-size 16 --output-dir .\outputs\baselines\aspect_label_aware_aspect_conditioned_smoke
+```
+
+### Outputs
+
+- Fixed three-aspect aspect-conditioned lexical results:
+  - `outputs/baselines/generalisation_aspect_conditioned_sentiment/`
+- Fixed three-aspect global sentiment rerun:
+  - `outputs/baselines/generalisation_global_sentiment_rerun/`
+- All-row LOAO with aspect-conditioned sentiment and micro-F1 threshold selection:
+  - `outputs/baselines/loao_heldout_aspect_lexical_aspect_conditioned_micro_selection/`
+- Positive-row LOAO sentiment diagnostic with aspect-conditioned sentiment:
+  - `outputs/baselines/loao_heldout_aspect_lexical_aspect_conditioned_positive_rows/`
+- Cross-encoder aspect-conditioned smoke test:
+  - `outputs/baselines/aspect_label_aware_aspect_conditioned_smoke/`
+
+Generated output files remain ignored by Git.
+
+### Results
+
+Fixed three-aspect held-out aspect lexical baseline, test split:
+
+| Sentiment Mode | Strategy | Pair Samples F1 | Pair Micro F1 | Pair Macro F1 | Sentiment Accuracy When Gold Aspect Predicted |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Global | `label_masked` | 0.4698 | 0.4667 | 0.3703 | 0.8867 |
+| Global | `example_filtered` | 0.4626 | 0.4596 | 0.3703 | 0.8851 |
+| Aspect-conditioned | `label_masked` | 0.4520 | 0.4491 | 0.3425 | 0.8533 |
+| Aspect-conditioned | `example_filtered` | 0.4389 | 0.4351 | 0.3422 | 0.8378 |
+
+All-row LOAO lexical baseline with micro-F1 threshold selection, test split:
+
+| Sentiment Mode | Strategy | Pair Samples F1 Mean | Pair Micro F1 Mean | Pair Precision Mean | Pair Recall Mean | FP Rows / 100 Mean | Sentiment Accuracy When Gold Aspect Predicted |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Global | `label_masked` | 0.0926 | 0.3635 | 0.3912 | 0.4883 | 18.5728 | 0.8867 |
+| Global | `example_filtered` | 0.0903 | 0.3780 | 0.3778 | 0.4895 | 17.4753 | 0.8783 |
+| Aspect-conditioned | `label_masked` | 0.0883 | 0.3511 | 0.3811 | 0.4700 | 18.5728 | 0.8592 |
+| Aspect-conditioned | `example_filtered` | 0.0842 | 0.3576 | 0.3627 | 0.4541 | 16.7034 | 0.8390 |
+
+Positive-row LOAO sentiment diagnostic, test split:
+
+| Sentiment Mode | Strategy | Pair Samples F1 Mean | Pair Micro F1 Mean | Pair Macro F1 Mean | Sentiment Accuracy When Gold Aspect Predicted |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Global | `label_masked` | 0.8870 | 0.8868 | 0.6316 | 0.8857 |
+| Global | `example_filtered` | 0.8790 | 0.8788 | 0.6272 | 0.8777 |
+| Aspect-conditioned | `label_masked` | 0.8647 | 0.8646 | 0.5924 | 0.8636 |
+| Aspect-conditioned | `example_filtered` | 0.8442 | 0.8440 | 0.5777 | 0.8430 |
+
+Validation:
+
+- First test attempt accidentally used system Python and failed because system Python lacked numpy/pandas.
+- Correct project environment command:
+  - `.\.venv\Scripts\python.exe -m unittest discover -s tests`
+  - `43 tests OK`
+
+### Interpretation
+
+- The aspect-conditioned pipeline fixes the modelling assumption: sentiment is now predicted per selected candidate aspect rather than once per document.
+- The current lightweight TF-IDF aspect-conditioned sentiment classifier did not improve the lexical results. It is slightly weaker than the global sentiment classifier in the fixed three-aspect split and in LOAO.
+- This does not mean per-aspect sentiment is the wrong direction. It means the current shallow sentiment classifier is not strong enough to benefit from the cleaner formulation.
+- In all-row LOAO, the main bottleneck is still unseen-aspect detection. Aspect-conditioned sentiment changes pair labels after aspects have been selected; it does not fix weak aspect selection.
+- In positive-row LOAO, where aspect selection is trivial, the global sentiment prior remains slightly stronger than the lightweight aspect-conditioned model.
+- The old global sentiment baseline should remain in the report as a useful empirical reference, while the aspect-conditioned version should be discussed as a methodologically cleaner but currently weaker ablation.
+
+### Next Step
+
+- Do not spend time on more lexical sentiment tuning unless a very small ablation is needed for the write-up.
+- The next useful non-LLM step is a stronger aspect-conditioned sentiment model, such as a DistilBERT cross-encoder for `(review, candidate aspect) -> sentiment`, or the deferred joint aspect+sentiment pair scorer.
+- A hosted Gemini indexed candidate-label baseline is now attractive because it can naturally output per-aspect sentiment without local GPU fine-tuning.

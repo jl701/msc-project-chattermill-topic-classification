@@ -45,14 +45,16 @@ This view is useful as a sentiment-coupling diagnostic, but it is not a real asp
 
 ## Baseline
 
-The completed full LOAO baseline is:
+The completed full LOAO lexical baselines are:
 
 - `candidate_label_lexical_tfidf_with_global_sentiment`
+- `candidate_label_lexical_tfidf_with_aspect_conditioned_sentiment`
 - aspect relevance: character TF-IDF similarity between review text and the canonical aspect label
-- sentiment: one global TF-IDF Logistic Regression sentiment prediction per review
+- global sentiment: one TF-IDF Logistic Regression sentiment prediction per review
+- aspect-conditioned sentiment: one TF-IDF Logistic Regression sentiment prediction per `(review, candidate aspect)` pair
 - strategies: `label_masked` and `example_filtered`
 
-The DistilBERT candidate-aspect cross-encoder path was implemented and smoke-tested, but full LOAO was not completed on the current local machine. A full single-fold smoke attempt did not finish within 30 minutes on the GTX 1660 Ti Max-Q 6 GB GPU. A tiny 100-train/100-eval/1-epoch smoke test completed, so the code path works, but full cross-encoder LOAO should run later on stronger compute or with a deliberately lighter model.
+The DistilBERT candidate-aspect cross-encoder path was implemented and smoke-tested for both the original global-sentiment setup and the newer aspect-conditioned sentiment setup, but full LOAO was not completed on the current local machine. A full single-fold smoke attempt did not finish within 30 minutes on the GTX 1660 Ti Max-Q 6 GB GPU. Tiny 100-train/100-eval/1-epoch smoke tests completed, so the code path works, but full cross-encoder LOAO should run later on stronger compute or with a deliberately lighter model.
 
 ## Main All-Row Results
 
@@ -66,6 +68,12 @@ Output directory for micro-F1-selected all-row LOAO:
 
 ```text
 outputs/baselines/loao_heldout_aspect_lexical_all_rows_micro_selection/
+```
+
+Output directory for micro-F1-selected all-row LOAO with aspect-conditioned sentiment:
+
+```text
+outputs/baselines/loao_heldout_aspect_lexical_aspect_conditioned_micro_selection/
 ```
 
 Sample-F1-selected test spread across 12 held-out aspects:
@@ -83,6 +91,17 @@ Micro-F1-selected test spread across 12 held-out aspects:
 | `example_filtered` | 0.0903 | 0.3780 | 0.3778 | 0.4895 | 17.4753 |
 
 Micro-F1 selection is the preferred all-row detection diagnostic. It trades lower sample-F1 and recall for much lower false-positive rates and substantially higher pair micro F1.
+
+Aspect-conditioned sentiment was then tested with the same lexical aspect selector and the preferred micro-F1 threshold selection:
+
+| Sentiment Mode | Strategy | Pair Samples F1 Mean | Pair Micro F1 Mean | Pair Precision Mean | Pair Recall Mean | FP Rows / 100 Mean | Sentiment Accuracy When Gold Aspect Predicted |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Global | `label_masked` | 0.0926 | 0.3635 | 0.3912 | 0.4883 | 18.5728 | 0.8867 |
+| Global | `example_filtered` | 0.0903 | 0.3780 | 0.3778 | 0.4895 | 17.4753 | 0.8783 |
+| Aspect-conditioned | `label_masked` | 0.0883 | 0.3511 | 0.3811 | 0.4700 | 18.5728 | 0.8592 |
+| Aspect-conditioned | `example_filtered` | 0.0842 | 0.3576 | 0.3627 | 0.4541 | 16.7034 | 0.8390 |
+
+This confirms that the lightweight aspect-conditioned sentiment classifier is not yet a performance improvement over the older global sentiment prior. It is still methodologically useful because it removes the document-level sentiment assumption that Aji queried, but the classifier itself needs to become stronger before this route is worth using as the headline non-LLM result.
 
 Sample-F1-selected per-aspect test results for `label_masked`:
 
@@ -122,7 +141,16 @@ Test spread across 12 held-out aspects:
 | `label_masked` | 0.8870 | 0.0294 | 0.8354 | 0.9312 | 0.8868 | 0.6316 | 1.0000 |
 | `example_filtered` | 0.8790 | 0.0254 | 0.8315 | 0.9231 | 0.8788 | 0.6272 | 1.0000 |
 
-These high scores should not be interpreted as solving open-topic selection. Because each fold has one candidate aspect and only positive rows, aspect selection is trivial. The result mainly shows that the global sentiment classifier is often able to assign the majority sentiment correctly once the held-out aspect is already known to be present.
+The same diagnostic with aspect-conditioned sentiment:
+
+| Sentiment Mode | Strategy | Pair Samples F1 Mean | Pair Micro F1 Mean | Pair Macro F1 Mean | Sentiment Accuracy When Gold Aspect Predicted |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Global | `label_masked` | 0.8870 | 0.8868 | 0.6316 | 0.8857 |
+| Global | `example_filtered` | 0.8790 | 0.8788 | 0.6272 | 0.8777 |
+| Aspect-conditioned | `label_masked` | 0.8647 | 0.8646 | 0.5924 | 0.8636 |
+| Aspect-conditioned | `example_filtered` | 0.8442 | 0.8440 | 0.5777 | 0.8430 |
+
+These high scores should not be interpreted as solving open-topic selection. Because each fold has one candidate aspect and only positive rows, aspect selection is trivial. The result mainly shows how often the sentiment classifier assigns the right polarity once the held-out aspect is already known to be present. Under this lightweight TF-IDF setup, aspect-conditioned sentiment is cleaner conceptually but weaker empirically than the global sentiment classifier.
 
 ## Interpretation
 
@@ -139,24 +167,28 @@ The gap between the all-row view and the positive-row diagnostic is the importan
 
 The `label_masked` and `example_filtered` lexical results are very close. This does not remove Aji's concern about false-negative noise in `label_masked`; it only means this simple lexical lower bound is not very sensitive to that training-data difference.
 
+The aspect-conditioned sentiment ablation clarifies the sentiment issue but does not improve the lexical baseline. This is plausible because the current sentiment classifier is still a shallow text classifier and cannot reliably localise sentiment spans around the requested aspect. The result supports fixing the modelling assumption, but it also shows that a stronger aspect-conditioned sentiment model or a joint pair scorer is needed before replacing the global-sentiment headline results.
+
 ## Reproduction
 
 Run the main all-row lexical LOAO:
 
 ```powershell
-python .\scripts\run_loao_heldout_aspect.py --baseline lexical --strategy both --output-dir .\outputs\baselines\loao_heldout_aspect_lexical_all_rows
+python .\scripts\run_loao_heldout_aspect.py --baseline lexical --strategy both --sentiment-mode global --output-dir .\outputs\baselines\loao_heldout_aspect_lexical_all_rows
 ```
 
 Run the preferred all-row detection diagnostic with micro-F1 threshold selection:
 
 ```powershell
-python .\scripts\run_loao_heldout_aspect.py --baseline lexical --strategy both --selection-metric pair_micro_f1 --output-dir .\outputs\baselines\loao_heldout_aspect_lexical_all_rows_micro_selection
+python .\scripts\run_loao_heldout_aspect.py --baseline lexical --strategy both --sentiment-mode global --selection-metric pair_micro_f1 --output-dir .\outputs\baselines\loao_heldout_aspect_lexical_all_rows_micro_selection
+python .\scripts\run_loao_heldout_aspect.py --baseline lexical --strategy both --sentiment-mode aspect_conditioned --selection-metric pair_micro_f1 --output-dir .\outputs\baselines\loao_heldout_aspect_lexical_aspect_conditioned_micro_selection
 ```
 
 Run the positive-row diagnostic:
 
 ```powershell
-python .\scripts\run_loao_heldout_aspect.py --baseline lexical --strategy both --eval-row-scope containing_heldout --ensure-one --output-dir .\outputs\baselines\loao_heldout_aspect_lexical_positive_rows
+python .\scripts\run_loao_heldout_aspect.py --baseline lexical --strategy both --sentiment-mode global --eval-row-scope containing_heldout --ensure-one --output-dir .\outputs\baselines\loao_heldout_aspect_lexical_positive_rows
+python .\scripts\run_loao_heldout_aspect.py --baseline lexical --strategy both --sentiment-mode aspect_conditioned --eval-row-scope containing_heldout --ensure-one --output-dir .\outputs\baselines\loao_heldout_aspect_lexical_aspect_conditioned_positive_rows
 ```
 
 Run a tiny cross-encoder smoke test:
@@ -167,9 +199,8 @@ python .\scripts\run_loao_heldout_aspect.py --baseline cross_encoder --strategy 
 
 ## Next Step
 
-The next methodological step is not more lexical tuning. The next useful improvement is to replace the global sentiment component with either:
+The lightweight aspect-conditioned sentiment pipeline is now implemented and evaluated. The next methodological step is not more lexical tuning. The useful next options are:
 
-- aspect-conditioned sentiment: `(review, candidate aspect) -> sentiment`
-- joint pair scoring: `(review, candidate aspect + sentiment) -> applicable / not applicable`
-
-This should be done after the LOAO protocol is stable.
+- train a stronger aspect-conditioned sentiment model, such as a DistilBERT cross-encoder for `(review, candidate aspect) -> sentiment`
+- move to joint pair scoring: `(review, candidate aspect + sentiment) -> applicable / not applicable`
+- add the hosted Gemini indexed candidate-label baseline before spending local GPU time on full Qwen fine-tuning

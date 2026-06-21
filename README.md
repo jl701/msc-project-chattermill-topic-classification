@@ -24,6 +24,7 @@ The current first phase is a closed-topic FABSA baseline:
 The expected local FABSA export is outside this repository:
 
 ```text
+D:\Msc_Project\Project_Preparation\Public_Datasets\FABSA
 C:\Msc_DSML\Msc_Project\Project_Preparation\Public_Datasets\FABSA
 ```
 
@@ -81,6 +82,7 @@ Run the first generalisation baselines:
 
 ```powershell
 python .\scripts\run_generalisation_baselines.py
+python .\scripts\run_generalisation_baselines.py --protocol heldout-aspect --sentiment-mode global
 ```
 
 Run the refined held-out organisation SVM grid:
@@ -92,14 +94,14 @@ python .\scripts\run_generalisation_baselines.py --protocol heldout-org --refine
 Run the candidate-aspect cross-encoder held-out-aspect baseline:
 
 ```powershell
-python .\scripts\run_aspect_label_aware_baseline.py --strategy both --epochs 3 --batch-size 32 --eval-batch-size 96 --learning-rate 2e-5 --negatives-per-positive 3
+python .\scripts\run_aspect_label_aware_baseline.py --strategy both --sentiment-mode global --epochs 3 --batch-size 32 --eval-batch-size 96 --learning-rate 2e-5 --negatives-per-positive 3
 ```
 
 Run leave-one-aspect-out held-out-aspect lexical evaluation:
 
 ```powershell
-python .\scripts\run_loao_heldout_aspect.py --baseline lexical --strategy both
-python .\scripts\run_loao_heldout_aspect.py --baseline lexical --strategy both --selection-metric pair_micro_f1
+python .\scripts\run_loao_heldout_aspect.py --baseline lexical --strategy both --sentiment-mode global
+python .\scripts\run_loao_heldout_aspect.py --baseline lexical --strategy both --sentiment-mode aspect_conditioned --selection-metric pair_micro_f1
 ```
 
 Run a Qwen held-out-aspect indexed zero-shot smoke test:

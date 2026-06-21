@@ -13,7 +13,13 @@ import torch
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from msc_project.baselines.candidate_label import candidate_pair_labels, train_sentiment_model
+from msc_project.baselines.candidate_label import (
+    SENTIMENT_MODES,
+    build_sentiment_lookup,
+    candidate_pair_labels,
+    pair_predictions_from_aspects,
+    train_candidate_sentiment_model,
+)
 from msc_project.baselines.label_aware import (
     CrossEncoderConfig,
     aspect_predictions_from_scores,
@@ -25,7 +31,7 @@ from msc_project.baselines.label_aware import (
     train_one_epoch,
 )
 from msc_project.baselines.transformer import set_seed
-from msc_project.data.fabsa import default_data_dir, format_pair_label
+from msc_project.data.fabsa import default_data_dir
 from msc_project.data.splits import DEFAULT_HELDOUT_ASPECTS, build_heldout_aspect_split, load_all_fabsa
 from msc_project.evaluation.metrics import binarize_labels, evaluate_pair_and_aspect, per_label_report
 
@@ -75,19 +81,12 @@ def write_prediction_rows(frame: pd.DataFrame, predictions: list[list[str]], pat
             handle.write(json.dumps(payload, ensure_ascii=False) + "\n")
 
 
-def pair_predictions(aspect_predictions: list[list[str]], sentiments: list[str]) -> list[list[str]]:
-    return [
-        [format_pair_label(aspect, str(sentiment)) for aspect in aspects]
-        for aspects, sentiment in zip(aspect_predictions, sentiments)
-    ]
-
-
 def score_thresholds(
     eval_df,
     candidate_aspects: list[str],
     candidate_pairs: list[str],
     aspect_scores,
-    sentiments: list[str],
+    sentiment_lookup: list[dict[str, str]],
     max_predictions_per_row: int | None,
     ensure_one: bool,
     selection_metric: str,
@@ -101,7 +100,7 @@ def score_thresholds(
             ensure_one=ensure_one,
             max_predictions_per_row=max_predictions_per_row,
         )
-        predictions = pair_predictions(aspect_predictions, sentiments)
+        predictions = pair_predictions_from_aspects(aspect_predictions, sentiment_lookup)
         metrics = evaluate_pair_and_aspect(eval_df["supervision_pair_labels"].tolist(), predictions, candidate_pairs)
         metrics["threshold"] = float(threshold)
         rows.append(metrics)
@@ -116,7 +115,7 @@ def score_thresholds(
         ensure_one=ensure_one,
         max_predictions_per_row=max_predictions_per_row,
     )
-    return best, pair_predictions(best_aspects, sentiments)
+    return best, pair_predictions_from_aspects(best_aspects, sentiment_lookup)
 
 
 def run_strategy(
@@ -149,9 +148,19 @@ def run_strategy(
         negatives_per_positive=args.negatives_per_positive,
         seed=args.seed,
     )
-    sentiment_model = train_sentiment_model(train_df)
-    validation_sentiments = sentiment_model.predict(validation_df["text"].tolist()).tolist()
-    test_sentiments = sentiment_model.predict(test_df["text"].tolist()).tolist()
+    sentiment_model = train_candidate_sentiment_model(train_df, args.sentiment_mode)
+    validation_sentiment_lookup = build_sentiment_lookup(
+        sentiment_model,
+        validation_df["text"].tolist(),
+        heldout_aspects,
+        args.sentiment_mode,
+    )
+    test_sentiment_lookup = build_sentiment_lookup(
+        sentiment_model,
+        test_df["text"].tolist(),
+        heldout_aspects,
+        args.sentiment_mode,
+    )
 
     config = CrossEncoderConfig(
         model_name=args.model_name,
@@ -184,7 +193,7 @@ def run_strategy(
             heldout_aspects,
             eval_candidate_pairs,
             validation_scores,
-            validation_sentiments,
+            validation_sentiment_lookup,
             args.max_predictions_per_row,
             ensure_one,
             args.selection_metric,
@@ -213,7 +222,7 @@ def run_strategy(
         ensure_one=ensure_one,
         max_predictions_per_row=args.max_predictions_per_row,
     )
-    validation_predictions = pair_predictions(validation_aspects, validation_sentiments)
+    validation_predictions = pair_predictions_from_aspects(validation_aspects, validation_sentiment_lookup)
     write_prediction_rows(validation_df, validation_predictions, output_dir / "best_validation_predictions.jsonl")
 
     test_scores = score_aspect_grid(model, tokenizer, test_df, heldout_aspects, config, device)
@@ -224,7 +233,7 @@ def run_strategy(
         ensure_one=ensure_one,
         max_predictions_per_row=args.max_predictions_per_row,
     )
-    test_predictions = pair_predictions(test_aspects, test_sentiments)
+    test_predictions = pair_predictions_from_aspects(test_aspects, test_sentiment_lookup)
     write_prediction_rows(test_df, test_predictions, output_dir / "best_test_predictions.jsonl")
     test_metrics = evaluate_pair_and_aspect(test_df["supervision_pair_labels"].tolist(), test_predictions, eval_candidate_pairs)
 
@@ -245,7 +254,8 @@ def run_strategy(
         "eval_candidate_pair_labels": int(len(eval_candidate_pairs)),
     }
     summary = {
-        "model": "candidate_aspect_cross_encoder_with_global_sentiment",
+        "model": f"candidate_aspect_cross_encoder_with_{args.sentiment_mode}_sentiment",
+        "sentiment_mode": args.sentiment_mode,
         "strategy": strategy,
         "eval_label_scope": "heldout",
         "eval_row_scope": eval_row_scope,
@@ -281,6 +291,7 @@ def main() -> None:
     parser.add_argument("--max-predictions-per-row", type=int, default=None)
     parser.add_argument("--allow-empty-predictions", action="store_true")
     parser.add_argument("--selection-metric", choices=SELECTION_KEYS, default="pair_samples_f1")
+    parser.add_argument("--sentiment-mode", choices=SENTIMENT_MODES, default="aspect_conditioned")
     parser.add_argument("--seed", type=int, default=13)
     parser.add_argument("--no-amp", action="store_true")
     parser.add_argument("--train-limit", type=int, default=None)

@@ -17,6 +17,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
 
 from msc_project.data.fabsa import default_data_dir
 from msc_project.data.splits import all_aspects, build_heldout_aspect_split, load_all_fabsa
+from msc_project.baselines.candidate_label import SENTIMENT_MODES
 
 from run_aspect_label_aware_baseline import run_strategy as run_cross_encoder_strategy
 from run_generalisation_baselines import run_candidate_label_baseline, write_json
@@ -74,6 +75,7 @@ def row_counts(splits: dict[str, pd.DataFrame]) -> dict[str, int]:
 
 def flatten_result(
     baseline: str,
+    sentiment_mode: str,
     strategy: str,
     aspect: str,
     eval_row_scope: str,
@@ -85,6 +87,7 @@ def flatten_result(
         metrics = result[split_key]
         row = {
             "baseline": baseline,
+            "sentiment_mode": sentiment_mode,
             "strategy": strategy,
             "heldout_aspect": aspect,
             "split": split_name,
@@ -102,9 +105,12 @@ def flatten_result(
 
 def aggregate_spread(results: pd.DataFrame) -> pd.DataFrame:
     rows = []
-    for (baseline, strategy, split_name), group in results.groupby(["baseline", "strategy", "split"]):
+    for (baseline, sentiment_mode, strategy, split_name), group in results.groupby(
+        ["baseline", "sentiment_mode", "strategy", "split"]
+    ):
         row: dict[str, object] = {
             "baseline": baseline,
+            "sentiment_mode": sentiment_mode,
             "strategy": strategy,
             "split": split_name,
             "aspects": int(group["heldout_aspect"].nunique()),
@@ -127,6 +133,7 @@ def run_lexical_fold(
     eval_row_scope: str,
     ensure_one: bool,
     selection_metric: str,
+    sentiment_mode: str,
 ) -> tuple[dict[str, object], dict[str, int]]:
     splits = build_heldout_aspect_split(
         frame,
@@ -144,6 +151,7 @@ def run_lexical_fold(
         output_dir,
         ensure_one=ensure_one,
         selection_metric=selection_metric,
+        sentiment_mode=sentiment_mode,
     )
     return result, counts
 
@@ -166,6 +174,7 @@ def cross_encoder_args(args: argparse.Namespace) -> SimpleNamespace:
         no_amp=args.no_amp,
         allow_empty_predictions=not args.ensure_one,
         selection_metric=args.selection_metric,
+        sentiment_mode=args.sentiment_mode,
     )
 
 
@@ -233,6 +242,7 @@ def main() -> None:
         default="pair_samples_f1",
         help="Primary validation metric for threshold/model selection.",
     )
+    parser.add_argument("--sentiment-mode", choices=SENTIMENT_MODES, default="aspect_conditioned")
     parser.add_argument("--model-name", default="distilbert-base-uncased")
     parser.add_argument("--epochs", type=int, default=3)
     parser.add_argument("--batch-size", type=int, default=32)
@@ -266,6 +276,7 @@ def main() -> None:
         "eval_row_scope": args.eval_row_scope,
         "ensure_one_prediction_per_row": bool(args.ensure_one),
         "selection_metric": args.selection_metric,
+        "sentiment_mode": args.sentiment_mode,
         "heldout_aspects": aspects,
         "baselines": {},
     }
@@ -301,6 +312,7 @@ def main() -> None:
                         args.eval_row_scope,
                         ensure_one=args.ensure_one,
                         selection_metric=args.selection_metric,
+                        sentiment_mode=args.sentiment_mode,
                     )
                 else:
                     result, counts = run_cross_encoder_fold(
@@ -317,7 +329,17 @@ def main() -> None:
                     "row_counts": counts,
                     "summary": result,
                 }
-                all_rows.extend(flatten_result(baseline, strategy, aspect, args.eval_row_scope, result, counts))
+                all_rows.extend(
+                    flatten_result(
+                        baseline,
+                        args.sentiment_mode,
+                        strategy,
+                        aspect,
+                        args.eval_row_scope,
+                        result,
+                        counts,
+                    )
+                )
                 write_tables(all_rows, args.output_dir)
 
     summary = write_tables(all_rows, args.output_dir)

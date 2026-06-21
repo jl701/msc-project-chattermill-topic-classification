@@ -11,7 +11,11 @@ import pandas as pd
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from msc_project.baselines.candidate_label import CandidateLexicalBaseline, candidate_pair_labels
+from msc_project.baselines.candidate_label import (
+    SENTIMENT_MODES,
+    CandidateLexicalBaseline,
+    candidate_pair_labels,
+)
 from msc_project.baselines.classical import (
     ClassicalConfig,
     default_configs,
@@ -187,9 +191,10 @@ def run_candidate_label_baseline(
     output_dir: Path,
     ensure_one: bool = True,
     selection_metric: str = "pair_samples_f1",
+    sentiment_mode: str = "aspect_conditioned",
 ) -> dict[str, object]:
     pair_classes = candidate_pair_labels(heldout_aspects)
-    baseline = CandidateLexicalBaseline(heldout_aspects).fit(train_df)
+    baseline = CandidateLexicalBaseline(heldout_aspects, sentiment_mode=sentiment_mode).fit(train_df)
 
     rows = []
     for threshold in LEXICAL_THRESHOLDS:
@@ -220,7 +225,8 @@ def run_candidate_label_baseline(
         "pair_labels": int(len(pair_classes)),
     }
     summary = {
-        "model": "candidate_label_lexical_tfidf_with_global_sentiment",
+        "model": f"candidate_label_lexical_tfidf_with_{sentiment_mode}_sentiment",
+        "sentiment_mode": sentiment_mode,
         "selection_metric": f"validation {selection_metric}, with remaining pair F1 metrics as tie-breakers",
         "heldout_aspects": heldout_aspects,
         "ensure_one_prediction_per_row": bool(ensure_one),
@@ -238,6 +244,7 @@ def run_heldout_aspect(
     strategies: list[str],
     heldout_aspects: list[str],
     selection_metric: str,
+    sentiment_mode: str,
 ) -> dict[str, object]:
     summaries = {}
     for strategy in strategies:
@@ -255,6 +262,7 @@ def run_heldout_aspect(
             heldout_aspects,
             output_dir / strategy,
             selection_metric=selection_metric,
+            sentiment_mode=sentiment_mode,
         )
     return summaries
 
@@ -267,6 +275,7 @@ def main() -> None:
     parser.add_argument("--strategy", choices=["label_masked", "example_filtered", "both"], default="both")
     parser.add_argument("--heldout-aspect", action="append", default=[])
     parser.add_argument("--selection-metric", choices=SELECTION_COLUMNS, default="pair_samples_f1")
+    parser.add_argument("--sentiment-mode", choices=SENTIMENT_MODES, default="aspect_conditioned")
     parser.add_argument("--quick", action="store_true", help="Run a small cross-org smoke-test grid.")
     parser.add_argument("--refined-cross-org", action="store_true", help="Run the narrower cross-org SVM refinement grid.")
     args = parser.parse_args()
@@ -291,6 +300,7 @@ def main() -> None:
             strategies,
             heldout_aspects,
             args.selection_metric,
+            args.sentiment_mode,
         )
 
     write_json(summaries, args.output_dir / "summary.json")
