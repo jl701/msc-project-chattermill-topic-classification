@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Iterable
 
+import numpy as np
 import pandas as pd
 from sklearn.metrics import classification_report, f1_score
 from sklearn.preprocessing import MultiLabelBinarizer
@@ -26,10 +27,22 @@ def binarize_labels(rows: list[list[str]], classes: list[str]) -> tuple[MultiLab
 
 
 def multilabel_scores(y_true: object, y_pred: object) -> dict[str, float]:
+    y_true_array = np.asarray(y_true)
+    y_pred_array = np.asarray(y_pred)
+    true_counts = y_true_array.sum(axis=1)
+    pred_counts = y_pred_array.sum(axis=1)
+    true_positive_counts = (y_true_array & y_pred_array).sum(axis=1)
+    denominators = true_counts + pred_counts
+    samples_f1 = np.divide(
+        2 * true_positive_counts,
+        denominators,
+        out=np.zeros_like(denominators, dtype=float),
+        where=denominators != 0,
+    )
     return {
         "micro_f1": float(f1_score(y_true, y_pred, average="micro", zero_division=0)),
         "macro_f1": float(f1_score(y_true, y_pred, average="macro", zero_division=0)),
-        "samples_f1": float(f1_score(y_true, y_pred, average="samples", zero_division=0)),
+        "samples_f1": float(samples_f1.mean()),
     }
 
 
@@ -84,4 +97,3 @@ def per_label_report(
         output_path.parent.mkdir(parents=True, exist_ok=True)
         frame.to_csv(output_path)
     return frame
-

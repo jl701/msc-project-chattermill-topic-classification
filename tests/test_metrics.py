@@ -29,6 +29,15 @@ class MetricsTest(unittest.TestCase):
             [["A"], ["B"]],
         )
 
+    def test_single_class_sample_f1_with_empty_rows(self) -> None:
+        scores = evaluate_pair_and_aspect(
+            [["A | positive"], []],
+            [["A | positive"], []],
+            ["A | positive"],
+        )
+        self.assertAlmostEqual(scores["pair_samples_f1"], 0.5)
+        self.assertAlmostEqual(scores["aspect_samples_f1"], 0.5)
+
     def test_threshold_predictions_ensures_one_label(self) -> None:
         pred = threshold_predictions(
             y_score=__import__("numpy").array([[0.1, 0.2], [0.8, 0.1]]),

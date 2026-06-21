@@ -83,6 +83,7 @@ def score_thresholds(
     aspect_scores,
     sentiments: list[str],
     max_predictions_per_row: int | None,
+    ensure_one: bool,
 ) -> tuple[dict[str, float], list[list[str]]]:
     rows = []
     for threshold in THRESHOLDS:
@@ -90,6 +91,7 @@ def score_thresholds(
             aspect_scores,
             candidate_aspects,
             threshold,
+            ensure_one=ensure_one,
             max_predictions_per_row=max_predictions_per_row,
         )
         predictions = pair_predictions(aspect_predictions, sentiments)
@@ -103,6 +105,7 @@ def score_thresholds(
         aspect_scores,
         candidate_aspects,
         best["threshold"],
+        ensure_one=ensure_one,
         max_predictions_per_row=max_predictions_per_row,
     )
     return best, pair_predictions(best_aspects, sentiments)
@@ -115,16 +118,19 @@ def run_strategy(
     output_dir: Path,
     args,
     device: torch.device,
+    eval_row_scope: str = "containing_heldout",
 ) -> dict[str, object]:
     splits = build_heldout_aspect_split(
         frame,
         heldout_aspects,
         strategy=strategy,
         eval_label_scope="heldout",
+        eval_row_scope=eval_row_scope,
     )
     train_df = limit_frame(splits["train"], args.train_limit)
     validation_df = limit_frame(splits["validation"], args.eval_limit)
     test_df = limit_frame(splits["test"], args.eval_limit)
+    ensure_one = not args.allow_empty_predictions
 
     train_aspects = sorted(set(flatten(train_df["supervision_aspect_labels"])))
     eval_candidate_pairs = candidate_pair_labels(heldout_aspects)
@@ -172,6 +178,7 @@ def run_strategy(
             validation_scores,
             validation_sentiments,
             args.max_predictions_per_row,
+            ensure_one,
         )
         validation_metrics["epoch"] = epoch
         validation_metrics["train_loss"] = float(train_loss)
@@ -193,6 +200,7 @@ def run_strategy(
         validation_scores,
         heldout_aspects,
         best_epoch["threshold"],
+        ensure_one=ensure_one,
         max_predictions_per_row=args.max_predictions_per_row,
     )
     validation_predictions = pair_predictions(validation_aspects, validation_sentiments)
@@ -203,6 +211,7 @@ def run_strategy(
         test_scores,
         heldout_aspects,
         best_epoch["threshold"],
+        ensure_one=ensure_one,
         max_predictions_per_row=args.max_predictions_per_row,
     )
     test_predictions = pair_predictions(test_aspects, test_sentiments)
@@ -229,11 +238,13 @@ def run_strategy(
         "model": "candidate_aspect_cross_encoder_with_global_sentiment",
         "strategy": strategy,
         "eval_label_scope": "heldout",
+        "eval_row_scope": eval_row_scope,
         "heldout_aspects": heldout_aspects,
         "selection_metric": "validation pair_samples_f1, with pair_micro_f1 and pair_macro_f1 tie-breakers",
         "config": config.__dict__,
         "negatives_per_positive": int(args.negatives_per_positive),
         "max_predictions_per_row": args.max_predictions_per_row,
+        "ensure_one_prediction_per_row": bool(ensure_one),
         "best_validation": best_epoch,
         "best_test": best_test,
         "history": history,
@@ -258,6 +269,7 @@ def main() -> None:
     parser.add_argument("--warmup-ratio", type=float, default=0.1)
     parser.add_argument("--negatives-per-positive", type=int, default=3)
     parser.add_argument("--max-predictions-per-row", type=int, default=None)
+    parser.add_argument("--allow-empty-predictions", action="store_true")
     parser.add_argument("--seed", type=int, default=13)
     parser.add_argument("--no-amp", action="store_true")
     parser.add_argument("--train-limit", type=int, default=None)

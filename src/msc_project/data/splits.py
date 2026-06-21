@@ -217,12 +217,15 @@ def build_heldout_aspect_split(
     heldout_aspects: Iterable[str],
     strategy: str,
     eval_label_scope: str = "heldout",
+    eval_row_scope: str = "containing_heldout",
 ) -> dict[str, pd.DataFrame]:
     heldout = set(heldout_aspects)
     if strategy not in {"label_masked", "example_filtered"}:
         raise ValueError(f"Unknown held-out-aspect strategy: {strategy}")
     if eval_label_scope not in {"heldout", "full"}:
         raise ValueError(f"Unknown eval label scope: {eval_label_scope}")
+    if eval_row_scope not in {"containing_heldout", "all"}:
+        raise ValueError(f"Unknown eval row scope: {eval_row_scope}")
 
     official_train = frame[frame["original_split"] == "train"].copy()
     official_validation = frame[frame["original_split"] == "validation"].copy()
@@ -237,12 +240,17 @@ def build_heldout_aspect_split(
 
     eval_splits = {}
     for name, split in [("validation", official_validation), ("test", official_test)]:
-        selected = split[split["labels"].apply(lambda labels: has_any_aspect(labels, heldout))].copy()
+        if eval_row_scope == "containing_heldout":
+            selected = split[split["labels"].apply(lambda labels: has_any_aspect(labels, heldout))].copy()
+        else:
+            selected = split.copy()
         if eval_label_scope == "heldout":
             selected["supervision_labels"] = selected["labels"].apply(lambda labels: filter_labels(labels, heldout, "heldout"))
         else:
             selected["supervision_labels"] = selected["labels"]
-        eval_splits[name] = selected[selected["supervision_labels"].apply(len) > 0].copy()
+        if eval_row_scope == "containing_heldout":
+            selected = selected[selected["supervision_labels"].apply(len) > 0].copy()
+        eval_splits[name] = selected.copy()
 
     splits = {"train": train, **eval_splits}
     for split in splits.values():

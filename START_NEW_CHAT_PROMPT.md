@@ -41,6 +41,7 @@ Before doing new work, please inspect these files. If a `D:\Msc_Project` path is
 8. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\heldout_aspect_error_analysis.md
 9. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\aji_updates_2026_06_21.md
 10. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\experiment_log.md
+11. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\loao_heldout_aspect.md
 
 Current confirmed project context:
 
@@ -156,6 +157,17 @@ Held-out aspect Qwen zero-shot:
 - Valid JSON rate: 1.0000
 - Plain canonical string prompts often produced near-miss aspect names such as `Account management`; indexed prompts fixed this.
 
+Leave-one-aspect-out held-out aspect:
+- Added after Aji's 2026-06-21 feedback.
+- Main all-row lexical LOAO keeps all official validation/test rows and filters gold labels to one held-out aspect, allowing empty predictions.
+- This avoids the trivial one-candidate positive-only setup and exposes false positives.
+- Test pair samples F1 spread across 12 aspects:
+  - label-masked mean 0.1299, std 0.1256, min 0.0126, max 0.3930.
+  - example-filtered mean 0.1288, std 0.1260, min 0.0126, max 0.3974.
+- Positive-row LOAO is much higher, about 0.88 test pair samples F1, but aspect F1 is trivially 1.0000 and it should be treated as a sentiment diagnostic.
+- Full DistilBERT cross-encoder LOAO was not completed locally; a single full fold did not finish within 30 minutes on the 6 GB GPU. A tiny cross-encoder smoke test passed.
+- See `docs/loao_heldout_aspect.md`.
+
 Held-out aspect error analysis:
 - DistilBERT cross-encoder mainly over-predicts candidate aspects.
 - Qwen indexed zero-shot has more exact rows but also some missed-all rows.
@@ -209,6 +221,8 @@ python .\scripts\run_generalisation_baselines.py
 python .\scripts\run_generalisation_baselines.py --protocol heldout-org --refined-cross-org --output-dir .\outputs\baselines\generalisation_refined
 python .\scripts\run_transformer_baseline.py --protocol heldout-org --epochs 10 --batch-size 16 --learning-rate 6e-5 --pos-weight sqrt
 python .\scripts\run_aspect_label_aware_baseline.py --strategy both --epochs 3 --batch-size 32 --eval-batch-size 96 --learning-rate 2e-5 --negatives-per-positive 3
+python .\scripts\run_loao_heldout_aspect.py --baseline lexical --strategy both --output-dir .\outputs\baselines\loao_heldout_aspect_lexical_all_rows
+python .\scripts\run_loao_heldout_aspect.py --baseline lexical --strategy both --eval-row-scope containing_heldout --ensure-one --output-dir .\outputs\baselines\loao_heldout_aspect_lexical_positive_rows
 python .\scripts\run_qwen_heldout_aspect_smoke.py --split validation --limit 10000 --load-in-4bit --prompt-variant indexed
 python .\scripts\run_qwen_heldout_aspect_smoke.py --split test --limit 10000 --load-in-4bit --prompt-variant indexed
 python .\scripts\prepare_qwen_heldout_aspect_sft_data.py --strategy both --prompt-variant indexed
@@ -217,12 +231,11 @@ python .\scripts\prepare_qwen_heldout_aspect_sft_data.py --strategy both --promp
 Recommended next steps:
 
 1. First inspect the repo and confirm the current state with `git status`.
-2. If I ask to continue experiments, the preferred next step is leave-one-aspect-out held-out aspect evaluation across all 12 FABSA aspects.
-3. Preserve `label_masked` and `example_filtered`, and report spread across aspects.
-4. After LOAO, improve the global sentiment component with aspect-conditioned sentiment or joint aspect+sentiment candidate scoring.
-5. Add a Gemini OpenAI-compatible hosted LLM baseline using the indexed candidate-label output format.
-6. Keep full Qwen fine-tuning parked until stronger GPU access is available.
-7. If I ask to publish changes, commit/push only clean code and documentation, without committing outputs, data, credentials, checkpoints, or generated artifacts.
+2. LOAO lexical evaluation has been implemented and documented. If continuing experiments, the preferred next step is now to improve the global sentiment component with aspect-conditioned sentiment or joint aspect+sentiment candidate scoring.
+3. Keep using the LOAO all-row view for robustness checks and the positive-row view only as a sentiment diagnostic.
+4. Add a Gemini OpenAI-compatible hosted LLM baseline using the indexed candidate-label output format after the sentiment baseline is clearer.
+5. Keep full Qwen fine-tuning parked until stronger GPU access is available.
+6. If I ask to publish changes, commit/push only clean code and documentation, without committing outputs, data, credentials, checkpoints, or generated artifacts.
 
 Please start by summarising what you find in the current docs and repo state, then propose the next concrete plan before implementing.
 ```

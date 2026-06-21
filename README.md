@@ -95,6 +95,12 @@ Run the candidate-aspect cross-encoder held-out-aspect baseline:
 python .\scripts\run_aspect_label_aware_baseline.py --strategy both --epochs 3 --batch-size 32 --eval-batch-size 96 --learning-rate 2e-5 --negatives-per-positive 3
 ```
 
+Run leave-one-aspect-out held-out-aspect lexical evaluation:
+
+```powershell
+python .\scripts\run_loao_heldout_aspect.py --baseline lexical --strategy both
+```
+
 Run a Qwen held-out-aspect indexed zero-shot smoke test:
 
 ```powershell

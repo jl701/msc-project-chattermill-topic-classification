@@ -54,6 +54,31 @@ class SplitTest(unittest.TestCase):
         self.assertEqual(checks["supervision_aspect_overlap"]["train_validation"]["count"], 0)
         self.assertEqual(checks["supervision_aspect_overlap"]["train_test"]["count"], 0)
 
+    def test_heldout_aspect_all_eval_rows_keeps_empty_negative_rows(self) -> None:
+        splits = build_heldout_aspect_split(
+            tiny_frame(),
+            ["B"],
+            strategy="label_masked",
+            eval_row_scope="all",
+        )
+        self.assertEqual(splits["validation"]["id"].tolist(), [3])
+        self.assertEqual(splits["validation"]["supervision_pair_labels"].tolist(), [["B | positive"]])
+        self.assertEqual(splits["test"]["id"].tolist(), [4])
+        self.assertEqual(splits["test"]["supervision_pair_labels"].tolist(), [["B | negative"]])
+
+        no_positive = build_heldout_aspect_split(
+            tiny_frame(),
+            ["A"],
+            strategy="label_masked",
+            eval_row_scope="all",
+        )
+        self.assertEqual(no_positive["validation"]["id"].tolist(), [3])
+        self.assertEqual(no_positive["validation"]["supervision_pair_labels"].tolist(), [[]])
+
+    def test_heldout_aspect_rejects_unknown_eval_row_scope(self) -> None:
+        with self.assertRaises(ValueError):
+            build_heldout_aspect_split(tiny_frame(), ["B"], strategy="label_masked", eval_row_scope="unknown")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -179,13 +179,14 @@ def run_candidate_label_baseline(
     test_df,
     heldout_aspects: list[str],
     output_dir: Path,
+    ensure_one: bool = True,
 ) -> dict[str, object]:
     pair_classes = candidate_pair_labels(heldout_aspects)
     baseline = CandidateLexicalBaseline(heldout_aspects).fit(train_df)
 
     rows = []
     for threshold in LEXICAL_THRESHOLDS:
-        pred_labels = baseline.predict(validation_df, threshold=threshold)
+        pred_labels = baseline.predict(validation_df, threshold=threshold, ensure_one=ensure_one)
         rows.append(
             {
                 "threshold": threshold,
@@ -198,7 +199,7 @@ def run_candidate_label_baseline(
     validation_results.to_csv(output_dir / "validation_sweep.csv", index=False)
 
     best_validation = validation_results.iloc[0]
-    test_pred = baseline.predict(test_df, threshold=float(best_validation["threshold"]))
+    test_pred = baseline.predict(test_df, threshold=float(best_validation["threshold"]), ensure_one=ensure_one)
     test_scores = score_candidate_predictions(test_df, pair_classes, test_pred)
     _, y_true = binarize_labels(test_df["supervision_pair_labels"].tolist(), pair_classes)
     _, y_pred = binarize_labels(test_pred, pair_classes)
@@ -215,6 +216,7 @@ def run_candidate_label_baseline(
         "model": "candidate_label_lexical_tfidf_with_global_sentiment",
         "selection_metric": "validation pair_samples_f1, with pair_micro_f1 and pair_macro_f1 tie-breakers",
         "heldout_aspects": heldout_aspects,
+        "ensure_one_prediction_per_row": bool(ensure_one),
         "best_validation": best_validation.to_dict(),
         "best_test": best_test,
         "top_validation": validation_results.head(10).to_dict(orient="records"),
