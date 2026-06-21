@@ -43,6 +43,17 @@ Before doing new work, please inspect these files. If a `D:\Msc_Project` path is
 10. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\experiment_log.md
 11. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\loao_heldout_aspect.md
 
+Immediate instruction for the new chat:
+
+Before implementing anything, perform a strict audit of the current progress and the proposed next direction. Do not merely continue from the previous plan. Read the docs listed above and then check the actual code paths. Challenge the project as if reviewing an MSc methods section:
+
+1. Verify whether the current split protocols match the research question and Aji's feedback.
+2. Verify whether the metrics are being used and interpreted correctly, especially pair samples F1, pair micro F1, pair macro F1, empty-gold rows in all-row LOAO, and positive-row LOAO as a sentiment-only diagnostic.
+3. Verify whether the current reported results are comparable or not comparable across fixed three-aspect held-out evaluation, all-row LOAO, positive-row LOAO, closed-topic, and held-out organisation.
+4. Check whether the latest conclusion is logically sound: lightweight TF-IDF aspect-conditioned sentiment is methodologically cleaner but empirically weaker than global sentiment.
+5. Challenge the next proposed direction: DistilBERT aspect-conditioned sentiment before Gemini. Explain whether it is the right next step, what risks it has, and what exact experiment should be run first.
+6. Only after this audit, propose a concrete next plan. If the plan still looks sound, proceed with implementation.
+
 Current confirmed project context:
 
 - The main dataset is FABSA, a public Chattermill-related customer feedback dataset.
@@ -208,6 +219,31 @@ Gemini / Vertex AI access:
 - Models are served in `europe-west4`; unsupported-region models can return 404.
 - Initial budget is $100 per key; exhausted budget returns 429.
 - Use enough `max_tokens` because Gemini 2.5 may spend tokens thinking first.
+- Latest user preference from 2026-06-22: do not use Gemini yet. The user wants to exhaust free/local resources first before spending hosted LLM credits. Gemini should remain a later hosted LLM baseline, not the immediate next task.
+
+Latest user decision from 2026-06-22:
+
+- The next preferred task is **DistilBERT aspect-conditioned sentiment**, not Gemini.
+- Rationale:
+  - it uses local/free GPU resources before spending Gemini budget
+  - it directly addresses Aji's global-sentiment concern
+  - it is a cleaner controlled experiment than jumping straight to a hosted LLM
+  - it is less complex than the later joint aspect+sentiment pair scorer
+- Proposed model shape:
+  - train a sentiment classifier with input `(review text, candidate aspect)`
+  - output one of `negative`, `neutral`, `positive`
+  - plug it into the existing candidate-aspect pipeline so the aspect selector stays fixed and only the sentiment module changes
+- First comparison target:
+  - lexical aspect selector + global sentiment
+  - lexical aspect selector + lightweight TF-IDF aspect-conditioned sentiment
+  - lexical aspect selector + DistilBERT aspect-conditioned sentiment
+- Then, if useful:
+  - candidate-aspect DistilBERT selector + DistilBERT aspect-conditioned sentiment
+  - only later, joint aspect+sentiment pair scoring
+- Suggested evaluation order:
+  1. fixed three-aspect held-out split for direct comparability
+  2. positive-row LOAO as a pure sentiment diagnostic
+  3. all-row LOAO as the full detection diagnostic
 
 Important repository hygiene:
 
@@ -246,12 +282,13 @@ python .\scripts\prepare_qwen_heldout_aspect_sft_data.py --strategy both --promp
 Recommended next steps:
 
 1. First inspect the repo and confirm the current state with `git status`.
-2. LOAO lexical evaluation and lightweight aspect-conditioned sentiment have been implemented and documented.
-3. Keep using the LOAO all-row view for robustness checks and the positive-row view only as a sentiment diagnostic.
-4. The next non-LLM modelling option is a stronger aspect-conditioned sentiment classifier, such as DistilBERT for `(review, candidate aspect) -> sentiment`, or the later joint aspect+sentiment pair scorer.
-5. Add a Gemini OpenAI-compatible hosted LLM baseline using the indexed candidate-label output format before spending local GPU time on full Qwen fine-tuning.
-6. Keep full Qwen fine-tuning parked until stronger GPU access is available.
-7. If I ask to publish changes, commit/push only clean code and documentation, without committing outputs, data, credentials, checkpoints, or generated artifacts.
+2. Perform the strict audit described near the top of this prompt before implementing the next task.
+3. LOAO lexical evaluation and lightweight aspect-conditioned sentiment have been implemented and documented.
+4. Keep using the LOAO all-row view for robustness checks and the positive-row view only as a sentiment diagnostic.
+5. If the audit confirms the direction, implement DistilBERT aspect-conditioned sentiment next.
+6. Do not run Gemini yet unless the user explicitly changes this decision.
+7. Keep full Qwen fine-tuning parked until stronger GPU access is available.
+8. If I ask to publish changes, commit/push only clean code and documentation, without committing outputs, data, credentials, checkpoints, or generated artifacts.
 
-Please start by summarising what you find in the current docs and repo state, then propose the next concrete plan before implementing.
+Please start by summarising what you find in the current docs and repo state, then perform the strict audit, then propose the next concrete plan before implementing.
 ```

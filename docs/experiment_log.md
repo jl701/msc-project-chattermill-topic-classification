@@ -417,3 +417,40 @@ Validation:
 - Do not spend time on more lexical sentiment tuning unless a very small ablation is needed for the write-up.
 - The next useful non-LLM step is a stronger aspect-conditioned sentiment model, such as a DistilBERT cross-encoder for `(review, candidate aspect) -> sentiment`, or the deferred joint aspect+sentiment pair scorer.
 - A hosted Gemini indexed candidate-label baseline is now attractive because it can naturally output per-aspect sentiment without local GPU fine-tuning.
+
+## 2026-06-22: Planning Note For Next Work
+
+### Decision
+
+The immediate next task should be **DistilBERT aspect-conditioned sentiment**, not Gemini.
+
+### Rationale
+
+- The user wants to exhaust free/local resources before spending hosted Gemini credits.
+- DistilBERT aspect-conditioned sentiment directly addresses Aji's question about the global sentiment component.
+- It is a controlled non-LLM ablation: keep the aspect selector fixed, replace only the sentiment module.
+- It is less complex than the later joint aspect+sentiment pair scorer.
+- Gemini remains useful, but should be a later hosted LLM baseline rather than the next step.
+
+### Proposed Audit Before Implementation
+
+Before implementing, the next assistant should strictly review:
+
+- whether the current split protocols match Aji's feedback and the research question
+- whether pair samples F1, pair micro F1, pair macro F1, all-row LOAO, and positive-row LOAO are being interpreted correctly
+- whether fixed three-aspect held-out results, all-row LOAO, positive-row LOAO, closed-topic, and held-out organisation results are being compared only where appropriate
+- whether the current conclusion is sound: lightweight TF-IDF aspect-conditioned sentiment is methodologically cleaner but empirically weaker than global sentiment
+- whether DistilBERT aspect-conditioned sentiment is truly the best next step before Gemini
+
+### Proposed Experiment Order
+
+1. Fixed three-aspect held-out split:
+   - lexical aspect selector + DistilBERT aspect-conditioned sentiment
+   - compare against lexical + global sentiment and lexical + TF-IDF aspect-conditioned sentiment
+2. Positive-row LOAO:
+   - use as a pure sentiment diagnostic because the aspect is already known to be present
+3. All-row LOAO:
+   - use as the full detection diagnostic after the sentiment module works
+4. If useful and compute allows:
+   - candidate-aspect DistilBERT selector + DistilBERT aspect-conditioned sentiment
+5. Keep joint aspect+sentiment pair scoring and Gemini for later.
