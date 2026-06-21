@@ -161,9 +161,13 @@ Leave-one-aspect-out held-out aspect:
 - Added after Aji's 2026-06-21 feedback.
 - Main all-row lexical LOAO keeps all official validation/test rows and filters gold labels to one held-out aspect, allowing empty predictions.
 - This avoids the trivial one-candidate positive-only setup and exposes false positives.
-- Test pair samples F1 spread across 12 aspects:
-  - label-masked mean 0.1299, std 0.1256, min 0.0126, max 0.3930.
-  - example-filtered mean 0.1288, std 0.1260, min 0.0126, max 0.3974.
+- Sample-F1-selected all-row LOAO test spread across 12 aspects:
+  - label-masked pair samples F1 mean 0.1299, pair micro F1 mean 0.2304, precision 0.1458, recall 0.8857, false-positive rows per 100 reviews 77.5362.
+  - example-filtered pair samples F1 mean 0.1288, pair micro F1 mean 0.2345, precision 0.1495, recall 0.8777, false-positive rows per 100 reviews 77.4207.
+- Micro-F1-selected all-row LOAO is the preferred detection diagnostic:
+  - label-masked pair samples F1 mean 0.0926, pair micro F1 mean 0.3635, precision 0.3912, recall 0.4883, false-positive rows per 100 reviews 18.5728.
+  - example-filtered pair samples F1 mean 0.0903, pair micro F1 mean 0.3780, precision 0.3778, recall 0.4895, false-positive rows per 100 reviews 17.4753.
+- The headline metric remains pair samples F1, but all-row threshold selection should not rely on sample-F1 alone because it does not reward true-negative empty rows and can hide false positives.
 - Positive-row LOAO is much higher, about 0.88 test pair samples F1, but aspect F1 is trivially 1.0000 and it should be treated as a sentiment diagnostic.
 - Full DistilBERT cross-encoder LOAO was not completed locally; a single full fold did not finish within 30 minutes on the 6 GB GPU. A tiny cross-encoder smoke test passed.
 - See `docs/loao_heldout_aspect.md`.
@@ -222,6 +226,7 @@ python .\scripts\run_generalisation_baselines.py --protocol heldout-org --refine
 python .\scripts\run_transformer_baseline.py --protocol heldout-org --epochs 10 --batch-size 16 --learning-rate 6e-5 --pos-weight sqrt
 python .\scripts\run_aspect_label_aware_baseline.py --strategy both --epochs 3 --batch-size 32 --eval-batch-size 96 --learning-rate 2e-5 --negatives-per-positive 3
 python .\scripts\run_loao_heldout_aspect.py --baseline lexical --strategy both --output-dir .\outputs\baselines\loao_heldout_aspect_lexical_all_rows
+python .\scripts\run_loao_heldout_aspect.py --baseline lexical --strategy both --selection-metric pair_micro_f1 --output-dir .\outputs\baselines\loao_heldout_aspect_lexical_all_rows_micro_selection
 python .\scripts\run_loao_heldout_aspect.py --baseline lexical --strategy both --eval-row-scope containing_heldout --ensure-one --output-dir .\outputs\baselines\loao_heldout_aspect_lexical_positive_rows
 python .\scripts\run_qwen_heldout_aspect_smoke.py --split validation --limit 10000 --load-in-4bit --prompt-variant indexed
 python .\scripts\run_qwen_heldout_aspect_smoke.py --split test --limit 10000 --load-in-4bit --prompt-variant indexed

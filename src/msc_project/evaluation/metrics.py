@@ -16,6 +16,11 @@ def pair_to_aspect(label: str) -> str:
     return label.split(PAIR_SEPARATOR, maxsplit=1)[0]
 
 
+def pair_to_components(label: str) -> tuple[str, str]:
+    aspect, sentiment = label.split(PAIR_SEPARATOR, maxsplit=1)
+    return aspect, sentiment
+
+
 def pairs_to_aspects(rows: Iterable[Iterable[str]]) -> list[list[str]]:
     return [sorted({pair_to_aspect(label) for label in labels}) for labels in rows]
 
@@ -32,6 +37,12 @@ def multilabel_scores(y_true: object, y_pred: object) -> dict[str, float]:
     true_counts = y_true_array.sum(axis=1)
     pred_counts = y_pred_array.sum(axis=1)
     true_positive_counts = (y_true_array & y_pred_array).sum(axis=1)
+    false_positive_counts = ((1 - y_true_array) & y_pred_array).sum(axis=1)
+    false_negative_counts = (y_true_array & (1 - y_pred_array)).sum(axis=1)
+    label_tp = int(true_positive_counts.sum())
+    label_fp = int(false_positive_counts.sum())
+    label_fn = int(false_negative_counts.sum())
+    rows = int(y_true_array.shape[0])
     denominators = true_counts + pred_counts
     samples_f1 = np.divide(
         2 * true_positive_counts,
@@ -39,10 +50,30 @@ def multilabel_scores(y_true: object, y_pred: object) -> dict[str, float]:
         out=np.zeros_like(denominators, dtype=float),
         where=denominators != 0,
     )
+    precision = label_tp / (label_tp + label_fp) if label_tp + label_fp else 0.0
+    recall = label_tp / (label_tp + label_fn) if label_tp + label_fn else 0.0
+    empty_gold = true_counts == 0
+    empty_pred = pred_counts == 0
     return {
         "micro_f1": float(f1_score(y_true, y_pred, average="micro", zero_division=0)),
+        "micro_precision": float(precision),
+        "micro_recall": float(recall),
         "macro_f1": float(f1_score(y_true, y_pred, average="macro", zero_division=0)),
         "samples_f1": float(samples_f1.mean()),
+        "label_tp": label_tp,
+        "label_fp": label_fp,
+        "label_fn": label_fn,
+        "predicted_label_count": int(pred_counts.sum()),
+        "gold_label_count": int(true_counts.sum()),
+        "empty_gold_rows": int(empty_gold.sum()),
+        "empty_prediction_rows": int(empty_pred.sum()),
+        "empty_gold_and_prediction_rows": int((empty_gold & empty_pred).sum()),
+        "false_positive_rows": int((empty_gold & ~empty_pred).sum()),
+        "false_negative_rows": int((~empty_gold & empty_pred).sum()),
+        "false_positive_rows_per_100": float((empty_gold & ~empty_pred).sum() * 100 / rows) if rows else 0.0,
+        "false_positive_labels_per_100": float(label_fp * 100 / rows) if rows else 0.0,
+        "false_negative_rows_per_100": float((~empty_gold & empty_pred).sum() * 100 / rows) if rows else 0.0,
+        "exact_match_rate": float((y_true_array == y_pred_array).all(axis=1).mean()) if rows else 0.0,
     }
 
 
@@ -68,14 +99,31 @@ def evaluate_pair_and_aspect(
     aspect_classes = sorted({pair_to_aspect(label) for label in pair_classes})
     aspect_scores = evaluate_label_sets(true_aspects, pred_aspects, aspect_classes)
 
-    return {
-        "pair_micro_f1": pair_scores["micro_f1"],
-        "pair_macro_f1": pair_scores["macro_f1"],
-        "pair_samples_f1": pair_scores["samples_f1"],
-        "aspect_micro_f1": aspect_scores["micro_f1"],
-        "aspect_macro_f1": aspect_scores["macro_f1"],
-        "aspect_samples_f1": aspect_scores["samples_f1"],
-    }
+    sentiment_total = 0
+    sentiment_correct = 0
+    for true_row, pred_row in zip(true_pairs, pred_pairs):
+        predicted_sentiments_by_aspect: dict[str, set[str]] = {}
+        for label in pred_row:
+            aspect, sentiment = pair_to_components(label)
+            predicted_sentiments_by_aspect.setdefault(aspect, set()).add(sentiment)
+
+        for label in true_row:
+            aspect, sentiment = pair_to_components(label)
+            if aspect in predicted_sentiments_by_aspect:
+                sentiment_total += 1
+                if sentiment in predicted_sentiments_by_aspect[aspect]:
+                    sentiment_correct += 1
+
+    sentiment_accuracy = sentiment_correct / sentiment_total if sentiment_total else 0.0
+
+    output: dict[str, float] = {}
+    for prefix, scores in [("pair", pair_scores), ("aspect", aspect_scores)]:
+        for key, value in scores.items():
+            output[f"{prefix}_{key}"] = value
+    output["sentiment_accuracy_when_gold_aspect_predicted"] = float(sentiment_accuracy)
+    output["sentiment_correct_when_gold_aspect_predicted"] = int(sentiment_correct)
+    output["sentiment_evaluated_gold_aspects"] = int(sentiment_total)
+    return output
 
 
 def per_label_report(

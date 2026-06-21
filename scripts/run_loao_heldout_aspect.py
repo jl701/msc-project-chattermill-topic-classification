@@ -26,10 +26,23 @@ from msc_project.baselines.transformer import set_seed
 METRIC_COLUMNS = [
     "pair_samples_f1",
     "pair_micro_f1",
+    "pair_micro_precision",
+    "pair_micro_recall",
     "pair_macro_f1",
+    "pair_false_positive_rows_per_100",
+    "pair_false_positive_labels_per_100",
+    "pair_false_negative_rows_per_100",
+    "pair_exact_match_rate",
     "aspect_samples_f1",
     "aspect_micro_f1",
+    "aspect_micro_precision",
+    "aspect_micro_recall",
     "aspect_macro_f1",
+    "aspect_false_positive_rows_per_100",
+    "aspect_false_positive_labels_per_100",
+    "aspect_false_negative_rows_per_100",
+    "aspect_exact_match_rate",
+    "sentiment_accuracy_when_gold_aspect_predicted",
 ]
 
 
@@ -79,7 +92,7 @@ def flatten_result(
             **counts,
         }
         for column in METRIC_COLUMNS:
-            row[column] = float(metrics[column])
+            row[column] = float(metrics.get(column, 0.0))
         row["threshold"] = float(metrics["threshold"])
         if "best_epoch" in metrics:
             row["best_epoch"] = int(metrics["best_epoch"])
@@ -113,6 +126,7 @@ def run_lexical_fold(
     output_dir: Path,
     eval_row_scope: str,
     ensure_one: bool,
+    selection_metric: str,
 ) -> tuple[dict[str, object], dict[str, int]]:
     splits = build_heldout_aspect_split(
         frame,
@@ -129,6 +143,7 @@ def run_lexical_fold(
         [aspect],
         output_dir,
         ensure_one=ensure_one,
+        selection_metric=selection_metric,
     )
     return result, counts
 
@@ -150,6 +165,7 @@ def cross_encoder_args(args: argparse.Namespace) -> SimpleNamespace:
         seed=args.seed,
         no_amp=args.no_amp,
         allow_empty_predictions=not args.ensure_one,
+        selection_metric=args.selection_metric,
     )
 
 
@@ -211,6 +227,12 @@ def main() -> None:
     parser.add_argument("--heldout-aspect", action="append", default=[])
     parser.add_argument("--eval-row-scope", choices=["containing_heldout", "all"], default="all")
     parser.add_argument("--ensure-one", action="store_true", help="Force at least one candidate aspect prediction per row.")
+    parser.add_argument(
+        "--selection-metric",
+        choices=["pair_samples_f1", "pair_micro_f1", "pair_macro_f1"],
+        default="pair_samples_f1",
+        help="Primary validation metric for threshold/model selection.",
+    )
     parser.add_argument("--model-name", default="distilbert-base-uncased")
     parser.add_argument("--epochs", type=int, default=3)
     parser.add_argument("--batch-size", type=int, default=32)
@@ -243,6 +265,7 @@ def main() -> None:
     nested: dict[str, object] = {
         "eval_row_scope": args.eval_row_scope,
         "ensure_one_prediction_per_row": bool(args.ensure_one),
+        "selection_metric": args.selection_metric,
         "heldout_aspects": aspects,
         "baselines": {},
     }
@@ -277,6 +300,7 @@ def main() -> None:
                         fold_dir,
                         args.eval_row_scope,
                         ensure_one=args.ensure_one,
+                        selection_metric=args.selection_metric,
                     )
                 else:
                     result, counts = run_cross_encoder_fold(

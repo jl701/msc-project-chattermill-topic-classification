@@ -215,3 +215,94 @@ Validation:
 ### Next Step
 
 Improve the held-out-aspect baseline with aspect-conditioned sentiment or joint aspect+sentiment pair scoring. Do not start full Qwen fine-tuning yet.
+
+## 2026-06-21: LOAO Diagnostics And Threshold Selection Check
+
+### Purpose
+
+- Clarify how all-row LOAO sample-F1 should be interpreted.
+- Add diagnostics that expose precision, recall, false positives, false negatives, empty-row behaviour, and sentiment correctness when the gold aspect is predicted.
+- Check whether selecting thresholds by validation pair samples F1 is appropriate for all-row LOAO.
+
+### Code Or Protocol Changes
+
+- Updated `src/msc_project/evaluation/metrics.py`:
+  - added pair/aspect micro precision and micro recall
+  - added TP/FP/FN label counts
+  - added empty-gold, empty-prediction, false-positive-row, and false-negative-row diagnostics
+  - added false-positive rows/labels per 100 reviews
+  - added exact-match rate
+  - added `sentiment_accuracy_when_gold_aspect_predicted`
+- Updated `scripts/run_loao_heldout_aspect.py`:
+  - includes the new diagnostics in per-fold and spread tables
+  - supports `--selection-metric`
+- Updated `scripts/run_generalisation_baselines.py` and `scripts/run_aspect_label_aware_baseline.py`:
+  - supports configurable validation threshold/model selection metric
+- Added `tests/test_selection_metrics.py`.
+
+### Setup
+
+- Dataset: FABSA public train/validation/test export.
+- Protocol: all-row LOAO with 12 held-out aspect folds and both training strategies.
+- Baseline: candidate-label lexical TF-IDF + global sentiment Logistic Regression.
+- Compared validation selection metrics:
+  - `pair_samples_f1`
+  - `pair_micro_f1`
+
+### Commands
+
+```powershell
+python -m unittest discover -s tests
+python .\scripts\run_loao_heldout_aspect.py --baseline lexical --strategy both --output-dir .\outputs\baselines\loao_heldout_aspect_lexical_all_rows
+python .\scripts\run_loao_heldout_aspect.py --baseline lexical --strategy both --selection-metric pair_micro_f1 --output-dir .\outputs\baselines\loao_heldout_aspect_lexical_all_rows_micro_selection
+python .\scripts\run_loao_heldout_aspect.py --baseline lexical --strategy both --eval-row-scope containing_heldout --ensure-one --output-dir .\outputs\baselines\loao_heldout_aspect_lexical_positive_rows
+```
+
+### Outputs
+
+- Sample-F1-selected all-row LOAO:
+  - `outputs/baselines/loao_heldout_aspect_lexical_all_rows/`
+- Micro-F1-selected all-row LOAO:
+  - `outputs/baselines/loao_heldout_aspect_lexical_all_rows_micro_selection/`
+- Positive-row diagnostic:
+  - `outputs/baselines/loao_heldout_aspect_lexical_positive_rows/`
+- Updated committed docs:
+  - `docs/loao_heldout_aspect.md`
+  - `docs/generalisation_baselines.md`
+
+Generated output files remain ignored by Git.
+
+### Results
+
+All-row LOAO, test split:
+
+| Selection | Strategy | Pair Samples F1 Mean | Pair Micro F1 Mean | Pair Precision Mean | Pair Recall Mean | FP Rows / 100 Mean |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| Sample F1 | `label_masked` | 0.1299 | 0.2304 | 0.1458 | 0.8857 | 77.5362 |
+| Sample F1 | `example_filtered` | 0.1288 | 0.2345 | 0.1495 | 0.8777 | 77.4207 |
+| Micro F1 | `label_masked` | 0.0926 | 0.3635 | 0.3912 | 0.4883 | 18.5728 |
+| Micro F1 | `example_filtered` | 0.0903 | 0.3780 | 0.3778 | 0.4895 | 17.4753 |
+
+Positive-row diagnostic, test split:
+
+| Strategy | Pair Samples F1 Mean | Pair Micro F1 Mean | Pair Precision Mean | Pair Recall Mean |
+| --- | ---: | ---: | ---: | ---: |
+| `label_masked` | 0.8870 | 0.8868 | 0.8879 | 0.8857 |
+| `example_filtered` | 0.8790 | 0.8788 | 0.8799 | 0.8777 |
+
+Validation:
+
+- `python -m unittest discover -s tests`
+- `37 tests OK`
+
+### Interpretation
+
+- Pair samples F1 remains the headline metric, following Aji's guidance.
+- For all-row LOAO, pair samples F1 alone is not suitable for threshold selection because empty-gold true negatives and empty-gold false positives both contribute row F1 `0`.
+- Sample-F1 selection therefore over-predicts: recall is high, but precision is very low and false-positive rows are excessive.
+- Micro-F1 selection is the better all-row detection diagnostic: it lowers sample-F1 but gives a much more meaningful precision/recall trade-off.
+- The positive-row diagnostic remains useful for sentiment interpretation, but it does not test aspect detection.
+
+### Next Step
+
+Use all-row LOAO with micro-F1 threshold selection as the main detection diagnostic, while still reporting pair samples F1 as the headline metric. The next modelling improvement remains aspect-conditioned sentiment or joint aspect+sentiment pair scoring.

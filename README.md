@@ -99,6 +99,7 @@ Run leave-one-aspect-out held-out-aspect lexical evaluation:
 
 ```powershell
 python .\scripts\run_loao_heldout_aspect.py --baseline lexical --strategy both
+python .\scripts\run_loao_heldout_aspect.py --baseline lexical --strategy both --selection-metric pair_micro_f1
 ```
 
 Run a Qwen held-out-aspect indexed zero-shot smoke test:

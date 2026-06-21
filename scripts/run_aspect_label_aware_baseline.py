@@ -52,6 +52,12 @@ def write_json(data: dict[str, object], path: Path) -> None:
     path.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
 
+def selection_keys(primary_metric: str) -> tuple[str, ...]:
+    if primary_metric not in SELECTION_KEYS:
+        raise ValueError(f"Unknown selection metric: {primary_metric}")
+    return tuple([primary_metric] + [key for key in SELECTION_KEYS if key != primary_metric])
+
+
 def write_prediction_rows(frame: pd.DataFrame, predictions: list[list[str]], path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as handle:
@@ -84,6 +90,7 @@ def score_thresholds(
     sentiments: list[str],
     max_predictions_per_row: int | None,
     ensure_one: bool,
+    selection_metric: str,
 ) -> tuple[dict[str, float], list[list[str]]]:
     rows = []
     for threshold in THRESHOLDS:
@@ -99,7 +106,8 @@ def score_thresholds(
         metrics["threshold"] = float(threshold)
         rows.append(metrics)
 
-    rows.sort(key=lambda row: tuple(row[key] for key in SELECTION_KEYS), reverse=True)
+    selected_keys = selection_keys(selection_metric)
+    rows.sort(key=lambda row: tuple(row[key] for key in selected_keys), reverse=True)
     best = rows[0]
     best_aspects = aspect_predictions_from_scores(
         aspect_scores,
@@ -179,14 +187,16 @@ def run_strategy(
             validation_sentiments,
             args.max_predictions_per_row,
             ensure_one,
+            args.selection_metric,
         )
         validation_metrics["epoch"] = epoch
         validation_metrics["train_loss"] = float(train_loss)
         history.append(validation_metrics)
         print(json.dumps({"strategy": strategy, **validation_metrics}, indent=2), flush=True)
 
-        if best_epoch is None or tuple(validation_metrics[key] for key in SELECTION_KEYS) > tuple(
-            best_epoch[key] for key in SELECTION_KEYS
+        selected_keys = selection_keys(args.selection_metric)
+        if best_epoch is None or tuple(validation_metrics[key] for key in selected_keys) > tuple(
+            best_epoch[key] for key in selected_keys
         ):
             best_epoch = validation_metrics
             best_state = copy.deepcopy({key: value.cpu() for key, value in model.state_dict().items()})
@@ -240,7 +250,7 @@ def run_strategy(
         "eval_label_scope": "heldout",
         "eval_row_scope": eval_row_scope,
         "heldout_aspects": heldout_aspects,
-        "selection_metric": "validation pair_samples_f1, with pair_micro_f1 and pair_macro_f1 tie-breakers",
+        "selection_metric": f"validation {args.selection_metric}, with remaining pair F1 metrics as tie-breakers",
         "config": config.__dict__,
         "negatives_per_positive": int(args.negatives_per_positive),
         "max_predictions_per_row": args.max_predictions_per_row,
@@ -270,6 +280,7 @@ def main() -> None:
     parser.add_argument("--negatives-per-positive", type=int, default=3)
     parser.add_argument("--max-predictions-per-row", type=int, default=None)
     parser.add_argument("--allow-empty-predictions", action="store_true")
+    parser.add_argument("--selection-metric", choices=SELECTION_KEYS, default="pair_samples_f1")
     parser.add_argument("--seed", type=int, default=13)
     parser.add_argument("--no-amp", action="store_true")
     parser.add_argument("--train-limit", type=int, default=None)

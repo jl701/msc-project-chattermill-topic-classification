@@ -41,6 +41,12 @@ def write_json(data: dict[str, object], path: Path) -> None:
     path.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
 
+def selection_columns(primary_metric: str) -> list[str]:
+    if primary_metric not in SELECTION_COLUMNS:
+        raise ValueError(f"Unknown selection metric: {primary_metric}")
+    return [primary_metric] + [column for column in SELECTION_COLUMNS if column != primary_metric]
+
+
 def score_classical_predictions(eval_df, labels, result, threshold: float) -> dict[str, float]:
     y_pred = threshold_predictions(result.y_score, threshold)
     pred_labels = predicted_label_lists(y_pred, result.binarizer)
@@ -180,6 +186,7 @@ def run_candidate_label_baseline(
     heldout_aspects: list[str],
     output_dir: Path,
     ensure_one: bool = True,
+    selection_metric: str = "pair_samples_f1",
 ) -> dict[str, object]:
     pair_classes = candidate_pair_labels(heldout_aspects)
     baseline = CandidateLexicalBaseline(heldout_aspects).fit(train_df)
@@ -194,7 +201,7 @@ def run_candidate_label_baseline(
             }
         )
 
-    validation_results = pd.DataFrame(rows).sort_values(SELECTION_COLUMNS, ascending=False)
+    validation_results = pd.DataFrame(rows).sort_values(selection_columns(selection_metric), ascending=False)
     output_dir.mkdir(parents=True, exist_ok=True)
     validation_results.to_csv(output_dir / "validation_sweep.csv", index=False)
 
@@ -214,7 +221,7 @@ def run_candidate_label_baseline(
     }
     summary = {
         "model": "candidate_label_lexical_tfidf_with_global_sentiment",
-        "selection_metric": "validation pair_samples_f1, with pair_micro_f1 and pair_macro_f1 tie-breakers",
+        "selection_metric": f"validation {selection_metric}, with remaining pair F1 metrics as tie-breakers",
         "heldout_aspects": heldout_aspects,
         "ensure_one_prediction_per_row": bool(ensure_one),
         "best_validation": best_validation.to_dict(),
@@ -225,7 +232,13 @@ def run_candidate_label_baseline(
     return summary
 
 
-def run_heldout_aspect(frame, output_dir: Path, strategies: list[str], heldout_aspects: list[str]) -> dict[str, object]:
+def run_heldout_aspect(
+    frame,
+    output_dir: Path,
+    strategies: list[str],
+    heldout_aspects: list[str],
+    selection_metric: str,
+) -> dict[str, object]:
     summaries = {}
     for strategy in strategies:
         print(f"[heldout-aspect] {strategy}")
@@ -241,6 +254,7 @@ def run_heldout_aspect(frame, output_dir: Path, strategies: list[str], heldout_a
             splits["test"],
             heldout_aspects,
             output_dir / strategy,
+            selection_metric=selection_metric,
         )
     return summaries
 
@@ -252,6 +266,7 @@ def main() -> None:
     parser.add_argument("--protocol", choices=["heldout-org", "heldout-aspect", "all"], default="all")
     parser.add_argument("--strategy", choices=["label_masked", "example_filtered", "both"], default="both")
     parser.add_argument("--heldout-aspect", action="append", default=[])
+    parser.add_argument("--selection-metric", choices=SELECTION_COLUMNS, default="pair_samples_f1")
     parser.add_argument("--quick", action="store_true", help="Run a small cross-org smoke-test grid.")
     parser.add_argument("--refined-cross-org", action="store_true", help="Run the narrower cross-org SVM refinement grid.")
     args = parser.parse_args()
@@ -275,6 +290,7 @@ def main() -> None:
             args.output_dir / "heldout_aspect",
             strategies,
             heldout_aspects,
+            args.selection_metric,
         )
 
     write_json(summaries, args.output_dir / "summary.json")

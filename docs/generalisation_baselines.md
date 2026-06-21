@@ -133,12 +133,14 @@ Small follow-up checks did not improve the validation-selected result:
 
 After Aji's 2026-06-21 feedback, a leave-one-aspect-out robustness evaluation was added. The full completed LOAO run is currently the lexical lower bound, with an all-row view that includes negative rows and a positive-row diagnostic that mirrors the older row scope. See `docs/loao_heldout_aspect.md` for the detailed protocol, spread tables, and interpretation.
 
-All-row lexical LOAO test spread across 12 held-out aspects:
+All-row lexical LOAO test spread across 12 held-out aspects. With sample-F1 threshold selection, the headline sample-F1 is slightly higher but precision is very low because sample-F1 does not penalise false positives on empty-gold rows beyond assigning the same zero row score as a true-negative empty prediction.
 
-| Strategy | Pair Samples F1 Mean | Pair Samples F1 Std | Min | Max | Pair Micro F1 Mean | Pair Macro F1 Mean |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Label-masked | 0.1299 | 0.1256 | 0.0126 | 0.3930 | 0.2304 | 0.1730 |
-| Example-filtered | 0.1288 | 0.1260 | 0.0126 | 0.3974 | 0.2345 | 0.1790 |
+| Selection | Strategy | Pair Samples F1 Mean | Pair Micro F1 Mean | Pair Precision Mean | Pair Recall Mean | FP Rows / 100 Mean |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| Sample F1 | Label-masked | 0.1299 | 0.2304 | 0.1458 | 0.8857 | 77.5362 |
+| Sample F1 | Example-filtered | 0.1288 | 0.2345 | 0.1495 | 0.8777 | 77.4207 |
+| Micro F1 | Label-masked | 0.0926 | 0.3635 | 0.3912 | 0.4883 | 18.5728 |
+| Micro F1 | Example-filtered | 0.0903 | 0.3780 | 0.3778 | 0.4895 | 17.4753 |
 
 Positive-row lexical LOAO is much higher, but it should be treated as a sentiment diagnostic rather than a true aspect-selection evaluation because each fold has only one candidate aspect and every evaluated row contains it.
 
