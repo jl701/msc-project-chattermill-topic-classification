@@ -14,7 +14,7 @@ from msc_project.data.fabsa import format_pair_label
 
 
 SENTIMENTS = ("negative", "neutral", "positive")
-SENTIMENT_MODES = ("global", "aspect_conditioned")
+SENTIMENT_MODES = ("global", "aspect_conditioned", "transformer_aspect_conditioned")
 
 
 def aspect_query_text(aspect: str) -> str:
@@ -67,7 +67,8 @@ class CandidateLexicalBaseline:
         )
         self.vectorizer.fit(train_df["text"].tolist() + label_texts)
         self.label_matrix = normalize(self.vectorizer.transform(label_texts))
-        self.sentiment_model = train_candidate_sentiment_model(train_df, self.sentiment_mode)
+        if self.sentiment_model is None:
+            self.sentiment_model = train_candidate_sentiment_model(train_df, self.sentiment_mode)
         return self
 
     def aspect_scores(self, texts: list[str]) -> np.ndarray:
@@ -110,6 +111,12 @@ def train_candidate_sentiment_model(train_df: pd.DataFrame, sentiment_mode: str)
     validate_sentiment_mode(sentiment_mode)
     if sentiment_mode == "global":
         return train_sentiment_model(train_df)
+    if sentiment_mode == "transformer_aspect_conditioned":
+        raise ValueError(
+            "Transformer aspect-conditioned sentiment requires explicit validation, "
+            "output, and device configuration. Train it with "
+            "train_transformer_aspect_sentiment_model and pass the fitted model in."
+        )
     return train_aspect_conditioned_sentiment_model(train_df)
 
 

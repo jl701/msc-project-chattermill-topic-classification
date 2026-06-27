@@ -31,6 +31,10 @@ from msc_project.baselines.label_aware import (
     train_one_epoch,
 )
 from msc_project.baselines.transformer import set_seed
+from msc_project.baselines.transformer_sentiment import (
+    TransformerAspectSentimentConfig,
+    train_transformer_aspect_sentiment_model,
+)
 from msc_project.data.fabsa import default_data_dir
 from msc_project.data.splits import DEFAULT_HELDOUT_ASPECTS, build_heldout_aspect_split, load_all_fabsa
 from msc_project.evaluation.metrics import binarize_labels, evaluate_pair_and_aspect, per_label_report
@@ -148,7 +152,31 @@ def run_strategy(
         negatives_per_positive=args.negatives_per_positive,
         seed=args.seed,
     )
-    sentiment_model = train_candidate_sentiment_model(train_df, args.sentiment_mode)
+    sentiment_summary = None
+    if args.sentiment_mode == "transformer_aspect_conditioned":
+        sentiment_config = TransformerAspectSentimentConfig(
+            model_name=args.sentiment_model_name,
+            max_length=args.sentiment_max_length,
+            batch_size=args.sentiment_batch_size,
+            eval_batch_size=args.sentiment_eval_batch_size,
+            learning_rate=args.sentiment_learning_rate,
+            weight_decay=args.sentiment_weight_decay,
+            epochs=args.sentiment_epochs,
+            warmup_ratio=args.sentiment_warmup_ratio,
+            seed=args.seed,
+            use_amp=not args.no_amp,
+            class_weight=args.sentiment_class_weight,
+            selection_metric=args.sentiment_selection_metric,
+        )
+        sentiment_model, sentiment_summary = train_transformer_aspect_sentiment_model(
+            train_df,
+            validation_df,
+            output_dir / "sentiment_model",
+            sentiment_config,
+            device,
+        )
+    else:
+        sentiment_model = train_candidate_sentiment_model(train_df, args.sentiment_mode)
     validation_sentiment_lookup = build_sentiment_lookup(
         sentiment_model,
         validation_df["text"].tolist(),
@@ -161,6 +189,10 @@ def run_strategy(
         heldout_aspects,
         args.sentiment_mode,
     )
+    if args.sentiment_mode == "transformer_aspect_conditioned":
+        del sentiment_model
+        if device.type == "cuda":
+            torch.cuda.empty_cache()
 
     config = CrossEncoderConfig(
         model_name=args.model_name,
@@ -265,6 +297,7 @@ def run_strategy(
         "negatives_per_positive": int(args.negatives_per_positive),
         "max_predictions_per_row": args.max_predictions_per_row,
         "ensure_one_prediction_per_row": bool(ensure_one),
+        "sentiment_model": sentiment_summary,
         "best_validation": best_epoch,
         "best_test": best_test,
         "history": history,
@@ -292,6 +325,16 @@ def main() -> None:
     parser.add_argument("--allow-empty-predictions", action="store_true")
     parser.add_argument("--selection-metric", choices=SELECTION_KEYS, default="pair_samples_f1")
     parser.add_argument("--sentiment-mode", choices=SENTIMENT_MODES, default="aspect_conditioned")
+    parser.add_argument("--sentiment-model-name", default="distilbert-base-uncased")
+    parser.add_argument("--sentiment-epochs", type=int, default=3)
+    parser.add_argument("--sentiment-batch-size", type=int, default=16)
+    parser.add_argument("--sentiment-eval-batch-size", type=int, default=64)
+    parser.add_argument("--sentiment-learning-rate", type=float, default=2e-5)
+    parser.add_argument("--sentiment-weight-decay", type=float, default=0.01)
+    parser.add_argument("--sentiment-max-length", type=int, default=256)
+    parser.add_argument("--sentiment-warmup-ratio", type=float, default=0.1)
+    parser.add_argument("--sentiment-class-weight", choices=["none", "balanced", "sqrt"], default="balanced")
+    parser.add_argument("--sentiment-selection-metric", choices=["accuracy", "macro_f1", "micro_f1"], default="macro_f1")
     parser.add_argument("--seed", type=int, default=13)
     parser.add_argument("--no-amp", action="store_true")
     parser.add_argument("--train-limit", type=int, default=None)

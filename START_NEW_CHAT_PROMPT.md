@@ -42,6 +42,8 @@ Before doing new work, please inspect these files. If a `D:\Msc_Project` path is
 9. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\aji_updates_2026_06_21.md
 10. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\experiment_log.md
 11. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\loao_heldout_aspect.md
+12. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\non_llm_open_topic_baseline.md
+13. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\next_stage_and_literature_review_plan.md
 
 Immediate instruction for the new chat:
 
@@ -50,8 +52,8 @@ Before implementing anything, perform a strict audit of the current progress and
 1. Verify whether the current split protocols match the research question and Aji's feedback.
 2. Verify whether the metrics are being used and interpreted correctly, especially pair samples F1, pair micro F1, pair macro F1, empty-gold rows in all-row LOAO, and positive-row LOAO as a sentiment-only diagnostic.
 3. Verify whether the current reported results are comparable or not comparable across fixed three-aspect held-out evaluation, all-row LOAO, positive-row LOAO, closed-topic, and held-out organisation.
-4. Check whether the latest conclusion is logically sound: lightweight TF-IDF aspect-conditioned sentiment is methodologically cleaner but empirically weaker than global sentiment.
-5. Challenge the next proposed direction: DistilBERT aspect-conditioned sentiment before Gemini. Explain whether it is the right next step, what risks it has, and what exact experiment should be run first.
+4. Check whether the latest conclusion is logically sound: DistilBERT aspect-conditioned sentiment improves the controlled lexical sentiment ablation and the example-filtered strong fixed held-out-aspect baseline, but not label-masked training.
+5. Challenge the next proposed direction after the completed non-LLM baseline phase. Decide whether the next work should be a hosted Gemini candidate-label baseline, Qwen fine-tuning/evaluation, or a small robustness diagnostic before moving to LLMs.
 6. Only after this audit, propose a concrete next plan. If the plan still looks sound, proceed with implementation.
 
 Current confirmed project context:
@@ -81,7 +83,7 @@ Latest Aji update from 2026-06-21:
 - Keep the overall held-out aspect protocol; do not redesign it from scratch.
 - Before heavy Qwen fine-tuning, rotate held-out aspects. The next robustness experiment should be leave-one-aspect-out across the 12 FABSA aspects and report the spread.
 - Treat label-masked vs example-filtered as an ablation about incomplete-label noise. Label-masked can keep text containing a held-out aspect while removing that aspect from supervision, creating false-negative or censored-label noise. Example-filtered removes these rows, giving cleaner but smaller training data.
-- The earlier lexical and candidate-aspect cross-encoder baselines used global sentiment: one document-level polarity was applied to all selected aspects. This is a limitation for FABSA because sentiment is per-aspect. A lightweight aspect-conditioned sentiment pipeline has now been implemented and evaluated; it is cleaner methodologically but slightly weaker than the global sentiment baseline, so stronger aspect-conditioned sentiment or joint aspect+sentiment pair scoring remains the next non-LLM modelling improvement.
+- The earlier lexical and candidate-aspect cross-encoder baselines used global sentiment: one document-level polarity was applied to all selected aspects. This is a limitation for FABSA because sentiment is per-aspect. A lightweight aspect-conditioned sentiment pipeline was cleaner methodologically but slightly weaker than the global sentiment baseline. A stronger DistilBERT aspect-conditioned sentiment pipeline has now been implemented and evaluated; it improves the controlled lexical sentiment ablation and the example-filtered strong fixed held-out-aspect baseline, but not label-masked training.
 - Full Qwen fine-tuning remains parked until stronger GPU access is clearer.
 - Aji provided access to Chattermill's Gemini Vertex AI endpoint through an OpenAI-compatible API. Do not store the key in the repo. Use it for hosted LLM baselines after the LOAO robustness work is started.
 - The GitHub branch issue has been fixed: remote `main` now points to the full setup commit, and local `main` tracks `origin/main`.
@@ -145,10 +147,18 @@ Held-out aspect lexical lower-bound:
 - Candidate-label lexical TF-IDF + global sentiment classifier.
 - Label-masked test pair samples F1: 0.4698
 - Example-filtered test pair samples F1: 0.4626
-- A lightweight aspect-conditioned sentiment version has also been implemented:
+- A lightweight TF-IDF aspect-conditioned sentiment version has also been implemented:
   - Label-masked test pair samples F1: 0.4520
   - Example-filtered test pair samples F1: 0.4389
   - Interpretation: this fixes the global-sentiment assumption but the shallow TF-IDF sentiment classifier is empirically weaker than the global prior.
+- A DistilBERT aspect-conditioned sentiment version has now been implemented:
+  - Label-masked test pair samples F1: 0.4840
+  - Label-masked test pair micro F1: 0.4807
+  - Label-masked test pair macro F1: 0.4063
+  - Example-filtered test pair samples F1: 0.4804
+  - Example-filtered test pair micro F1: 0.4772
+  - Example-filtered test pair macro F1: 0.3985
+  - Interpretation: stronger aspect-conditioned sentiment improves the controlled lexical sentiment ablation, but the lexical aspect selector remains the bottleneck.
 
 Held-out aspect label-aware baseline:
 - Candidate-aspect DistilBERT cross-encoder + global TF-IDF Logistic Regression sentiment classifier.
@@ -159,6 +169,22 @@ Held-out aspect label-aware baseline:
 - Example-filtered test pair samples F1: 0.5816
 - Example-filtered test pair micro F1: 0.5646
 - Example-filtered test pair macro F1: 0.4538
+- Candidate-aspect DistilBERT cross-encoder + DistilBERT aspect-conditioned sentiment:
+  - Label-masked, selector LR 2e-5:
+    - test pair samples F1: 0.5412
+    - test pair micro F1: 0.5343
+    - test pair macro F1: 0.4713
+  - Example-filtered, selector LR 2e-5:
+    - test pair samples F1: 0.6001
+    - test pair micro F1: 0.5859
+    - test pair macro F1: 0.4942
+  - Example-filtered, selector LR 3e-5, best current non-LLM fixed held-out-aspect run:
+    - test pair samples F1: 0.6071
+    - test pair micro F1: 0.5917
+    - test pair macro F1: 0.4890
+    - test aspect samples F1: 0.6651
+    - sentiment accuracy when the gold aspect is predicted: 0.9100
+  - Interpretation: DistilBERT aspect-conditioned sentiment improves the cleaner example-filtered strong baseline over global sentiment, but label-masked remains weaker and should be treated as incomplete-label-noise evidence rather than the main result.
 
 Held-out aspect Qwen zero-shot:
 - Model: Qwen/Qwen3-4B-Instruct-2507
@@ -221,29 +247,32 @@ Gemini / Vertex AI access:
 - Use enough `max_tokens` because Gemini 2.5 may spend tokens thinking first.
 - Latest user preference from 2026-06-22: do not use Gemini yet. The user wants to exhaust free/local resources first before spending hosted LLM credits. Gemini should remain a later hosted LLM baseline, not the immediate next task.
 
-Latest user decision from 2026-06-22:
+Latest user decision and completed local baseline phase from 2026-06-27:
 
-- The next preferred task is **DistilBERT aspect-conditioned sentiment**, not Gemini.
-- Rationale:
-  - it uses local/free GPU resources before spending Gemini budget
-  - it directly addresses Aji's global-sentiment concern
-  - it is a cleaner controlled experiment than jumping straight to a hosted LLM
-  - it is less complex than the later joint aspect+sentiment pair scorer
-- Proposed model shape:
-  - train a sentiment classifier with input `(review text, candidate aspect)`
-  - output one of `negative`, `neutral`, `positive`
-  - plug it into the existing candidate-aspect pipeline so the aspect selector stays fixed and only the sentiment module changes
-- First comparison target:
-  - lexical aspect selector + global sentiment
-  - lexical aspect selector + lightweight TF-IDF aspect-conditioned sentiment
-  - lexical aspect selector + DistilBERT aspect-conditioned sentiment
-- Then, if useful:
+- The requested non-LLM phase has been completed up to **candidate-aspect DistilBERT selector + DistilBERT aspect-conditioned sentiment**.
+- The result should be treated sceptically:
+  - DistilBERT aspect-conditioned sentiment clearly improves the controlled lexical sentiment ablation.
+  - It improves the strong `example_filtered` candidate-aspect pipeline from 0.5816 to 0.6071 test pair samples F1.
+  - It does not improve `label_masked`; the best comparable label-masked run is 0.5412 versus the older global-sentiment result of 0.5595.
+  - This supports using `example_filtered` as the cleaner fixed held-out-aspect result and retaining `label_masked` as an incomplete-label-noise ablation.
+- The strongest current non-LLM fixed held-out-aspect result is:
   - candidate-aspect DistilBERT selector + DistilBERT aspect-conditioned sentiment
-  - only later, joint aspect+sentiment pair scoring
-- Suggested evaluation order:
-  1. fixed three-aspect held-out split for direct comparability
-  2. positive-row LOAO as a pure sentiment diagnostic
-  3. all-row LOAO as the full detection diagnostic
+  - strategy: `example_filtered`
+  - sentiment LR: `2e-5`, 3 epochs, balanced class weights, validation accuracy selection
+  - selector LR: `3e-5`, 3 epochs, 3 negatives per positive, validation pair samples F1 selection
+  - test pair samples F1: 0.6071
+  - test pair micro F1: 0.5917
+  - test pair macro F1: 0.4890
+  - test aspect samples F1: 0.6651
+- Small tuning attempts have already been checked:
+  - selector LR `4e-5` was worse
+  - 5 selector epochs was worse
+  - top-2 prediction cap was slightly worse
+  - label-masked LR `3e-5` was worse
+- Gemini or Qwen full fine-tuning/evaluation should be treated as the next major phase, not part of the completed local non-LLM baseline phase.
+- Detailed write-up:
+  - `docs/non_llm_open_topic_baseline.md`
+  - `docs/next_stage_and_literature_review_plan.md`
 
 Important repository hygiene:
 
@@ -270,6 +299,8 @@ python .\scripts\run_generalisation_baselines.py --protocol heldout-aspect --sen
 python .\scripts\run_generalisation_baselines.py --protocol heldout-org --refined-cross-org --output-dir .\outputs\baselines\generalisation_refined
 python .\scripts\run_transformer_baseline.py --protocol heldout-org --epochs 10 --batch-size 16 --learning-rate 6e-5 --pos-weight sqrt
 python .\scripts\run_aspect_label_aware_baseline.py --strategy both --sentiment-mode global --epochs 3 --batch-size 32 --eval-batch-size 96 --learning-rate 2e-5 --negatives-per-positive 3
+python .\scripts\run_generalisation_baselines.py --protocol heldout-aspect --strategy both --sentiment-mode transformer_aspect_conditioned --sentiment-epochs 3 --sentiment-learning-rate 2e-5 --sentiment-batch-size 16 --sentiment-eval-batch-size 64 --sentiment-class-weight balanced --sentiment-selection-metric accuracy --output-dir .\outputs\baselines\generalisation_transformer_sentiment_lr2e-5_ep3_balanced_accuracy
+python .\scripts\run_aspect_label_aware_baseline.py --strategy example_filtered --sentiment-mode transformer_aspect_conditioned --sentiment-epochs 3 --sentiment-learning-rate 2e-5 --sentiment-batch-size 16 --sentiment-eval-batch-size 64 --sentiment-class-weight balanced --sentiment-selection-metric accuracy --epochs 3 --batch-size 32 --eval-batch-size 96 --learning-rate 3e-5 --negatives-per-positive 3 --output-dir .\outputs\baselines\aspect_label_aware_transformer_sentiment_lr3e-5_ep3_neg3_example_filtered
 python .\scripts\run_loao_heldout_aspect.py --baseline lexical --strategy both --sentiment-mode global --output-dir .\outputs\baselines\loao_heldout_aspect_lexical_all_rows
 python .\scripts\run_loao_heldout_aspect.py --baseline lexical --strategy both --sentiment-mode global --selection-metric pair_micro_f1 --output-dir .\outputs\baselines\loao_heldout_aspect_lexical_all_rows_micro_selection
 python .\scripts\run_loao_heldout_aspect.py --baseline lexical --strategy both --sentiment-mode aspect_conditioned --selection-metric pair_micro_f1 --output-dir .\outputs\baselines\loao_heldout_aspect_lexical_aspect_conditioned_micro_selection
@@ -283,11 +314,11 @@ Recommended next steps:
 
 1. First inspect the repo and confirm the current state with `git status`.
 2. Perform the strict audit described near the top of this prompt before implementing the next task.
-3. LOAO lexical evaluation and lightweight aspect-conditioned sentiment have been implemented and documented.
+3. LOAO lexical evaluation, lightweight aspect-conditioned sentiment, and DistilBERT aspect-conditioned sentiment have been implemented and documented.
 4. Keep using the LOAO all-row view for robustness checks and the positive-row view only as a sentiment diagnostic.
-5. If the audit confirms the direction, implement DistilBERT aspect-conditioned sentiment next.
-6. Do not run Gemini yet unless the user explicitly changes this decision.
-7. Keep full Qwen fine-tuning parked until stronger GPU access is available.
+5. Treat candidate-aspect DistilBERT selector + DistilBERT aspect-conditioned sentiment as the current strongest non-LLM fixed held-out-aspect baseline.
+6. Next, decide whether to start a hosted Gemini candidate-label baseline, prepare/run Qwen fine-tuning/evaluation on stronger GPU access, or run a small robustness diagnostic before LLMs.
+7. Do not run Gemini or full Qwen fine-tuning without explicit user approval because they are the next major phase.
 8. If I ask to publish changes, commit/push only clean code and documentation, without committing outputs, data, credentials, checkpoints, or generated artifacts.
 
 Please start by summarising what you find in the current docs and repo state, then perform the strict audit, then propose the next concrete plan before implementing.

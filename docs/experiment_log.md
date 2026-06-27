@@ -454,3 +454,231 @@ Before implementing, the next assistant should strictly review:
 4. If useful and compute allows:
    - candidate-aspect DistilBERT selector + DistilBERT aspect-conditioned sentiment
 5. Keep joint aspect+sentiment pair scoring and Gemini for later.
+
+## 2026-06-27: DistilBERT Aspect-Conditioned Sentiment Baseline
+
+### Purpose
+
+- Revisit the global-sentiment limitation flagged by Aji: earlier held-out-aspect baselines predicted one document-level polarity and reused it for every selected aspect.
+- Test whether a stronger local/free sentiment model can improve the methodologically cleaner `(feedback text, candidate aspect) -> sentiment` formulation.
+- Stop at the strongest non-LLM baseline requested for this phase: candidate-aspect DistilBERT selector plus DistilBERT aspect-conditioned sentiment.
+- Keep the result sceptical: measure both controlled lexical-selector changes and full pipeline changes, and record tuning attempts that did not help.
+
+### Code Or Protocol Changes
+
+- Added `src/msc_project/baselines/transformer_sentiment.py`:
+  - trains a DistilBERT three-way sentiment classifier over `(review text, candidate aspect)` examples
+  - supports validation selection by accuracy, macro F1, or micro F1
+  - supports class weighting and AMP
+  - exposes `predict_pairs(texts, aspects)` for pipeline integration
+- Updated `src/msc_project/baselines/candidate_label.py`:
+  - added `transformer_aspect_conditioned` sentiment mode
+  - allowed an externally fitted sentiment model to be passed into the candidate-label pipeline
+- Updated `scripts/run_generalisation_baselines.py`:
+  - added CLI controls for transformer aspect-conditioned sentiment
+  - trains DistilBERT sentiment before evaluating the lexical held-out-aspect selector
+- Updated `scripts/run_aspect_label_aware_baseline.py`:
+  - added `--sentiment-mode transformer_aspect_conditioned`
+  - trains DistilBERT aspect-conditioned sentiment before training/evaluating the candidate-aspect DistilBERT selector
+  - frees the sentiment model before selector training to reduce GPU memory pressure
+- Updated `scripts/run_loao_heldout_aspect.py`:
+  - intentionally kept LOAO to the fast sentiment modes for now because full transformer-sentiment LOAO is outside this phase and would be slow locally
+- Added `tests/test_transformer_sentiment.py`.
+
+### Setup
+
+- Dataset: FABSA public train/validation/test export.
+- Protocol: fixed three-aspect held-out aspect evaluation, containing-heldout row scope, held-out labels only.
+- Held-out aspects:
+  - `Account management: Account access`
+  - `Company brand: Competitor`
+  - `Value: Discounts promotions`
+- Strategies:
+  - `label_masked`
+  - `example_filtered`
+- Sentiment model:
+  - `distilbert-base-uncased`
+  - input: `Review: ... Aspect: ...`
+  - classes: `negative`, `neutral`, `positive`
+  - 3 epochs unless otherwise noted
+  - learning rate `2e-5`
+  - batch size 16, eval batch size 64
+  - balanced class weights
+  - validation accuracy selection for the final runs
+- Aspect selector for the strongest baseline:
+  - `distilbert-base-uncased` candidate-aspect cross-encoder
+  - batch size 32, eval batch size 96
+  - 3 negatives per positive
+  - validation pair samples F1 selection
+- Hardware:
+  - NVIDIA GeForce RTX 5050 Laptop GPU
+  - CUDA-enabled PyTorch was available.
+
+### Commands
+
+```powershell
+python -m unittest discover -s tests
+python -m compileall -q src scripts tests
+
+python .\scripts\run_aspect_label_aware_baseline.py --strategy label_masked --sentiment-mode transformer_aspect_conditioned --train-limit 80 --eval-limit 40 --sentiment-epochs 1 --sentiment-batch-size 8 --sentiment-eval-batch-size 16 --epochs 1 --batch-size 8 --eval-batch-size 16 --output-dir .\outputs\baselines\aspect_label_aware_transformer_sentiment_smoke
+
+python .\scripts\run_generalisation_baselines.py --protocol heldout-aspect --strategy both --sentiment-mode transformer_aspect_conditioned --sentiment-epochs 3 --sentiment-learning-rate 2e-5 --sentiment-batch-size 16 --sentiment-eval-batch-size 64 --sentiment-class-weight balanced --sentiment-selection-metric macro_f1 --output-dir .\outputs\baselines\generalisation_transformer_sentiment_lr2e-5_ep3_balanced_macro
+
+python .\scripts\run_generalisation_baselines.py --protocol heldout-aspect --strategy both --sentiment-mode transformer_aspect_conditioned --sentiment-epochs 3 --sentiment-learning-rate 2e-5 --sentiment-batch-size 16 --sentiment-eval-batch-size 64 --sentiment-class-weight balanced --sentiment-selection-metric accuracy --output-dir .\outputs\baselines\generalisation_transformer_sentiment_lr2e-5_ep3_balanced_accuracy
+
+python .\scripts\run_aspect_label_aware_baseline.py --strategy both --sentiment-mode transformer_aspect_conditioned --sentiment-epochs 3 --sentiment-learning-rate 2e-5 --sentiment-batch-size 16 --sentiment-eval-batch-size 64 --sentiment-class-weight balanced --sentiment-selection-metric accuracy --epochs 3 --batch-size 32 --eval-batch-size 96 --learning-rate 2e-5 --negatives-per-positive 3 --output-dir .\outputs\baselines\aspect_label_aware_transformer_sentiment_lr2e-5_ep3_neg3
+
+python .\scripts\run_aspect_label_aware_baseline.py --strategy example_filtered --sentiment-mode transformer_aspect_conditioned --sentiment-epochs 3 --sentiment-learning-rate 2e-5 --sentiment-batch-size 16 --sentiment-eval-batch-size 64 --sentiment-class-weight balanced --sentiment-selection-metric accuracy --epochs 5 --batch-size 32 --eval-batch-size 96 --learning-rate 2e-5 --negatives-per-positive 3 --output-dir .\outputs\baselines\aspect_label_aware_transformer_sentiment_lr2e-5_ep5_neg3_example_filtered
+
+python .\scripts\run_aspect_label_aware_baseline.py --strategy example_filtered --sentiment-mode transformer_aspect_conditioned --sentiment-epochs 3 --sentiment-learning-rate 2e-5 --sentiment-batch-size 16 --sentiment-eval-batch-size 64 --sentiment-class-weight balanced --sentiment-selection-metric accuracy --epochs 3 --batch-size 32 --eval-batch-size 96 --learning-rate 2e-5 --negatives-per-positive 3 --max-predictions-per-row 2 --output-dir .\outputs\baselines\aspect_label_aware_transformer_sentiment_lr2e-5_ep3_neg3_top2_example_filtered
+
+python .\scripts\run_aspect_label_aware_baseline.py --strategy example_filtered --sentiment-mode transformer_aspect_conditioned --sentiment-epochs 3 --sentiment-learning-rate 2e-5 --sentiment-batch-size 16 --sentiment-eval-batch-size 64 --sentiment-class-weight balanced --sentiment-selection-metric accuracy --epochs 3 --batch-size 32 --eval-batch-size 96 --learning-rate 3e-5 --negatives-per-positive 3 --output-dir .\outputs\baselines\aspect_label_aware_transformer_sentiment_lr3e-5_ep3_neg3_example_filtered
+
+python .\scripts\run_aspect_label_aware_baseline.py --strategy example_filtered --sentiment-mode transformer_aspect_conditioned --sentiment-epochs 3 --sentiment-learning-rate 2e-5 --sentiment-batch-size 16 --sentiment-eval-batch-size 64 --sentiment-class-weight balanced --sentiment-selection-metric accuracy --epochs 3 --batch-size 32 --eval-batch-size 96 --learning-rate 4e-5 --negatives-per-positive 3 --output-dir .\outputs\baselines\aspect_label_aware_transformer_sentiment_lr4e-5_ep3_neg3_example_filtered
+
+python .\scripts\run_aspect_label_aware_baseline.py --strategy label_masked --sentiment-mode transformer_aspect_conditioned --sentiment-epochs 3 --sentiment-learning-rate 2e-5 --sentiment-batch-size 16 --sentiment-eval-batch-size 64 --sentiment-class-weight balanced --sentiment-selection-metric accuracy --epochs 3 --batch-size 32 --eval-batch-size 96 --learning-rate 3e-5 --negatives-per-positive 3 --output-dir .\outputs\baselines\aspect_label_aware_transformer_sentiment_lr3e-5_ep3_neg3_label_masked
+```
+
+### Outputs
+
+- Smoke test:
+  - `outputs/baselines/aspect_label_aware_transformer_sentiment_smoke/`
+- Controlled lexical selector runs:
+  - `outputs/baselines/generalisation_transformer_sentiment_lr2e-5_ep3_balanced_macro/`
+  - `outputs/baselines/generalisation_transformer_sentiment_lr2e-5_ep3_balanced_accuracy/`
+- Candidate-aspect DistilBERT selector plus DistilBERT sentiment runs:
+  - `outputs/baselines/aspect_label_aware_transformer_sentiment_lr2e-5_ep3_neg3/`
+  - `outputs/baselines/aspect_label_aware_transformer_sentiment_lr2e-5_ep5_neg3_example_filtered/`
+  - `outputs/baselines/aspect_label_aware_transformer_sentiment_lr2e-5_ep3_neg3_top2_example_filtered/`
+  - `outputs/baselines/aspect_label_aware_transformer_sentiment_lr3e-5_ep3_neg3_example_filtered/`
+  - `outputs/baselines/aspect_label_aware_transformer_sentiment_lr4e-5_ep3_neg3_example_filtered/`
+  - `outputs/baselines/aspect_label_aware_transformer_sentiment_lr3e-5_ep3_neg3_label_masked/`
+- Generated output files remain ignored by Git.
+
+### Results
+
+Controlled lexical selector, test split:
+
+| Sentiment Mode | Strategy | Test Pair Samples F1 | Test Pair Micro F1 | Test Pair Macro F1 | Sentiment Accuracy When Gold Aspect Predicted |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Global TF-IDF sentiment | `label_masked` | 0.4698 | 0.4667 | 0.3703 | 0.8867 |
+| Lightweight TF-IDF aspect-conditioned sentiment | `label_masked` | 0.4520 | 0.4491 | 0.3425 | 0.8533 |
+| DistilBERT aspect-conditioned sentiment | `label_masked` | 0.4840 | 0.4807 | 0.4063 | 0.9133 |
+| Global TF-IDF sentiment | `example_filtered` | 0.4626 | 0.4596 | 0.3703 | 0.8851 |
+| Lightweight TF-IDF aspect-conditioned sentiment | `example_filtered` | 0.4389 | 0.4351 | 0.3422 | 0.8378 |
+| DistilBERT aspect-conditioned sentiment | `example_filtered` | 0.4804 | 0.4772 | 0.3985 | 0.9189 |
+
+Candidate-aspect DistilBERT selector plus DistilBERT aspect-conditioned sentiment, test split:
+
+| Strategy / Variant | Test Pair Samples F1 | Test Pair Micro F1 | Test Pair Macro F1 | Test Aspect Samples F1 | Sentiment Accuracy When Gold Aspect Predicted |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `label_masked`, selector LR `2e-5`, 3 epochs | 0.5412 | 0.5343 | 0.4713 | 0.6088 | 0.8947 |
+| `label_masked`, selector LR `3e-5`, 3 epochs | 0.4981 | 0.4925 | 0.4531 | 0.5598 | 0.8919 |
+| `example_filtered`, selector LR `2e-5`, 3 epochs | 0.6001 | 0.5859 | 0.4942 | 0.6600 | 0.9095 |
+| `example_filtered`, selector LR `2e-5`, 5 epochs | 0.5325 | 0.5298 | 0.4573 | 0.5942 | 0.8990 |
+| `example_filtered`, selector LR `2e-5`, top-2 cap | 0.5949 | 0.5823 | 0.4942 | 0.6548 | 0.9095 |
+| `example_filtered`, selector LR `3e-5`, 3 epochs | **0.6071** | **0.5917** | 0.4890 | **0.6651** | 0.9100 |
+| `example_filtered`, selector LR `4e-5`, 3 epochs | 0.5614 | 0.5478 | 0.4610 | 0.6260 | 0.8972 |
+
+Best current non-LLM fixed held-out-aspect result:
+
+| Model | Strategy | Test Pair Samples F1 | Test Pair Micro F1 | Test Pair Macro F1 | Test Aspect Samples F1 |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Candidate-aspect DistilBERT selector + global TF-IDF sentiment | `example_filtered` | 0.5816 | 0.5646 | 0.4538 | 0.6835 |
+| Candidate-aspect DistilBERT selector + DistilBERT aspect-conditioned sentiment | `example_filtered` | **0.6071** | **0.5917** | **0.4890** | 0.6651 |
+| Qwen3-4B-Instruct indexed zero-shot | fixed held-out aspects | 0.5374 | 0.5300 | 0.4374 | 0.6340 |
+
+Validation:
+
+- `python -m unittest discover -s tests`
+- `48 tests OK`
+- `python -m compileall -q src scripts tests`
+- compile check passed.
+
+### Interpretation
+
+- The user's memory is partly confirmed. DistilBERT aspect-conditioned sentiment improves over global sentiment in the controlled lexical-selector setup, and it clearly improves over the earlier lightweight TF-IDF aspect-conditioned sentiment classifier.
+- The improvement is not universal once the stronger aspect selector is included. The `example_filtered` candidate-aspect DistilBERT selector benefits from DistilBERT aspect-conditioned sentiment, improving test pair samples F1 from `0.5816` to `0.6071`.
+- The `label_masked` candidate-aspect setup gets worse than the previous global-sentiment result (`0.5412` versus `0.5595` at selector LR `2e-5`, and worse again at LR `3e-5`). This supports treating label-masked training as noisier because it can retain rows with censored held-out supervision.
+- The best run has slightly lower aspect-only samples F1 than the previous global-sentiment candidate-aspect example-filtered baseline (`0.6651` versus `0.6835`), but higher pair-level F1 because sentiment is more accurate when the relevant aspect is selected.
+- Additional tuning did not find a better local fixed-split result:
+  - 5 selector epochs overfit or selected poorly on test.
+  - a top-2 prediction cap did not help.
+  - selector LR `4e-5` degraded.
+  - label-masked LR `3e-5` degraded.
+- This result should be reported as the strongest current fixed three-aspect non-LLM baseline, not as a full LOAO robustness result.
+
+### Next Step
+
+- Document this as the end of the current non-LLM fixed held-out-aspect phase.
+- Do not spend more time on small fixed-split local tuning unless a report-specific ablation is needed.
+- The next major modelling stage is Gemini or Qwen candidate-label fine-tuning/evaluation, but it should start as a separate phase after this baseline is written up and reviewed.
+
+## 2026-06-27: Non-LLM Open-Topic Baseline Write-Up And Pause Checkpoint
+
+### Purpose
+
+- Convert the strongest local non-LLM open-topic result into a reusable methods/results note.
+- Record a clean pause point before starting the next major Gemini or Qwen modelling phase.
+- Preserve the literature-review and dissertation-framework direction so the project can temporarily shift from experiments to writing and reading.
+
+### Code Or Protocol Changes
+
+- No modelling protocol changed in this entry.
+- Added `docs/non_llm_open_topic_baseline.md`.
+- Added `docs/next_stage_and_literature_review_plan.md`.
+- Updated project entry points so future sessions can find these notes:
+  - `README.md`
+  - `PROJECT_OVERVIEW.md`
+  - `START_NEW_CHAT_PROMPT.md`
+  - `docs/experiment_log.md`
+
+### Setup
+
+- Baseline being documented:
+  - candidate-aspect DistilBERT selector
+  - DistilBERT aspect-conditioned sentiment classifier
+  - fixed three-aspect held-out-aspect protocol
+  - `example_filtered` training
+- Best test result:
+  - pair samples F1: `0.6071`
+  - pair micro F1: `0.5917`
+  - pair macro F1: `0.4890`
+
+### Commands
+
+```powershell
+python -m unittest discover -s tests
+python -m compileall -q src scripts tests
+git status --short --branch
+```
+
+### Outputs
+
+- New documentation:
+  - `docs/non_llm_open_topic_baseline.md`
+  - `docs/next_stage_and_literature_review_plan.md`
+- Generated experiment outputs remain local under `outputs/` and ignored by Git.
+- No data, checkpoints, credentials, or raw confidential materials were added.
+
+### Results
+
+| Check | Result |
+| --- | --- |
+| Strongest local non-LLM fixed held-out-aspect baseline documented | Yes |
+| Next Gemini/Qwen phase recorded as paused | Yes |
+| Literature review themes and dissertation structure recorded | Yes |
+| Unit tests | 48 tests OK |
+| Compile check | Passed |
+
+### Interpretation
+
+- The local non-LLM open-topic baseline phase is ready to be treated as a completed dissertation result block.
+- The next useful work is not more small fixed-split DistilBERT tuning; it is either literature-review/report framing or a separate LLM phase.
+- The literature review should now organise the project around ABSA, multi-label classification, domain generalisation, open-topic/candidate-label classification, and instruction-following LLMs.
+
+### Next Step
+
+- Pause major modelling.
+- Work on the dissertation literature review, research framing, and result-table structure.
+- When modelling resumes, decide explicitly between a hosted Gemini candidate-label baseline and Qwen candidate-label fine-tuning/evaluation.

@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 import pandas as pd
+import torch
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -15,6 +16,10 @@ from msc_project.baselines.candidate_label import (
     SENTIMENT_MODES,
     CandidateLexicalBaseline,
     candidate_pair_labels,
+)
+from msc_project.baselines.transformer_sentiment import (
+    TransformerAspectSentimentConfig,
+    train_transformer_aspect_sentiment_model,
 )
 from msc_project.baselines.classical import (
     ClassicalConfig,
@@ -192,9 +197,14 @@ def run_candidate_label_baseline(
     ensure_one: bool = True,
     selection_metric: str = "pair_samples_f1",
     sentiment_mode: str = "aspect_conditioned",
+    sentiment_model: object | None = None,
 ) -> dict[str, object]:
     pair_classes = candidate_pair_labels(heldout_aspects)
-    baseline = CandidateLexicalBaseline(heldout_aspects, sentiment_mode=sentiment_mode).fit(train_df)
+    baseline = CandidateLexicalBaseline(
+        heldout_aspects,
+        sentiment_mode=sentiment_mode,
+        sentiment_model=sentiment_model,
+    ).fit(train_df)
 
     rows = []
     for threshold in LEXICAL_THRESHOLDS:
@@ -245,6 +255,8 @@ def run_heldout_aspect(
     heldout_aspects: list[str],
     selection_metric: str,
     sentiment_mode: str,
+    sentiment_config: TransformerAspectSentimentConfig,
+    device: torch.device,
 ) -> dict[str, object]:
     summaries = {}
     for strategy in strategies:
@@ -255,6 +267,16 @@ def run_heldout_aspect(
             strategy=strategy,
             eval_label_scope="heldout",
         )
+        sentiment_model = None
+        sentiment_summary = None
+        if sentiment_mode == "transformer_aspect_conditioned":
+            sentiment_model, sentiment_summary = train_transformer_aspect_sentiment_model(
+                splits["train"],
+                splits["validation"],
+                output_dir / strategy / "sentiment_model",
+                sentiment_config,
+                device,
+            )
         summaries[strategy] = run_candidate_label_baseline(
             splits["train"],
             splits["validation"],
@@ -263,7 +285,14 @@ def run_heldout_aspect(
             output_dir / strategy,
             selection_metric=selection_metric,
             sentiment_mode=sentiment_mode,
+            sentiment_model=sentiment_model,
         )
+        if sentiment_summary is not None:
+            summaries[strategy]["sentiment_model"] = sentiment_summary
+        if sentiment_mode == "transformer_aspect_conditioned":
+            del sentiment_model
+            if device.type == "cuda":
+                torch.cuda.empty_cache()
     return summaries
 
 
@@ -276,12 +305,38 @@ def main() -> None:
     parser.add_argument("--heldout-aspect", action="append", default=[])
     parser.add_argument("--selection-metric", choices=SELECTION_COLUMNS, default="pair_samples_f1")
     parser.add_argument("--sentiment-mode", choices=SENTIMENT_MODES, default="aspect_conditioned")
+    parser.add_argument("--sentiment-model-name", default="distilbert-base-uncased")
+    parser.add_argument("--sentiment-epochs", type=int, default=3)
+    parser.add_argument("--sentiment-batch-size", type=int, default=16)
+    parser.add_argument("--sentiment-eval-batch-size", type=int, default=64)
+    parser.add_argument("--sentiment-learning-rate", type=float, default=2e-5)
+    parser.add_argument("--sentiment-weight-decay", type=float, default=0.01)
+    parser.add_argument("--sentiment-max-length", type=int, default=256)
+    parser.add_argument("--sentiment-warmup-ratio", type=float, default=0.1)
+    parser.add_argument("--sentiment-class-weight", choices=["none", "balanced", "sqrt"], default="balanced")
+    parser.add_argument("--sentiment-selection-metric", choices=["accuracy", "macro_f1", "micro_f1"], default="macro_f1")
     parser.add_argument("--quick", action="store_true", help="Run a small cross-org smoke-test grid.")
     parser.add_argument("--refined-cross-org", action="store_true", help="Run the narrower cross-org SVM refinement grid.")
+    parser.add_argument("--no-amp", action="store_true")
     args = parser.parse_args()
 
     frame = load_all_fabsa(args.data_dir)
     summaries: dict[str, object] = {}
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    sentiment_config = TransformerAspectSentimentConfig(
+        model_name=args.sentiment_model_name,
+        max_length=args.sentiment_max_length,
+        batch_size=args.sentiment_batch_size,
+        eval_batch_size=args.sentiment_eval_batch_size,
+        learning_rate=args.sentiment_learning_rate,
+        weight_decay=args.sentiment_weight_decay,
+        epochs=args.sentiment_epochs,
+        warmup_ratio=args.sentiment_warmup_ratio,
+        seed=13,
+        use_amp=not args.no_amp,
+        class_weight=args.sentiment_class_weight,
+        selection_metric=args.sentiment_selection_metric,
+    )
 
     if args.protocol in {"heldout-org", "all"}:
         summaries["heldout_organisation"] = run_heldout_org(
@@ -301,6 +356,8 @@ def main() -> None:
             heldout_aspects,
             args.selection_metric,
             args.sentiment_mode,
+            sentiment_config,
+            device,
         )
 
     write_json(summaries, args.output_dir / "summary.json")

@@ -1,6 +1,6 @@
 # Project Overview: Open-Vocabulary Topic Classification With LLMs
 
-Last updated: 2026-06-17  
+Last updated: 2026-06-27  
 Local workspace: `C:\Msc_DSML\Msc_Project`  
 GitHub repo: `https://github.com/jl701/msc-project-chattermill-topic-classification`  
 
@@ -638,9 +638,17 @@ Held-out aspect, candidate-label lexical TF-IDF + global sentiment:
   label-masked test pair samples F1:     0.470
   example-filtered test pair samples F1: 0.463
 
+Held-out aspect, candidate-label lexical TF-IDF + DistilBERT aspect-conditioned sentiment:
+  label-masked test pair samples F1:     0.484
+  example-filtered test pair samples F1: 0.480
+
 Held-out aspect, candidate-aspect cross-encoder + global sentiment:
   label-masked test pair samples F1:     0.560
   example-filtered test pair samples F1: 0.582
+
+Held-out aspect, candidate-aspect cross-encoder + DistilBERT aspect-conditioned sentiment:
+  label-masked test pair samples F1:     0.541
+  example-filtered test pair samples F1: 0.607
 
 Held-out aspect, Qwen3-4B indexed zero-shot:
   validation pair samples F1: 0.575
@@ -650,6 +658,8 @@ Held-out aspect, Qwen3-4B indexed zero-shot:
 
 See `docs/generalisation_baselines.md` for details.
 
+The strongest current local non-LLM open-topic baseline is documented separately in `docs/non_llm_open_topic_baseline.md`. The paused next-stage modelling plan and literature-review framing are recorded in `docs/next_stage_and_literature_review_plan.md`.
+
 Qwen held-out-aspect status:
 
 ```text
@@ -658,6 +668,8 @@ Completed:
   zero-shot validation/test evaluation
   row-level error analysis
   GPU-ready SFT/evaluation JSONL preparation script
+  strongest current non-LLM fixed held-out-aspect baseline:
+    candidate-aspect DistilBERT selector + DistilBERT aspect-conditioned sentiment
 
 Not yet completed:
   full Qwen held-out-aspect fine-tuning
@@ -682,21 +694,21 @@ The current Qwen held-out-aspect result is therefore a zero-shot prompt baseline
    - Time per 1M responses.
    - Fine-tuning cost per iteration.
 
-5. Which label-aware non-LLM baseline should be run next for held-out aspects?
-   - The first candidate-aspect cross-encoder baseline is now implemented.
-   - Useful next candidates are bi-encoder / sentence-transformer similarity and NLI-style entailment classifiers.
+5. Which LLM stage should follow the completed non-LLM held-out-aspect baseline?
+   - Candidate-aspect DistilBERT selector plus DistilBERT aspect-conditioned sentiment is now the strongest fixed held-out-aspect non-LLM result.
+   - The next major options are a hosted Gemini candidate-label baseline or Qwen fine-tuning/evaluation on stronger GPU access.
 
 ## 15. Immediate Next Steps
 
-1. Push the clean initial repository structure to GitHub.
+1. Preserve the completed DistilBERT aspect-conditioned sentiment baseline in code and documentation.
 
 2. Keep the provided FABSA split as the closed-topic benchmark.
 
-3. Review held-out-aspect error analysis and use it to guide Qwen fine-tuning.
+3. Treat `example_filtered` as the cleaner fixed held-out-aspect result and `label_masked` as an incomplete-label-noise ablation.
 
-4. Run full Qwen candidate-label fine-tuning on a stronger GPU using the indexed held-out-aspect SFT files.
+4. Decide whether the next major phase is a hosted Gemini candidate-label baseline or Qwen candidate-label fine-tuning/evaluation.
 
-5. Optionally add another non-LLM label-aware held-out-aspect baseline, such as a bi-encoder or NLI-style candidate-label model.
+5. Keep LOAO all-row evaluation as the robustness view and positive-row LOAO only as a sentiment diagnostic.
 
 ## 16. Notes For Repository Hygiene
 

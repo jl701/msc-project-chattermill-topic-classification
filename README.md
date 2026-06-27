@@ -10,6 +10,8 @@ The main project context, current understanding, datasets, modelling plan, evalu
 
 - [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md)
 - [docs/github_upload_scope.md](docs/github_upload_scope.md)
+- [docs/non_llm_open_topic_baseline.md](docs/non_llm_open_topic_baseline.md)
+- [docs/next_stage_and_literature_review_plan.md](docs/next_stage_and_literature_review_plan.md)
 
 The current first phase is a closed-topic FABSA baseline:
 
@@ -95,6 +97,12 @@ Run the candidate-aspect cross-encoder held-out-aspect baseline:
 
 ```powershell
 python .\scripts\run_aspect_label_aware_baseline.py --strategy both --sentiment-mode global --epochs 3 --batch-size 32 --eval-batch-size 96 --learning-rate 2e-5 --negatives-per-positive 3
+```
+
+Run the strongest current non-LLM fixed held-out-aspect baseline:
+
+```powershell
+python .\scripts\run_aspect_label_aware_baseline.py --strategy example_filtered --sentiment-mode transformer_aspect_conditioned --sentiment-epochs 3 --sentiment-learning-rate 2e-5 --sentiment-batch-size 16 --sentiment-eval-batch-size 64 --sentiment-class-weight balanced --sentiment-selection-metric accuracy --epochs 3 --batch-size 32 --eval-batch-size 96 --learning-rate 3e-5 --negatives-per-positive 3
 ```
 
 Run leave-one-aspect-out held-out-aspect lexical evaluation:

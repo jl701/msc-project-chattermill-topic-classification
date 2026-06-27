@@ -45,6 +45,7 @@ METRIC_COLUMNS = [
     "aspect_exact_match_rate",
     "sentiment_accuracy_when_gold_aspect_predicted",
 ]
+FAST_SENTIMENT_MODES = tuple(mode for mode in SENTIMENT_MODES if mode != "transformer_aspect_conditioned")
 
 
 def aspect_slug(aspect: str) -> str:
@@ -242,7 +243,7 @@ def main() -> None:
         default="pair_samples_f1",
         help="Primary validation metric for threshold/model selection.",
     )
-    parser.add_argument("--sentiment-mode", choices=SENTIMENT_MODES, default="aspect_conditioned")
+    parser.add_argument("--sentiment-mode", choices=FAST_SENTIMENT_MODES, default="aspect_conditioned")
     parser.add_argument("--model-name", default="distilbert-base-uncased")
     parser.add_argument("--epochs", type=int, default=3)
     parser.add_argument("--batch-size", type=int, default=32)
