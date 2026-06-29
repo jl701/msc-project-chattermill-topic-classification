@@ -678,6 +678,8 @@ Not yet completed:
 
 The current Qwen held-out-aspect result is therefore a zero-shot prompt baseline, not a fine-tuned Qwen result. Full Qwen candidate-label fine-tuning should run later on stronger GPU access using the indexed SFT/evaluation data generation workflow.
 
+The current Tier 1 literature-review foundation is recorded in `docs/tier1_core_literature_review_matrix.md`. It covers customer review mining, ABSA, FABSA, multi-label evaluation, domain generalisation, candidate-label taxonomy shift, and structured-output LLM evaluation, while leaving detailed Qwen/Gemini fine-tuning and deployment-governance work as later optional branches.
+
 ## 14. Current Open Questions
 
 1. Are tagger guidance notes available for FABSA aspects?

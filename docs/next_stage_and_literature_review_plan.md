@@ -10,6 +10,7 @@ See also:
 - `docs/literature_review_scoping_2026_06_29.md`
 - `docs/dissertation_internal_spec.md`
 - `docs/literature_review_matrix.md`
+- `docs/tier1_core_literature_review_matrix.md`
 - `docs/aji_updates_2026_06_29.md`
 
 ## Current Pause Point
@@ -344,6 +345,29 @@ While the next modelling phase is paused, the best use of time is:
    - candidate-label pipeline
    - result comparison across closed-topic, held-out organisation, and held-out aspect settings
 6. Re-read `docs/non_llm_open_topic_baseline.md`, `docs/generalisation_baselines.md`, and `docs/loao_heldout_aspect.md` before writing the methods section.
+
+## Current Literature Review Execution Boundary
+
+The immediate literature-review work should prioritise Tier 1 foundations that will remain useful regardless of Aji's reply about the final emphasis:
+
+- customer review mining;
+- aspect-based sentiment analysis;
+- the FABSA dataset;
+- multi-label classification and evaluation;
+- domain generalisation;
+- open-topic / candidate-label / taxonomy-shift classification;
+- structured-output LLM evaluation.
+
+This Tier 1 work is the dissertation foundation and should not be delayed while waiting for supervisor feedback. The goal is to build a broad but disciplined evidence matrix that can later be narrowed once the dissertation framing is confirmed.
+
+For now, avoid deep Tier 2 optional branches:
+
+- detailed Qwen fine-tuning methods;
+- detailed Gemini structured-output cost comparison;
+- joint aspect-sentiment pair-scoring model literature;
+- deep deployment governance discussion.
+
+These Tier 2 branches should remain as placeholders or future-work notes until the project direction and next experiment branch are confirmed.
 
 ## Updated Eight-Stage Future Work Roadmap
 

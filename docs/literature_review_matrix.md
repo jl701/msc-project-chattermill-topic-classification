@@ -8,7 +8,30 @@ This matrix is the Stage 2 working document for the dissertation literature revi
 Structured candidate-label aspect-sentiment modelling under taxonomy shift in customer feedback.
 ```
 
-This is not final prose. It is a planning matrix for deciding what each paper contributes and where more literature is needed.
+This is not final prose. It is a planning matrix for deciding what each paper contributes and where more literature is needed. The more detailed Tier 1 evidence matrix from the 2026-06-29 review pass is in:
+
+- `docs/tier1_core_literature_review_matrix.md`
+
+## Current Review Scope
+
+The current pass is a Tier 1 core literature review. These themes should be developed now because they support the dissertation regardless of whether the next modelling phase prioritises Qwen, Gemini, LOAO, or another local baseline:
+
+- customer review mining;
+- aspect-based sentiment analysis;
+- the FABSA dataset;
+- multi-label classification and evaluation;
+- domain generalisation;
+- open-topic / candidate-label / taxonomy-shift classification;
+- structured-output LLM evaluation.
+
+Tier 2 optional branches should not be deeply expanded in this pass:
+
+- detailed Qwen fine-tuning methods;
+- detailed Gemini cost and token-accounting analysis;
+- joint aspect-sentiment pair-scoring architectures;
+- deep deployment governance.
+
+The expected output of this pass is an evidence matrix, not final chapter prose: each included source should state what problem it addresses, what method or evidence it provides, what limitation it has, and exactly how it supports this dissertation's hourglass argument.
 
 ## Review Structure
 
@@ -366,4 +389,3 @@ The related-work chapter should argue:
 - Use "taxonomy shift", "new-aspect generalisation", and "candidate-label classification" as the more precise terms.
 - Use Qwen/Gemini literature to motivate future/next-stage model families, not to replace the evaluation spine.
 - Make the strongest local baseline the empirical anchor until LLM experiments justify changing the centre of gravity.
-
