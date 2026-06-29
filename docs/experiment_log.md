@@ -682,3 +682,106 @@ git status --short --branch
 - Pause major modelling.
 - Work on the dissertation literature review, research framing, and result-table structure.
 - When modelling resumes, decide explicitly between a hosted Gemini candidate-label baseline and Qwen candidate-label fine-tuning/evaluation.
+
+## 2026-06-29: Aji Guidance And Literature Review Scoping
+
+### Purpose
+
+- Record the latest Aji guidance from the Slack screenshot supplied by the user.
+- Start the literature review phase by scanning the locally downloaded papers.
+- Convert the user's hourglass dissertation idea into a concrete broad-to-narrow-to-broad project framing.
+
+### Code Or Protocol Changes
+
+- No code or modelling protocol changed in this entry.
+- Added `docs/aji_updates_2026_06_29.md`.
+- Added `docs/literature_review_scoping_2026_06_29.md`.
+- Updated:
+  - `docs/next_stage_and_literature_review_plan.md`
+  - `README.md`
+  - `PROJECT_OVERVIEW.md`
+  - `START_NEW_CHAT_PROMPT.md`
+
+### Setup
+
+- Local literature folders scanned:
+  - `C:\Msc_DSML\Msc_Project\Project_Preparation\Background_Paper`
+  - `C:\Msc_DSML\Msc_Project\Project_Preparation\Recent_Paper`
+- Main local papers identified:
+  - Hu and Liu, 2004, *Mining and Summarizing Customer Reviews*
+  - Tang et al., 2016, *Aspect Level Sentiment Classification with Deep Memory Network*
+  - Kontonatsios et al., 2023, *FABSA: An aspect-based sentiment analysis dataset of user reviews*
+  - Ding et al., 2023, *Towards Open-Domain Topic Classification*
+  - Yu et al., 2023, *Open, Closed, or Small Language Models for Text Classification?*
+  - Ventirozos et al., *Exploring Zero-Shot ACSA with Unified Meaning Representation in Chain-of-Thought Prompting*
+  - Lim et al., 2026, *Parameter-Efficient Adaptation of Qwen2.5 for Aspect-Based Sentiment Analysis Using Low-Rank Adaptation and Parameter-Efficient Fine-Tuning*
+
+### Commands
+
+```powershell
+git status --short --branch
+Get-ChildItem -LiteralPath 'C:\Msc_DSML\Msc_Project' -Recurse -File -Include *.pdf,*.bib,*.ris,*.md,*.txt
+```
+
+### Outputs
+
+- `docs/aji_updates_2026_06_29.md`
+- `docs/literature_review_scoping_2026_06_29.md`
+- Updated handoff and project overview documents.
+
+### Results
+
+| Item | Result |
+| --- | --- |
+| Aji's latest LOAO/Gemini guidance recorded | Yes |
+| Local downloaded literature mapped into themes | Yes |
+| Hourglass dissertation framing drafted | Yes |
+| Narrow topic proposed | Candidate-label open-topic aspect+sentiment classification for customer feedback |
+
+### Interpretation
+
+- The dissertation should start broadly from customer feedback analytics, review mining, ABSA, and multi-label classification.
+- It should narrow to candidate-label open-topic aspect+sentiment classification, where held-out aspects are the central technical claim and held-out organisation is a supporting deployment-shift axis.
+- It can broaden again to practical open-vocabulary feedback analytics systems, comparing local encoders, open LLMs, and hosted LLMs under accuracy, latency, cost, privacy, and governance constraints.
+- Aji's latest guidance strengthens the role of LOAO in the open-topic claim and adds two concrete Gemini evaluation requirements: use JSON mode if available and include reasoning tokens in cost accounting.
+
+### Next Step
+
+- Use `docs/literature_review_scoping_2026_06_29.md` as the starting point for a full literature review matrix.
+- Fill the missing literature gaps: multi-label evaluation, entailment-style zero-shot classification, domain generalisation, instruction-tuned ABSA, and practical LLM cost/latency evaluation.
+- Ask a stronger reasoning model to critique and refine the hourglass framing before drafting the literature review prose.
+
+## 2026-06-29: Eight-Stage Future Work Roadmap
+
+### Purpose
+
+- Record the agreed future-work order after reviewing the Pro-model dissertation-topic feedback.
+- Keep the project oriented toward Qwen/Gemini and structured LLM comparisons while preserving a robust taxonomy-shift dissertation spine.
+
+### Code Or Protocol Changes
+
+- No code or modelling protocol changed.
+- Updated `docs/next_stage_and_literature_review_plan.md` with an eight-stage roadmap.
+
+### Results
+
+The recorded stages are:
+
+1. Freeze the dissertation spine and internal experiment spec.
+2. Build the literature review matrix.
+3. Complete LOAO for the strongest local baseline.
+4. Run a controlled Gemini pilot.
+5. Choose the main modelling branch.
+6. Strengthen Qwen under the chosen branch.
+7. Implement joint aspect-sentiment pair scoring if needed.
+8. Write and synthesise the dissertation.
+
+### Interpretation
+
+- Qwen/Gemini remain a major intended direction, but the dissertation should not depend on them succeeding before the evaluation spine is stable.
+- Stage 1 and Stage 2 are the immediate pre-experiment tasks.
+- LOAO remains the first experimental priority after the literature/framework checkpoint.
+
+### Next Step
+
+- Complete Stage 1 and Stage 2 before resuming major modelling.

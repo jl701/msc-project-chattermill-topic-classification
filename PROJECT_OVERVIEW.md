@@ -658,7 +658,7 @@ Held-out aspect, Qwen3-4B indexed zero-shot:
 
 See `docs/generalisation_baselines.md` for details.
 
-The strongest current local non-LLM open-topic baseline is documented separately in `docs/non_llm_open_topic_baseline.md`. The paused next-stage modelling plan and literature-review framing are recorded in `docs/next_stage_and_literature_review_plan.md`.
+The strongest current local non-LLM open-topic baseline is documented separately in `docs/non_llm_open_topic_baseline.md`. The paused next-stage modelling plan and literature-review framing are recorded in `docs/next_stage_and_literature_review_plan.md`, with the first local-paper scoping pass in `docs/literature_review_scoping_2026_06_29.md` and the latest Aji guidance in `docs/aji_updates_2026_06_29.md`.
 
 Qwen held-out-aspect status:
 

@@ -12,6 +12,8 @@ The main project context, current understanding, datasets, modelling plan, evalu
 - [docs/github_upload_scope.md](docs/github_upload_scope.md)
 - [docs/non_llm_open_topic_baseline.md](docs/non_llm_open_topic_baseline.md)
 - [docs/next_stage_and_literature_review_plan.md](docs/next_stage_and_literature_review_plan.md)
+- [docs/literature_review_scoping_2026_06_29.md](docs/literature_review_scoping_2026_06_29.md)
+- [docs/aji_updates_2026_06_29.md](docs/aji_updates_2026_06_29.md)
 
 The current first phase is a closed-topic FABSA baseline:
 

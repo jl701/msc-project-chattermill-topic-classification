@@ -44,6 +44,8 @@ Before doing new work, please inspect these files. If a `D:\Msc_Project` path is
 11. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\loao_heldout_aspect.md
 12. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\non_llm_open_topic_baseline.md
 13. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\next_stage_and_literature_review_plan.md
+14. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\literature_review_scoping_2026_06_29.md
+15. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\aji_updates_2026_06_29.md
 
 Immediate instruction for the new chat:
 
@@ -273,6 +275,19 @@ Latest user decision and completed local baseline phase from 2026-06-27:
 - Detailed write-up:
   - `docs/non_llm_open_topic_baseline.md`
   - `docs/next_stage_and_literature_review_plan.md`
+
+Latest Aji/literature-review framing update from 2026-06-29:
+
+- Aji confirmed that the leave-one-aspect-out setup is the part that matters most for the open-topic claim.
+- For Gemini, use `response_format` / JSON mode if the endpoint supports it, rather than only measuring valid JSON rate.
+- Gemini cost comparisons must include reasoning/thinking tokens, not just visible output tokens.
+- The dissertation should be framed with an hourglass shape:
+  - broad opening: customer feedback analytics, review mining, ABSA, and multi-label topic/sentiment classification
+  - narrow waist: candidate-label open-topic aspect+sentiment classification on FABSA, evaluated through held-out aspects and cross-organisation shift
+  - broad ending: practical open-vocabulary feedback analytics systems combining local encoders, open LLMs, and hosted LLMs under accuracy/cost/latency/governance constraints
+- First local literature scoping is recorded in:
+  - `docs/literature_review_scoping_2026_06_29.md`
+  - `docs/aji_updates_2026_06_29.md`
 
 Important repository hygiene:
 
