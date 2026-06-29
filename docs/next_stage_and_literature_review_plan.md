@@ -8,6 +8,8 @@ See also:
 
 - `docs/non_llm_open_topic_baseline.md`
 - `docs/literature_review_scoping_2026_06_29.md`
+- `docs/dissertation_internal_spec.md`
+- `docs/literature_review_matrix.md`
 - `docs/aji_updates_2026_06_29.md`
 
 ## Current Pause Point
@@ -373,6 +375,7 @@ Tasks:
 Expected output:
 
 - A concise project spec that future experiments must follow.
+- Current output file: `docs/dissertation_internal_spec.md`.
 
 ### Stage 2: Build The Literature Review Matrix
 
@@ -409,6 +412,7 @@ Tasks:
 Expected output:
 
 - A literature review matrix that can later be expanded into the related-work chapter.
+- Current output file: `docs/literature_review_matrix.md`.
 
 ### Stage 3: Complete LOAO For The Strongest Local Baseline
 

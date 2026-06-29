@@ -46,6 +46,8 @@ Before doing new work, please inspect these files. If a `D:\Msc_Project` path is
 13. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\next_stage_and_literature_review_plan.md
 14. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\literature_review_scoping_2026_06_29.md
 15. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\aji_updates_2026_06_29.md
+16. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\dissertation_internal_spec.md
+17. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\literature_review_matrix.md
 
 Immediate instruction for the new chat:
 
@@ -288,6 +290,9 @@ Latest Aji/literature-review framing update from 2026-06-29:
 - First local literature scoping is recorded in:
   - `docs/literature_review_scoping_2026_06_29.md`
   - `docs/aji_updates_2026_06_29.md`
+- Stage 1 and Stage 2 pre-experiment documents are recorded in:
+  - `docs/dissertation_internal_spec.md`
+  - `docs/literature_review_matrix.md`
 
 Important repository hygiene:
 

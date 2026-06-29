@@ -785,3 +785,62 @@ The recorded stages are:
 ### Next Step
 
 - Complete Stage 1 and Stage 2 before resuming major modelling.
+
+## 2026-06-29: Stage 1 And Stage 2 Completion
+
+### Purpose
+
+- Complete the immediate pre-experiment tasks before resuming LOAO, Gemini, Qwen, or joint pair-scoring work.
+- Freeze the dissertation spine and experiment rules.
+- Build the first usable literature review matrix.
+
+### Code Or Protocol Changes
+
+- No code changed.
+- Added `docs/dissertation_internal_spec.md`.
+- Added `docs/literature_review_matrix.md`.
+- Updated:
+  - `README.md`
+  - `PROJECT_OVERVIEW.md`
+  - `START_NEW_CHAT_PROMPT.md`
+  - `docs/next_stage_and_literature_review_plan.md`
+  - `docs/experiment_log.md`
+
+### Results
+
+Stage 1 output:
+
+- `docs/dissertation_internal_spec.md`
+- Freezes the working spine:
+  - `structured candidate-label aspect-sentiment modelling under taxonomy shift in customer feedback`
+- Defines:
+  - task variants
+  - candidate-label input format
+  - indexed JSON output schema
+  - invalid-output handling
+  - metrics
+  - primary split/protocol roles
+  - local two-stage baseline, structured LLMs, and joint pair scoring
+
+Stage 2 output:
+
+- `docs/literature_review_matrix.md`
+- Maps local papers into:
+  - customer review mining
+  - ABSA
+  - multi-label classification and evaluation
+  - domain/organisation generalisation
+  - open-topic taxonomy shift
+  - candidate-label and zero-shot classification
+  - structured-output LLMs and deployment trade-offs
+- Records literature gaps and search strings.
+
+### Interpretation
+
+- The project now has a documented bridge from completed experiments to dissertation framing.
+- The immediate next experimental priority remains LOAO for the strongest local baseline.
+- Gemini/Qwen should be resumed only under the frozen candidate-label JSON/evaluation spec.
+
+### Next Step
+
+- Begin Stage 3: complete LOAO for the strongest local two-stage baseline, or pause experiments and expand `docs/literature_review_matrix.md` into a full related-work outline.
