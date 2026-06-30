@@ -45,7 +45,6 @@ METRIC_COLUMNS = [
     "aspect_exact_match_rate",
     "sentiment_accuracy_when_gold_aspect_predicted",
 ]
-FAST_SENTIMENT_MODES = tuple(mode for mode in SENTIMENT_MODES if mode != "transformer_aspect_conditioned")
 
 
 def aspect_slug(aspect: str) -> str:
@@ -176,6 +175,16 @@ def cross_encoder_args(args: argparse.Namespace) -> SimpleNamespace:
         allow_empty_predictions=not args.ensure_one,
         selection_metric=args.selection_metric,
         sentiment_mode=args.sentiment_mode,
+        sentiment_model_name=args.sentiment_model_name,
+        sentiment_max_length=args.sentiment_max_length,
+        sentiment_batch_size=args.sentiment_batch_size,
+        sentiment_eval_batch_size=args.sentiment_eval_batch_size,
+        sentiment_learning_rate=args.sentiment_learning_rate,
+        sentiment_weight_decay=args.sentiment_weight_decay,
+        sentiment_epochs=args.sentiment_epochs,
+        sentiment_warmup_ratio=args.sentiment_warmup_ratio,
+        sentiment_class_weight=args.sentiment_class_weight,
+        sentiment_selection_metric=args.sentiment_selection_metric,
     )
 
 
@@ -243,7 +252,17 @@ def main() -> None:
         default="pair_samples_f1",
         help="Primary validation metric for threshold/model selection.",
     )
-    parser.add_argument("--sentiment-mode", choices=FAST_SENTIMENT_MODES, default="aspect_conditioned")
+    parser.add_argument("--sentiment-mode", choices=SENTIMENT_MODES, default="aspect_conditioned")
+    parser.add_argument("--sentiment-model-name", default="distilbert-base-uncased")
+    parser.add_argument("--sentiment-epochs", type=int, default=3)
+    parser.add_argument("--sentiment-batch-size", type=int, default=16)
+    parser.add_argument("--sentiment-eval-batch-size", type=int, default=64)
+    parser.add_argument("--sentiment-learning-rate", type=float, default=2e-5)
+    parser.add_argument("--sentiment-weight-decay", type=float, default=0.01)
+    parser.add_argument("--sentiment-max-length", type=int, default=256)
+    parser.add_argument("--sentiment-warmup-ratio", type=float, default=0.1)
+    parser.add_argument("--sentiment-class-weight", choices=["none", "balanced", "sqrt"], default="balanced")
+    parser.add_argument("--sentiment-selection-metric", choices=["accuracy", "macro_f1", "micro_f1"], default="macro_f1")
     parser.add_argument("--model-name", default="distilbert-base-uncased")
     parser.add_argument("--epochs", type=int, default=3)
     parser.add_argument("--batch-size", type=int, default=32)
@@ -261,9 +280,15 @@ def main() -> None:
     args = parser.parse_args()
 
     set_seed(args.seed)
+    baselines = ["lexical", "cross_encoder"] if args.baseline == "both" else [args.baseline]
+    if args.sentiment_mode == "transformer_aspect_conditioned" and "lexical" in baselines:
+        parser.error(
+            "--sentiment-mode transformer_aspect_conditioned is only supported with "
+            "--baseline cross_encoder in this LOAO runner."
+        )
+
     frame = load_all_fabsa(args.data_dir)
     aspects = selected_aspects(frame, args.heldout_aspect)
-    baselines = ["lexical", "cross_encoder"] if args.baseline == "both" else [args.baseline]
     strategies = ["label_masked", "example_filtered"] if args.strategy == "both" else [args.strategy]
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
