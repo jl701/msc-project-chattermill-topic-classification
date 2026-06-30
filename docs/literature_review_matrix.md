@@ -359,6 +359,8 @@ hosted LLM privacy governance industrial NLP
 
 ## Literature Gap Backlog
 
+The first foundation fill for multi-label metrics, cross-domain ABSA, candidate-label / label-semantics methods, and structured-output LLM reliability was added on 2026-06-30 in `docs/tier1_core_literature_review_matrix.md`. The table below remains a backlog for follow-up depth and final citation selection, not a statement that these areas are still empty.
+
 | Priority | Gap | Why It Matters | Search Target |
 | ---: | --- | --- | --- |
 | 1 | Multi-label evaluation metrics | Needed to justify samples F1, micro F1, macro F1, thresholding. | Multi-label text classification survey / evaluation metrics. |

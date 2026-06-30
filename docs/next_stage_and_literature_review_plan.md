@@ -369,6 +369,33 @@ For now, avoid deep Tier 2 optional branches:
 
 These Tier 2 branches should remain as placeholders or future-work notes until the project direction and next experiment branch are confirmed.
 
+## Deferred Citation Branches Pending Aji's Reply
+
+The 2026-06-30 literature-review update filled the first class of foundation references: multi-label metrics, cross-domain ABSA, candidate-label / label-semantics methods, and structured-output LLM reliability.
+
+The following citation branches should remain recorded but not deeply expanded until Aji confirms the dissertation emphasis and the next experiment branch:
+
+- Qwen fine-tuning details:
+  - Qwen model-family papers;
+  - LoRA / QLoRA / PEFT method papers;
+  - instruction tuning and ABSA-specific SFT papers;
+  - GPU/resource-efficient fine-tuning comparisons.
+- Gemini and hosted-LLM evaluation:
+  - Gemini API/model documentation for the exact model used;
+  - structured-output / JSON-mode reliability under the selected endpoint;
+  - latency, token accounting, reasoning/thinking tokens, and cost-estimation references.
+- Joint aspect-sentiment pair scoring:
+  - cross-encoder pair scoring;
+  - NLI-style pair classification;
+  - ranking or pairwise relevance models;
+  - hard-negative construction for candidate aspect-sentiment pairs.
+- Deployment and governance:
+  - privacy and data-governance constraints for hosted LLMs;
+  - industrial NLP reliability and monitoring;
+  - cost/latency trade-offs at production scale.
+
+These should be revisited after Aji replies or after the next experimental branch decision note is written.
+
 ## Updated Eight-Stage Future Work Roadmap
 
 This roadmap records the current working order after the 2026-06-29 topic-framing discussion. The project should move toward Qwen/Gemini and structured LLM comparisons, but the dissertation spine should remain robust: structured candidate-label aspect+sentiment modelling under taxonomy shift.
