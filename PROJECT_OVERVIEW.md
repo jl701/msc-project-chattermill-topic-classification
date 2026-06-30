@@ -680,7 +680,20 @@ The current Qwen held-out-aspect result is therefore a zero-shot prompt baseline
 
 The current Tier 1 literature-review foundation is recorded in `docs/tier1_core_literature_review_matrix.md`. It covers customer review mining, ABSA, FABSA, multi-label evaluation, domain generalisation, candidate-label taxonomy shift, and structured-output LLM evaluation, while leaving detailed Qwen/Gemini fine-tuning and deployment-governance work as later optional branches.
 
-## 14. Current Open Questions
+## 14. Thesis LaTeX Source And Writing Rule
+
+The dissertation source now lives in `thesis/`, created from the UCL MSc thesis template zip at `C:\Msc_DSML\Msc_Project\UCL_Msc_Thesis.zip`.
+
+Use these files as the thesis source of truth:
+
+- `thesis/main.tex`
+- `thesis/chapters/02_literature_review.tex`
+- `thesis/references.bib`
+- `thesis/notes/pro_literature_review_feedback_2026_06_30.tex`
+
+Future dissertation-writing work should edit the LaTeX source directly. Markdown files under `docs/` should continue to record experiment logs, protocol notes, planning, and handoff summaries, but they should not become parallel final-dissertation drafts. The detailed workflow is recorded in `docs/thesis_latex_workflow.md`.
+
+## 15. Current Open Questions
 
 1. Are tagger guidance notes available for FABSA aspects?
    - There are no formal descriptions, but Aji may be able to find human scoring guidance.
@@ -700,7 +713,7 @@ The current Tier 1 literature-review foundation is recorded in `docs/tier1_core_
    - Candidate-aspect DistilBERT selector plus DistilBERT aspect-conditioned sentiment is now the strongest fixed held-out-aspect non-LLM result.
    - The next major options are a hosted Gemini candidate-label baseline or Qwen fine-tuning/evaluation on stronger GPU access.
 
-## 15. Immediate Next Steps
+## 16. Immediate Next Steps
 
 1. Preserve the completed DistilBERT aspect-conditioned sentiment baseline in code and documentation.
 
@@ -712,7 +725,7 @@ The current Tier 1 literature-review foundation is recorded in `docs/tier1_core_
 
 5. Keep LOAO all-row evaluation as the robustness view and positive-row LOAO only as a sentiment diagnostic.
 
-## 16. Notes For Repository Hygiene
+## 17. Notes For Repository Hygiene
 
 Do not commit:
 

@@ -1,0 +1,69 @@
+% This working note records the Pro model literature-review feedback received on 2026-06-30.
+% It is not included in the main dissertation build. Use it as a revision checklist.
+
+\section*{Pro Literature Review Feedback Record, 2026-06-30}
+
+\subsection*{Core Framing}
+
+The literature review should not be framed as a generic survey of LLMs for review classification. It should support the dissertation spine:
+
+\begin{quote}
+Structured candidate-label aspect-sentiment classification under taxonomy shift in customer feedback.
+\end{quote}
+
+The central task is not unrestricted topic discovery. The model receives supplied candidate aspect labels at inference time and predicts which aspects apply, together with aspect-specific sentiment. Qwen and Gemini are important next-stage model families, but they should be evaluated inside this candidate-label taxonomy-shift problem rather than becoming the whole dissertation topic before the experiments are complete.
+
+\subsection*{Hourglass Literature Review Shape}
+
+\begin{enumerate}
+  \item Start broadly with customer review mining and opinion mining.
+  \item Narrow to ABSA and the claim that sentiment must be aspect-specific.
+  \item Anchor the empirical task in FABSA.
+  \item Explain the multi-label evaluation problem and the need for samples, micro, macro, aspect-only, and sentiment-conditional metrics.
+  \item Separate organisation/domain shift from taxonomy/new-aspect shift.
+  \item Place candidate-label classification at the dissertation waist.
+  \item End with structured-output LLMs as a natural model family for supplied-label prediction.
+\end{enumerate}
+
+\subsection*{Claims Supported By This Structure}
+
+\begin{itemize}
+  \item Customer feedback contains actionable aspects and opinions, not only document sentiment.
+  \item FABSA is a suitable public benchmark for multi-label customer-feedback ABSA.
+  \item Fixed-taxonomy evaluation is insufficient for evolving feedback taxonomies.
+  \item Held-out organisation and held-out aspect protocols answer different generalisation questions.
+  \item Candidate-label modelling is the correct operational framing for new-aspect generalisation.
+  \item Structured-output LLMs should be judged by schema reliability and cost/latency diagnostics as well as F1.
+\end{itemize}
+
+\subsection*{Must-Fill Before Final Dissertation}
+
+\begin{enumerate}
+  \item Tighten exact definitions of sample F1, micro F1, macro F1, and threshold diagnostics using multi-label evaluation literature.
+  \item Add direct cross-domain ABSA references beyond general domain-adaptation citations.
+  \item Find at least one strong source on dynamic taxonomies, taxonomy evolution, or changing label sets in text classification or industrial categorisation.
+  \item Cite the FABSA paper precisely for dataset size, aspect hierarchy, sentiment labels, and any original candidate-aspect setup.
+  \item Explain all-row LOAO and positive-row LOAO clearly in the methods chapter, because they answer different questions.
+\end{enumerate}
+
+\subsection*{Only Expand If Qwen/Gemini Become Central}
+
+\begin{enumerate}
+  \item Official documentation for the exact Gemini endpoint used, including JSON mode, token accounting, and reasoning/thinking token fields.
+  \item Structured-output reliability benchmarks and constrained decoding references.
+  \item LLM classification comparison literature, especially work showing that small supervised models can remain competitive.
+  \item Qwen fine-tuning, PEFT, and LoRA literature only if the Qwen fine-tuning branch is actually completed.
+\end{enumerate}
+
+\subsection*{Only Expand If Joint Pair Scoring Becomes Central}
+
+\begin{enumerate}
+  \item Cross-encoder pair scoring literature.
+  \item NLI-style text-label or label-pair relevance literature.
+  \item Hard-negative construction for ranking or contrastive classification.
+  \item Joint ABSA formulations that directly predict aspect-sentiment pairs.
+\end{enumerate}
+
+\subsection*{Current Recommendation}
+
+Use the title ``Structured Candidate-Label Aspect-Sentiment Classification under Taxonomy Shift in Customer Feedback'' unless Qwen/Gemini experiments become central enough to justify a more LLM-focused title. The current literature-review draft in \texttt{thesis/chapters/02\_literature\_review.tex} follows this recommendation.

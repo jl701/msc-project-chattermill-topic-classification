@@ -30,6 +30,19 @@ wandb/
 # Logs
 *.log
 
+# LaTeX build artifacts
+thesis/*.aux
+thesis/*.bbl
+thesis/*.blg
+thesis/*.fls
+thesis/*.fdb_latexmk
+thesis/*.lof
+thesis/*.lot
+thesis/*.out
+thesis/*.pdf
+thesis/*.synctex.gz
+thesis/*.toc
+
 # OS/editor
 .DS_Store
 Thumbs.db

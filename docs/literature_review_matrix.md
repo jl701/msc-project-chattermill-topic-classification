@@ -258,6 +258,8 @@ taxonomy shift text classification
 dynamic taxonomy classification NLP
 ```
 
+2026-07-01 update: the direct dynamic-label evidence gap is now partly filled by Godbole et al. (2005), *Text Classification with Evolving Label-Sets*, and Wohlwend et al. (2019), *Metric Learning for Dynamic Text Classification*. Keep the search strings above only for optional follow-up if the final dissertation needs more industrial-taxonomy evidence.
+
 ### 6. Candidate-Label, Zero-Shot, And NLI-Style Classification
 
 Purpose:
@@ -369,7 +371,7 @@ The first foundation fill for multi-label metrics, cross-domain ABSA, candidate-
 | 2 | Instruction-tuned / generative ABSA | Needed to position Qwen/Gemini and structured outputs. | InstructABSA, unified generative ABSA, prompt-based ABSA. |
 | 2 | Structured-output LLM reliability | Needed for JSON mode, parse failures, schema validity. | JSON/constrained decoding/structured output LLM papers. |
 | 3 | LLM cost/latency evaluation | Needed if Gemini becomes central. | LLM classification cost latency benchmark papers. |
-| 3 | Dynamic taxonomy / taxonomy expansion | Would strengthen the taxonomy-shift framing. | Dynamic taxonomy classification / taxonomy evolution NLP. |
+| 3 | Dynamic taxonomy / taxonomy expansion | Basic support has been added through evolving-label-set and dynamic-text-classification papers; further industrial evidence is optional. | Added: Godbole et al. 2005; Wohlwend et al. 2019. Optional: dynamic taxonomy classification / taxonomy evolution NLP. |
 
 ## Draft Related-Work Argument
 

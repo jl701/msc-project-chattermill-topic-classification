@@ -1,0 +1,73 @@
+\documentclass[12pt,a4paper]{report}
+
+\usepackage{setspace}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{booktabs}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+
+\graphicspath{{./}}
+\setlength{\emergencystretch}{3em}
+
+\title{
+  {\includegraphics[scale=.45]{ucl_logo.png}}\\[1em]
+  {\Huge Structured Candidate-Label Aspect-Sentiment Classification under Taxonomy Shift in Customer Feedback}\\[0.5em]
+  {\large Working Dissertation Draft}
+}
+
+\date{Working draft: 30 June 2026}
+
+\author{
+  Jialin Liu\\[0.5em]
+  MSc Data Science and Machine Learning\\[0.5em]
+  Supervisor: Aji Ghose\\[1em]
+  \thanks{
+  {\bf Disclaimer:}
+  This report is submitted as part requirement for the MSc Data Science and Machine Learning at UCL.
+  It is substantially the result of my own work except where explicitly indicated in the text.
+  The report will be distributed to the internal and external examiners, but thereafter may not be copied
+  or distributed except with permission from the author.}
+}
+
+\begin{document}
+
+\onehalfspacing
+\maketitle
+
+\begin{abstract}
+This dissertation studies structured aspect-sentiment classification for customer feedback when the target aspect taxonomy changes between training and evaluation. The working focus is not unrestricted topic generation, but candidate-label prediction: at inference time, a model receives a supplied set of candidate aspect labels and must select relevant aspects and assign aspect-specific sentiment. The empirical setting is FABSA, a public multi-domain, multi-organisation, multi-label customer-feedback ABSA dataset. Current experiments compare closed-topic, held-out organisation, fixed held-out-aspect, and leave-one-aspect-out protocols, with local DistilBERT baselines and planned structured-output LLM comparisons.
+\end{abstract}
+
+\tableofcontents
+\setcounter{page}{1}
+
+\input{chapters/01_introduction}
+\input{chapters/02_literature_review}
+
+\chapter{Data and Task Formulation}
+This chapter will describe FABSA, the aspect hierarchy, sentiment labels, aspect-sentiment pair labels, train/validation/test construction, and the four evaluation protocols: closed-topic, held-out organisation, fixed held-out aspect, and leave-one-aspect-out.
+
+\chapter{Methods}
+This chapter will describe the closed-topic supervised baselines, local candidate-aspect models, aspect-conditioned sentiment models, Qwen/Gemini structured-output candidate-label methods if completed, and any joint pair-scoring model if it becomes part of the final project.
+
+\chapter{Results}
+This chapter will report closed-topic, held-out organisation, fixed held-out-aspect, LOAO, and LLM results. Current working headline results include closed-topic DistilBERT pair samples F1 of 0.7803, held-out organisation DistilBERT pair samples F1 of 0.7575, strongest fixed held-out-aspect local non-LLM pair samples F1 of 0.6071, and Qwen indexed zero-shot fixed held-out-aspect pair samples F1 of 0.5374.
+
+\chapter{Discussion}
+This chapter will interpret taxonomy-shift difficulty, local-model versus LLM trade-offs, schema reliability for structured outputs, metric limitations, and practical constraints such as latency, cost, and governance where supported by completed experiments.
+
+\chapter{Conclusion}
+This chapter will summarise what the dissertation demonstrates about candidate-label aspect-sentiment classification under taxonomy shift and identify the most defensible next steps for robust customer-feedback analytics.
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+\appendix
+\chapter{Project Artefact Index}
+The current thesis prose source is maintained in this \texttt{thesis/} directory. Working notes that should not be treated as final dissertation prose are stored under \texttt{thesis/notes/}. Experiment logs and protocol documentation remain in the repository \texttt{docs/} directory.
+
+\end{document}

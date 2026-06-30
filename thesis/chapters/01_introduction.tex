@@ -1,0 +1,15 @@
+\chapter{Introduction}
+
+\section{Working Dissertation Frame}
+
+Customer-feedback analytics often needs more than a document-level positive or negative judgement. A single review can mention several service features, product issues, support interactions, or user-experience points, and these aspects can carry different sentiment. This dissertation therefore studies aspect-sentiment classification for customer feedback, with a particular focus on what happens when the target aspect taxonomy changes.
+
+The working dissertation frame is structured candidate-label aspect-sentiment classification under taxonomy shift in customer feedback. In this framing, the model is not asked to invent arbitrary topics. Instead, at inference time it receives a supplied set of candidate aspect labels and predicts which candidate aspects are relevant to the review, together with their sentiment. This makes the open-topic claim operational and measurable while matching a realistic analytics setting where organisations may revise or extend their feedback taxonomy.
+
+\section{Current Empirical Position}
+
+The project currently has a set of local and language-model baselines over FABSA. Closed-topic and held-out organisation evaluations establish the fixed-taxonomy reference points. Fixed held-out-aspect and leave-one-aspect-out evaluations then test taxonomy-shift behaviour. The strongest current fixed held-out-aspect local non-LLM baseline is a candidate-aspect DistilBERT selector combined with a DistilBERT aspect-conditioned sentiment classifier, achieving 0.6071 pair samples F1. The initial Qwen indexed zero-shot baseline achieves 0.5374 pair samples F1 under the same fixed held-out-aspect setup, and future Qwen/Gemini work should use the same candidate-label protocol with structured-output reliability diagnostics.
+
+\section{Contribution Shape}
+
+The intended contribution is an evaluation-centred study rather than a claim that any one model family is automatically superior. The dissertation compares increasingly difficult generalisation settings: fixed taxonomy, unseen organisations, held-out aspects, and leave-one-aspect-out rotations. It also compares model families that can consume candidate labels, including local discriminative baselines and structured-output LLMs if the next experimental stage is completed. This keeps the project coherent even if hosted or open LLMs underperform the strongest local baseline.

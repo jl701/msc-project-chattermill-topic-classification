@@ -294,6 +294,16 @@ Latest Aji/literature-review framing update from 2026-06-29:
   - `docs/dissertation_internal_spec.md`
   - `docs/literature_review_matrix.md`
 
+Thesis LaTeX workflow:
+
+- Dissertation prose should now be edited directly in LaTeX, not as parallel Markdown drafts.
+- Main entry point: `thesis/main.tex`.
+- Literature review draft: `thesis/chapters/02_literature_review.tex`.
+- Bibliography: `thesis/references.bib`.
+- Pro-model literature-review feedback and revision checklist: `thesis/notes/pro_literature_review_feedback_2026_06_30.tex`.
+- Workflow rule: `docs/thesis_latex_workflow.md`.
+- If asked to revise the dissertation, literature review, citations, chapter structure, or thesis wording, edit the LaTeX source first and only use `docs/` for supporting logs/plans.
+
 Important repository hygiene:
 
 - Do not commit internal Chattermill data, credentials, API keys, model checkpoints, or confidential outputs.

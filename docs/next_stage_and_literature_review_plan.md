@@ -615,6 +615,17 @@ Expected output:
 
 - A dissertation narrative that remains valid whether LLMs outperform, match, or underperform the strongest local baseline.
 
+### Thesis LaTeX Workflow Checkpoint
+
+The UCL MSc thesis template has been extracted into the repository under `thesis/`. Future dissertation prose edits should be made directly in LaTeX:
+
+- `thesis/main.tex`
+- `thesis/chapters/02_literature_review.tex`
+- `thesis/references.bib`
+- `thesis/notes/pro_literature_review_feedback_2026_06_30.tex`
+
+The workflow rule is recorded in `docs/thesis_latex_workflow.md`. Markdown remains appropriate for experiment logs, protocol notes, planning, and handoff summaries, but the dissertation text itself should not be maintained as a separate Markdown draft.
+
 ## What Not To Do Next
 
 - Do not spend more time on small fixed held-out-aspect DistilBERT tuning unless a specific dissertation gap appears.
