@@ -239,7 +239,7 @@ Useful angles:
 
 Already relevant in project notes:
 
-- Ding et al., 2023, `Towards Open-Domain Topic Classification`.
+- Ding et al., 2022, `Towards Open-Domain Topic Classification`.
 - Yin et al., 2019, zero-shot text classification benchmark.
 
 ### Instruction-Following LLMs For Classification

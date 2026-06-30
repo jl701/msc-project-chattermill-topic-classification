@@ -711,7 +711,7 @@ git status --short --branch
   - Hu and Liu, 2004, *Mining and Summarizing Customer Reviews*
   - Tang et al., 2016, *Aspect Level Sentiment Classification with Deep Memory Network*
   - Kontonatsios et al., 2023, *FABSA: An aspect-based sentiment analysis dataset of user reviews*
-  - Ding et al., 2023, *Towards Open-Domain Topic Classification*
+  - Ding et al., 2022, *Towards Open-Domain Topic Classification* (local 2023 arXiv copy)
   - Yu et al., 2023, *Open, Closed, or Small Language Models for Text Classification?*
   - Ventirozos et al., *Exploring Zero-Shot ACSA with Unified Meaning Representation in Chain-of-Thought Prompting*
   - Lim et al., 2026, *Parameter-Efficient Adaptation of Qwen2.5 for Aspect-Based Sentiment Analysis Using Low-Rank Adaptation and Parameter-Efficient Fine-Tuning*

@@ -17,7 +17,7 @@ This note records the first pass over the locally downloaded literature in `C:\M
 | Local File | Paper | Likely Role |
 | --- | --- | --- |
 | `Project_Preparation/Recent_Paper/1-s2.0-S0925231223009906-main.pdf` | Kontonatsios et al., 2023, *FABSA: An aspect-based sentiment analysis dataset of user reviews* | Dataset and task anchor; Chattermill-related public benchmark |
-| `Project_Preparation/Recent_Paper/2306.17290_Towards_Open_Domain_Topic_Classification.pdf` | Ding et al., 2023, *Towards Open-Domain Topic Classification* | Direct open-topic/candidate-label motivation: user-defined taxonomy in real time |
+| `Project_Preparation/Recent_Paper/2306.17290_Towards_Open_Domain_Topic_Classification.pdf` | Ding et al., 2022, *Towards Open-Domain Topic Classification*; local file is the 2023 arXiv copy | Direct open-topic/candidate-label motivation: user-defined taxonomy in real time |
 | `Project_Preparation/Recent_Paper/2308.10092v1.pdf` | Yu et al., 2023, *Open, Closed, or Small Language Models for Text Classification?* | Model-family comparison: hosted LLMs, open LLMs, and smaller supervised models |
 | `Project_Preparation/Recent_Paper/2512.19651v1.pdf` | Ventirozos et al., *Exploring Zero-Shot ACSA with Unified Meaning Representation in Chain-of-Thought Prompting* | LLM prompting for ACSA; useful for Qwen/Gemini zero-shot framing |
 | `Project_Preparation/Recent_Paper/engproc-128-00015.pdf` | Lim et al., 2026, *Parameter-Efficient Adaptation of Qwen2.5 for Aspect-Based Sentiment Analysis Using Low-Rank Adaptation and Parameter-Efficient Fine-Tuning* | Qwen/LoRA/PEFT motivation for the next modelling stage |
@@ -79,7 +79,7 @@ Gap:
 
 Anchor paper:
 
-- Ding et al., 2023.
+- Ding et al., 2022.
 
 Purpose in dissertation:
 
@@ -249,7 +249,7 @@ Recommended order:
 1. Re-read FABSA paper.
    - Extract dataset motivation, annotation setup, domains, labels, baseline framing, and limitations.
 
-2. Re-read Ding et al., 2023.
+2. Re-read Ding et al., 2022.
    - Extract how they define open-domain topic classification and user-defined taxonomy.
    - Map their setup against this project's held-out-aspect candidate-label formulation.
 
@@ -266,4 +266,3 @@ Recommended order:
    - Use them for the next-stage LLM discussion, not as the core of the current completed experimental contribution.
 
 7. Fill gaps with targeted searches for multi-label evaluation, NLI-style zero-shot classification, and domain generalisation.
-

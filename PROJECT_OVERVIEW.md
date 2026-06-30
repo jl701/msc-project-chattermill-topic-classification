@@ -296,8 +296,9 @@ Aji's FABSA Tagger demo appears to expose the 12-aspect taxonomy and a Qwen3-4B 
    - Public Chattermill-related customer feedback dataset.
    - Multi-domain, multi-label, human-labelled aspect + sentiment data.
 
-2. Ding et al., 2023: `Towards Open-Domain Topic Classification`
+2. Ding et al., 2022: `Towards Open-Domain Topic Classification`
    - Local path: `Project_Preparation/Recent_Paper/2306.17290_Towards_Open_Domain_Topic_Classification.pdf`
+   - Note: the local PDF is the 2023 arXiv copy; the formal citation should use the NAACL 2022 System Demonstrations version.
    - Important for the open-topic/open-vocabulary direction.
    - Focuses on classifying text into user-provided or open-domain topic categories.
 

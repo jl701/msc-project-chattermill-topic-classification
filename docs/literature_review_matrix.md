@@ -52,7 +52,7 @@ The related-work chapter should move from broad to narrow:
 | Hu and Liu, 2004, *Mining and Summarizing Customer Reviews*; `Project_Preparation/Background_Paper/1014052.1014073.pdf` | Customer review mining | Large volumes of product reviews need feature/opinion summarisation. | Early feature extraction and opinion summarisation from customer reviews. | Establishes the historical root of mining product/service aspects from feedback. | Older pre-neural, product-review-focused setting. | Use in the broad opening: customer feedback contains aspects/features and opinions that need structured extraction. |
 | Tang et al., 2016, *Aspect Level Sentiment Classification with Deep Memory Network*; `Project_Preparation/Background_Paper/D16-1021.pdf` | ABSA / aspect-conditioned sentiment | Sentiment depends on the target aspect, not only on the whole sentence or document. | Deep memory network with attention over context for aspect-level sentiment classification. | Supports the principle that sentiment must be conditioned on the aspect. | Standard benchmark setting is narrower than this project's multi-label candidate-label setup. | Use to justify replacing global sentiment with DistilBERT aspect-conditioned sentiment. |
 | Kontonatsios et al., 2023, *FABSA: An aspect-based sentiment analysis dataset of user reviews*; `Project_Preparation/Recent_Paper/1-s2.0-S0925231223009906-main.pdf` | Dataset / ABSA / customer feedback | Existing ABSA datasets are often small, domain-limited, and costly to annotate. | Multi-domain feedback-review ABSA dataset with aspect+sentiment labels. | Still one public dataset with 12 aspects and anonymised organisations. | Central data anchor; use for dataset motivation, task definition, and baseline comparability. |
-| Ding et al., 2023, *Towards Open-Domain Topic Classification*; `Project_Preparation/Recent_Paper/2306.17290_Towards_Open_Domain_Topic_Classification.pdf` | Open-domain topic classification | Users may define arbitrary taxonomies at inference time. | Label-aware zero-shot classifier trained to handle unseen labels and evaluated across domains. | Not specifically ABSA and not tied to aspect+sentiment pairs. | Main conceptual bridge from fixed-head classification to candidate-label taxonomy shift. |
+| Ding et al., 2022, *Towards Open-Domain Topic Classification*; local arXiv copy `Project_Preparation/Recent_Paper/2306.17290_Towards_Open_Domain_Topic_Classification.pdf` | Open-domain topic classification | Users may define arbitrary taxonomies at inference time. | Label-aware zero-shot classifier trained to handle unseen labels and evaluated across domains. | Not specifically ABSA and not tied to aspect+sentiment pairs. | Main conceptual bridge from fixed-head classification to candidate-label taxonomy shift. |
 | Yu et al., 2023, *Open, Closed, or Small Language Models for Text Classification?*; `Project_Preparation/Recent_Paper/2308.10092v1.pdf` | Model-family comparison | It is unclear when closed LLMs, open LLMs, or smaller supervised models are preferable for classification. | Empirical comparison across model families and classification tasks. | Different tasks from FABSA and not focused on taxonomy shift. | Use to motivate fair local-vs-LLM comparison and avoid assuming LLMs are always superior. |
 | Ventirozos et al., *Exploring Zero-Shot ACSA with Unified Meaning Representation in Chain-of-Thought Prompting*; `Project_Preparation/Recent_Paper/2512.19651v1.pdf` | Zero-shot ACSA / LLM prompting | Can LLMs solve aspect-category sentiment analysis without task-specific training? | Zero-shot prompting with UMR/CoT across Qwen/Gemini-style models and multiple datasets. | Preliminary and prompt/model dependent; may not use the same candidate-label protocol. | Use for LLM ABSA prompting context and to justify evaluating Qwen/Gemini carefully rather than assuming success. |
 | Lim et al., 2026, *Parameter-Efficient Adaptation of Qwen2.5 for Aspect-Based Sentiment Analysis Using Low-Rank Adaptation and Parameter-Efficient Fine-Tuning*; `Project_Preparation/Recent_Paper/engproc-128-00015.pdf` | Qwen / PEFT / ABSA | How can Qwen-style models be adapted to ABSA with limited trainable parameters? | LoRA/PEFT adaptation for Qwen2.5 on ABSA-style data. | May be a proceedings paper and may not match FABSA taxonomy-shift setup. | Use as support for possible Qwen fine-tuning, not as the central justification for the dissertation. |
@@ -229,7 +229,7 @@ Purpose:
 
 Current local anchor:
 
-- Ding et al., 2023, *Towards Open-Domain Topic Classification*.
+- Ding et al., 2022, *Towards Open-Domain Topic Classification*.
 
 Argument to make:
 
@@ -269,7 +269,7 @@ Purpose:
 
 Current local anchors:
 
-- Ding et al., 2023.
+- Ding et al., 2022.
 - Yu et al., 2023.
 - Ventirozos et al., zero-shot ACSA.
 
@@ -345,7 +345,7 @@ hosted LLM privacy governance industrial NLP
 
 1. FABSA paper.
    - Extract dataset, annotation, domain, and baseline framing.
-2. Ding et al., 2023.
+2. Ding et al., 2022.
    - Extract open-domain topic classification and user-defined taxonomy framing.
 3. Tang et al., 2016.
    - Extract aspect-level sentiment rationale.
