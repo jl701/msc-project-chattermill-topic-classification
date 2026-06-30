@@ -161,3 +161,15 @@ python .\scripts\prepare_qwen_heldout_aspect_sft_data.py --strategy both --promp
 ```
 
 The training split uses seen-aspect supervision only. Validation and test use held-out candidate aspects and held-out labels only.
+
+## Gemini Comparison Path
+
+A Gemini hosted candidate-label runner was added on 2026-07-01 to provide a closed hosted-LLM comparison under the same indexed held-out-aspect protocol:
+
+```powershell
+python .\scripts\run_gemini_heldout_aspect.py --split validation --limit 5 --response-format json_schema --response-format-fallback --output-dir .\outputs\llm\gemini_candidate_label_YYYYMMDD_HHMMSS
+```
+
+It uses candidate IDs rather than copied aspect strings, normalises predictions into the same pair-label metrics, and records JSON/schema validity, latency, token usage, and reasoning/thinking tokens when the endpoint reports them.
+
+The implementation has only been dry-run locally so far because no compatible API credentials were available in the environment. See `docs/gemini_candidate_label_baseline.md` before running hosted sweeps or comparing Gemini against Qwen.

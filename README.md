@@ -16,6 +16,7 @@ The main project context, current understanding, datasets, modelling plan, evalu
 - [docs/dissertation_internal_spec.md](docs/dissertation_internal_spec.md)
 - [docs/literature_review_matrix.md](docs/literature_review_matrix.md)
 - [docs/aji_updates_2026_06_29.md](docs/aji_updates_2026_06_29.md)
+- [docs/gemini_candidate_label_baseline.md](docs/gemini_candidate_label_baseline.md)
 
 The current first phase is a closed-topic FABSA baseline:
 
@@ -120,6 +121,13 @@ Run a Qwen held-out-aspect indexed zero-shot smoke test:
 
 ```powershell
 python .\scripts\run_qwen_heldout_aspect_smoke.py --split validation --limit 10000 --load-in-4bit --prompt-variant indexed
+```
+
+Prepare or run the hosted Gemini candidate-label baseline:
+
+```powershell
+python .\scripts\run_gemini_heldout_aspect.py --dry-run --split validation --limit 2 --response-format json_schema --output-dir .\outputs\llm\gemini_candidate_label_dry_run_check
+python .\scripts\run_gemini_heldout_aspect.py --split validation --limit 5 --response-format json_schema --response-format-fallback --output-dir .\outputs\llm\gemini_candidate_label_YYYYMMDD_HHMMSS
 ```
 
 Prepare Qwen held-out-aspect SFT/evaluation JSONL files:

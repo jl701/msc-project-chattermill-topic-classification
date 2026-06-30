@@ -659,7 +659,7 @@ Held-out aspect, Qwen3-4B indexed zero-shot:
 
 See `docs/generalisation_baselines.md` for details.
 
-The strongest current local non-LLM open-topic baseline is documented separately in `docs/non_llm_open_topic_baseline.md`. The paused next-stage modelling plan and literature-review framing are recorded in `docs/next_stage_and_literature_review_plan.md`, with the first local-paper scoping pass in `docs/literature_review_scoping_2026_06_29.md`, the current internal dissertation spec in `docs/dissertation_internal_spec.md`, the literature matrix in `docs/literature_review_matrix.md`, and the latest Aji guidance in `docs/aji_updates_2026_06_29.md`.
+The strongest current local non-LLM open-topic baseline is documented separately in `docs/non_llm_open_topic_baseline.md`. The paused next-stage modelling plan and literature-review framing are recorded in `docs/next_stage_and_literature_review_plan.md`, with the first local-paper scoping pass in `docs/literature_review_scoping_2026_06_29.md`, the current internal dissertation spec in `docs/dissertation_internal_spec.md`, the literature matrix in `docs/literature_review_matrix.md`, the latest Aji guidance in `docs/aji_updates_2026_06_29.md`, and the Gemini hosted baseline implementation status in `docs/gemini_candidate_label_baseline.md`.
 
 Qwen held-out-aspect status:
 
@@ -678,6 +678,25 @@ Not yet completed:
 ```
 
 The current Qwen held-out-aspect result is therefore a zero-shot prompt baseline, not a fine-tuned Qwen result. Full Qwen candidate-label fine-tuning should run later on stronger GPU access using the indexed SFT/evaluation data generation workflow.
+
+Gemini hosted candidate-label status:
+
+```text
+Completed:
+  OpenAI-compatible Gemini runner
+  indexed candidate-label prompt support
+  JSON schema / JSON object / plain JSON response-format modes
+  schema-validity and invalid-output diagnostics
+  latency, token-usage, reasoning-token, and optional cost accounting
+  dry-run request construction check
+
+Not yet completed:
+  real hosted Gemini API smoke test
+  validation prompt/JSON-mode sweep
+  full fixed held-out-aspect validation/test evaluation
+```
+
+The Gemini implementation was blocked from real API evaluation on 2026-07-01 because no compatible credentials were available in the environment. No Gemini F1 result should be reported until a real hosted run is completed.
 
 The current Tier 1 literature-review foundation is recorded in `docs/tier1_core_literature_review_matrix.md`. It covers customer review mining, ABSA, FABSA, multi-label evaluation, domain generalisation, candidate-label taxonomy shift, and structured-output LLM evaluation, while leaving detailed Qwen/Gemini fine-tuning and deployment-governance work as later optional branches.
 
@@ -712,7 +731,8 @@ Future dissertation-writing work should edit the LaTeX source directly. Markdown
 
 5. Which LLM stage should follow the completed non-LLM held-out-aspect baseline?
    - Candidate-aspect DistilBERT selector plus DistilBERT aspect-conditioned sentiment is now the strongest fixed held-out-aspect non-LLM result.
-   - The next major options are a hosted Gemini candidate-label baseline or Qwen fine-tuning/evaluation on stronger GPU access.
+   - The Gemini runner is implemented but still needs hosted API credentials and real validation/test results.
+   - The next major options are completing the Gemini hosted evaluation or running Qwen fine-tuning/evaluation on stronger GPU access.
 
 ## 16. Immediate Next Steps
 
@@ -722,7 +742,7 @@ Future dissertation-writing work should edit the LaTeX source directly. Markdown
 
 3. Treat `example_filtered` as the cleaner fixed held-out-aspect result and `label_masked` as an incomplete-label-noise ablation.
 
-4. Decide whether the next major phase is a hosted Gemini candidate-label baseline or Qwen candidate-label fine-tuning/evaluation.
+4. Run the Gemini hosted smoke test and validation sweep once credentials are available, or switch to Qwen candidate-label fine-tuning/evaluation if stronger GPU access becomes available first.
 
 5. Keep LOAO all-row evaluation as the robustness view and positive-row LOAO only as a sentiment diagnostic.
 

@@ -48,6 +48,7 @@ Before doing new work, please inspect these files. If a `D:\Msc_Project` path is
 15. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\aji_updates_2026_06_29.md
 16. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\dissertation_internal_spec.md
 17. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\literature_review_matrix.md
+18. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\gemini_candidate_label_baseline.md
 
 Immediate instruction for the new chat:
 
@@ -249,7 +250,15 @@ Gemini / Vertex AI access:
 - Models are served in `europe-west4`; unsupported-region models can return 404.
 - Initial budget is $100 per key; exhausted budget returns 429.
 - Use enough `max_tokens` because Gemini 2.5 may spend tokens thinking first.
-- Latest user preference from 2026-06-22: do not use Gemini yet. The user wants to exhaust free/local resources first before spending hosted LLM credits. Gemini should remain a later hosted LLM baseline, not the immediate next task.
+- The old 2026-06-22 preference to postpone Gemini has been superseded by the 2026-07-01 request to implement the hosted Gemini candidate-label baseline.
+- Gemini runner status:
+  - implemented: `scripts/run_gemini_heldout_aspect.py`
+  - shared parser/schema utilities: `src/msc_project/llm/candidate_label.py`
+  - tests: `tests/test_llm_candidate_label.py`
+  - documentation: `docs/gemini_candidate_label_baseline.md`
+  - real API evaluation: not yet run because no compatible credentials were available in the environment
+  - do not report any Gemini F1 result until a real hosted run completes
+- The runner defaults to `response_format=json_schema`, JSON object wrapper `{"labels": [...]}`, and indexed candidate IDs; it can fall back to plain JSON if the endpoint rejects response format.
 
 Latest user decision and completed local baseline phase from 2026-06-27:
 
@@ -338,6 +347,8 @@ python .\scripts\run_loao_heldout_aspect.py --baseline lexical --strategy both -
 python .\scripts\run_qwen_heldout_aspect_smoke.py --split validation --limit 10000 --load-in-4bit --prompt-variant indexed
 python .\scripts\run_qwen_heldout_aspect_smoke.py --split test --limit 10000 --load-in-4bit --prompt-variant indexed
 python .\scripts\prepare_qwen_heldout_aspect_sft_data.py --strategy both --prompt-variant indexed
+python .\scripts\run_gemini_heldout_aspect.py --dry-run --split validation --limit 2 --response-format json_schema --output-dir .\outputs\llm\gemini_candidate_label_dry_run_check
+python .\scripts\run_gemini_heldout_aspect.py --split validation --limit 5 --response-format json_schema --response-format-fallback --output-dir .\outputs\llm\gemini_candidate_label_YYYYMMDD_HHMMSS
 ```
 
 Recommended next steps:
@@ -347,8 +358,8 @@ Recommended next steps:
 3. LOAO lexical evaluation, lightweight aspect-conditioned sentiment, and DistilBERT aspect-conditioned sentiment have been implemented and documented.
 4. Keep using the LOAO all-row view for robustness checks and the positive-row view only as a sentiment diagnostic.
 5. Treat candidate-aspect DistilBERT selector + DistilBERT aspect-conditioned sentiment as the current strongest non-LLM fixed held-out-aspect baseline.
-6. Next, decide whether to start a hosted Gemini candidate-label baseline, prepare/run Qwen fine-tuning/evaluation on stronger GPU access, or run a small robustness diagnostic before LLMs.
-7. Do not run Gemini or full Qwen fine-tuning without explicit user approval because they are the next major phase.
+6. If Gemini credentials are available, run the 5-row hosted smoke test, then a small validation sweep over at least `indexed`, `indexed_conservative`, and `indexed_descriptive`.
+7. If Gemini credentials are still unavailable, keep the runner/parser/docs as implemented and record the blocked reason rather than fabricating results.
 8. If I ask to publish changes, commit/push only clean code and documentation, without committing outputs, data, credentials, checkpoints, or generated artifacts.
 
 Please start by summarising what you find in the current docs and repo state, then perform the strict audit, then propose the next concrete plan before implementing.

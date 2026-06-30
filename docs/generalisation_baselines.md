@@ -217,6 +217,38 @@ Prompt comparison on 50 sampled validation rows selected the plain `indexed` pro
 
 This is a zero-shot prompt baseline, not a fine-tuned Qwen result. It is competitive enough to justify full Qwen fine-tuning once stronger GPU resources are available.
 
+## Gemini Hosted Candidate-Label Baseline
+
+A hosted Gemini runner has been implemented but not yet executed against the real API because no compatible API credentials were available in the environment during the 2026-07-01 implementation session. It should therefore be treated as an implemented, blocked baseline rather than as a completed result.
+
+The runner is:
+
+```powershell
+python .\scripts\run_gemini_heldout_aspect.py
+```
+
+It reuses the indexed candidate-label protocol from the Qwen held-out-aspect run and defaults to:
+
+- model: `vertex_ai/gemini-2.5-flash`
+- prompt variant: `indexed`
+- held-out-aspect strategy metadata: `example_filtered`
+- response format: `json_schema`
+- JSON-mode prompt container: `{"labels": [...]}`
+- output directory pattern: `outputs/llm/gemini_candidate_label_YYYYMMDD_HHMMSS`
+
+The parser accepts both the Qwen-style top-level JSON array and the JSON-mode object wrapper, then normalises valid items into the same `aspect | sentiment` pair labels used by the existing metrics. In addition to pair/aspect F1, the runner records valid JSON rate, schema-valid rate, parse failures, invalid candidate IDs, invalid sentiments, duplicate predictions, conflicting sentiments, latency, token usage, reasoning/thinking tokens when reported, and optional cost estimates.
+
+Current validation:
+
+```powershell
+python -m unittest tests.test_llm_candidate_label
+python -m unittest discover -s tests
+python -m compileall -q src scripts tests
+python .\scripts\run_gemini_heldout_aspect.py --dry-run --split validation --limit 2 --response-format json_schema --output-dir .\outputs\llm\gemini_candidate_label_dry_run_check
+```
+
+The dry-run passed and wrote only ignored local output files. See `docs/gemini_candidate_label_baseline.md` for the hosted smoke-test and validation-sweep commands to run once credentials are available.
+
 ## Interpretation
 
 The closed-topic DistilBERT result remains the strongest current benchmark on the provided split.

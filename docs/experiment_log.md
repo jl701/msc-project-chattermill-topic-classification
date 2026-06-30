@@ -844,3 +844,106 @@ Stage 2 output:
 ### Next Step
 
 - Begin Stage 3: complete LOAO for the strongest local two-stage baseline, or pause experiments and expand `docs/literature_review_matrix.md` into a full related-work outline.
+
+## 2026-07-01: Gemini Hosted Candidate-Label Runner Implementation
+
+### Purpose
+
+- Implement the hosted Gemini candidate-label baseline requested after the local non-LLM baseline phase.
+- Reuse the Qwen indexed held-out-aspect protocol while adding Aji's required hosted-LLM diagnostics: JSON/schema validity, parse failures, invalid labels, latency, token usage, reasoning/thinking tokens, and optional cost estimates.
+- Stop cleanly without fabricating results because no compatible API credentials were available in the environment.
+
+### Code Or Protocol Changes
+
+- Added `src/msc_project/llm/candidate_label.py`:
+  - indexed candidate-label prompt construction
+  - JSON schema for structured output
+  - parser supporting Qwen-style top-level arrays and JSON-mode `{"labels": [...]}` wrappers
+  - diagnostics for schema validity, invalid candidate IDs, invalid sentiments, duplicates, conflicts, and aspect-name fallbacks
+  - OpenAI/Gemini-style token usage extraction and optional cost estimation
+- Added `scripts/run_gemini_heldout_aspect.py`:
+  - OpenAI-compatible Chat Completions HTTP client using the Python standard library
+  - default model `vertex_ai/gemini-2.5-flash`
+  - default `response_format=json_schema`
+  - `--response-format-fallback` support for endpoints that reject JSON mode/schema
+  - independent output directory pattern under `outputs/llm/gemini_candidate_label_YYYYMMDD_HHMMSS`
+  - `--dry-run` mode for request construction without API calls
+- Added `tests/test_llm_candidate_label.py`.
+- Added `docs/gemini_candidate_label_baseline.md`.
+- Updated:
+  - `README.md`
+  - `PROJECT_OVERVIEW.md`
+  - `START_NEW_CHAT_PROMPT.md`
+  - `docs/generalisation_baselines.md`
+  - `docs/qwen_feasibility.md`
+  - `docs/experiment_log.md`
+
+### Setup
+
+- Dataset: FABSA public export.
+- Protocol: fixed held-out-aspect candidate-label evaluation.
+- Held-out aspects:
+  - `Account management: Account access`
+  - `Company brand: Competitor`
+  - `Value: Discounts promotions`
+- Default runner metadata strategy: `example_filtered`.
+- Default split for smoke tests: validation.
+- Default prompt variant: `indexed`.
+- Default response format: `json_schema`.
+- Environment audit:
+  - `OPENAI_BASE_URL`: missing
+  - `OPENAI_API_KEY`: missing
+  - `GEMINI_API_KEY`: missing
+  - `GOOGLE_API_KEY`: missing
+  - `GOOGLE_APPLICATION_CREDENTIALS`: missing
+
+### Commands
+
+```powershell
+git status --short --branch
+git fetch origin
+git status --short --branch
+git log --oneline --decorate -8
+
+python -m unittest tests.test_llm_candidate_label
+python -m unittest discover -s tests
+python -m compileall -q src scripts tests
+python .\scripts\run_gemini_heldout_aspect.py --dry-run --split validation --limit 2 --response-format json_schema --output-dir .\outputs\llm\gemini_candidate_label_dry_run_check
+```
+
+### Outputs
+
+- Code and documentation files listed above are intended for commit.
+- Dry-run local outputs:
+  - `outputs/llm/gemini_candidate_label_dry_run_check/summary.json`
+  - `outputs/llm/gemini_candidate_label_dry_run_check/requests_validation_indexed.jsonl`
+- Generated `outputs/` files remain ignored by Git and must not be committed because request JSONL files contain review text.
+
+### Results
+
+| Check | Result |
+| --- | --- |
+| Git state before work | clean `main`, aligned with `origin/main` |
+| Parser/schema tests | 11 tests OK |
+| Full unit test suite | 59 tests OK |
+| Compile check | passed |
+| Gemini dry-run request construction | passed |
+| Real hosted Gemini smoke test | blocked by missing credentials |
+| Gemini F1 metrics | not available |
+
+### Interpretation
+
+- The Gemini baseline is now implemented as a reproducible runner with the correct candidate-label output protocol and hosted-LLM diagnostics.
+- JSON schema mode uses an object wrapper because JSON-mode endpoints commonly require a top-level object; the parser still accepts the Qwen top-level array for plain JSON compatibility.
+- The implementation should be treated as ready for hosted smoke testing, not as a completed empirical result.
+- No predictive claim about Gemini should be made until a real API run produces validation/test metrics.
+
+### Next Step
+
+- Once `OPENAI_BASE_URL` and `OPENAI_API_KEY` are available, run:
+
+```powershell
+python .\scripts\run_gemini_heldout_aspect.py --split validation --limit 5 --response-format json_schema --response-format-fallback --output-dir .\outputs\llm\gemini_candidate_label_YYYYMMDD_HHMMSS
+```
+
+- If the smoke test passes, run a sampled validation sweep over at least `indexed`, `indexed_conservative`, and `indexed_descriptive`, then run full validation/test for the selected configuration.
