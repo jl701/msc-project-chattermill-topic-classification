@@ -1406,6 +1406,51 @@ python -m compileall -q src scripts tests
 | Compile check | passed |
 | Secret scan over tracked code/docs paths | no real API key found |
 
+## 2026-07-01: Tasks 1-3 Thesis Prep Consolidation
+
+### Purpose
+
+- Confirm that Gemini follow-up Tasks 1, 2, and 3 are complete and GitHub-synchronised.
+- Consolidate the completed evidence into one clean handoff for dissertation writing and Task 4.
+- Preserve the distinction between fixed three-aspect evidence, selective-deployment evidence, and future LOAO robustness evidence.
+
+### Code Or Protocol Changes
+
+- Added `docs/tasks_1_to_3_thesis_prep.md`.
+- Updated `PROJECT_OVERVIEW.md`, `START_NEW_CHAT_PROMPT.md`, and `docs/gemini_candidate_label_baseline.md` to point to the new handoff note.
+- No model code or experiment protocol changed.
+
+### Consolidated Tasks
+
+| Task | Status | Main Evidence |
+| --- | --- | --- |
+| 1. Full Gemini Pro fixed-split validation/test | complete | Pro test pair samples F1 `0.7141`, validation+test cost about `$2.9781` |
+| 2. Full Gemini Flash-Lite fixed-split validation/test | complete | Flash-Lite test pair samples F1 `0.5516`, validation+test cost about `$0.0171` |
+| 3. Local-to-Gemini uncertainty cascade | complete | local -> Pro cascade test pair samples F1 `0.8102`; Pro cascade beats pure Pro through fallback/error complementarity |
+
+### Task 4 Starting Point
+
+- Start from `docs/tasks_1_to_3_thesis_prep.md`.
+- Test candidate-aspect descriptions without using validation/test review text or validation/test labels to create descriptions.
+- Keep indexed candidate IDs, `response_format=json_schema`, `temperature=0`, and `max_tokens=2048`.
+- Use validation to select the description/prompt variant, then evaluate once on test.
+- Start with Gemini Flash for cost efficiency; use Pro only if the description effect is promising or diagnostically ambiguous.
+
+### Validation
+
+```powershell
+git status --short --branch
+git diff --check
+rg -n "sk-[A-Za-z0-9_-]{12,}" . --glob '!outputs/**' --glob '!data/**' --glob '!models/**' --glob '!checkpoints/**' --glob '!.git/**'
+```
+
+| Check | Result |
+| --- | --- |
+| Git status before consolidation | clean and synced with `origin/main` |
+| Diff whitespace check | passed, with CRLF conversion warnings only |
+| Secret scan over tracked code/docs paths | no real API key found |
+| Documentation-only update | ready to commit |
+
 ## 2026-07-01: Local-To-Gemini Pro Cascade Deep-Dive
 
 ### Purpose

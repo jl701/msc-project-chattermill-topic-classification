@@ -334,6 +334,8 @@ Results:
 
 Do not run full Gemini LOAO by default. Full Pro validation/test, Flash-Lite validation/test, and the local-to-Gemini cascade are now complete. A full Pro LOAO remains unjustified without a separate dissertation-value argument.
 
+Tasks 1-3 of the Gemini follow-up are consolidated for thesis writing and Task 4 handoff in `docs/tasks_1_to_3_thesis_prep.md`.
+
 The remaining Gemini/local experiments should be framed around dissertation value rather than raw leaderboard chasing:
 
 1. Test Gemini-generated candidate-aspect descriptions as label-representation support, generated without validation/test leakage.

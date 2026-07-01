@@ -51,6 +51,7 @@ Before doing new work, please inspect these files. If a `D:\Msc_Project` path is
 18. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\gemini_candidate_label_baseline.md
 19. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\gemini_error_analysis.md
 20. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\local_gemini_cascade.md
+21. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\tasks_1_to_3_thesis_prep.md
 
 Immediate instruction for the new chat:
 
@@ -338,6 +339,7 @@ Gemini / Vertex AI access:
 - Gemini/local dissertation-value roadmap:
   - fixed-split hosted Pareto baselines are now complete: Gemini Flash-Lite, Flash, and Pro
   - local-to-Gemini uncertainty cascade is now complete
+  - Tasks 1-3 are consolidated for thesis/task-4 handoff in `docs/tasks_1_to_3_thesis_prep.md`
   - next test Gemini-generated candidate-aspect descriptions as label-representation support, without validation/test leakage
   - then use Gemini Pro for qualitative error-taxonomy assistance, with manual review and no automatic metric claims
 - Important Gemini finding: `max_tokens=512` caused truncated JSON because Gemini spent most completion tokens thinking first. Use `max_tokens=2048` for this prompt unless a later sweep proves a cheaper reliable setting.
