@@ -141,13 +141,13 @@ The local GPU is useful for small DistilBERT and smoke-test work, but it is stil
 
 ## 6. Gemini / Vertex AI Access From Aji
 
-Aji provided access to Chattermill's Gemini endpoint through an OpenAI-compatible API. The actual API key must not be committed or written into project files.
+Aji provided access to a private Gemini endpoint through an OpenAI-compatible API. The endpoint URL and actual API key must stay in local environment variables only and must not be committed or written into project files.
 
-Endpoint:
+Local setup pattern:
 
 ```bash
-export OPENAI_BASE_URL="https://llm-api.datascience.chattermill.xyz/v1"
-export OPENAI_API_KEY="sk-..."
+export OPENAI_BASE_URL="<private-openai-compatible-endpoint>/v1"
+export OPENAI_API_KEY="<set-locally-only>"
 ```
 
 Recommended model IDs:
@@ -158,20 +158,16 @@ Recommended model IDs:
 | `vertex_ai/gemini-2.5-pro` | Most capable |
 | `vertex_ai/gemini-2.5-flash-lite` | Cheapest and lowest latency |
 
-Operational notes from Aji:
+Operational notes:
 
-- The endpoint supports standard OpenAI `/v1` routes: chat completions, embeddings, and model listing.
-- Tool/function calling, streaming, and vision should work like the OpenAI API.
-- The `vertex_ai/` prefix is required.
-- Models are served in `europe-west4`; models not available there may return `404`.
-- Budget is initially `$100` per key; budget exhaustion returns `429`.
-- Gemini-only key: non-Gemini models are not allowed.
+- Keep endpoint URLs, API keys, budgets, and provider-specific access details out of tracked project files.
+- Use the `vertex_ai/` model IDs with the private endpoint only when that access is configured locally.
 - Gemini 2.5 spends tokens thinking first; too-low `max_tokens` can produce empty content, so use a few hundred tokens.
 
 Suggested smoke test:
 
 ```bash
-curl -s https://llm-api.datascience.chattermill.xyz/v1/chat/completions \
+curl -s "$OPENAI_BASE_URL/chat/completions" \
   -H "Authorization: Bearer $OPENAI_API_KEY" \
   -H "content-type: application/json" \
   -d '{"model":"vertex_ai/gemini-2.5-flash","max_tokens":200,"messages":[{"role":"user","content":"ping"}]}'

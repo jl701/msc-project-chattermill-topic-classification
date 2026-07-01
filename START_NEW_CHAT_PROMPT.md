@@ -248,7 +248,7 @@ Qwen feasibility:
 
 Gemini / Vertex AI access:
 - Aji provided an OpenAI-compatible endpoint:
-  - `OPENAI_BASE_URL=https://llm-api.datascience.chattermill.xyz/v1`
+  - `OPENAI_BASE_URL=<private-openai-compatible-endpoint>/v1`
   - `OPENAI_API_KEY` should be set locally only; never commit it.
 - Recommended models:
   - `vertex_ai/gemini-2.5-flash` as the default fast/cheap baseline.

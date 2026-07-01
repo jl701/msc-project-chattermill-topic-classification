@@ -267,7 +267,7 @@ python .\scripts\run_gemini_heldout_aspect.py --dry-run --split validation --lim
 Tiny hosted smoke test once credentials are available:
 
 ```powershell
-$env:OPENAI_BASE_URL="https://llm-api.datascience.chattermill.xyz/v1"
+$env:OPENAI_BASE_URL="<private-openai-compatible-endpoint>/v1"
 # Set OPENAI_API_KEY locally before running; do not write it into the repository.
 python .\scripts\run_gemini_heldout_aspect.py --split validation --limit 5 --response-format json_schema --response-format-fallback --output-dir .\outputs\llm\gemini_candidate_label_YYYYMMDD_HHMMSS
 ```
