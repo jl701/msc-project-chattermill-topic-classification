@@ -121,18 +121,21 @@ Tracked roadmap:
 
 - `docs/thesis_completion_roadmap.md`
 
-## 2026-07-02 - Qualitative Error Taxonomy Local Packet
+## 2026-07-02 - Gemini-Assisted Qualitative Error Taxonomy
 
 Command:
 
 ```powershell
 python .\scripts\analyse_qualitative_error_taxonomy.py --output-dir .\outputs\analysis\qualitative_error_taxonomy_20260702
+
+python .\scripts\analyse_qualitative_error_taxonomy.py --output-dir .\outputs\analysis\qualitative_error_taxonomy_20260702 --max-examples-per-category 10 --max-gemini-examples-per-category 2 --snippet-chars 220 --gemini-draft --gemini-model vertex_ai/gemini-2.5-pro --gemini-max-tokens 7000 --request-timeout 240
 ```
 
-Observed local packet:
+Observed Gemini-assisted packet:
 
 - Rows aligned across fixed held-out-aspect test predictions: 281.
-- Gemini draft: not run.
+- Gemini Pro draft: successful, used only as an assistant for candidate taxonomy wording.
+- Gemini usage: 19,494 prompt tokens, 6,362 completion tokens, including 4,336 reasoning tokens; 25,856 total tokens.
 - Output directory: `outputs/analysis/qualitative_error_taxonomy_20260702/`.
 - Tracked summary: `docs/qualitative_error_taxonomy.md`.
 
@@ -154,3 +157,4 @@ Key mechanism counts:
 Interpretation:
 
 - Qualitative evidence supports the quantitative story: local and Qwen over-predict, hosted Gemini is more conservative and can abstain, descriptions move precision/recall, and the Pro cascade works by recovering hosted abstentions.
+- The final taxonomy remains manually consolidated: semantic boundary bleed, competitor-positive recall bottleneck, generative over-prediction, cautious abstention, sentiment polarity under-recall, prompt-induced precision-recall shift, and cascade complementarity.

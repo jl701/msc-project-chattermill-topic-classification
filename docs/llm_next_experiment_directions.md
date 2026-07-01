@@ -108,7 +108,7 @@ Key questions:
 - Does Gemini also become conservative or empty on rare/ambiguous aspects?
 - Are the same error modes visible as in the fixed split?
 
-### Completed: Qualitative Error Taxonomy Local Packet
+### Completed: Gemini-Assisted Qualitative Error Taxonomy
 
 Purpose:
 
@@ -125,20 +125,18 @@ Recommended design:
 Status:
 
 - Local packet completed with `scripts/analyse_qualitative_error_taxonomy.py`.
-- No Gemini API call was made.
+- Gemini Pro draft completed as an assistant-only pass; final taxonomy is manually consolidated.
 - Tracked summary is in `docs/qualitative_error_taxonomy.md`.
 
-Candidate categories:
+Final manually consolidated categories:
 
-- missed competitor praise;
-- neutral versus positive confusion;
-- account/access overprediction;
-- promotion/value ambiguity;
-- hosted LLM abstention or empty prediction;
-- local over-prediction;
-- Qwen empty-gold over-prediction;
-- description-driven precision/recall shift;
-- Pro cascade recovery.
+- semantic boundary bleed;
+- competitor-positive recall bottleneck;
+- generative over-prediction / fail-noisy behaviour;
+- cautious abstention / fail-silent behaviour;
+- sentiment polarity under-recall;
+- prompt-induced precision-recall shift;
+- cascade complementarity.
 
 Key questions:
 

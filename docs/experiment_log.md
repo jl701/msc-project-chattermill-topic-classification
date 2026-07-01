@@ -1591,7 +1591,12 @@ This taxonomy gives the next Qwen fine-tuning phase concrete targets: abstention
 
 ### Validation
 
-Pending final repository validation after documentation updates.
+| Check | Result |
+| --- | --- |
+| Unit tests | 75 tests OK: `python -m unittest discover -s tests` |
+| Compile check | passed: `python -m compileall -q src scripts tests` |
+| Diff whitespace check | passed: `git diff --check` |
+| Secret scan | no `sk-...` or Google API-key pattern matches in tracked project/docs/scripts/test/thesis paths |
 
 ## 2026-07-01: Qwen LOAO Full Interpretation Analysis
 
@@ -2392,91 +2397,4 @@ The thesis narrative should keep LOAO as the open-topic robustness spine. Fixed 
 
 ### Next Step
 
-Implement the qualitative error taxonomy tooling and documentation using existing local outputs, keeping any raw review text under ignored `outputs/`.
-
-## 2026-07-02: Qualitative Error Taxonomy Local Packet
-
-### Purpose
-
-- Convert the completed local, Qwen, Gemini, description, cascade, and Qwen LOAO outputs into a thesis-facing qualitative error taxonomy.
-- Build a tracked no-text summary while keeping raw review text and prompts under ignored `outputs/`.
-- Strengthen the discussion chapter before the full Qwen LoRA LOAO compute-bound experiment.
-
-### Code Or Protocol Changes
-
-- Added `scripts/analyse_qualitative_error_taxonomy.py`.
-- Added `tests/test_qualitative_error_taxonomy.py`.
-- Updated `docs/qualitative_error_taxonomy.md` from pre-registration to completed local packet analysis.
-- No model predictions were regenerated.
-- No Gemini API call was made because `--gemini-draft` was not used.
-
-### Setup
-
-- Fixed held-out-aspect test rows: `281`.
-- Aligned prediction sources:
-  - local DistilBERT fixed held-out-aspect baseline;
-  - Qwen fixed held-out-aspect zero-shot;
-  - Gemini Flash-Lite, Flash, and Pro fixed baselines;
-  - Gemini aspect-description variants;
-  - local-to-Pro cascade;
-  - existing Qwen-vs-DistilBERT LOAO summary outputs.
-
-### Command
-
-```powershell
-python .\scripts\analyse_qualitative_error_taxonomy.py --output-dir .\outputs\analysis\qualitative_error_taxonomy_20260702
-```
-
-### Outputs
-
-- Local ignored output directory:
-  - `outputs/analysis/qualitative_error_taxonomy_20260702/`
-- Local files:
-  - `summary.json`
-  - `category_counts.csv`
-  - `fixed_split_cases_no_text.jsonl`
-  - `fixed_split_cases_with_text.jsonl`
-  - `gemini_taxonomy_prompt.md`
-- Tracked documentation:
-  - `docs/qualitative_error_taxonomy.md`
-  - `report_notes.md`
-
-### Results
-
-| Mechanism Tag | Rows |
-| --- | ---: |
-| `discounts_value_boundary` | 155 |
-| `account_access_overprediction` | 112 |
-| `empty_abstention` | 84 |
-| `competitor_positive_miss` | 82 |
-| `description_precision_shift` | 66 |
-| `description_row_gain` | 57 |
-| `qwen_overprediction` | 56 |
-| `local_overprediction` | 50 |
-| `description_recall_loss` | 45 |
-| `neutral_under_recall` | 25 |
-| `pro_empty_cascade_recovery` | 20 |
-
-Model-level fixed-split row profile:
-
-| Model | Mean Row Sample F1 | Exact Rows | Empty Rows | Aspect Miss Rows | Aspect Overprediction Rows |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Local DistilBERT | 0.6071 | 144 | 0 | 78 | 119 |
-| Qwen zero-shot | 0.5374 | 125 | 15 | 86 | 117 |
-| Gemini Flash-Lite | 0.5516 | 138 | 37 | 107 | 88 |
-| Gemini Flash | 0.6071 | 138 | 42 | 78 | 80 |
-| Gemini Pro | 0.7141 | 167 | 28 | 49 | 67 |
-| Flash-Lite descriptions | 0.5925 | 152 | 31 | 92 | 75 |
-| Flash descriptions | 0.5893 | 150 | 61 | 88 | 48 |
-| Local -> Pro cascade | 0.8102 | 194 | 0 | 28 | 74 |
-
-### Interpretation
-
-- The qualitative packet supports the quantitative story: local DistilBERT and Qwen tend to over-predict candidate aspects, while hosted Gemini models are more conservative and can abstain.
-- Gemini descriptions often shift the precision-recall balance rather than uniformly improving every model.
-- The Pro cascade result is explained by recovering hosted empty abstentions with local fallback.
-- Qwen fine-tuning should target absence calibration and hard negative boundaries, especially account access, discounts/value, competitor mentions, and neutral sentiment.
-
-### Next Step
-
-Use this taxonomy in the thesis discussion and move to thesis-ready result tables/figure data, then cascade score/margin uncertainty and Qwen LoRA runner readiness.
+Task 5 is now complete. Move next to thesis-ready result tables/figure data, cascade score or margin uncertainty, and Qwen LoRA runner readiness before any full Qwen LoRA LOAO run.

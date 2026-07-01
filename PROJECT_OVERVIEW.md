@@ -764,7 +764,7 @@ The current Tier 1 literature-review foundation is recorded in `docs/tier1_core_
 
 The active completion roadmap is now `docs/thesis_completion_roadmap.md`. It treats full fine-tuned Qwen LoRA LOAO as the only remaining major compute-bound experiment. While GPU access is being negotiated, the project should complete thesis-ready tables, cascade score/margin uncertainty, Qwen LoRA runner readiness, and LaTeX skeleton alignment.
 
-The qualitative error taxonomy local packet is now complete and documented in `docs/qualitative_error_taxonomy.md`. It reuses existing outputs, keeps review-text packets under ignored `outputs/`, and manually consolidates seven thesis-facing categories: semantic boundary ambiguity, competitor-positive recall bottleneck, generative over-prediction, cautious abstention, neutral sentiment under-recall, prompt-induced precision-recall shift, and cascade complementarity. These categories define the main Qwen fine-tuning targets: abstention calibration, hard-negative aspect boundaries, competitor-positive recall, neutral sentiment coverage, stable label semantics, and cascade-ready uncertainty signals. No Gemini draft was generated for this first taxonomy pass.
+The Gemini-assisted qualitative error taxonomy is now complete and documented in `docs/qualitative_error_taxonomy.md`. It reuses existing outputs, keeps review-text packets and Gemini drafts under ignored `outputs/`, and manually consolidates seven thesis-facing categories: semantic boundary ambiguity, competitor-positive recall bottleneck, generative over-prediction, cautious abstention, neutral sentiment under-recall, prompt-induced precision-recall shift, and cascade complementarity. A small Gemini Pro draft pass was used only as an assistant for category wording and cross-checking, with reasoning tokens counted in the recorded usage. These categories define the main Qwen fine-tuning targets: abstention calibration, hard-negative aspect boundaries, competitor-positive recall, neutral sentiment coverage, stable label semantics, and cascade-ready uncertainty signals.
 
 ## 14. Thesis LaTeX Source And Writing Rule
 
@@ -807,7 +807,7 @@ Future dissertation-writing work should edit the LaTeX source directly. Markdown
    - The local-to-Gemini cascade is complete and is the strongest fixed-split system result, but it remains fixed three-aspect evidence rather than LOAO robustness evidence.
    - The Pro cascade beats pure Pro through error complementarity: Pro handles most uncertain rows, while the local fallback protects against Pro abstentions and some local-reliable rows.
    - The strongest next dissertation-oriented work is not more DistilBERT LOAO, more Gemini prompt sweeps, or full Gemini LOAO by default. The roadmap is recorded in `docs/thesis_completion_roadmap.md`.
-   - Candidate-aspect descriptions and the qualitative error taxonomy local packet are now complete. Recommended order after this point: thesis-ready result tables, cascade uncertainty improvement using local score/margin export, Qwen LoRA runner readiness, and full Qwen LoRA LOAO only after GPU access is confirmed.
+   - Candidate-aspect descriptions and the Gemini-assisted qualitative error taxonomy are now complete. Recommended order after this point: thesis-ready result tables, cascade uncertainty improvement using local score/margin export, Qwen LoRA runner readiness, and full Qwen LoRA LOAO only after GPU access is confirmed.
 
 ## 16. Immediate Next Steps
 
@@ -831,7 +831,7 @@ Future dissertation-writing work should edit the LaTeX source directly. Markdown
 
 10. Treat Gemini-generated aspect descriptions as complete Task 4 evidence. Do not rerun the same description API work unless a new thesis question requires it.
 
-11. Treat the qualitative error taxonomy local packet as complete and keep raw review text and optional Gemini prompts/drafts under ignored `outputs/`.
+11. Treat the Gemini-assisted qualitative error taxonomy as complete and keep raw review text, Gemini prompts, and Gemini drafts under ignored `outputs/`.
 
 12. Prepare thesis-ready evidence tables and figure inputs that keep fixed-split, all-row LOAO, and positive-gold diagnostic results conceptually separate.
 
