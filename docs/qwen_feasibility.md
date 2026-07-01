@@ -162,14 +162,21 @@ python .\scripts\prepare_qwen_heldout_aspect_sft_data.py --strategy both --promp
 
 The training split uses seen-aspect supervision only. Validation and test use held-out candidate aspects and held-out labels only.
 
-## Gemini Comparison Path
+## Gemini Comparison Result
 
-A Gemini hosted candidate-label runner was added on 2026-07-01 to provide a closed hosted-LLM comparison under the same indexed held-out-aspect protocol:
+A Gemini hosted candidate-label runner was added and evaluated on 2026-07-01 to provide a closed hosted-LLM comparison under the same indexed held-out-aspect protocol:
 
 ```powershell
-python .\scripts\run_gemini_heldout_aspect.py --split validation --limit 5 --response-format json_schema --response-format-fallback --output-dir .\outputs\llm\gemini_candidate_label_YYYYMMDD_HHMMSS
+python .\scripts\run_gemini_heldout_aspect.py --split both --limit 10000 --prompt-variant indexed --response-format json_schema --response-format-fallback --max-tokens 2048 --output-dir .\outputs\llm\gemini_candidate_label_20260701_0145_fixed_full
 ```
 
 It uses candidate IDs rather than copied aspect strings, normalises predictions into the same pair-label metrics, and records JSON/schema validity, latency, token usage, and reasoning/thinking tokens when the endpoint reports them.
 
-The implementation has only been dry-run locally so far because no compatible API credentials were available in the environment. See `docs/gemini_candidate_label_baseline.md` before running hosted sweeps or comparing Gemini against Qwen.
+Final fixed held-out-aspect test result:
+
+| Model | Test Pair Samples F1 | Test Pair Micro F1 | Test Pair Macro F1 | Valid JSON |
+| --- | ---: | ---: | ---: | ---: |
+| Qwen3-4B-Instruct indexed zero-shot | 0.5374 | 0.5300 | 0.4374 | 1.0000 |
+| Gemini 2.5 Flash indexed JSON-schema | 0.6071 | 0.6541 | 0.5547 | 1.0000 |
+
+Gemini is therefore the stronger zero-shot hosted/generative candidate-label baseline on this fixed three-aspect evaluation. This does not replace the need for full Qwen fine-tuning or LOAO robustness checks. See `docs/gemini_candidate_label_baseline.md` for the validation sweep, max-token truncation finding, schema diagnostics, latency, and token-cost accounting.

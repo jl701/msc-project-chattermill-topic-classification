@@ -11,20 +11,26 @@ Implemented:
 - `scripts/run_gemini_heldout_aspect.py`
 - shared LLM candidate-label utilities in `src/msc_project/llm/candidate_label.py`
 - parser/schema diagnostics tests in `tests/test_llm_candidate_label.py`
-- dry-run validation of request construction on the fixed held-out-aspect validation split
-
-Not yet run:
-
-- real Gemini API smoke test
-- validation prompt/decoding sweep
+- dry-run validation of request construction
+- real hosted Gemini smoke test
+- small validation sweep over prompt/max-token settings
 - full fixed held-out-aspect validation/test evaluation
 
-Blocked reason:
+Completed hosted result:
 
-- no Gemini/OpenAI-compatible API key is currently available in the process environment;
-- `OPENAI_BASE_URL`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, `GOOGLE_API_KEY`, and `GOOGLE_APPLICATION_CREDENTIALS` were all missing during the 2026-07-01 implementation session.
+```text
+Model: vertex_ai/gemini-2.5-flash
+Endpoint: Chattermill Vertex AI OpenAI-compatible endpoint
+Prompt: indexed candidate labels
+Response format: json_schema
+Max tokens: 2048
+Validation pair samples F1: 0.6146
+Test pair samples F1: 0.6071
+Test valid JSON rate: 1.0000
+Test schema-valid rate: 1.0000
+```
 
-No Gemini F1 result should be reported until a real hosted run has completed.
+Historical note: the first implementation pass was blocked because no compatible credentials were available in the process environment. The hosted run below was completed after the user supplied Aji's endpoint details and key. The key was used only as a process-local environment variable and was not written to the repository.
 
 ## Protocol
 
@@ -91,12 +97,114 @@ For each completed run the runner reports:
 - empty prediction count
 - mean and median latency
 - input tokens
-- visible output tokens
+- output/completion tokens
 - reasoning/thinking tokens when reported
 - total tokens
 - estimated cost if token counts and cost rates are supplied
 
-Token usage extraction supports both OpenAI-style fields and Gemini-style `usageMetadata` fields such as `thoughtsTokenCount`.
+Token usage extraction supports both OpenAI-style fields and Gemini-style `usageMetadata` fields such as `thoughtsTokenCount`. For the Chattermill endpoint, `output_tokens` appears to include thinking tokens: `input_tokens + output_tokens = total_tokens`, while `reasoning_tokens` is a subset of `output_tokens`. Therefore cost estimates below bill output tokens once and report reasoning tokens separately.
+
+## Hosted Results
+
+### Smoke Test
+
+Command:
+
+```powershell
+python .\scripts\run_gemini_heldout_aspect.py --split validation --limit 5 --response-format json_schema --response-format-fallback --output-dir .\outputs\llm\gemini_candidate_label_20260701_0110_smoke
+```
+
+Result:
+
+| Metric | Value |
+| --- | ---: |
+| Examples | 5 |
+| Pair samples F1 | 0.4000 |
+| Pair micro F1 | 0.5455 |
+| Pair macro F1 | 0.2222 |
+| Aspect samples F1 | 0.4000 |
+| Valid JSON rate | 1.0000 |
+| Schema-valid rate | 1.0000 |
+| Mean latency seconds | 2.5497 |
+| Input tokens | 960 |
+| Output tokens, including thinking | 1,832 |
+| Reasoning tokens | 1,661 |
+
+The smoke test confirmed that the endpoint accepts `response_format=json_schema` and returns reasoning-token diagnostics.
+
+### Validation Sweep
+
+All sweep rows used a sampled 50-row validation subset with seed 13.
+
+| Configuration | Max Tokens | Pair Samples F1 | Pair Micro F1 | Pair Macro F1 | Valid JSON | Schema Valid | Reasoning Tokens |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `indexed` | 512 | 0.5867 | 0.7033 | 0.5353 | 0.8400 | 0.8400 | 15,803 |
+| `indexed_conservative` | 512 | 0.4933 | 0.6207 | 0.4215 | 0.8200 | 0.8000 | 15,747 |
+| `indexed_descriptive` | 512 | 0.5067 | 0.6429 | 0.4575 | 0.7800 | 0.7800 | 16,774 |
+| `indexed` | 1024 | 0.6733 | 0.7475 | 0.5453 | 0.9800 | 0.9800 | 17,902 |
+| `indexed` | 2048 | 0.6733 | 0.7327 | 0.5287 | 1.0000 | 1.0000 | 18,362 |
+
+The first sweep exposed the exact failure mode Aji warned about: with `max_tokens=512`, Gemini often spent nearly all completion tokens on thinking and returned truncated JSON such as `{ "labels":`. Raising `max_tokens` solved the parse failures. A tiny `thinking_budget=0` smoke test was accepted by the endpoint but did not materially suppress reasoning tokens, so it was not used as the final configuration.
+
+The selected configuration is:
+
+```text
+prompt_variant=indexed
+response_format=json_schema
+max_tokens=2048
+temperature=0
+```
+
+This was selected because it achieved perfect schema validity on the sampled sweep while keeping predictive performance in the same band as the best 1024-token run.
+
+### Full Fixed Held-Out-Aspect Evaluation
+
+Command:
+
+```powershell
+python .\scripts\run_gemini_heldout_aspect.py --split both --limit 10000 --prompt-variant indexed --response-format json_schema --response-format-fallback --max-tokens 2048 --output-dir .\outputs\llm\gemini_candidate_label_20260701_0145_fixed_full
+```
+
+| Split | Examples | Pair Samples F1 | Pair Micro F1 | Pair Macro F1 | Aspect Samples F1 | Sentiment Accuracy When Gold Aspect Predicted |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| validation | 212 | 0.6146 | 0.6446 | 0.4830 | 0.7129 | 0.8639 |
+| test | 281 | 0.6071 | 0.6541 | 0.5547 | 0.6747 | 0.9052 |
+
+Structured-output diagnostics:
+
+| Split | Valid JSON | Schema Valid | Parse Failures | Invalid Candidates | Invalid Sentiments | Duplicates | Conflicts |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| validation | 1.0000 | 0.9953 | 0 | 0 | 0 | 0 | 1 |
+| test | 1.0000 | 1.0000 | 0 | 0 | 0 | 0 | 0 |
+
+Latency and tokens:
+
+| Split | Mean Latency | Median Latency | Input Tokens | Output Tokens, Including Thinking | Reasoning Tokens | Total Tokens |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| validation | 2.5074 s | 2.0986 s | 41,960 | 89,052 | 80,780 | 131,012 |
+| test | 2.3721 s | 2.0598 s | 56,338 | 113,067 | 102,574 | 169,405 |
+
+Approximate cost using public Gemini 2.5 Flash Standard rates from the [Gemini API pricing page](https://ai.google.dev/gemini-api/docs/pricing) as checked on 2026-07-01 (`$0.30 / 1M input tokens`, `$2.50 / 1M output tokens`, with output tokens including thinking):
+
+| Split | Estimated Cost | Cost / 1k Reviews | Cost / 1M Reviews |
+| --- | ---: | ---: | ---: |
+| validation | $0.2352 | $1.1095 | $1,109.52 |
+| test | $0.2996 | $1.0661 | $1,066.08 |
+| validation + test | $0.5348 | $1.0848 | $1,084.76 |
+
+This is an approximate public-rate calculation, not a Chattermill billing statement. It is useful for dissertation-scale comparison because it includes reasoning tokens through the billable output-token count.
+
+## Interpretation
+
+Gemini Flash is now a serious fixed held-out-aspect baseline. On the test split it matches the current strongest non-LLM fixed held-out-aspect headline score:
+
+| Model | Test Pair Samples F1 | Test Pair Micro F1 | Test Pair Macro F1 | Test Aspect Samples F1 |
+| --- | ---: | ---: | ---: | ---: |
+| Candidate-aspect DistilBERT selector + DistilBERT aspect-conditioned sentiment | 0.6071 | 0.5917 | 0.4890 | 0.6651 |
+| Qwen3-4B-Instruct indexed zero-shot | 0.5374 | 0.5300 | 0.4374 | 0.6340 |
+| Gemini 2.5 Flash indexed JSON-schema | 0.6071 | 0.6541 | 0.5547 | 0.6747 |
+
+Gemini is stronger than Qwen zero-shot and has better pair micro/macro F1 than the local non-LLM fixed result, while matching the local headline pair samples F1. However, the comparison is still only for the fixed three-aspect held-out protocol. It should not be treated as LOAO robustness evidence, and it should be discussed alongside latency, hosted-API governance, and cost.
 
 ## Reproduction Commands
 
@@ -127,7 +235,7 @@ python .\scripts\run_gemini_heldout_aspect.py --split validation --limit 50 --sa
 Full fixed held-out-aspect validation/test run after selecting the best configuration:
 
 ```powershell
-python .\scripts\run_gemini_heldout_aspect.py --split both --limit 10000 --prompt-variant indexed --response-format json_schema --response-format-fallback --output-dir .\outputs\llm\gemini_candidate_label_YYYYMMDD_HHMMSS
+python .\scripts\run_gemini_heldout_aspect.py --split both --limit 10000 --prompt-variant indexed --response-format json_schema --response-format-fallback --max-tokens 2048 --output-dir .\outputs\llm\gemini_candidate_label_YYYYMMDD_HHMMSS
 ```
 
 Cost rates are intentionally explicit rather than hard-coded:
@@ -167,8 +275,10 @@ Results:
 | Full unit test suite | 59 tests OK |
 | Compile check | passed |
 | Dry-run request construction | passed |
-| Real API call | blocked by missing credentials |
+| Hosted API smoke test | passed |
+| 50-row validation sweep | completed |
+| Full validation/test evaluation | completed |
 
 ## Next Step
 
-Run the 5-row hosted smoke test once a key is available, then compare at least `indexed`, `indexed_conservative`, and `indexed_descriptive` on a sampled validation subset before running full validation/test.
+Do not run full Gemini LOAO by default. The next useful hosted checks are a small `gemini-2.5-pro` subset or a targeted qualitative error analysis of the fixed Gemini Flash predictions, but only if the dissertation needs stronger hosted-LLM evidence.

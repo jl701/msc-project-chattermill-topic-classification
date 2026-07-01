@@ -256,8 +256,21 @@ Gemini / Vertex AI access:
   - shared parser/schema utilities: `src/msc_project/llm/candidate_label.py`
   - tests: `tests/test_llm_candidate_label.py`
   - documentation: `docs/gemini_candidate_label_baseline.md`
-  - real API evaluation: not yet run because no compatible credentials were available in the environment
-  - do not report any Gemini F1 result until a real hosted run completes
+  - real API evaluation: completed for fixed held-out-aspect validation/test
+  - final fixed configuration: `vertex_ai/gemini-2.5-flash`, `indexed`, `response_format=json_schema`, `max_tokens=2048`
+- Gemini fixed held-out-aspect result:
+  - validation pair samples F1: 0.6146
+  - validation pair micro F1: 0.6446
+  - validation pair macro F1: 0.4830
+  - validation valid JSON / schema-valid: 1.0000 / 0.9953
+  - test pair samples F1: 0.6071
+  - test pair micro F1: 0.6541
+  - test pair macro F1: 0.5547
+  - test aspect samples F1: 0.6747
+  - test valid JSON / schema-valid: 1.0000 / 1.0000
+  - test mean latency: 2.3721 seconds/example
+  - test tokens: 56,338 input, 113,067 output/completion, 102,574 reasoning, 169,405 total
+- Important Gemini finding: `max_tokens=512` caused truncated JSON because Gemini spent most completion tokens thinking first. Use `max_tokens=2048` for this prompt unless a later sweep proves a cheaper reliable setting.
 - The runner defaults to `response_format=json_schema`, JSON object wrapper `{"labels": [...]}`, and indexed candidate IDs; it can fall back to plain JSON if the endpoint rejects response format.
 
 Latest user decision and completed local baseline phase from 2026-06-27:
@@ -283,9 +296,13 @@ Latest user decision and completed local baseline phase from 2026-06-27:
   - top-2 prediction cap was slightly worse
   - label-masked LR `3e-5` was worse
 - Gemini or Qwen full fine-tuning/evaluation should be treated as the next major phase, not part of the completed local non-LLM baseline phase.
+- Gemini Flash fixed held-out-aspect is now completed and should be compared against the current local non-LLM result:
+  - Gemini Flash matches test pair samples F1 at 0.6071 and improves pair micro/macro F1.
+  - This is not LOAO robustness evidence and should not be over-claimed.
 - Detailed write-up:
   - `docs/non_llm_open_topic_baseline.md`
   - `docs/next_stage_and_literature_review_plan.md`
+  - `docs/gemini_candidate_label_baseline.md`
 
 Latest Aji/literature-review framing update from 2026-06-29:
 
@@ -348,7 +365,7 @@ python .\scripts\run_qwen_heldout_aspect_smoke.py --split validation --limit 100
 python .\scripts\run_qwen_heldout_aspect_smoke.py --split test --limit 10000 --load-in-4bit --prompt-variant indexed
 python .\scripts\prepare_qwen_heldout_aspect_sft_data.py --strategy both --prompt-variant indexed
 python .\scripts\run_gemini_heldout_aspect.py --dry-run --split validation --limit 2 --response-format json_schema --output-dir .\outputs\llm\gemini_candidate_label_dry_run_check
-python .\scripts\run_gemini_heldout_aspect.py --split validation --limit 5 --response-format json_schema --response-format-fallback --output-dir .\outputs\llm\gemini_candidate_label_YYYYMMDD_HHMMSS
+python .\scripts\run_gemini_heldout_aspect.py --split both --limit 10000 --prompt-variant indexed --response-format json_schema --response-format-fallback --max-tokens 2048 --output-dir .\outputs\llm\gemini_candidate_label_YYYYMMDD_HHMMSS
 ```
 
 Recommended next steps:
@@ -358,8 +375,8 @@ Recommended next steps:
 3. LOAO lexical evaluation, lightweight aspect-conditioned sentiment, and DistilBERT aspect-conditioned sentiment have been implemented and documented.
 4. Keep using the LOAO all-row view for robustness checks and the positive-row view only as a sentiment diagnostic.
 5. Treat candidate-aspect DistilBERT selector + DistilBERT aspect-conditioned sentiment as the current strongest non-LLM fixed held-out-aspect baseline.
-6. If Gemini credentials are available, run the 5-row hosted smoke test, then a small validation sweep over at least `indexed`, `indexed_conservative`, and `indexed_descriptive`.
-7. If Gemini credentials are still unavailable, keep the runner/parser/docs as implemented and record the blocked reason rather than fabricating results.
+6. Treat Gemini Flash as the completed hosted fixed held-out-aspect baseline, but do not run full Gemini LOAO unless the cost/benefit is explicitly justified.
+7. Useful next options are Gemini error analysis, a small Gemini Pro subset, Qwen fine-tuning/evaluation on stronger GPU access, or LOAO robustness for the selected branch.
 8. If I ask to publish changes, commit/push only clean code and documentation, without committing outputs, data, credentials, checkpoints, or generated artifacts.
 
 Please start by summarising what you find in the current docs and repo state, then perform the strict audit, then propose the next concrete plan before implementing.

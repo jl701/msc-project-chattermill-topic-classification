@@ -947,3 +947,124 @@ python .\scripts\run_gemini_heldout_aspect.py --split validation --limit 5 --res
 ```
 
 - If the smoke test passes, run a sampled validation sweep over at least `indexed`, `indexed_conservative`, and `indexed_descriptive`, then run full validation/test for the selected configuration.
+
+## 2026-07-01: Gemini Flash Fixed Held-Out-Aspect Evaluation
+
+### Purpose
+
+- Run the hosted Gemini candidate-label baseline after the user supplied Aji's endpoint details and API key.
+- Evaluate Gemini Flash under the same indexed candidate-label held-out-aspect protocol used for Qwen zero-shot.
+- Check Aji's two requirements in practice:
+  - use `response_format` / JSON mode if the endpoint supports it;
+  - count reasoning/thinking tokens in cost diagnostics.
+
+### Code Or Protocol Changes
+
+- No code changed during the hosted run.
+- Documentation was updated after the run:
+  - `docs/gemini_candidate_label_baseline.md`
+  - `docs/generalisation_baselines.md`
+  - `docs/qwen_feasibility.md`
+  - `PROJECT_OVERVIEW.md`
+  - `START_NEW_CHAT_PROMPT.md`
+  - `README.md`
+  - `docs/experiment_log.md`
+
+### Setup
+
+- Dataset: FABSA public export.
+- Protocol: fixed held-out-aspect candidate-label evaluation.
+- Held-out aspects:
+  - `Account management: Account access`
+  - `Company brand: Competitor`
+  - `Value: Discounts promotions`
+- Strategy metadata: `example_filtered`.
+- Model: `vertex_ai/gemini-2.5-flash`.
+- Endpoint: Chattermill Vertex AI OpenAI-compatible endpoint.
+- Prompt: `indexed`.
+- Response format: `json_schema`.
+- Final max tokens: `2048`.
+- Temperature: `0`.
+- API key handling:
+  - used only as a process-local environment variable;
+  - not written to any repository file;
+  - not committed.
+
+### Commands
+
+```powershell
+python .\scripts\run_gemini_heldout_aspect.py --split validation --limit 5 --response-format json_schema --response-format-fallback --output-dir .\outputs\llm\gemini_candidate_label_20260701_0110_smoke
+
+python .\scripts\run_gemini_heldout_aspect.py --split validation --limit 50 --sample --prompt-variant indexed --prompt-variant indexed_conservative --prompt-variant indexed_descriptive --response-format json_schema --response-format-fallback --output-dir .\outputs\llm\gemini_candidate_label_20260701_0115_validation_sweep
+
+python .\scripts\run_gemini_heldout_aspect.py --split validation --limit 50 --sample --prompt-variant indexed --response-format json_schema --response-format-fallback --max-tokens 1024 --output-dir .\outputs\llm\gemini_candidate_label_20260701_0125_validation_indexed_max1024
+
+python .\scripts\run_gemini_heldout_aspect.py --split validation --limit 5 --sample --prompt-variant indexed --response-format json_schema --response-format-fallback --max-tokens 1024 --thinking-budget 0 --output-dir .\outputs\llm\gemini_candidate_label_20260701_0135_thinking0_smoke
+
+python .\scripts\run_gemini_heldout_aspect.py --split validation --limit 50 --sample --prompt-variant indexed --response-format json_schema --response-format-fallback --max-tokens 2048 --output-dir .\outputs\llm\gemini_candidate_label_20260701_0140_validation_indexed_max2048
+
+python .\scripts\run_gemini_heldout_aspect.py --split both --limit 10000 --prompt-variant indexed --response-format json_schema --response-format-fallback --max-tokens 2048 --output-dir .\outputs\llm\gemini_candidate_label_20260701_0145_fixed_full
+```
+
+### Outputs
+
+- Local ignored output directories:
+  - `outputs/llm/gemini_candidate_label_20260701_0110_smoke/`
+  - `outputs/llm/gemini_candidate_label_20260701_0115_validation_sweep/`
+  - `outputs/llm/gemini_candidate_label_20260701_0125_validation_indexed_max1024/`
+  - `outputs/llm/gemini_candidate_label_20260701_0135_thinking0_smoke/`
+  - `outputs/llm/gemini_candidate_label_20260701_0140_validation_indexed_max2048/`
+  - `outputs/llm/gemini_candidate_label_20260701_0145_fixed_full/`
+- Generated prediction/request files remain ignored by Git because they contain review text.
+
+### Results
+
+Small validation sweep on 50 sampled validation rows:
+
+| Configuration | Max Tokens | Pair Samples F1 | Pair Micro F1 | Pair Macro F1 | Valid JSON | Schema Valid |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `indexed` | 512 | 0.5867 | 0.7033 | 0.5353 | 0.8400 | 0.8400 |
+| `indexed_conservative` | 512 | 0.4933 | 0.6207 | 0.4215 | 0.8200 | 0.8000 |
+| `indexed_descriptive` | 512 | 0.5067 | 0.6429 | 0.4575 | 0.7800 | 0.7800 |
+| `indexed` | 1024 | 0.6733 | 0.7475 | 0.5453 | 0.9800 | 0.9800 |
+| `indexed` | 2048 | 0.6733 | 0.7327 | 0.5287 | 1.0000 | 1.0000 |
+
+Full fixed held-out-aspect evaluation:
+
+| Split | Examples | Pair Samples F1 | Pair Micro F1 | Pair Macro F1 | Aspect Samples F1 | Valid JSON | Schema Valid |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| validation | 212 | 0.6146 | 0.6446 | 0.4830 | 0.7129 | 1.0000 | 0.9953 |
+| test | 281 | 0.6071 | 0.6541 | 0.5547 | 0.6747 | 1.0000 | 1.0000 |
+
+Token and approximate public-rate cost diagnostics:
+
+| Split | Input Tokens | Output Tokens, Including Thinking | Reasoning Tokens | Total Tokens | Mean Latency | Approx Cost |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| validation | 41,960 | 89,052 | 80,780 | 131,012 | 2.5074 s | $0.2352 |
+| test | 56,338 | 113,067 | 102,574 | 169,405 | 2.3721 s | $0.2996 |
+
+Approximate cost uses public Gemini 2.5 Flash Standard rates checked on 2026-07-01:
+
+- input: `$0.30 / 1M tokens`
+- output: `$2.50 / 1M tokens`
+
+The endpoint reports `input_tokens + output_tokens = total_tokens`, and `reasoning_tokens` is a subset of output/completion tokens. Cost therefore bills output tokens once while still reporting reasoning tokens separately.
+
+### Interpretation
+
+- The endpoint honours `response_format=json_schema`; no plain-JSON fallback was needed.
+- `max_tokens=512` is too low for this task because Gemini 2.5 Flash often spends nearly all completion tokens thinking first and returns truncated JSON.
+- `max_tokens=2048` fixed schema reliability on the 50-row sweep and produced perfect test JSON/schema validity.
+- The attempted `thinking_budget=0` smoke test did not materially suppress reasoning tokens, so it was not used as the final optimisation.
+- Gemini 2.5 Flash is now stronger than Qwen indexed zero-shot on the fixed held-out-aspect test split.
+- Gemini matches the strongest local non-LLM fixed held-out-aspect headline pair samples F1 (`0.6071`) and improves pair micro/macro F1, but the comparison has hosted cost, latency, and governance trade-offs.
+- This is still a fixed three-aspect result, not LOAO robustness evidence.
+
+### Next Step
+
+- Do not run full Gemini LOAO by default.
+- Useful next checks are:
+  - row-level Gemini error analysis against Qwen and the local non-LLM baseline;
+  - a small Gemini Pro subset if the dissertation needs an upper hosted-LLM comparison;
+  - Qwen fine-tuning/evaluation on stronger GPU access;
+  - LOAO robustness only if the cost/benefit is explicitly justified.

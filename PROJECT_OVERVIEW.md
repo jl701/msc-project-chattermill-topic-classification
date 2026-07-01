@@ -655,6 +655,14 @@ Held-out aspect, Qwen3-4B indexed zero-shot:
   validation pair samples F1: 0.575
   test pair samples F1:       0.537
   valid JSON rate:            1.000
+
+Held-out aspect, Gemini 2.5 Flash indexed JSON-schema:
+  validation pair samples F1: 0.615
+  test pair samples F1:       0.607
+  test pair micro F1:         0.654
+  test pair macro F1:         0.555
+  test valid JSON rate:       1.000
+  test schema-valid rate:     1.000
 ```
 
 See `docs/generalisation_baselines.md` for details.
@@ -689,14 +697,23 @@ Completed:
   schema-validity and invalid-output diagnostics
   latency, token-usage, reasoning-token, and optional cost accounting
   dry-run request construction check
-
-Not yet completed:
   real hosted Gemini API smoke test
   validation prompt/JSON-mode sweep
   full fixed held-out-aspect validation/test evaluation
+
+Final fixed held-out-aspect test:
+  model: vertex_ai/gemini-2.5-flash
+  prompt: indexed JSON-schema
+  max tokens: 2048
+  pair samples F1: 0.6071
+  pair micro F1:   0.6541
+  pair macro F1:   0.5547
+  aspect samples F1: 0.6747
+  valid JSON rate: 1.0000
+  schema-valid rate: 1.0000
 ```
 
-The Gemini implementation was blocked from real API evaluation on 2026-07-01 because no compatible credentials were available in the environment. No Gemini F1 result should be reported until a real hosted run is completed.
+The Gemini implementation initially blocked on missing credentials, but the fixed held-out-aspect run was completed after Aji's endpoint/key details were supplied. The key was not committed. This is still a fixed three-aspect result, not Gemini LOAO robustness evidence.
 
 The current Tier 1 literature-review foundation is recorded in `docs/tier1_core_literature_review_matrix.md`. It covers customer review mining, ABSA, FABSA, multi-label evaluation, domain generalisation, candidate-label taxonomy shift, and structured-output LLM evaluation, while leaving detailed Qwen/Gemini fine-tuning and deployment-governance work as later optional branches.
 
@@ -731,8 +748,8 @@ Future dissertation-writing work should edit the LaTeX source directly. Markdown
 
 5. Which LLM stage should follow the completed non-LLM held-out-aspect baseline?
    - Candidate-aspect DistilBERT selector plus DistilBERT aspect-conditioned sentiment is now the strongest fixed held-out-aspect non-LLM result.
-   - The Gemini runner is implemented but still needs hosted API credentials and real validation/test results.
-   - The next major options are completing the Gemini hosted evaluation or running Qwen fine-tuning/evaluation on stronger GPU access.
+   - Gemini 2.5 Flash now matches the local non-LLM fixed held-out-aspect headline score and improves pair micro/macro F1, but has hosted-API cost, latency, and governance trade-offs.
+   - The next major options are targeted Gemini error analysis, a small Gemini Pro subset, Qwen fine-tuning/evaluation on stronger GPU access, or LOAO robustness for the selected local/Gemini branch if budget permits.
 
 ## 16. Immediate Next Steps
 
@@ -742,7 +759,7 @@ Future dissertation-writing work should edit the LaTeX source directly. Markdown
 
 3. Treat `example_filtered` as the cleaner fixed held-out-aspect result and `label_masked` as an incomplete-label-noise ablation.
 
-4. Run the Gemini hosted smoke test and validation sweep once credentials are available, or switch to Qwen candidate-label fine-tuning/evaluation if stronger GPU access becomes available first.
+4. Treat the completed Gemini Flash fixed held-out-aspect result as a hosted baseline, but do not over-claim it as LOAO evidence.
 
 5. Keep LOAO all-row evaluation as the robustness view and positive-row LOAO only as a sentiment diagnostic.
 

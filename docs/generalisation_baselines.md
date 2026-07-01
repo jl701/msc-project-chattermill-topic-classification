@@ -23,6 +23,7 @@ Headline metric: **pair samples F1**. Pair micro F1 and pair macro F1 are report
 | Held-out aspect, label-masked | Candidate-aspect cross-encoder + DistilBERT aspect-conditioned sentiment | 0.5412 | 0.5343 | 0.4713 | 0.6088 |
 | Held-out aspect, example-filtered | Candidate-aspect cross-encoder + DistilBERT aspect-conditioned sentiment | 0.6071 | 0.5917 | 0.4890 | 0.6651 |
 | Held-out aspect | Qwen3-4B-Instruct indexed zero-shot | 0.5374 | 0.5300 | 0.4374 | 0.6340 |
+| Held-out aspect | Gemini 2.5 Flash indexed JSON-schema | 0.6071 | 0.6541 | 0.5547 | 0.6747 |
 
 ## Held-Out Organisation
 
@@ -219,7 +220,7 @@ This is a zero-shot prompt baseline, not a fine-tuned Qwen result. It is competi
 
 ## Gemini Hosted Candidate-Label Baseline
 
-A hosted Gemini runner has been implemented but not yet executed against the real API because no compatible API credentials were available in the environment during the 2026-07-01 implementation session. It should therefore be treated as an implemented, blocked baseline rather than as a completed result.
+A hosted Gemini baseline was completed after Aji provided the Chattermill Vertex AI OpenAI-compatible endpoint. The runner is:
 
 The runner is:
 
@@ -227,27 +228,56 @@ The runner is:
 python .\scripts\run_gemini_heldout_aspect.py
 ```
 
-It reuses the indexed candidate-label protocol from the Qwen held-out-aspect run and defaults to:
+It reuses the indexed candidate-label protocol from the Qwen held-out-aspect run. The final selected configuration is:
 
 - model: `vertex_ai/gemini-2.5-flash`
 - prompt variant: `indexed`
 - held-out-aspect strategy metadata: `example_filtered`
 - response format: `json_schema`
 - JSON-mode prompt container: `{"labels": [...]}`
+- max tokens: `2048`
 - output directory pattern: `outputs/llm/gemini_candidate_label_YYYYMMDD_HHMMSS`
 
 The parser accepts both the Qwen-style top-level JSON array and the JSON-mode object wrapper, then normalises valid items into the same `aspect | sentiment` pair labels used by the existing metrics. In addition to pair/aspect F1, the runner records valid JSON rate, schema-valid rate, parse failures, invalid candidate IDs, invalid sentiments, duplicate predictions, conflicting sentiments, latency, token usage, reasoning/thinking tokens when reported, and optional cost estimates.
 
-Current validation:
+Prompt and decoding sweep on 50 sampled validation rows:
+
+| Configuration | Max Tokens | Pair Samples F1 | Pair Micro F1 | Pair Macro F1 | Valid JSON | Schema Valid |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `indexed` | 512 | 0.5867 | 0.7033 | 0.5353 | 0.8400 | 0.8400 |
+| `indexed_conservative` | 512 | 0.4933 | 0.6207 | 0.4215 | 0.8200 | 0.8000 |
+| `indexed_descriptive` | 512 | 0.5067 | 0.6429 | 0.4575 | 0.7800 | 0.7800 |
+| `indexed` | 1024 | 0.6733 | 0.7475 | 0.5453 | 0.9800 | 0.9800 |
+| `indexed` | 2048 | 0.6733 | 0.7327 | 0.5287 | 1.0000 | 1.0000 |
+
+The initial `512` max-token setting caused truncated JSON because Gemini 2.5 Flash spent most completion tokens on thinking. The final run therefore used `max_tokens=2048`.
+
+Full fixed held-out-aspect results:
+
+| Split | Pair Samples F1 | Pair Micro F1 | Pair Macro F1 | Aspect Samples F1 | Sentiment Accuracy When Gold Aspect Predicted | Valid JSON | Schema Valid | Mean Latency |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| validation | 0.6146 | 0.6446 | 0.4830 | 0.7129 | 0.8639 | 1.0000 | 0.9953 | 2.5074 s |
+| test | 0.6071 | 0.6541 | 0.5547 | 0.6747 | 0.9052 | 1.0000 | 1.0000 | 2.3721 s |
+
+Token and approximate public-rate cost diagnostics:
+
+| Split | Input Tokens | Output Tokens, Including Thinking | Reasoning Tokens | Total Tokens | Approx Cost | Approx Cost / 1M Reviews |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| validation | 41,960 | 89,052 | 80,780 | 131,012 | $0.2352 | $1,109.52 |
+| test | 56,338 | 113,067 | 102,574 | 169,405 | $0.2996 | $1,066.08 |
+
+The approximate cost uses public Gemini 2.5 Flash Standard rates checked on 2026-07-01: `$0.30 / 1M input tokens` and `$2.50 / 1M output tokens`. The endpoint's `output_tokens` include reasoning tokens, so reasoning is counted through output-token billing and reported separately for transparency.
+
+Validation commands:
 
 ```powershell
 python -m unittest tests.test_llm_candidate_label
 python -m unittest discover -s tests
 python -m compileall -q src scripts tests
-python .\scripts\run_gemini_heldout_aspect.py --dry-run --split validation --limit 2 --response-format json_schema --output-dir .\outputs\llm\gemini_candidate_label_dry_run_check
+python .\scripts\run_gemini_heldout_aspect.py --split both --limit 10000 --prompt-variant indexed --response-format json_schema --response-format-fallback --max-tokens 2048 --output-dir .\outputs\llm\gemini_candidate_label_20260701_0145_fixed_full
 ```
 
-The dry-run passed and wrote only ignored local output files. See `docs/gemini_candidate_label_baseline.md` for the hosted smoke-test and validation-sweep commands to run once credentials are available.
+Generated prediction files are ignored under `outputs/` and are not committed because they contain review text. See `docs/gemini_candidate_label_baseline.md` for the full sweep and cost notes.
 
 ## Interpretation
 
@@ -255,7 +285,7 @@ The closed-topic DistilBERT result remains the strongest current benchmark on th
 
 The held-out organisation traditional result is close to the closed-topic traditional baseline on pair samples F1, but pair macro F1 drops. The held-out-organisation DistilBERT run gives a clear improvement over the traditional model, but its macro F1 remains lower than closed-topic DistilBERT. This suggests that domain shift is still hurting long-tail labels even when overall performance is strong.
 
-The held-out aspect results are much lower than the closed-topic and held-out-organisation results, as expected. A fixed-output supervised classifier is not a meaningful model for unseen labels. The candidate-aspect cross-encoder is a stronger label-aware baseline and improves substantially over the lexical lower bound. Qwen indexed zero-shot is competitive, but the best current non-LLM fixed held-out-aspect result is now the example-filtered candidate-aspect DistilBERT selector plus DistilBERT aspect-conditioned sentiment pipeline (`0.6071` test pair samples F1). The global sentiment limitation has been tested carefully: DistilBERT aspect-conditioned sentiment improves the controlled lexical setup and the example-filtered strong pipeline, but it does not improve label-masked training. This supports using example-filtered as the cleaner fixed-split result while keeping label-masked as an incomplete-label-noise ablation. The next major modelling stage should be a hosted Gemini baseline or Qwen fine-tuning/evaluation, not more small fixed-split sentiment tuning.
+The held-out aspect results are much lower than the closed-topic and held-out-organisation results, as expected. A fixed-output supervised classifier is not a meaningful model for unseen labels. The candidate-aspect cross-encoder is a stronger label-aware baseline and improves substantially over the lexical lower bound. Qwen indexed zero-shot is competitive, but it does not beat the best local fixed held-out-aspect result. Gemini 2.5 Flash with indexed JSON-schema prompting now matches the current strongest non-LLM fixed held-out-aspect headline score (`0.6071` test pair samples F1) and improves pair micro/macro F1, but it has hosted-API latency, cost, and governance trade-offs. The global sentiment limitation has been tested carefully: DistilBERT aspect-conditioned sentiment improves the controlled lexical setup and the example-filtered strong pipeline, but it does not improve label-masked training. This supports using example-filtered as the cleaner fixed-split result while keeping label-masked as an incomplete-label-noise ablation. The next major modelling stage should not be more fixed-split sentiment tuning; useful next checks are Gemini error analysis, a small Gemini Pro subset, Qwen fine-tuning/evaluation, or LOAO robustness for the selected local/Gemini branch if budget permits.
 
 See `docs/heldout_aspect_error_analysis.md` for row-level error analysis.
 
