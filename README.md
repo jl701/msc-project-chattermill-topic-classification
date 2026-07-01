@@ -18,6 +18,9 @@ The main project context, current understanding, datasets, modelling plan, evalu
 - [docs/aji_updates_2026_06_29.md](docs/aji_updates_2026_06_29.md)
 - [docs/gemini_candidate_label_baseline.md](docs/gemini_candidate_label_baseline.md)
 - [docs/llm_next_experiment_directions.md](docs/llm_next_experiment_directions.md)
+- [docs/experiment_reproducibility_register.md](docs/experiment_reproducibility_register.md)
+
+Experiment close-out rule: after every meaningful experiment, record the exact parameters/configuration and results in tracked project documentation, run relevant validation checks, then commit and push safe code/docs/config changes to GitHub. Do not commit or push `outputs/`, raw data, credentials, checkpoints, model weights, raw prediction files, or confidential material.
 
 The current first phase is a closed-topic FABSA baseline:
 

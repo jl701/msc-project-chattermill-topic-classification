@@ -53,6 +53,7 @@ Before doing new work, please inspect these files. If a `D:\Msc_Project` path is
 20. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\local_gemini_cascade.md
 21. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\tasks_1_to_3_thesis_prep.md
 22. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\llm_next_experiment_directions.md
+23. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\experiment_reproducibility_register.md
 
 Immediate instruction for the new chat:
 
@@ -426,7 +427,12 @@ Experiment logging rule:
 
 - After every meaningful experiment, implementation change, or evaluation run, update `docs/experiment_log.md`.
 - Record the code/protocol change, dataset split, model or baseline, exact command, output location, headline/supporting metrics, interpretation, limitations, and next step.
-- Commit only concise documentation summaries, not local generated outputs or credentials.
+- Use `docs/experiment_reproducibility_register.md` as the consolidated cross-experiment reproducibility index. It audits older runs, records canonical commands/parameters, and lists remaining provenance caveats.
+- Future experiments should ideally save exact command, git commit, parsed CLI args, hardware/API metadata, and package versions alongside `summary.json`.
+- Every future experiment must be closed by documenting the exact parameters/configuration, updating the relevant project docs, running appropriate validation checks, and committing/pushing safe tracked changes to GitHub.
+- Do not leave results only in local `outputs/`; summarise the result in tracked documentation before stopping.
+- Commit and push only clean code, documentation, and non-sensitive configs. Never commit or push local generated outputs, raw data, credentials, API keys, checkpoints, model weights, raw prediction files, or confidential material.
+- If GitHub push is blocked by network/auth/conflict issues, record the blocker in `docs/experiment_log.md` and push as soon as the blocker is resolved.
 
 Useful commands:
 

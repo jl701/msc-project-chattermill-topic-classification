@@ -1,0 +1,157 @@
+# Experiment Reproducibility Register
+
+Last updated: 2026-07-01
+
+This register audits whether the project experiments have enough recorded parameters for the user, Aji, or a future project session to reproduce the reported results. It complements `docs/experiment_log.md`, which remains the chronological ledger.
+
+## Recording Standard
+
+Every future meaningful experiment should record:
+
+- exact command and working directory
+- dataset path and split/protocol
+- training/evaluation row scope and label scope
+- model name and model family
+- prompt variant or feature pipeline
+- important hyperparameters, including learning rate, epochs, batch sizes, sequence length, class weighting, threshold-selection metric, random seed, and negative sampling
+- output directory
+- validation-selection rule
+- headline and supporting metrics
+- runtime, hardware, API endpoint family, token usage, and approximate cost when relevant
+- whether outputs are local-only because they may contain review text
+- caveats, such as smoke-test status, subset evaluation, or non-comparability with full validation/test results
+
+Every future experiment must also be closed out with a safe GitHub sync:
+
+- update the chronological record in `docs/experiment_log.md`
+- update this register when a new canonical experiment, parameter set, or headline result is introduced
+- commit and push safe tracked files after validation passes
+- never commit `outputs/`, raw data, credentials, checkpoints, model weights, or raw prediction files containing review text
+- if push cannot be completed immediately, record the reason in the experiment log and complete the push as soon as possible
+
+## Audit Summary
+
+The current project is mostly reproducible for all dissertation-relevant results.
+
+Strongly recorded:
+
+- post-2026-06-21 experiments in `docs/experiment_log.md`
+- held-out aspect protocols and LOAO experiments
+- strongest local non-LLM fixed-split and LOAO results
+- Gemini Flash/Flash-Lite/Pro fixed-split runs
+- local-to-Gemini cascade and Pro cascade deep-dive
+
+Recoverable from local artifacts but less well centralised before this register:
+
+- early closed-topic DistilBERT tuning runs
+- early Qwen LoRA feasibility pilots
+- first TF-IDF Logistic Regression baseline
+- exploratory pair-label cross-encoder runs
+
+Remaining limitations:
+
+- Some early exploratory commands were not logged verbatim when they were first run. Their key parameters are recoverable from output directory names, `summary.json`, script defaults, and later documentation, but not always from a single historical command line.
+- Most scripts save configurations and metrics, but not all save the exact shell command, git commit, package versions, or hardware metadata. This should be improved for future experiments if time allows.
+- Generated prediction files under `outputs/` may contain review text and must remain uncommitted.
+
+## Canonical Experiment Register
+
+| Area | Experiment / Claim | Parameter Record Status | Canonical Command Or Parameter Source | Main Output / Evidence | Notes |
+| --- | --- | --- | --- | --- | --- |
+| Data exploration | FABSA schema, split sizes, label distribution | Adequate | `python .\scripts\explore_fabsa.py` | `outputs/fabsa_exploration/summary.json`, `PROJECT_OVERVIEW.md` | Early exploratory result; sufficient for dataset description. |
+| Split design | Held-out organisation and held-out aspect split analysis | Complete | `python .\scripts\analyse_split_candidates.py`; `python .\scripts\build_fabsa_splits.py` | `docs/evaluation_protocol.md`, `outputs/split_analysis/summary.json` | Split rows, held-out orgs/aspects, and leakage checks are documented. |
+| Closed-topic traditional | First TF-IDF Logistic Regression baseline | Partially centralised, recoverable | `python .\scripts\run_tfidf_logreg.py --eval-split all --output-dir .\outputs\baselines\tfidf_logreg` | `outputs/baselines/tfidf_logreg/`, `PROJECT_OVERVIEW.md` | Superseded by the classical sweep; record is adequate as a first lower-bound baseline. |
+| Closed-topic traditional | Full classical baseline sweep | Complete | `python .\scripts\run_classical_baselines.py --output-dir .\outputs\baselines\classical` | `docs/closed_topic_baselines.md`, `outputs/baselines/classical/summary.json`, `validation_sweep.csv` | Best config: word+char TF-IDF Linear SVM, word ngrams `1-3`, `C=0.2`, threshold `-0.38`. |
+| Closed-topic encoder | DistilBERT/BERT closed-topic tuning | Complete for main runs | `python .\scripts\run_transformer_baseline.py --protocol closed-topic --epochs <N> --batch-size 16 --learning-rate <LR> --pos-weight sqrt --output-dir .\outputs\baselines\transformer\<run>` | `docs/closed_topic_baselines.md`, `outputs/baselines/transformer/*/summary.json` | Each summary stores model name, max length, batch size, LR, weight decay, epochs, warmup, seed, AMP, class weighting, history, and best validation/test metrics. |
+| Held-out organisation | Traditional SVM generalisation baseline | Complete | `python .\scripts\run_generalisation_baselines.py --protocol heldout-org --refined-cross-org --output-dir .\outputs\baselines\generalisation_refined` | `docs/generalisation_baselines.md`, `outputs/baselines/generalisation_refined/summary.json` | Best refined config and validation/test metrics are documented. |
+| Held-out organisation | DistilBERT generalisation baseline | Complete | `python .\scripts\run_transformer_baseline.py --protocol heldout-org --epochs 10 --batch-size 16 --learning-rate 6e-5 --pos-weight sqrt --output-dir .\outputs\baselines\transformer_heldout_org\distilbert_lr6e-5_sqrt` | `docs/generalisation_baselines.md`, `outputs/baselines/transformer_heldout_org/*/summary.json` | LR `4e-5` to `7e-5` checks are recorded in summaries and docs. |
+| Held-out aspect | Lexical candidate-label baseline with global sentiment | Complete | `python .\scripts\run_generalisation_baselines.py --protocol heldout-aspect --strategy both --sentiment-mode global --output-dir .\outputs\baselines\generalisation_global_sentiment_rerun` | `docs/generalisation_baselines.md`, local output summaries | Fixed three-aspect lower-bound baseline. |
+| Held-out aspect | Lexical candidate-label baseline with shallow aspect-conditioned sentiment | Complete | `python .\scripts\run_generalisation_baselines.py --protocol heldout-aspect --strategy both --sentiment-mode aspect_conditioned --output-dir .\outputs\baselines\generalisation_aspect_conditioned_sentiment` | `docs/generalisation_baselines.md`, `docs/experiment_log.md` | Methodologically cleaner than global sentiment, but weaker empirically. |
+| Held-out aspect | Lexical selector with DistilBERT aspect-conditioned sentiment | Complete | `python .\scripts\run_generalisation_baselines.py --protocol heldout-aspect --strategy both --sentiment-mode transformer_aspect_conditioned --sentiment-epochs 3 --sentiment-learning-rate 2e-5 --sentiment-batch-size 16 --sentiment-eval-batch-size 64 --sentiment-class-weight balanced --sentiment-selection-metric accuracy --output-dir .\outputs\baselines\generalisation_transformer_sentiment_lr2e-5_ep3_balanced_accuracy` | `docs/generalisation_baselines.md`, `docs/non_llm_open_topic_baseline.md` | Controls the aspect selector and isolates sentiment model strength. |
+| Held-out aspect | Candidate-aspect DistilBERT cross-encoder with global sentiment | Complete | `python .\scripts\run_aspect_label_aware_baseline.py --strategy both --sentiment-mode global --epochs 3 --batch-size 32 --eval-batch-size 96 --learning-rate 2e-5 --negatives-per-positive 3 --output-dir .\outputs\baselines\aspect_label_aware_lr2e-5_ep3_neg3` | `docs/generalisation_baselines.md`, `docs/heldout_aspect_error_analysis.md`, local summaries | Important predecessor to the final local non-LLM branch. |
+| Held-out aspect | Pair-label cross-encoder exploratory runs | Adequate for negative result | `python .\scripts\run_label_aware_baseline.py --strategy label_masked --epochs 3 --batch-size 32 --eval-batch-size 96 --learning-rate 2e-5 --negatives-per-positive 3 --output-dir .\outputs\baselines\label_aware_pair_cross_encoder_lr2e-5_ep3_neg3` | `outputs/baselines/label_aware_pair_cross_encoder_*`, `docs/generalisation_baselines.md` | Underperformed; not a headline result, but output parameters are preserved. |
+| Held-out aspect | Strongest local non-LLM fixed-split baseline | Complete | `python .\scripts\run_aspect_label_aware_baseline.py --strategy example_filtered --sentiment-mode transformer_aspect_conditioned --sentiment-epochs 3 --sentiment-learning-rate 2e-5 --sentiment-batch-size 16 --sentiment-eval-batch-size 64 --sentiment-class-weight balanced --sentiment-selection-metric accuracy --epochs 3 --batch-size 32 --eval-batch-size 96 --learning-rate 3e-5 --negatives-per-positive 3 --output-dir .\outputs\baselines\aspect_label_aware_transformer_sentiment_lr3e-5_ep3_neg3_example_filtered` | `docs/non_llm_open_topic_baseline.md`, `docs/generalisation_baselines.md`, local summary | Headline fixed held-out-aspect non-LLM result: `0.6071` pair samples F1. |
+| Held-out aspect tuning | Strong local non-LLM tuning attempts | Complete for important runs | Output directories named by LR/epochs/top-k plus `summary.json` | `docs/non_llm_open_topic_baseline.md`, `outputs/baselines/aspect_label_aware_transformer_sentiment_*` | Checked LR `2e-5`, `3e-5`, `4e-5`, 5 epochs, top-2 cap, and label-masked LR `3e-5`. |
+| LOAO | Lexical global-sentiment LOAO, all-row and positive-row | Complete | See `docs/loao_heldout_aspect.md` reproduction commands | `docs/loao_heldout_aspect.md`, `docs/experiment_log.md` | Includes sample-F1 and micro-F1 threshold-selection variants. |
+| LOAO | Lexical shallow aspect-conditioned sentiment LOAO | Complete | `python .\scripts\run_loao_heldout_aspect.py --baseline lexical --strategy both --sentiment-mode aspect_conditioned --selection-metric pair_micro_f1 --output-dir .\outputs\baselines\loao_heldout_aspect_lexical_aspect_conditioned_micro_selection` | `docs/loao_heldout_aspect.md` | Confirms shallow aspect-conditioned sentiment is not stronger. |
+| LOAO | Strongest DistilBERT selector plus DistilBERT aspect-conditioned sentiment LOAO | Complete | `python .\scripts\run_loao_heldout_aspect.py --baseline cross_encoder --strategy example_filtered --eval-row-scope all --selection-metric pair_micro_f1 --sentiment-mode transformer_aspect_conditioned --sentiment-epochs 3 --sentiment-learning-rate 2e-5 --sentiment-batch-size 16 --sentiment-eval-batch-size 64 --sentiment-class-weight balanced --sentiment-selection-metric accuracy --epochs 3 --batch-size 32 --eval-batch-size 96 --learning-rate 3e-5 --negatives-per-positive 3 --output-dir .\outputs\baselines\loao_cross_encoder_transformer_sentiment_example_filtered_micro_selection_20260630` | `docs/loao_heldout_aspect.md`, `docs/experiment_log.md` | Full 12-fold run complete; LR `2e-5` tuning check also documented. |
+| Error analysis | Local/Qwen held-out aspect error analysis | Complete enough | `python .\scripts\analyse_heldout_aspect_errors.py --output-dir .\outputs\analysis\heldout_aspect` | `docs/heldout_aspect_error_analysis.md`, local analysis outputs | Uses row IDs and aggregate labels in docs; raw review text remains local. |
+| Qwen | Closed-topic zero-shot smoke | Adequate for smoke result | `python .\scripts\run_qwen_zero_shot.py --split validation --limit 100 --load-in-4bit --output-dir .\outputs\qwen_zero_shot_val100` | `docs/qwen_feasibility.md`, `outputs/qwen_zero_shot_*` | Smoke only, not comparable with full validation/test baselines. |
+| Qwen | Closed-topic QLoRA feasibility pilots | Recoverable and now centralised | See Qwen LoRA parameter table below | `docs/qwen_feasibility.md`, `outputs/qwen_lora_*/summary.json` | Exact historical commands were not all logged, but key parameters and metrics are in summaries. |
+| Qwen | Held-out-aspect indexed zero-shot baseline | Complete | `python .\scripts\run_qwen_heldout_aspect_smoke.py --split validation --limit 10000 --load-in-4bit --prompt-variant indexed --output-dir .\outputs\qwen_heldout_aspect_smoke\validation_indexed_full`; `python .\scripts\run_qwen_heldout_aspect_smoke.py --split test --limit 10000 --load-in-4bit --prompt-variant indexed --output-dir .\outputs\qwen_heldout_aspect_smoke\test_indexed_full` | `docs/qwen_feasibility.md`, `docs/generalisation_baselines.md`, local summaries | Full validation/test prompt baseline, not fine-tuned Qwen. |
+| Qwen | Held-out-aspect SFT data preparation | Complete | `python .\scripts\prepare_qwen_heldout_aspect_sft_data.py --strategy both --prompt-variant indexed --output-dir .\outputs\qwen_heldout_aspect_sft_indexed` | `docs/qwen_feasibility.md`, `docs/generalisation_baselines.md` | Generated data remains local and uncommitted. |
+| Gemini | Hosted API dry-run, smoke, prompt/max-token sweep | Complete | See `docs/gemini_candidate_label_baseline.md` commands | `docs/gemini_candidate_label_baseline.md`, `outputs/llm/gemini_candidate_label_*/summary.json` | Captures model, prompt variant, response format, max tokens, token usage, schema validity, latency, and cost inputs. |
+| Gemini | Full fixed-split Flash baseline | Complete | `python .\scripts\run_gemini_heldout_aspect.py --split both --limit 10000 --prompt-variant indexed --response-format json_schema --response-format-fallback --max-tokens 2048 --output-dir .\outputs\llm\gemini_candidate_label_20260701_0145_fixed_full` | `docs/gemini_candidate_label_baseline.md`, local summary | Cost recomputed from stored token counts when explicit rates were not stored. |
+| Gemini | Full fixed-split Pro and Flash-Lite baselines | Complete | See `docs/tasks_1_to_3_thesis_prep.md` commands with explicit cost rates | `docs/gemini_candidate_label_baseline.md`, `docs/tasks_1_to_3_thesis_prep.md`, local summaries | Full hosted Pareto comparison is reproducible except for requiring local API credentials. |
+| Gemini cascade | Local-to-Gemini Flash-Lite/Flash/Pro cascade | Complete | See `docs/local_gemini_cascade.md` commands | `docs/local_gemini_cascade.md`, `outputs/analysis/local_gemini_cascade_*` | Policy search is validation-only; test labels used only for final evaluation and later explanation. |
+| Gemini cascade | Pro cascade deep-dive | Complete | `python .\scripts\analyse_local_gemini_cascade.py` | `docs/local_gemini_cascade.md`, `outputs/analysis/local_gemini_cascade_pro_deep_dive/summary.json` | Explains error complementarity and Pro-empty fallback. |
+| Roadmap | LLM next experiment directions | Complete planning note | n/a | `docs/llm_next_experiment_directions.md` | Not an experiment result; records future order and cost rationale. |
+
+## Supplemental Qwen LoRA Pilot Parameters
+
+These early Qwen feasibility runs were originally recorded as a table in `docs/qwen_feasibility.md`. The detailed parameters below are recovered from local `summary.json` files.
+
+| Output Directory | Train / Eval Examples | Epochs | Batch / Grad Accum | LR | LoRA r / alpha / dropout | Runtime | Final Pair Micro F1 | Status |
+| --- | ---: | ---: | --- | ---: | --- | ---: | ---: | --- |
+| `outputs/qwen_lora_smoke/` | 16 / 5 | 1 | 1 / 4 | `2e-4` | 8 / 16 / 0.05 | 38 s | 0.8000 | Tiny smoke only |
+| `outputs/qwen_lora_train500_eval100_ep1_r8_lr2e-4/` | 500 / 100 | 1 | 1 / 8 | `2e-4` | 8 / 16 / 0.05 | 728 s | 0.6476 | Feasibility |
+| `outputs/qwen_lora_train500_eval100_ep2_r8_lr2e-4/` | 500 / 100 | 2 | 1 / 8 | `2e-4` | 8 / 16 / 0.05 | 1,586 s | 0.7193 | Feasibility |
+| `outputs/qwen_lora_train500_eval100_ep3_r8_lr2e-4/` | 500 / 100 | 3 | 1 / 8 | `2e-4` | 8 / 16 / 0.05 | 2,285 s | 0.7283 | Feasibility |
+| `outputs/qwen_lora_train1000_eval100_ep2_r8_lr2e-4_len512/` | 1000 / 100 | 2 | 1 / 8 | `2e-4` | 8 / 16 / 0.05 | 2,346 s | 0.7405 | Feasibility |
+| `outputs/qwen_lora_train1000_eval100_ep3_r8_lr2e-4_len512/` | 1000 / 100 | 3 | 1 / 8 | `2e-4` | 8 / 16 / 0.05 | 3,451 s | 0.7478 final epoch, best documented pilot `0.7586` | Feasibility |
+| `outputs/qwen_lora_train1000_eval100_ep3_r8_lr1e-4_len512/` | 1000 / 100 | 3 | 1 / 8 | `1e-4` | 8 / 16 / 0.05 | 3,466 s | 0.7616 | Feasibility |
+
+Canonical command template:
+
+```powershell
+python .\scripts\run_qwen_lora_pilot.py --train-limit 1000 --eval-limit 100 --epochs 3 --batch-size 1 --grad-accumulation-steps 8 --learning-rate 1e-4 --max-length 512 --lora-r 8 --lora-alpha 16 --lora-dropout 0.05 --output-dir .\outputs\qwen_lora_train1000_eval100_ep3_r8_lr1e-4_len512
+```
+
+Do not treat these pilots as final full-split Qwen results. They are 100-row validation-slice feasibility checks on a local laptop GPU.
+
+## Supplemental Closed-Topic Transformer Tuning Parameters
+
+Closed-topic transformer summaries under `outputs/baselines/transformer/*/summary.json` store full configs. The main tested runs were:
+
+| Output Directory | Model | LR | Epochs | Batch | Pos Weight | Best Epoch | Test Pair Samples F1 | Test Pair Micro F1 |
+| --- | --- | ---: | ---: | ---: | --- | ---: | ---: | ---: |
+| `distilbert_lr2e-5_len256_bs16_ep3` | DistilBERT | `2e-5` | 3 | 16 | none | 3 | 0.6760 | 0.6787 |
+| `distilbert_lr2e-5_len256_bs16_ep4_sqrtpos` | DistilBERT | `2e-5` | 4 | 16 | sqrt | 4 | 0.7285 | 0.7128 |
+| `distilbert_lr3e-5_len256_bs16_ep8_sqrtpos` | DistilBERT | `3e-5` | 8 | 16 | sqrt | 7 | 0.7678 | 0.7567 |
+| `distilbert_lr4e-5_len256_bs16_ep10_sqrtpos` | DistilBERT | `4e-5` | 10 | 16 | sqrt | 8 | 0.7803 | 0.7738 |
+| `distilbert_lr5e-5_len256_bs16_ep10_sqrtpos` | DistilBERT | `5e-5` | 10 | 16 | sqrt | 9 | 0.7744 | 0.7663 |
+| `bertbase_lr2e-5_len256_bs8ga2_ep6_sqrtpos` | BERT-base | `2e-5` | 6 | 8, grad accum 2 | sqrt | 6 | 0.7453 | 0.7312 |
+
+Canonical command template:
+
+```powershell
+python .\scripts\run_transformer_baseline.py --protocol closed-topic --model-name distilbert-base-uncased --epochs 10 --batch-size 16 --learning-rate 4e-5 --pos-weight sqrt --output-dir .\outputs\baselines\transformer\distilbert_lr4e-5_len256_bs16_ep10_sqrtpos
+```
+
+## Supplemental Held-Out Organisation Transformer Parameters
+
+Held-out-organisation transformer summaries under `outputs/baselines/transformer_heldout_org/*/summary.json` store full configs.
+
+| Output Directory | LR | Epochs | Batch | Pos Weight | Best Epoch | Test Pair Samples F1 | Test Pair Micro F1 |
+| --- | ---: | ---: | ---: | --- | ---: | ---: | ---: |
+| `distilbert_lr4e-5_sqrt` | `4e-5` | 10 | 16 | sqrt | 8 | 0.7570 | 0.7541 |
+| `distilbert_lr5e-5_sqrt` | `5e-5` | 10 | 16 | sqrt | 8 | 0.7565 | 0.7567 |
+| `distilbert_lr6e-5_sqrt` | `6e-5` | 10 | 16 | sqrt | 8 | 0.7575 | 0.7600 |
+| `distilbert_lr7e-5_sqrt` | `7e-5` | 10 | 16 | sqrt | 8 | 0.7594 | 0.7629 |
+
+The validation-selected report row uses LR `6e-5`; LR `7e-5` has slightly higher test metrics but was not validation-selected.
+
+## Future Logging Improvement
+
+For future experiments, prefer scripts that write a run manifest alongside `summary.json` containing:
+
+- `command`: exact shell command
+- `cwd`: working directory
+- `git_commit`: current commit hash
+- `python_version` and key package versions
+- `hardware`: GPU or API model/endpoint family
+- `started_at` and `finished_at`
+- `data_dir` and split/protocol metadata
+- all parsed CLI arguments
+
+This would make future reproduction less dependent on human-written notes.

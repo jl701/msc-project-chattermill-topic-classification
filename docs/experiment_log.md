@@ -15,7 +15,16 @@ Every completed experiment must add an entry to this file. The entry should be d
 - what the result means
 - what should be done next
 
-Do not commit local `outputs/`, checkpoints, credentials, API keys, or private data. Summarise results in this document and keep generated artifacts local unless explicitly approved.
+An experiment is not considered closed until the parameters/configuration and results have been recorded in project documentation and the safe tracked changes have been committed and pushed to GitHub. The minimum close-out checklist is:
+
+1. Record the exact command, data split, row/label scope, model, prompt or feature pipeline, hyperparameters, random seed, hardware/API endpoint family, output directory, validation-selection rule, headline metrics, supporting metrics, and caveats.
+2. Update `docs/experiment_reproducibility_register.md` when the experiment creates a new family of runs, a new canonical command, or a new headline result.
+3. Run the relevant validation checks for the changed code/docs.
+4. Check Git status and stage only safe files.
+5. Commit and push code, documentation, and non-sensitive configs to GitHub so the experiment record is not lost.
+6. If GitHub push is temporarily impossible, record the blocker and push as soon as the blocker is resolved.
+
+Do not commit local `outputs/`, checkpoints, credentials, API keys, private data, or raw prediction files that may contain review text. Summarise results in this document and keep generated artifacts local unless explicitly approved.
 
 ## Required Entry Template
 
@@ -1404,6 +1413,71 @@ python -m compileall -q src scripts tests
 | --- | --- |
 | Unit tests | 63 tests OK |
 | Compile check | passed |
+
+## 2026-07-01: Experiment Reproducibility Audit
+
+### Purpose
+
+- Check whether experiments from the start of the project have enough recorded parameters for future reproduction.
+- Consolidate commands, model parameters, data splits, output paths, and provenance caveats into one index.
+- Supplement older experiments that pre-date the stricter 2026-06-21 experiment-log template.
+
+### Code Or Protocol Changes
+
+- Added `docs/experiment_reproducibility_register.md`.
+- Updated documentation entry points:
+  - `README.md`
+  - `PROJECT_OVERVIEW.md`
+  - `START_NEW_CHAT_PROMPT.md`
+
+### Setup
+
+- Scope: all main project experiment families, including data/split analysis, closed-topic baselines, held-out organisation, held-out aspect, LOAO, Qwen feasibility, Gemini hosted baselines, cascade experiments, and error analyses.
+- Sources inspected:
+  - committed documentation under `docs/`
+  - script CLI arguments
+  - local aggregate `summary.json` files under ignored `outputs/`
+- Raw prediction outputs and review text were not copied into documentation.
+
+### Commands
+
+```powershell
+rg --files docs scripts src tests thesis
+rg -n "Command|Commands|Reproduction|python .\\scripts|learning rate|epochs|batch|threshold|output-dir|Result|Validation|LOAO|Gemini|Qwen|DistilBERT|SVM|TF-IDF" docs PROJECT_OVERVIEW.md README.md START_NEW_CHAT_PROMPT.md
+Get-ChildItem -Path outputs -Recurse -File -Include summary.json,full_summary.json,*.csv
+python .\scripts\run_classical_baselines.py --help
+python .\scripts\run_transformer_baseline.py --help
+python .\scripts\run_generalisation_baselines.py --help
+python .\scripts\run_aspect_label_aware_baseline.py --help
+python .\scripts\run_loao_heldout_aspect.py --help
+python .\scripts\run_qwen_heldout_aspect_smoke.py --help
+python .\scripts\run_gemini_heldout_aspect.py --help
+```
+
+### Outputs
+
+- New committed documentation:
+  - `docs/experiment_reproducibility_register.md`
+- No generated outputs, data files, credentials, checkpoints, or prediction files were committed.
+
+### Results
+
+| Finding | Status |
+| --- | --- |
+| Post-2026-06-21 experiment-log entries | Strong, command-level record exists |
+| Gemini/cascade experiments | Strong, with commands, token/cost diagnostics, and output paths |
+| Strongest local non-LLM and LOAO experiments | Strong after latest documentation updates |
+| Closed-topic DistilBERT tuning | Recoverable from summaries; now centralised in register |
+| Qwen LoRA feasibility pilots | Recoverable from summaries; now centralised in register |
+| Earliest exploratory TF-IDF/Qwen smoke runs | Adequate for non-headline exploratory status, but not all historical commands were logged verbatim |
+
+### Interpretation
+
+The dissertation-relevant results are reproducible enough for thesis use after this audit. The main weakness was not missing outputs, but lack of a single cross-experiment map for older runs. The new register fills that gap and records remaining caveats honestly.
+
+### Next Step
+
+For future experiments, add exact command, git commit, parsed CLI arguments, hardware/API metadata, and package versions to each run summary where feasible.
 
 ## 2026-07-01: LLM Next Experiment Roadmap
 
