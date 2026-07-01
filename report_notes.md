@@ -58,3 +58,99 @@ Open follow-up:
 - Sampled Gemini LOAO diagnostic if a lightweight robustness signal is needed.
 - Cascade uncertainty improvement using local selector score/margin features.
 - Qualitative error taxonomy with manual review.
+
+## 2026-07-02 - Qualitative Error Taxonomy Pre-Registration
+
+Task:
+
+- Build a Gemini-assisted, manually verified qualitative error taxonomy before moving to Qwen fine-tuning.
+
+Planned configuration:
+
+- Use existing local ignored prediction outputs; do not rerun fixed-split or LOAO models.
+- Fixed-split row-level sources: local DistilBERT, Qwen zero-shot, Gemini Flash-Lite/Flash/Pro, aspect-description variants, and Pro cascade.
+- LOAO sources: existing Qwen-vs-DistilBERT comparison summaries and per-aspect CSVs.
+- Output directory: `outputs/analysis/qualitative_error_taxonomy_20260702/`.
+- Tracked documentation: `docs/qualitative_error_taxonomy.md`.
+- Gemini Pro may assist taxonomy drafting from local ignored packets, but final categories must be manually reviewed.
+- Raw review text must remain local-only and must not be committed.
+
+Observed result:
+
+- Implemented `scripts/analyse_qualitative_error_taxonomy.py`.
+- Local output directory: `outputs/analysis/qualitative_error_taxonomy_20260702/`.
+- Gemini Pro draft call succeeded with 19,494 prompt tokens, 6,362 completion tokens, 4,336 reasoning tokens, and 25,856 total tokens.
+- Final tracked write-up: `docs/qualitative_error_taxonomy.md`.
+
+Final taxonomy:
+
+1. Semantic boundary bleed.
+2. Competitor-positive recall bottleneck.
+3. Generative over-prediction / fail-noisy behaviour.
+4. Cautious abstention / fail-silent behaviour.
+5. Sentiment polarity under-recall.
+6. Prompt-induced precision-recall shift.
+7. Cascade complementarity.
+
+Qwen fine-tuning targets:
+
+- abstention/no-label calibration;
+- hard-negative aspect boundaries;
+- competitor-positive recall;
+- neutral sentiment coverage;
+- stable label semantics;
+- cascade-ready uncertainty signals.
+
+## 2026-07-02 - Thesis Completion Roadmap
+
+Decision:
+
+- Keep LOAO as the dissertation's open-topic robustness spine.
+- Treat full fine-tuned Qwen LoRA LOAO as the only major compute-bound unfinished experiment.
+- Complete all non-major thesis work before GPU access is resolved.
+
+Immediate non-major work:
+
+- Finish qualitative error taxonomy from existing outputs.
+- Build thesis-ready result tables and figure data.
+- Try cascade score/margin uncertainty without new Gemini calls.
+- Prepare and smoke-test the Qwen LoRA SFT/evaluation runner.
+- Refresh the LaTeX thesis skeleton around the completed Gemini/Qwen/LOAO evidence.
+
+Tracked roadmap:
+
+- `docs/thesis_completion_roadmap.md`
+
+## 2026-07-02 - Qualitative Error Taxonomy Local Packet
+
+Command:
+
+```powershell
+python .\scripts\analyse_qualitative_error_taxonomy.py --output-dir .\outputs\analysis\qualitative_error_taxonomy_20260702
+```
+
+Observed local packet:
+
+- Rows aligned across fixed held-out-aspect test predictions: 281.
+- Gemini draft: not run.
+- Output directory: `outputs/analysis/qualitative_error_taxonomy_20260702/`.
+- Tracked summary: `docs/qualitative_error_taxonomy.md`.
+
+Key mechanism counts:
+
+| Mechanism | Rows |
+| --- | ---: |
+| discounts/value boundary | 155 |
+| account-access overprediction | 112 |
+| empty abstention | 84 |
+| competitor positive miss | 82 |
+| description precision shift | 66 |
+| Qwen overprediction | 56 |
+| local overprediction | 50 |
+| description recall loss | 45 |
+| neutral under-recall | 25 |
+| Pro-empty cascade recovery | 20 |
+
+Interpretation:
+
+- Qualitative evidence supports the quantitative story: local and Qwen over-predict, hosted Gemini is more conservative and can abstain, descriptions move precision/recall, and the Pro cascade works by recovering hosted abstentions.

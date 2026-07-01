@@ -1,6 +1,6 @@
 # Experiment Reproducibility Register
 
-Last updated: 2026-07-01
+Last updated: 2026-07-02
 
 This register audits whether the project experiments have enough recorded parameters for the user, Aji, or a future project session to reproduce the reported results. It complements `docs/experiment_log.md`, which remains the chronological ledger.
 
@@ -42,6 +42,7 @@ Strongly recorded:
 - Gemini Flash/Flash-Lite/Pro fixed-split runs
 - local-to-Gemini cascade and Pro cascade deep-dive
 - Gemini-generated aspect-description ablation
+- Gemini-assisted qualitative error taxonomy
 
 Recoverable from local artifacts but less well centralised before this register:
 
@@ -91,7 +92,9 @@ Remaining limitations:
 | Gemini cascade | Local-to-Gemini Flash-Lite/Flash/Pro cascade | Complete | See `docs/local_gemini_cascade.md` commands | `docs/local_gemini_cascade.md`, `outputs/analysis/local_gemini_cascade_*` | Policy search is validation-only; test labels used only for final evaluation and later explanation. |
 | Gemini cascade | Pro cascade deep-dive | Complete | `python .\scripts\analyse_local_gemini_cascade.py` | `docs/local_gemini_cascade.md`, `outputs/analysis/local_gemini_cascade_pro_deep_dive/summary.json` | Explains error complementarity and Pro-empty fallback. |
 | Gemini descriptions | Gemini-generated aspect-description ablation | Complete | See `docs/gemini_aspect_descriptions.md` commands and tracked configs under `configs/` | `docs/gemini_aspect_descriptions.md`, local summaries under `outputs/llm/gemini_candidate_label_20260701_desc_*`, `outputs/analysis/gemini_description_ablation_summary.json` | Uses descriptions generated from aspect names only, with no validation/test review text. Flash-Lite label-only descriptions improve test pair samples F1 from `0.5516` to `0.5925`; stronger models show mixed trade-offs. Raw predictions remain local-only. |
+| Qualitative analysis | Gemini-assisted qualitative error taxonomy | Complete | `python .\scripts\analyse_qualitative_error_taxonomy.py --output-dir .\outputs\analysis\qualitative_error_taxonomy_20260702 --max-examples-per-category 10 --max-gemini-examples-per-category 2 --snippet-chars 220 --gemini-draft --gemini-model vertex_ai/gemini-2.5-pro --gemini-max-tokens 7000 --request-timeout 240` | `docs/qualitative_error_taxonomy.md`, `report_notes.md`, local packet under `outputs/analysis/qualitative_error_taxonomy_20260702/` | Reuses existing predictions and summaries. `fixed_split_cases_no_text.jsonl` omits review text; with-text packets, Gemini prompt, and raw Gemini draft remain local-only under ignored `outputs/`. |
 | Roadmap | LLM next experiment directions | Complete planning note | n/a | `docs/llm_next_experiment_directions.md` | Not an experiment result; records future order and cost rationale. |
+| Roadmap | Thesis completion and Qwen full LOAO boundary | Complete planning note | n/a | `docs/thesis_completion_roadmap.md`, `docs/qualitative_error_taxonomy.md`, `report_notes.md` | Not an experiment result. Records the decision to finish thesis tables, qualitative error taxonomy, cascade score/margin uncertainty, and Qwen LoRA runner readiness before treating full fine-tuned Qwen LOAO as the remaining major compute-bound experiment. |
 
 ## Supplemental Qwen LoRA Pilot Parameters
 

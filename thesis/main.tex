@@ -19,7 +19,7 @@
   {\large Working Dissertation Draft}
 }
 
-\date{Working draft: 30 June 2026}
+\date{Working draft: 2 July 2026}
 
 \author{
   Jialin Liu\\[0.5em]
@@ -39,7 +39,7 @@
 \maketitle
 
 \begin{abstract}
-This dissertation studies structured aspect-sentiment classification for customer feedback when the target aspect taxonomy changes between training and evaluation. The working focus is not unrestricted topic generation, but candidate-label prediction: at inference time, a model receives a supplied set of candidate aspect labels and must select relevant aspects and assign aspect-specific sentiment. The empirical setting is FABSA, a public multi-domain, multi-organisation, multi-label customer-feedback ABSA dataset. Current experiments compare closed-topic, held-out organisation, fixed held-out-aspect, and leave-one-aspect-out protocols, with local DistilBERT baselines and planned structured-output LLM comparisons.
+This dissertation studies structured aspect-sentiment classification for customer feedback when the target aspect taxonomy changes between training and evaluation. The working focus is not unrestricted topic generation, but candidate-label prediction: at inference time, a model receives a supplied set of candidate aspect labels and must select relevant aspects and assign aspect-specific sentiment. The empirical setting is FABSA, a public multi-domain, multi-organisation, multi-label customer-feedback ABSA dataset. Current experiments compare closed-topic, held-out organisation, fixed held-out-aspect, and leave-one-aspect-out protocols, with local DistilBERT baselines, a local Qwen zero-shot LOAO baseline, hosted Gemini fixed-split baselines, and local-to-Gemini selective cascades. Full fine-tuned Qwen LoRA LOAO remains the main pending compute-bound experiment.
 \end{abstract}
 
 \tableofcontents
@@ -52,13 +52,13 @@ This dissertation studies structured aspect-sentiment classification for custome
 This chapter will describe FABSA, the aspect hierarchy, sentiment labels, aspect-sentiment pair labels, train/validation/test construction, and the four evaluation protocols: closed-topic, held-out organisation, fixed held-out aspect, and leave-one-aspect-out.
 
 \chapter{Methods}
-This chapter will describe the closed-topic supervised baselines, local candidate-aspect models, aspect-conditioned sentiment models, Qwen/Gemini structured-output candidate-label methods if completed, and any joint pair-scoring model if it becomes part of the final project.
+This chapter will describe the closed-topic supervised baselines, local candidate-aspect models, aspect-conditioned sentiment models, Qwen/Gemini structured-output candidate-label methods, local-to-Gemini selective cascades, and Qwen LoRA fine-tuning if the final full-LOAO run is completed.
 
 \chapter{Results}
-This chapter will report closed-topic, held-out organisation, fixed held-out-aspect, LOAO, and LLM results. Current working headline results include closed-topic DistilBERT pair samples F1 of 0.7803, held-out organisation DistilBERT pair samples F1 of 0.7575, strongest fixed held-out-aspect local non-LLM pair samples F1 of 0.6071, and Qwen indexed zero-shot fixed held-out-aspect pair samples F1 of 0.5374.
+This chapter will report closed-topic, held-out organisation, fixed held-out-aspect, LOAO, and LLM results. Current working headline results include closed-topic DistilBERT pair samples F1 of 0.7803, held-out organisation DistilBERT pair samples F1 of 0.7575, strongest fixed held-out-aspect local non-LLM pair samples F1 of 0.6071, Qwen indexed zero-shot full all-row LOAO test mean pair micro F1 of 0.3378, Gemini Pro fixed held-out-aspect pair samples F1 of 0.7141, and local-to-Gemini Pro cascade fixed held-out-aspect pair samples F1 of 0.8102. Fixed held-out-aspect and all-row LOAO scores will be reported as different protocols rather than a single shared leaderboard.
 
 \chapter{Discussion}
-This chapter will interpret taxonomy-shift difficulty, local-model versus LLM trade-offs, schema reliability for structured outputs, metric limitations, and practical constraints such as latency, cost, and governance where supported by completed experiments.
+This chapter will interpret taxonomy-shift difficulty, local-model versus LLM trade-offs, Qwen zero-shot absence-calibration failure, schema reliability for structured outputs, selective-deployment complementarity, metric limitations, and practical constraints such as latency, cost, and governance where supported by completed experiments.
 
 \chapter{Conclusion}
 This chapter will summarise what the dissertation demonstrates about candidate-label aspect-sentiment classification under taxonomy shift and identify the most defensible next steps for robust customer-feedback analytics.

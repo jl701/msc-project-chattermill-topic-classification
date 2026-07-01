@@ -54,6 +54,8 @@ Before doing new work, please inspect these files. If a `D:\Msc_Project` path is
 21. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\tasks_1_to_3_thesis_prep.md
 22. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\llm_next_experiment_directions.md
 23. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\experiment_reproducibility_register.md
+24. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\thesis_completion_roadmap.md
+25. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\qualitative_error_taxonomy.md
 
 Immediate instruction for the new chat:
 
@@ -63,7 +65,7 @@ Before implementing anything, perform a strict audit of the current progress and
 2. Verify whether the metrics are being used and interpreted correctly, especially pair samples F1, pair micro F1, pair macro F1, empty-gold rows in all-row LOAO, and positive-row LOAO as a sentiment-only diagnostic.
 3. Verify whether the current reported results are comparable or not comparable across fixed three-aspect held-out evaluation, all-row LOAO, positive-row LOAO, closed-topic, and held-out organisation.
 4. Check whether the latest conclusion is logically sound: DistilBERT aspect-conditioned sentiment improves the controlled lexical sentiment ablation and the example-filtered strong fixed held-out-aspect baseline, but not label-masked training.
-5. Challenge the next proposed direction after the completed non-LLM baseline phase. Decide whether the next work should be a hosted Gemini candidate-label baseline, Qwen fine-tuning/evaluation, or a small robustness diagnostic before moving to LLMs.
+5. Challenge the next proposed direction after the completed Gemini/Qwen zero-shot phase. The current decision is to make full fine-tuned Qwen LoRA LOAO the only major pending modelling experiment, while finishing thesis-ready tables, qualitative error taxonomy, cascade score/margin uncertainty, and Qwen SFT runner readiness first.
 6. Only after this audit, propose a concrete next plan. If the plan still looks sound, proceed with implementation.
 
 Current confirmed project context:
@@ -87,6 +89,7 @@ Aji's confirmed direction:
 - Open-topic should use candidate labels at inference.
 - The model should select from canonical labels and should not freely invent topic names.
 - Qwen zero-shot full all-row LOAO has now been completed locally; full Qwen fine-tuning still waits for stronger GPU access.
+- The current completion roadmap is `docs/thesis_completion_roadmap.md`. It explicitly separates work that can be completed before GPU access from the full fine-tuned Qwen LoRA LOAO run.
 
 Latest Aji update from 2026-06-21:
 
@@ -374,12 +377,14 @@ Gemini / Vertex AI access:
   - details are in `docs/gemini_aspect_descriptions.md`
   - Tasks 1-3 are consolidated for thesis/task-4 handoff in `docs/tasks_1_to_3_thesis_prep.md`
   - the next LLM roadmap is recorded in `docs/llm_next_experiment_directions.md`
+  - the active completion roadmap is recorded in `docs/thesis_completion_roadmap.md`
+  - qualitative error taxonomy local packet is complete in `docs/qualitative_error_taxonomy.md`
   - recommended order:
-    - sampled Gemini LOAO diagnostic, not full Gemini LOAO
-    - cascade uncertainty improvement using local score/margin export and existing Gemini predictions
-    - qualitative error taxonomy with manual review
-    - Qwen fine-tuning/evaluation once stronger GPU access is available
-  - full Gemini LOAO is not the default because estimated all-row LOAO cost/latency is high relative to the expected dissertation value
+    - thesis-ready result tables and figure data
+    - cascade score/margin uncertainty using existing Gemini predictions
+    - Qwen LoRA SFT runner readiness and smoke test
+    - full Qwen LoRA all-row LOAO once stronger GPU access is available
+  - full Gemini LOAO is not the default because estimated all-row LOAO cost/latency is high relative to the expected dissertation value and the current robustness spine already uses local DistilBERT LOAO plus Qwen zero-shot LOAO
 - Important Gemini finding: `max_tokens=512` caused truncated JSON because Gemini spent most completion tokens thinking first. Use `max_tokens=2048` for this prompt unless a later sweep proves a cheaper reliable setting.
 - The runner defaults to `response_format=json_schema`, JSON object wrapper `{"labels": [...]}`, and indexed candidate IDs; it can fall back to plain JSON if the endpoint rejects response format.
 
@@ -505,8 +510,9 @@ Recommended next steps:
 8. Treat Gemini Flash as the completed hosted fixed held-out-aspect baseline, but do not run full Gemini LOAO unless the cost/benefit is explicitly justified.
 9. The local-to-Gemini cascade is complete; follow `docs/llm_next_experiment_directions.md` with the new Qwen LOAO result in mind.
 10. Gemini-generated aspect descriptions are complete; do not rerun the same Task 4 API work unless a new variant or thesis question is explicitly requested.
-11. The next experiment order should prioritise sampled Gemini LOAO only if still useful, cascade score/margin uncertainty, qualitative error taxonomy, and Qwen fine-tuning/calibration planning once stronger GPU access is available.
-11. If I ask to publish changes, commit/push only clean code and documentation, without committing outputs, data, credentials, checkpoints, or generated artifacts.
+11. Use `docs/thesis_completion_roadmap.md` as the current task order: thesis-ready tables/figure data, cascade score/margin uncertainty, Qwen LoRA runner readiness, and then full Qwen LoRA LOAO after GPU access is confirmed. The qualitative error taxonomy local packet is already complete.
+12. Treat sampled Gemini LOAO as optional fallback or supervisor-requested work, not the default next experiment.
+13. If I ask to publish changes, commit/push only clean code and documentation, without committing outputs, data, credentials, checkpoints, or generated artifacts.
 
 Please start by summarising what you find in the current docs and repo state, then perform the strict audit, then propose the next concrete plan before implementing.
 ```

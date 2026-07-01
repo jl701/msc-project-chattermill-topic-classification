@@ -1512,6 +1512,87 @@ git diff --check
 | Secret scan | no matches |
 | Diff whitespace check | passed |
 
+## 2026-07-02 - Gemini-Assisted Qualitative Error Taxonomy
+
+### Purpose
+
+Task 5 converted the completed local/Qwen/Gemini/cascade experiments into a manually consolidated qualitative error taxonomy. The goal was to strengthen the thesis discussion and define the main targets for later Qwen fine-tuning, not to produce another leaderboard result.
+
+### Pre-Registered Configuration
+
+The configuration was recorded before implementation in `docs/qualitative_error_taxonomy.md` and `report_notes.md`.
+
+Key choices:
+
+- reuse existing fixed-split and LOAO outputs;
+- avoid new model evaluation runs;
+- generate local row-level taxonomy packets with and without review text;
+- keep raw review text and Gemini prompts/drafts local-only;
+- use Gemini Pro only as an assistant for candidate category drafting;
+- manually consolidate the final taxonomy.
+
+### Commands
+
+```powershell
+python .\scripts\analyse_qualitative_error_taxonomy.py --output-dir .\outputs\analysis\qualitative_error_taxonomy_20260702 --max-examples-per-category 10 --max-gemini-examples-per-category 3 --snippet-chars 320
+
+python .\scripts\analyse_qualitative_error_taxonomy.py --output-dir .\outputs\analysis\qualitative_error_taxonomy_20260702 --max-examples-per-category 10 --max-gemini-examples-per-category 2 --snippet-chars 220 --gemini-draft --gemini-model vertex_ai/gemini-2.5-pro --gemini-max-tokens 7000 --request-timeout 240
+```
+
+### Outputs
+
+Local ignored outputs:
+
+- `outputs/analysis/qualitative_error_taxonomy_20260702/summary.json`
+- `outputs/analysis/qualitative_error_taxonomy_20260702/category_counts.csv`
+- `outputs/analysis/qualitative_error_taxonomy_20260702/fixed_split_cases_no_text.jsonl`
+- `outputs/analysis/qualitative_error_taxonomy_20260702/fixed_split_cases_with_text.jsonl`
+- `outputs/analysis/qualitative_error_taxonomy_20260702/gemini_taxonomy_prompt.md`
+- `outputs/analysis/qualitative_error_taxonomy_20260702/gemini_taxonomy_draft.json`
+
+Tracked write-up:
+
+- `docs/qualitative_error_taxonomy.md`
+
+### Results
+
+Aligned fixed-split row summary:
+
+| System | Mean Row F1 | Exact Rows | Empty Rows | Aspect Miss Rows | Aspect Over-Pred Rows |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Local DistilBERT | 0.6071 | 144 | 0 | 78 | 119 |
+| Qwen zero-shot | 0.5374 | 125 | 15 | 86 | 117 |
+| Gemini Flash | 0.6071 | 138 | 42 | 78 | 80 |
+| Gemini Pro | 0.7141 | 167 | 28 | 49 | 67 |
+| Local -> Pro cascade | 0.8102 | 194 | 0 | 28 | 74 |
+
+Final manually consolidated taxonomy:
+
+1. Semantic boundary bleed.
+2. Competitor-positive recall bottleneck.
+3. Generative over-prediction / fail-noisy behaviour.
+4. Cautious abstention / fail-silent behaviour.
+5. Sentiment polarity under-recall.
+6. Prompt-induced precision-recall shift.
+7. Cascade complementarity.
+
+Gemini-assisted draft:
+
+- Model: `vertex_ai/gemini-2.5-pro`
+- Prompt tokens: 19,494
+- Completion tokens: 6,362
+- Reasoning tokens: 4,336
+- Total tokens: 25,856
+- Approx public-rate cost: about `$0.088`
+
+### Interpretation
+
+This taxonomy gives the next Qwen fine-tuning phase concrete targets: abstention/no-label calibration, hard-negative aspect boundaries, competitor-positive recall, neutral sentiment coverage, stable label semantics, and cascade-ready uncertainty signals.
+
+### Validation
+
+Pending final repository validation after documentation updates.
+
 ## 2026-07-01: Qwen LOAO Full Interpretation Analysis
 
 ### Purpose
@@ -2247,3 +2328,155 @@ python -m compileall -q src scripts tests
 | --- | --- |
 | Unit tests | 63 tests OK |
 | Compile check | passed |
+
+## 2026-07-02: Thesis Completion Roadmap And Qwen Full LOAO Boundary
+
+### Purpose
+
+- Record the project-level decision that full fine-tuned Qwen LoRA LOAO remains necessary for the strongest open-weight LLM story, but should be treated as the only major compute-bound unfinished experiment.
+- Prevent the project from drifting into more Gemini prompt sweeps, full Gemini LOAO, or minor DistilBERT tuning while GPU access for Qwen is being negotiated.
+- Consolidate all remaining non-major work needed for the dissertation narrative.
+
+### Code Or Protocol Changes
+
+- Added `docs/thesis_completion_roadmap.md`.
+- Registered the existing qualitative error-taxonomy pre-registration in `docs/qualitative_error_taxonomy.md`.
+- Updated `PROJECT_OVERVIEW.md`, `START_NEW_CHAT_PROMPT.md`, `docs/llm_next_experiment_directions.md`, and `docs/experiment_reproducibility_register.md`.
+- No model code, dataset split, metric definition, or evaluation protocol changed.
+
+### Setup
+
+- Current evidence base:
+  - closed-topic and held-out organisation baselines complete;
+  - fixed held-out-aspect local, Qwen, Gemini, and cascade evidence complete;
+  - lexical, DistilBERT, and Qwen zero-shot all-row LOAO evidence complete;
+  - Gemini aspect-description ablation complete.
+- Pending major experiment:
+  - full fine-tuned Qwen LoRA all-row LOAO over all 12 FABSA aspects.
+
+### Commands
+
+```powershell
+git status --short --branch
+git log --oneline --decorate -5
+```
+
+No model-training or API command was run for this planning update.
+
+### Outputs
+
+- Tracked planning and documentation files:
+  - `docs/thesis_completion_roadmap.md`
+  - `docs/qualitative_error_taxonomy.md`
+  - `report_notes.md`
+  - `PROJECT_OVERVIEW.md`
+  - `START_NEW_CHAT_PROMPT.md`
+  - `docs/llm_next_experiment_directions.md`
+  - `docs/experiment_reproducibility_register.md`
+- No generated predictions, raw review text packets, checkpoints, credentials, or `outputs/` files were added.
+
+### Results
+
+The active next-work order is now:
+
+1. Finish qualitative error taxonomy using existing local ignored outputs.
+2. Build thesis-ready result tables and figure data.
+3. Try cascade score/margin uncertainty without new Gemini calls.
+4. Prepare and smoke-test the final Qwen LoRA SFT/evaluation runner.
+5. Refresh the LaTeX thesis skeleton and draft from frozen evidence.
+6. Run full fine-tuned Qwen LoRA LOAO only after GPU access and resume/manifest behaviour are ready.
+
+### Interpretation
+
+The thesis narrative should keep LOAO as the open-topic robustness spine. Fixed held-out-aspect Gemini and cascade results are valuable selective-deployment evidence, but they do not replace LOAO. Qwen zero-shot LOAO diagnoses the open-weight LLM failure mode: strong positive-gold recognition but weak empty-gold absence calibration. Full Qwen LoRA LOAO is therefore a valuable final robustness closure, but the dissertation can and should complete all non-compute-bound analysis first.
+
+### Next Step
+
+Implement the qualitative error taxonomy tooling and documentation using existing local outputs, keeping any raw review text under ignored `outputs/`.
+
+## 2026-07-02: Qualitative Error Taxonomy Local Packet
+
+### Purpose
+
+- Convert the completed local, Qwen, Gemini, description, cascade, and Qwen LOAO outputs into a thesis-facing qualitative error taxonomy.
+- Build a tracked no-text summary while keeping raw review text and prompts under ignored `outputs/`.
+- Strengthen the discussion chapter before the full Qwen LoRA LOAO compute-bound experiment.
+
+### Code Or Protocol Changes
+
+- Added `scripts/analyse_qualitative_error_taxonomy.py`.
+- Added `tests/test_qualitative_error_taxonomy.py`.
+- Updated `docs/qualitative_error_taxonomy.md` from pre-registration to completed local packet analysis.
+- No model predictions were regenerated.
+- No Gemini API call was made because `--gemini-draft` was not used.
+
+### Setup
+
+- Fixed held-out-aspect test rows: `281`.
+- Aligned prediction sources:
+  - local DistilBERT fixed held-out-aspect baseline;
+  - Qwen fixed held-out-aspect zero-shot;
+  - Gemini Flash-Lite, Flash, and Pro fixed baselines;
+  - Gemini aspect-description variants;
+  - local-to-Pro cascade;
+  - existing Qwen-vs-DistilBERT LOAO summary outputs.
+
+### Command
+
+```powershell
+python .\scripts\analyse_qualitative_error_taxonomy.py --output-dir .\outputs\analysis\qualitative_error_taxonomy_20260702
+```
+
+### Outputs
+
+- Local ignored output directory:
+  - `outputs/analysis/qualitative_error_taxonomy_20260702/`
+- Local files:
+  - `summary.json`
+  - `category_counts.csv`
+  - `fixed_split_cases_no_text.jsonl`
+  - `fixed_split_cases_with_text.jsonl`
+  - `gemini_taxonomy_prompt.md`
+- Tracked documentation:
+  - `docs/qualitative_error_taxonomy.md`
+  - `report_notes.md`
+
+### Results
+
+| Mechanism Tag | Rows |
+| --- | ---: |
+| `discounts_value_boundary` | 155 |
+| `account_access_overprediction` | 112 |
+| `empty_abstention` | 84 |
+| `competitor_positive_miss` | 82 |
+| `description_precision_shift` | 66 |
+| `description_row_gain` | 57 |
+| `qwen_overprediction` | 56 |
+| `local_overprediction` | 50 |
+| `description_recall_loss` | 45 |
+| `neutral_under_recall` | 25 |
+| `pro_empty_cascade_recovery` | 20 |
+
+Model-level fixed-split row profile:
+
+| Model | Mean Row Sample F1 | Exact Rows | Empty Rows | Aspect Miss Rows | Aspect Overprediction Rows |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Local DistilBERT | 0.6071 | 144 | 0 | 78 | 119 |
+| Qwen zero-shot | 0.5374 | 125 | 15 | 86 | 117 |
+| Gemini Flash-Lite | 0.5516 | 138 | 37 | 107 | 88 |
+| Gemini Flash | 0.6071 | 138 | 42 | 78 | 80 |
+| Gemini Pro | 0.7141 | 167 | 28 | 49 | 67 |
+| Flash-Lite descriptions | 0.5925 | 152 | 31 | 92 | 75 |
+| Flash descriptions | 0.5893 | 150 | 61 | 88 | 48 |
+| Local -> Pro cascade | 0.8102 | 194 | 0 | 28 | 74 |
+
+### Interpretation
+
+- The qualitative packet supports the quantitative story: local DistilBERT and Qwen tend to over-predict candidate aspects, while hosted Gemini models are more conservative and can abstain.
+- Gemini descriptions often shift the precision-recall balance rather than uniformly improving every model.
+- The Pro cascade result is explained by recovering hosted empty abstentions with local fallback.
+- Qwen fine-tuning should target absence calibration and hard negative boundaries, especially account access, discounts/value, competitor mentions, and neutral sentiment.
+
+### Next Step
+
+Use this taxonomy in the thesis discussion and move to thesis-ready result tables/figure data, then cascade score/margin uncertainty and Qwen LoRA runner readiness.

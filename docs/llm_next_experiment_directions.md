@@ -1,24 +1,26 @@
 # LLM Next Experiment Directions
 
-Last updated: 2026-07-01
+Last updated: 2026-07-02
 
-This note records the recommended next LLM-centred experiments after the completed local DistilBERT LOAO robustness run and the completed fixed-split Gemini Pareto/cascade experiments.
+This note records the recommended next LLM-centred experiments after the completed local DistilBERT LOAO robustness run, Qwen zero-shot LOAO run, fixed-split Gemini Pareto/cascade experiments, and Gemini aspect-description ablation. The current completion-level roadmap is `docs/thesis_completion_roadmap.md`; this file remains the LLM-specific companion note.
 
 ## Current Evidence Position
 
-The project now has five complementary evidence blocks:
+The project now has six complementary evidence blocks:
 
 1. Strong local fixed-split non-LLM baseline: candidate-aspect DistilBERT selector plus DistilBERT aspect-conditioned sentiment reaches `0.6071` test pair samples F1.
 2. Local LOAO robustness caveat: the same DistilBERT branch drops to `0.3128` mean pair micro F1 in full all-row LOAO, showing weak unseen-aspect relevance detection and threshold calibration under taxonomy shift.
-3. Hosted Gemini fixed-split Pareto: Flash-Lite is cheap/fast, Flash matches local pair samples F1 with better pair micro/macro F1, and Pro is the strongest pure hosted fixed-split baseline.
-4. Local-to-Gemini cascade: selective escalation is the strongest fixed-split system result so far, reaching `0.7459` with Flash and `0.8102` with Pro.
-5. Gemini-generated aspect descriptions: label-only descriptions improve Flash-Lite test pair samples F1 from `0.5516` to `0.5925`, but stronger models show mixed precision-recall trade-offs rather than monotonic gains.
+3. Qwen zero-shot LOAO baseline: indexed local Qwen reaches `0.3378` mean test pair micro F1 with valid JSON `1.0000`, but over-predicts empty-gold rows and therefore motivates absence-aware fine-tuning or calibration.
+4. Hosted Gemini fixed-split Pareto: Flash-Lite is cheap/fast, Flash matches local pair samples F1 with better pair micro/macro F1, and Pro is the strongest pure hosted fixed-split baseline.
+5. Local-to-Gemini cascade: selective escalation is the strongest fixed-split system result so far, reaching `0.7459` with Flash and `0.8102` with Pro.
+6. Gemini-generated aspect descriptions: label-only descriptions improve Flash-Lite test pair samples F1 from `0.5516` to `0.5925`, but stronger models show mixed precision-recall trade-offs rather than monotonic gains.
 
 The dissertation story should therefore not be "run every model on every expensive protocol". It should be:
 
 - use LOAO to expose robustness limits of the local candidate-label branch;
+- use Qwen zero-shot LOAO to diagnose the open-weight LLM failure mode before fine-tuning;
 - use Gemini fixed-split and cascade experiments to study semantic candidate-label reasoning under cost, latency, and governance constraints;
-- use targeted low-cost diagnostics rather than full Gemini LOAO unless a new dissertation-value argument appears.
+- avoid adding new hosted LOAO work unless a new dissertation-value argument appears.
 
 ## Why Full Gemini LOAO Is Not The Next Default
 
@@ -74,12 +76,18 @@ Main finding:
 - Flash descriptions improve validation but reduce test pair samples F1, while improving micro/macro slightly.
 - Pro descriptions do not justify a full run based on the 50-row validation diagnostic.
 
-### 1. Sampled Gemini LOAO Diagnostic
+### Deferred: Sampled Gemini LOAO Diagnostic
 
 Purpose:
 
 - Get a small robustness signal without paying for full all-row Gemini LOAO.
 - Check whether Gemini fixed-split gains plausibly carry to harder aspect rotations.
+
+Current decision:
+
+- Do not run this by default while full Qwen LoRA LOAO GPU access is being pursued.
+- The thesis already has local DistilBERT LOAO and Qwen zero-shot LOAO as the open-topic robustness spine.
+- Run this only if a supervisor specifically asks whether Gemini fixed-split strength transfers to LOAO, or if Qwen LoRA full LOAO becomes impossible and a small hosted robustness signal becomes more valuable.
 
 Recommended design:
 
@@ -99,6 +107,45 @@ Key questions:
 - Does Gemini reduce the local DistilBERT LOAO failure on difficult aspects?
 - Does Gemini also become conservative or empty on rare/ambiguous aspects?
 - Are the same error modes visible as in the fixed split?
+
+### Completed: Qualitative Error Taxonomy Local Packet
+
+Purpose:
+
+- Turn model comparisons into an interpretable dissertation discussion.
+- Explain why local, Qwen, Gemini, descriptions, and cascade systems fail differently.
+
+Recommended design:
+
+- Start from the pre-registration in `docs/qualitative_error_taxonomy.md`.
+- Use existing local ignored prediction outputs; do not rerun fixed-split or LOAO models.
+- Use row IDs and label sets in tracked documentation; do not commit raw review text.
+- Gemini Pro may assist category drafting, but final taxonomy must be manually reviewed.
+
+Status:
+
+- Local packet completed with `scripts/analyse_qualitative_error_taxonomy.py`.
+- No Gemini API call was made.
+- Tracked summary is in `docs/qualitative_error_taxonomy.md`.
+
+Candidate categories:
+
+- missed competitor praise;
+- neutral versus positive confusion;
+- account/access overprediction;
+- promotion/value ambiguity;
+- hosted LLM abstention or empty prediction;
+- local over-prediction;
+- Qwen empty-gold over-prediction;
+- description-driven precision/recall shift;
+- Pro cascade recovery.
+
+Key questions:
+
+- Which errors are caused by label semantics?
+- Which errors are caused by sentiment ambiguity?
+- Which errors are deployment-relevant, such as hosted abstention or local over-prediction?
+- Which Qwen errors point directly to absence-aware fine-tuning?
 
 ### 2. Cascade Uncertainty Improvement
 
@@ -126,52 +173,21 @@ Key questions:
 - Does it reduce the current 90% Flash/Pro escalation rate?
 - Does it improve the dissertation defensibility of selective deployment?
 
-### 3. Qualitative Error Taxonomy
-
-Purpose:
-
-- Turn model comparisons into an interpretable dissertation discussion.
-- Explain why local, Gemini, and cascade systems fail differently.
-
-Recommended design:
-
-- Sample representative error rows from:
-  - local-only errors
-  - Gemini Flash errors
-  - Gemini Pro errors
-  - cascade wins and cascade losses
-- Use row IDs and label sets in tracked documentation; do not commit raw review text.
-- Gemini Pro may assist category drafting, but final taxonomy must be manually reviewed.
-
-Candidate categories:
-
-- missed competitor praise
-- neutral versus positive confusion
-- account/access overprediction
-- promotion/value ambiguity
-- hosted LLM abstention or empty prediction
-- local over-prediction
-- multi-aspect boundary ambiguity
-
-Key questions:
-
-- Which errors are caused by label semantics?
-- Which errors are caused by sentiment ambiguity?
-- Which errors are deployment-relevant, such as hosted abstention or local over-prediction?
-
-### 4. Qwen Fine-Tuning And Evaluation
+### 3. Qwen LoRA Pipeline Readiness
 
 Purpose:
 
 - Test whether an open/local LLM can close part of the gap to hosted Gemini while preserving privacy/control advantages.
 - Move beyond zero-shot Qwen once stronger GPU access is available.
+- Ensure the final full Qwen LoRA LOAO experiment is runnable as soon as stronger GPU access is available.
 
 Recommended design:
 
 - Reuse the indexed candidate-label protocol and prepared Qwen SFT data.
-- Start with a small, reproducible QLoRA/SFT run on stronger GPU access.
-- Evaluate on the fixed held-out-aspect split first.
-- Only consider broader robustness diagnostics after the fixed-split pipeline is stable.
+- Confirm or implement the final SFT runner and manifest logging.
+- Start with a tiny local QLoRA/SFT smoke test.
+- Evaluate on the fixed held-out-aspect split first if local time allows.
+- Run full 12-fold fine-tuned all-row LOAO only after the fixed pipeline and resume path are stable.
 - Compare against:
   - Qwen zero-shot
   - local DistilBERT baseline
@@ -182,14 +198,16 @@ Recommended design:
 Key questions:
 
 - Can Qwen fine-tuning beat zero-shot Qwen and approach Gemini Flash?
+- Does fine-tuning reduce Qwen's empty-gold over-prediction from zero-shot LOAO?
 - How does Qwen compare on cost, privacy, latency, and deployability?
 - Does it reduce the need for hosted escalation, or mainly provide another local baseline?
 
 ## Recommended Order
 
-1. Sampled Gemini LOAO diagnostic, if a small robustness signal is still needed.
-2. Cascade uncertainty improvement using local score/margin export.
-3. Qualitative error taxonomy.
-4. Qwen fine-tuning/evaluation once stronger GPU access is available.
+1. Thesis-ready result tables and figure data, coordinated through `docs/thesis_completion_roadmap.md`.
+2. Cascade uncertainty improvement using local score/margin export and no new Gemini calls.
+3. Qwen LoRA SFT runner readiness and tiny smoke test.
+4. Full fine-tuned Qwen LoRA LOAO only after GPU access, resume behaviour, and command templates are ready.
+5. Sampled Gemini LOAO only if specifically needed as a fallback or supervisor-requested robustness signal.
 
-This order maximises dissertation value per unit cost. It first tests the label-semantics hypothesis, then adds a lightweight robustness check, then strengthens the selective-deployment method without more hosted calls, then prepares the qualitative discussion, and finally moves to the larger open-LLM fine-tuning stage.
+This order maximises dissertation value per unit cost while preserving the current strategic boundary: the only major unfinished modelling experiment should be full Qwen LoRA LOAO. Everything else should either convert existing evidence into thesis-ready analysis or prepare the Qwen run so GPU time is not wasted on setup problems.
