@@ -168,7 +168,7 @@ python .\scripts\run_loao_heldout_aspect.py --baseline lexical --strategy both -
 python .\scripts\run_loao_heldout_aspect.py --baseline cross_encoder --strategy label_masked --heldout-aspect "Staff support: Email" --epochs 1 --batch-size 16 --eval-batch-size 32 --learning-rate 2e-5 --negatives-per-positive 1 --train-limit 100 --eval-limit 100 --output-dir .\outputs\baselines\loao_cross_encoder_tiny_smoke
 ```
 
-An attempted full DistilBERT cross-encoder single-fold smoke did not finish within 30 minutes on the local 6 GB GPU, so full cross-encoder LOAO was not run as a formal result.
+An attempted full DistilBERT cross-encoder single-fold smoke did not finish within 30 minutes on the local 6 GB GPU, so full cross-encoder LOAO was not run as a formal result at this point. This status is superseded by the 2026-07-01 full DistilBERT LOAO run on the RTX 5050 Laptop GPU.
 
 ### Outputs
 
@@ -339,7 +339,7 @@ Use all-row LOAO with micro-F1 threshold selection as the main detection diagnos
 - Dataset: FABSA public train/validation/test export.
 - Main changed model: candidate-label lexical TF-IDF aspect selector + aspect-conditioned TF-IDF Logistic Regression sentiment classifier.
 - The global sentiment classifier was rerun to confirm that the code change preserved the original lower-bound results.
-- Full cross-encoder LOAO was not run; only a tiny cross-encoder smoke test was run because full local DistilBERT LOAO is too slow on the GTX 1660 Ti Max-Q 6 GB GPU.
+- Full cross-encoder LOAO was not run at this point; only a tiny cross-encoder smoke test was run because full local DistilBERT LOAO was too slow on the GTX 1660 Ti Max-Q 6 GB GPU. This status is superseded by the 2026-07-01 full DistilBERT LOAO run on the RTX 5050 Laptop GPU.
 
 ### Commands
 
@@ -1404,7 +1404,133 @@ python -m compileall -q src scripts tests
 | --- | --- |
 | Unit tests | 63 tests OK |
 | Compile check | passed |
+
+## 2026-07-01: LLM Next Experiment Roadmap
+
+### Purpose
+
+- Record the next LLM-centred experiment direction after completing the strongest local DistilBERT LOAO robustness run and the fixed-split Gemini Pareto/cascade experiments.
+- Avoid treating full Gemini LOAO as the default next step because the estimated all-row hosted cost and latency are high relative to the added dissertation value.
+- Preserve a concrete ordered roadmap for future work and new-chat handoff.
+
+### Decision
+
+The next experiment roadmap is documented in `docs/llm_next_experiment_directions.md`.
+
+Recommended order:
+
+1. Candidate-aspect descriptions with Gemini Flash.
+2. Sampled Gemini LOAO diagnostic, not full Gemini LOAO.
+3. Cascade uncertainty improvement using local score/margin export and existing Gemini predictions.
+4. Qualitative error taxonomy with manual review.
+5. Qwen fine-tuning/evaluation once stronger GPU access is available.
+
+### Rationale
+
+- Candidate descriptions test whether richer label semantics improve candidate-label prediction.
+- A sampled Gemini LOAO diagnostic gives a limited robustness signal without paying for full all-row hosted LOAO.
+- Cascade uncertainty improvement strengthens the selective-deployment method without new Gemini calls.
+- Qualitative error taxonomy turns the fixed-split and LOAO results into dissertation discussion evidence.
+- Qwen fine-tuning remains the next major open/local LLM stage once compute is available.
+
+### Documentation Updated
+
+- `docs/llm_next_experiment_directions.md`
+- `docs/gemini_candidate_label_baseline.md`
+- `docs/tasks_1_to_3_thesis_prep.md`
+- `PROJECT_OVERVIEW.md`
+- `START_NEW_CHAT_PROMPT.md`
+- `README.md`
 | Secret scan over tracked code/docs paths | no real API key found |
+
+## 2026-07-01: Strongest DistilBERT LOAO Robustness Run
+
+### Purpose
+
+- Complete the previously missing strongest local non-LLM LOAO check.
+- Test whether the fixed three-aspect result for `candidate-aspect DistilBERT selector + DistilBERT aspect-conditioned sentiment` remains strong when every FABSA aspect is rotated into the unseen position.
+- Use the all-row LOAO view as the main robustness diagnostic, not the easier positive-row sentiment diagnostic.
+
+### Setup
+
+- Protocol: leave-one-aspect-out held-out-aspect evaluation over all 12 FABSA aspects.
+- Evaluation scope: all official validation/test rows, with gold labels filtered to the current held-out aspect.
+- Candidate set: only the current held-out aspect.
+- Strategy: `example_filtered`.
+- Aspect selector: DistilBERT cross-encoder over `(review text, candidate aspect)`.
+- Sentiment model: DistilBERT aspect-conditioned classifier over `(review text, candidate aspect)`.
+- Threshold selection: validation pair micro F1.
+- Hardware used for the full run: RTX 5050 Laptop GPU.
+
+### Commands
+
+Tiny smoke test:
+
+```powershell
+python .\scripts\run_loao_heldout_aspect.py --baseline cross_encoder --strategy example_filtered --heldout-aspect "Staff support: Email" --eval-row-scope all --selection-metric pair_micro_f1 --sentiment-mode transformer_aspect_conditioned --sentiment-epochs 1 --sentiment-learning-rate 2e-5 --sentiment-batch-size 8 --sentiment-eval-batch-size 16 --sentiment-class-weight balanced --sentiment-selection-metric accuracy --epochs 1 --batch-size 8 --eval-batch-size 16 --learning-rate 3e-5 --negatives-per-positive 1 --train-limit 80 --eval-limit 40 --output-dir .\outputs\baselines\loao_cross_encoder_transformer_sentiment_tiny_smoke_20260630
+```
+
+Preferred full LOAO run:
+
+```powershell
+python .\scripts\run_loao_heldout_aspect.py --baseline cross_encoder --strategy example_filtered --eval-row-scope all --selection-metric pair_micro_f1 --sentiment-mode transformer_aspect_conditioned --sentiment-epochs 3 --sentiment-learning-rate 2e-5 --sentiment-batch-size 16 --sentiment-eval-batch-size 64 --sentiment-class-weight balanced --sentiment-selection-metric accuracy --epochs 3 --batch-size 32 --eval-batch-size 96 --learning-rate 3e-5 --negatives-per-positive 3 --output-dir .\outputs\baselines\loao_cross_encoder_transformer_sentiment_example_filtered_micro_selection_20260630
+```
+
+Selector LR tuning check:
+
+```powershell
+python .\scripts\run_loao_heldout_aspect.py --baseline cross_encoder --strategy example_filtered --eval-row-scope all --selection-metric pair_micro_f1 --sentiment-mode transformer_aspect_conditioned --sentiment-epochs 3 --sentiment-learning-rate 2e-5 --sentiment-batch-size 16 --sentiment-eval-batch-size 64 --sentiment-class-weight balanced --sentiment-selection-metric accuracy --epochs 3 --batch-size 32 --eval-batch-size 96 --learning-rate 2e-5 --negatives-per-positive 3 --output-dir .\outputs\baselines\loao_cross_encoder_transformer_sentiment_example_filtered_micro_selection_lr2e-5_20260701
+```
+
+### Outputs
+
+- Local ignored outputs:
+  - `outputs/baselines/loao_cross_encoder_transformer_sentiment_tiny_smoke_20260630/`
+  - `outputs/baselines/loao_cross_encoder_transformer_sentiment_example_filtered_micro_selection_20260630/`
+  - `outputs/baselines/loao_cross_encoder_transformer_sentiment_example_filtered_micro_selection_lr2e-5_20260701/`
+- The output directories contain aggregate CSV/JSON files and per-fold prediction diagnostics under `outputs/`, so they remain ignored and are not committed.
+- No model checkpoints were saved.
+
+### Results
+
+Mean test spread across 12 held-out aspects:
+
+| Variant | Pair Samples F1 Mean | Pair Micro F1 Mean | Pair Precision Mean | Pair Recall Mean | Pair Macro F1 Mean | FP Rows / 100 Mean | FN Rows / 100 Mean | Aspect Micro F1 Mean | Sentiment Accuracy When Gold Aspect Predicted |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Selector LR `3e-5` | 0.0550 | 0.3128 | 0.3345 | 0.4315 | 0.2285 | 12.7022 | 8.6746 | 0.7862 | 0.9319 |
+| Selector LR `2e-5` | 0.0577 | 0.2941 | 0.3021 | 0.3921 | 0.2250 | 13.2798 | 8.3176 | 0.7840 | 0.9301 |
+
+The LR `3e-5` setting is the preferred DistilBERT LOAO result because it has higher mean pair micro F1, precision, recall, pair macro F1, and sentiment accuracy. The LR `2e-5` run has slightly higher pair samples F1, but all-row LOAO pair samples F1 is not the preferred threshold-selection or diagnostic metric because it handles empty-gold true negatives poorly.
+
+Per-aspect LR `3e-5` pair micro F1 ranged from `0.1011` for `Company brand: Reviews` to `0.5128` for `Staff support: Phone`. This confirms large aspect-to-aspect variation.
+
+### Interpretation
+
+- The fixed three-aspect non-LLM headline remains `0.6071` pair samples F1 for candidate-aspect DistilBERT plus DistilBERT aspect-conditioned sentiment.
+- The full all-row LOAO robustness check does not reproduce that strength. Mean pair micro F1 is `0.3128` for the preferred DistilBERT LOAO setting.
+- The result is below the documented lexical global-sentiment micro-selected all-row LOAO lower bound (`0.3780` mean pair micro F1 for `example_filtered`).
+- This is not mainly a sentiment problem: sentiment accuracy when the gold aspect is predicted is high, around `0.93`.
+- The bottleneck is unseen-aspect relevance detection and threshold calibration under taxonomy shift.
+- The dissertation should therefore present the local DistilBERT pipeline as the strongest fixed-split non-LLM baseline, and LOAO as the robustness caveat that motivates LLM-assisted candidate-label reasoning and selective deployment.
+
+### Next Step
+
+- Do not spend more time on small DistilBERT LOAO hyperparameter tuning unless a specific thesis gap appears.
+- Use this result to motivate the LLM-centred branch: candidate-aspect descriptions, qualitative error taxonomy, hosted Gemini/local cascade framing, and later Qwen fine-tuning/evaluation on stronger GPU access.
+
+### Validation
+
+```powershell
+python -m unittest discover -s tests
+python -m compileall -q src scripts tests
+git diff --check -- PROJECT_OVERVIEW.md README.md START_NEW_CHAT_PROMPT.md docs\experiment_log.md docs\generalisation_baselines.md docs\loao_heldout_aspect.md docs\non_llm_open_topic_baseline.md
+```
+
+| Check | Result |
+| --- | --- |
+| Unit tests | 63 tests OK |
+| Compile check | passed |
+| Diff whitespace check | passed, with CRLF conversion warnings only |
 
 ## 2026-07-01: Tasks 1-3 Thesis Prep Consolidation
 

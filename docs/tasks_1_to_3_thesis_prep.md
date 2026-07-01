@@ -16,6 +16,8 @@ The task numbering follows the Gemini follow-up plan recorded on 2026-07-01:
 
 Tasks 1, 2, and 3 are complete, documented, and synchronised to GitHub. Task 4 is the next clean modelling task.
 
+The broader post-task roadmap is now recorded in `docs/llm_next_experiment_directions.md`. It keeps full Gemini LOAO as a non-default option because the estimated all-row LOAO cost and latency are high relative to the added dissertation value.
+
 ## Repository Status
 
 Tracked evidence and implementation:
@@ -260,6 +262,18 @@ Key evaluation questions:
 - Do they change JSON/schema reliability?
 
 Task 4 should be logged separately in `docs/experiment_log.md` and should update this handoff note only after results are available.
+
+## Next Experiment Roadmap
+
+The recommended order after Tasks 1-3 is:
+
+1. Candidate-aspect descriptions with Gemini Flash.
+2. Sampled Gemini LOAO diagnostic, not full Gemini LOAO.
+3. Cascade uncertainty improvement using local score/margin export and existing Gemini predictions.
+4. Qualitative error taxonomy with manual review.
+5. Qwen fine-tuning/evaluation once stronger GPU access is available.
+
+This order is chosen because it maximises dissertation value per unit cost. Candidate descriptions test the label-semantics hypothesis directly. A sampled LOAO diagnostic provides a small robustness signal without committing to full hosted LOAO. Score/margin uncertainty improves the cascade method without more API calls. Qualitative taxonomy strengthens the discussion chapter. Qwen fine-tuning remains the next major open/local LLM stage once compute is available.
 
 ## Validation Snapshot
 

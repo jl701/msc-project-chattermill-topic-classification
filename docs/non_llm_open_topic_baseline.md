@@ -1,6 +1,6 @@
 # Strongest Local Non-LLM Open-Topic Baseline
 
-Last updated: 2026-06-27
+Last updated: 2026-07-01
 
 This note records the current strongest local non-LLM baseline for the fixed held-out-aspect open-topic protocol. It is intended to be reusable in the dissertation methods/results sections.
 
@@ -23,7 +23,7 @@ On the fixed three-aspect held-out-aspect test set, the best validation-selected
 | Aspect samples F1 | 0.6651 |
 | Sentiment accuracy when gold aspect is predicted | 0.9100 |
 
-This is the best fixed held-out-aspect non-LLM result currently available in the repository. It is stronger than the earlier candidate-aspect DistilBERT selector with global TF-IDF sentiment (`0.5816` pair samples F1) and the Qwen indexed zero-shot baseline (`0.5374` pair samples F1). It should not be interpreted as a full leave-one-aspect-out robustness result.
+This is the best fixed held-out-aspect non-LLM result currently available in the repository. It is stronger than the earlier candidate-aspect DistilBERT selector with global TF-IDF sentiment (`0.5816` pair samples F1) and the Qwen indexed zero-shot baseline (`0.5374` pair samples F1). It should not be interpreted as a full leave-one-aspect-out robustness result; the completed LOAO check below shows that fixed-split strength does not transfer uniformly across all held-out aspects.
 
 ## Evaluation Setting
 
@@ -150,6 +150,35 @@ The following fixed-split checks did not beat the best run:
 
 This suggests the current fixed held-out-aspect non-LLM baseline is close enough to pause local tuning and move to report framing or the next LLM phase.
 
+## LOAO Robustness Check
+
+The strongest fixed-split local non-LLM branch was also run through the all-row leave-one-aspect-out held-out-aspect protocol. Each of the 12 FABSA aspects is held out in turn; validation/test keep all official rows; gold labels are filtered to the current held-out aspect only; and the candidate set contains only that held-out aspect. This is the main robustness diagnostic requested after Aji's 2026-06-21 feedback.
+
+Preferred full LOAO run:
+
+```text
+Candidate-aspect DistilBERT selector
++ DistilBERT aspect-conditioned sentiment classifier
++ example_filtered training
++ all-row LOAO
++ validation pair micro F1 threshold selection
+```
+
+Mean test spread across 12 held-out aspects:
+
+| Variant | Pair Samples F1 Mean | Pair Micro F1 Mean | Pair Precision Mean | Pair Recall Mean | Pair Macro F1 Mean | FP Rows / 100 Mean | FN Rows / 100 Mean | Aspect Micro F1 Mean | Sentiment Accuracy When Gold Aspect Predicted |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Selector LR `3e-5` | 0.0550 | 0.3128 | 0.3345 | 0.4315 | 0.2285 | 12.7022 | 8.6746 | 0.7862 | 0.9319 |
+| Selector LR `2e-5` | 0.0577 | 0.2941 | 0.3021 | 0.3921 | 0.2250 | 13.2798 | 8.3176 | 0.7840 | 0.9301 |
+
+The LR `3e-5` run remains the best DistilBERT LOAO setting by pair micro F1. However, it does not beat the previously recorded lexical micro-F1-selected all-row LOAO lower bound (`0.3780` mean pair micro F1 for `example_filtered` with global sentiment). This is not a sentiment failure: sentiment accuracy when the gold aspect is predicted is high, around `0.93`. The bottleneck is unseen-aspect relevance detection and threshold calibration when the held-out aspect rotates through rare, ambiguous, and less lexically transparent labels.
+
+This means the local non-LLM story should be framed carefully:
+
+- fixed three-aspect result: strong local candidate-label baseline, useful as the local system to compare with Qwen/Gemini
+- LOAO result: robustness warning showing that the fixed split is not enough for a broad open-topic generalisation claim
+- dissertation implication: the next modelling value lies in LLM-assisted candidate-label reasoning, candidate-label descriptions, qualitative error analysis, and later Qwen fine-tuning/evaluation, not more DistilBERT selector tuning
+
 ## Reproduction
 
 Run the strongest current fixed held-out-aspect non-LLM baseline:
@@ -178,5 +207,4 @@ This baseline should be described as a strong local non-LLM candidate-label base
 1. Select unseen candidate aspects using label-aware text matching.
 2. Assign aspect-specific sentiment only after candidate aspects are selected.
 
-The main limitation is that the result is still a fixed three-aspect held-out evaluation. The leave-one-aspect-out lexical results show that robustness varies strongly across aspects, but full DistilBERT LOAO was not run locally because of compute cost.
-
+The main limitation is that the headline result is still a fixed three-aspect held-out evaluation. The completed all-row LOAO run shows that the same DistilBERT branch is not uniformly robust across all held-out aspects. Use the fixed result as the strongest local non-LLM baseline and the LOAO result as the robustness caveat.

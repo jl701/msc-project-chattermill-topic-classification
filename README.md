@@ -17,6 +17,7 @@ The main project context, current understanding, datasets, modelling plan, evalu
 - [docs/literature_review_matrix.md](docs/literature_review_matrix.md)
 - [docs/aji_updates_2026_06_29.md](docs/aji_updates_2026_06_29.md)
 - [docs/gemini_candidate_label_baseline.md](docs/gemini_candidate_label_baseline.md)
+- [docs/llm_next_experiment_directions.md](docs/llm_next_experiment_directions.md)
 
 The current first phase is a closed-topic FABSA baseline:
 
@@ -115,6 +116,12 @@ Run leave-one-aspect-out held-out-aspect lexical evaluation:
 ```powershell
 python .\scripts\run_loao_heldout_aspect.py --baseline lexical --strategy both --sentiment-mode global
 python .\scripts\run_loao_heldout_aspect.py --baseline lexical --strategy both --sentiment-mode aspect_conditioned --selection-metric pair_micro_f1
+```
+
+Run the preferred DistilBERT leave-one-aspect-out robustness check:
+
+```powershell
+python .\scripts\run_loao_heldout_aspect.py --baseline cross_encoder --strategy example_filtered --eval-row-scope all --selection-metric pair_micro_f1 --sentiment-mode transformer_aspect_conditioned --sentiment-epochs 3 --sentiment-learning-rate 2e-5 --sentiment-batch-size 16 --sentiment-eval-batch-size 64 --sentiment-class-weight balanced --sentiment-selection-metric accuracy --epochs 3 --batch-size 32 --eval-batch-size 96 --learning-rate 3e-5 --negatives-per-positive 3
 ```
 
 Run a Qwen held-out-aspect indexed zero-shot smoke test:

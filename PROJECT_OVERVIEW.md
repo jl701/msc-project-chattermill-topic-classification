@@ -778,14 +778,16 @@ Future dissertation-writing work should edit the LaTeX source directly. Markdown
 
 5. Which LLM stage should follow the completed non-LLM held-out-aspect baseline?
    - Candidate-aspect DistilBERT selector plus DistilBERT aspect-conditioned sentiment is now the strongest fixed held-out-aspect non-LLM result.
+   - The full all-row DistilBERT LOAO robustness check is also complete. Its preferred LR `3e-5` run reaches only `0.3128` mean pair micro F1 across the 12 held-out aspects, below the documented lexical global-sentiment LOAO lower bound. This should be treated as a robustness caveat, not a new headline improvement.
+   - The DistilBERT LOAO result suggests the main remaining local-model bottleneck is unseen-aspect relevance detection and threshold calibration under taxonomy shift. Sentiment accuracy when the gold aspect is predicted is high, around `0.93`.
    - Gemini 2.5 Flash now matches the local non-LLM fixed held-out-aspect headline score and improves pair micro/macro F1, but has hosted-API cost, latency, and governance trade-offs.
    - Gemini error analysis shows higher precision and fewer aspect over-predictions than the local DistilBERT pipeline, but weaker recall for `Company brand: Competitor`.
    - Gemini Pro is the strongest fixed-split hosted baseline, but with substantially higher latency and cost.
    - Flash-Lite provides the cheapest and fastest hosted baseline.
    - The local-to-Gemini cascade is complete and is the strongest fixed-split system result, but it remains fixed three-aspect evidence rather than LOAO robustness evidence.
    - The Pro cascade beats pure Pro through error complementarity: Pro handles most uncertain rows, while the local fallback protects against Pro abstentions and some local-reliable rows.
-   - The strongest next dissertation-oriented Gemini/local work is not full Pro LOAO. It is candidate-aspect descriptions and qualitative error taxonomy.
-   - The next major options after that are Qwen fine-tuning/evaluation on stronger GPU access or LOAO robustness for the selected local branch if budget permits.
+   - The strongest next dissertation-oriented Gemini/local work is not more DistilBERT LOAO or full Pro LOAO. The roadmap is recorded in `docs/llm_next_experiment_directions.md`.
+   - Recommended order: candidate-aspect descriptions, sampled Gemini LOAO diagnostic, cascade uncertainty improvement using local score/margin export, qualitative error taxonomy, then Qwen fine-tuning/evaluation on stronger GPU access.
 
 ## 16. Immediate Next Steps
 
@@ -799,11 +801,15 @@ Future dissertation-writing work should edit the LaTeX source directly. Markdown
 
 5. Keep LOAO all-row evaluation as the robustness view and positive-row LOAO only as a sentiment diagnostic.
 
-6. Treat the fixed-split hosted Pareto comparison as complete: Flash-Lite, Flash, and Pro have all been run on validation/test.
+6. Treat the completed DistilBERT all-row LOAO result as the robustness caveat for the local non-LLM branch: strong fixed three-aspect performance, weak and highly variable full LOAO performance.
 
-7. Treat the local-to-Gemini cascade as complete fixed-split selective-deployment evidence; its Pro variant beats pure Pro through fallback recovery and lower false-negative count, not because local is globally stronger. Use `docs/tasks_1_to_3_thesis_prep.md` as the clean evidence map before starting Task 4, then prioritise Gemini-generated candidate descriptions and Gemini-assisted qualitative error taxonomy as separate dissertation-value experiments.
+7. Treat the fixed-split hosted Pareto comparison as complete: Flash-Lite, Flash, and Pro have all been run on validation/test.
 
-8. Do not run full Gemini Pro LOAO unless the dissertation value justifies the added cost and latency.
+8. Treat the local-to-Gemini cascade as complete fixed-split selective-deployment evidence; its Pro variant beats pure Pro through fallback recovery and lower false-negative count, not because local is globally stronger. Use `docs/tasks_1_to_3_thesis_prep.md` as the clean evidence map before starting Task 4.
+
+9. Follow the LLM next-experiment roadmap in `docs/llm_next_experiment_directions.md`: candidate-aspect descriptions, sampled Gemini LOAO diagnostic, cascade score/margin uncertainty, qualitative error taxonomy, then Qwen fine-tuning/evaluation.
+
+10. Do not run full Gemini Pro LOAO unless the dissertation value justifies the added cost and latency.
 
 ## 17. Notes For Repository Hygiene
 

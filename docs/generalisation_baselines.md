@@ -22,6 +22,7 @@ Headline metric: **pair samples F1**. Pair micro F1 and pair macro F1 are report
 | Held-out aspect, example-filtered | Candidate-aspect cross-encoder + global sentiment | 0.5816 | 0.5646 | 0.4538 | 0.6835 |
 | Held-out aspect, label-masked | Candidate-aspect cross-encoder + DistilBERT aspect-conditioned sentiment | 0.5412 | 0.5343 | 0.4713 | 0.6088 |
 | Held-out aspect, example-filtered | Candidate-aspect cross-encoder + DistilBERT aspect-conditioned sentiment | 0.6071 | 0.5917 | 0.4890 | 0.6651 |
+| LOAO held-out aspect, all-row mean | Candidate-aspect cross-encoder + DistilBERT aspect-conditioned sentiment | 0.0550 | 0.3128 | 0.2285 | 0.7862 |
 | Held-out aspect | Qwen3-4B-Instruct indexed zero-shot | 0.5374 | 0.5300 | 0.4374 | 0.6340 |
 | Held-out aspect | Gemini 2.5 Flash-Lite indexed JSON-schema | 0.5516 | 0.5872 | 0.4876 | 0.6062 |
 | Held-out aspect | Gemini 2.5 Flash indexed JSON-schema | 0.6071 | 0.6541 | 0.5547 | 0.6747 |
@@ -199,6 +200,15 @@ All-row lexical LOAO test spread across 12 held-out aspects. With sample-F1 thre
 
 Positive-row lexical LOAO is much higher, but it should be treated as a sentiment diagnostic rather than a true aspect-selection evaluation because each fold has only one candidate aspect and every evaluated row contains it.
 
+The strongest local non-LLM branch was then run through the same all-row LOAO robustness view: candidate-aspect DistilBERT selector plus DistilBERT aspect-conditioned sentiment, `example_filtered`, validation threshold selected by pair micro F1. Two selector learning rates were checked:
+
+| Selector LR | Pair Samples F1 Mean | Pair Micro F1 Mean | Pair Precision Mean | Pair Recall Mean | Pair Macro F1 Mean | FP Rows / 100 Mean | FN Rows / 100 Mean | Aspect Micro F1 Mean | Sentiment Accuracy When Gold Aspect Predicted |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `3e-5` | 0.0550 | 0.3128 | 0.3345 | 0.4315 | 0.2285 | 12.7022 | 8.6746 | 0.7862 | 0.9319 |
+| `2e-5` | 0.0577 | 0.2941 | 0.3021 | 0.3921 | 0.2250 | 13.2798 | 8.3176 | 0.7840 | 0.9301 |
+
+The LR `3e-5` run is the preferred DistilBERT LOAO result by mean pair micro F1, but it does not beat the lexical global-sentiment micro-selected LOAO lower bound (`0.3780` mean pair micro F1 for `example_filtered`). This is an important robustness caveat: the fixed three-aspect local DistilBERT result is strong, but it does not generalise uniformly when every aspect is rotated into the unseen position. The high sentiment accuracy suggests the main bottleneck is aspect relevance detection and thresholding under taxonomy shift, not aspect-conditioned sentiment itself.
+
 ## Qwen Held-Out Aspect Smoke Test
 
 A zero-shot Qwen3-4B-Instruct smoke test was added for the held-out-aspect protocol. The key prompt change is to use indexed candidate labels:
@@ -302,7 +312,7 @@ The closed-topic DistilBERT result remains the strongest current benchmark on th
 
 The held-out organisation traditional result is close to the closed-topic traditional baseline on pair samples F1, but pair macro F1 drops. The held-out-organisation DistilBERT run gives a clear improvement over the traditional model, but its macro F1 remains lower than closed-topic DistilBERT. This suggests that domain shift is still hurting long-tail labels even when overall performance is strong.
 
-The held-out aspect results are much lower than the closed-topic and held-out-organisation results, as expected. A fixed-output supervised classifier is not a meaningful model for unseen labels. The candidate-aspect cross-encoder is a stronger label-aware baseline and improves substantially over the lexical lower bound. Qwen indexed zero-shot is competitive, but it does not beat the best local fixed held-out-aspect result. Gemini 2.5 Flash with indexed JSON-schema prompting matches the current strongest non-LLM fixed held-out-aspect headline score (`0.6071` test pair samples F1) and improves pair micro/macro F1, but it has hosted-API latency, cost, and governance trade-offs. The follow-up Gemini error analysis shows that this gain comes mainly from higher pair precision and fewer aspect over-predictions, while Gemini is conservative on `Company brand: Competitor` and returns more empty predictions than the local DistilBERT pipeline. Gemini 2.5 Pro is the strongest fixed-split hosted result (`0.7141` test pair samples F1), while Flash-Lite provides a very cheap/fast hosted point (`0.5516` test pair samples F1, 0.3719 s/test example). The local-to-Gemini cascade is now the strongest fixed-split system result: Flash cascade reaches `0.7459`, and Pro cascade reaches `0.8102`. The cascade should be presented as selective deployment evidence, not as LOAO robustness evidence. The global sentiment limitation has been tested carefully: DistilBERT aspect-conditioned sentiment improves the controlled lexical setup and the example-filtered strong pipeline, but it does not improve label-masked training. This supports using example-filtered as the cleaner fixed-split result while keeping label-masked as an incomplete-label-noise ablation. The next major modelling stage should not be more fixed-split sentiment tuning; useful next checks are candidate-label descriptions, qualitative error taxonomy, Qwen fine-tuning/evaluation on stronger GPU access, or LOAO robustness for the selected local branch if budget permits.
+The held-out aspect results are much lower than the closed-topic and held-out-organisation results, as expected. A fixed-output supervised classifier is not a meaningful model for unseen labels. The candidate-aspect cross-encoder is a stronger label-aware baseline and improves substantially over the lexical lower bound on the fixed split, but the completed DistilBERT LOAO run shows that this fixed-split strength is not uniformly robust across all aspects. Qwen indexed zero-shot is competitive, but it does not beat the best local fixed held-out-aspect result. Gemini 2.5 Flash with indexed JSON-schema prompting matches the current strongest non-LLM fixed held-out-aspect headline score (`0.6071` test pair samples F1) and improves pair micro/macro F1, but it has hosted-API latency, cost, and governance trade-offs. The follow-up Gemini error analysis shows that this gain comes mainly from higher pair precision and fewer aspect over-predictions, while Gemini is conservative on `Company brand: Competitor` and returns more empty predictions than the local DistilBERT pipeline. Gemini 2.5 Pro is the strongest fixed-split hosted result (`0.7141` test pair samples F1), while Flash-Lite provides a very cheap/fast hosted point (`0.5516` test pair samples F1, 0.3719 s/test example). The local-to-Gemini cascade is now the strongest fixed-split system result: Flash cascade reaches `0.7459`, and Pro cascade reaches `0.8102`. The cascade should be presented as selective deployment evidence, not as LOAO robustness evidence. The global sentiment limitation has been tested carefully: DistilBERT aspect-conditioned sentiment improves the controlled lexical setup and the example-filtered strong pipeline, but it does not improve label-masked training. This supports using example-filtered as the cleaner fixed-split result while keeping label-masked as an incomplete-label-noise ablation. The next major modelling stage should not be more fixed-split sentiment or DistilBERT LOAO tuning; useful next checks are candidate-label descriptions, qualitative error taxonomy, Qwen fine-tuning/evaluation on stronger GPU access, and LLM-centred robustness extensions if budget permits.
 
 See `docs/heldout_aspect_error_analysis.md` for the earlier Qwen/local row-level analysis, `docs/gemini_error_analysis.md` for the Gemini Flash fixed-split error analysis, and `docs/local_gemini_cascade.md` for the selective escalation experiment.
 
@@ -348,6 +358,12 @@ Run the controlled lexical selector plus DistilBERT aspect-conditioned sentiment
 
 ```powershell
 python .\scripts\run_generalisation_baselines.py --protocol heldout-aspect --strategy both --sentiment-mode transformer_aspect_conditioned --sentiment-epochs 3 --sentiment-learning-rate 2e-5 --sentiment-batch-size 16 --sentiment-eval-batch-size 64 --sentiment-class-weight balanced --sentiment-selection-metric accuracy --output-dir .\outputs\baselines\generalisation_transformer_sentiment_lr2e-5_ep3_balanced_accuracy
+```
+
+Run the preferred DistilBERT LOAO robustness check:
+
+```powershell
+python .\scripts\run_loao_heldout_aspect.py --baseline cross_encoder --strategy example_filtered --eval-row-scope all --selection-metric pair_micro_f1 --sentiment-mode transformer_aspect_conditioned --sentiment-epochs 3 --sentiment-learning-rate 2e-5 --sentiment-batch-size 16 --sentiment-eval-batch-size 64 --sentiment-class-weight balanced --sentiment-selection-metric accuracy --epochs 3 --batch-size 32 --eval-batch-size 96 --learning-rate 3e-5 --negatives-per-positive 3 --output-dir .\outputs\baselines\loao_cross_encoder_transformer_sentiment_example_filtered_micro_selection_YYYYMMDD
 ```
 
 Run the Qwen indexed zero-shot held-out-aspect smoke test:

@@ -1,5 +1,7 @@
 # Leave-One-Aspect-Out Held-Out Aspect Evaluation
 
+Last updated: 2026-07-01
+
 This note records the leave-one-aspect-out (LOAO) held-out-aspect experiment added after Aji's 2026-06-21 feedback.
 
 ## Motivation
@@ -54,7 +56,19 @@ The completed full LOAO lexical baselines are:
 - aspect-conditioned sentiment: one TF-IDF Logistic Regression sentiment prediction per `(review, candidate aspect)` pair
 - strategies: `label_masked` and `example_filtered`
 
-The DistilBERT candidate-aspect cross-encoder path was implemented and smoke-tested for both the original global-sentiment setup and the newer aspect-conditioned sentiment setup, but full LOAO was not completed on the current local machine. A full single-fold smoke attempt did not finish within 30 minutes on the GTX 1660 Ti Max-Q 6 GB GPU. Tiny 100-train/100-eval/1-epoch smoke tests completed, so the code path works, but full cross-encoder LOAO should run later on stronger compute or with a deliberately lighter model.
+The DistilBERT candidate-aspect cross-encoder path is now complete for the strongest local non-LLM branch:
+
+- aspect relevance: DistilBERT cross-encoder over `(review text, candidate aspect)`
+- sentiment: DistilBERT aspect-conditioned classifier over `(review text, candidate aspect)`
+- strategy: `example_filtered`
+- evaluation: all rows, one held-out aspect per fold, validation threshold selected by pair micro F1
+
+Two full 12-fold runs were completed on the RTX 5050 Laptop GPU:
+
+- selector LR `3e-5`, 3 epochs, 3 negatives per positive
+- selector LR `2e-5`, 3 epochs, 3 negatives per positive
+
+The LR `3e-5` run is the preferred DistilBERT LOAO result by mean pair micro F1. This is different from the fixed three-aspect result: the fixed split reaches `0.6071` pair samples F1, but full LOAO exposes much larger aspect-to-aspect variation and a harder unseen-aspect detection problem.
 
 ## Main All-Row Results
 
@@ -74,6 +88,13 @@ Output directory for micro-F1-selected all-row LOAO with aspect-conditioned sent
 
 ```text
 outputs/baselines/loao_heldout_aspect_lexical_aspect_conditioned_micro_selection/
+```
+
+Output directories for micro-F1-selected all-row LOAO with the DistilBERT candidate-aspect selector and DistilBERT aspect-conditioned sentiment:
+
+```text
+outputs/baselines/loao_cross_encoder_transformer_sentiment_example_filtered_micro_selection_20260630/
+outputs/baselines/loao_cross_encoder_transformer_sentiment_example_filtered_micro_selection_lr2e-5_20260701/
 ```
 
 Sample-F1-selected test spread across 12 held-out aspects:
@@ -102,6 +123,34 @@ Aspect-conditioned sentiment was then tested with the same lexical aspect select
 | Aspect-conditioned | `example_filtered` | 0.0842 | 0.3576 | 0.3627 | 0.4541 | 16.7034 | 0.8390 |
 
 This confirms that the lightweight aspect-conditioned sentiment classifier is not yet a performance improvement over the older global sentiment prior. It is still methodologically useful because it removes the document-level sentiment assumption that Aji queried, but the classifier itself needs to become stronger before this route is worth using as the headline non-LLM result.
+
+The full DistilBERT candidate-aspect selector plus DistilBERT aspect-conditioned sentiment LOAO run was then completed for `example_filtered`. Unlike the fixed three-aspect setting, this all-row LOAO result is not stronger than the lexical micro-F1-selected lower bound:
+
+| Model | Selector LR | Pair Samples F1 Mean | Pair Micro F1 Mean | Pair Precision Mean | Pair Recall Mean | Pair Macro F1 Mean | FP Rows / 100 Mean | FN Rows / 100 Mean | Aspect Micro F1 Mean | Sentiment Accuracy When Gold Aspect Predicted |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Lexical selector + global sentiment | n/a | 0.0903 | 0.3780 | 0.3778 | 0.4895 | n/a | 17.4753 | n/a | n/a | 0.8783 |
+| Lexical selector + lightweight aspect-conditioned sentiment | n/a | 0.0842 | 0.3576 | 0.3627 | 0.4541 | n/a | 16.7034 | n/a | n/a | 0.8390 |
+| DistilBERT selector + DistilBERT aspect-conditioned sentiment | `3e-5` | 0.0550 | 0.3128 | 0.3345 | 0.4315 | 0.2285 | 12.7022 | 8.6746 | 0.7862 | 0.9319 |
+| DistilBERT selector + DistilBERT aspect-conditioned sentiment | `2e-5` | 0.0577 | 0.2941 | 0.3021 | 0.3921 | 0.2250 | 13.2798 | 8.3176 | 0.7840 | 0.9301 |
+
+The LR `3e-5` DistilBERT run is therefore the strongest DistilBERT LOAO setting tried, but it is not the strongest all-row LOAO result. The sentiment component itself is strong, with mean sentiment accuracy above `0.93` when the gold aspect is predicted. The failure mode is mainly unseen-aspect detection and threshold calibration under taxonomy shift, not aspect-conditioned sentiment assignment.
+
+Per-aspect test results for the preferred LR `3e-5` DistilBERT LOAO run:
+
+| Held-Out Aspect | Pair Samples F1 | Pair Micro F1 | Pair Precision | Pair Recall | Threshold | Best Epoch |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `Staff support: Phone` | 0.0126 | 0.5128 | 0.5128 | 0.5128 | 0.36 | 3 |
+| `Purchase booking experience: Ease of use` | 0.2327 | 0.4593 | 0.3345 | 0.7327 | 0.16 | 2 |
+| `Staff support: Attitude of staff` | 0.0744 | 0.4395 | 0.3512 | 0.5871 | 0.15 | 1 |
+| `Value: Price value for money` | 0.0750 | 0.3760 | 0.2787 | 0.5777 | 0.26 | 3 |
+| `Logistics rides: Speed` | 0.0309 | 0.3643 | 0.6125 | 0.2593 | 0.31 | 1 |
+| `Online experience: App website` | 0.0855 | 0.2918 | 0.6990 | 0.1844 | 0.05 | 3 |
+| `Staff support: Email` | 0.0057 | 0.2903 | 0.2250 | 0.4091 | 0.82 | 1 |
+| `Account management: Account access` | 0.0202 | 0.2807 | 0.2148 | 0.4051 | 0.12 | 3 |
+| `Company brand: General satisfaction` | 0.0624 | 0.2491 | 0.4605 | 0.1707 | 0.05 | 2 |
+| `Value: Discounts promotions` | 0.0239 | 0.2099 | 0.1392 | 0.4270 | 0.20 | 1 |
+| `Company brand: Competitor` | 0.0214 | 0.1785 | 0.1308 | 0.2810 | 0.26 | 1 |
+| `Company brand: Reviews` | 0.0151 | 0.1011 | 0.0549 | 0.6316 | 0.10 | 1 |
 
 Sample-F1-selected per-aspect test results for `label_masked`:
 
@@ -167,7 +216,9 @@ The gap between the all-row view and the positive-row diagnostic is the importan
 
 The `label_masked` and `example_filtered` lexical results are very close. This does not remove Aji's concern about false-negative noise in `label_masked`; it only means this simple lexical lower bound is not very sensitive to that training-data difference.
 
-The aspect-conditioned sentiment ablation clarifies the sentiment issue but does not improve the lexical baseline. This is plausible because the current sentiment classifier is still a shallow text classifier and cannot reliably localise sentiment spans around the requested aspect. The result supports fixing the modelling assumption, but it also shows that a stronger aspect-conditioned sentiment model or a joint pair scorer is needed before replacing the global-sentiment headline results.
+The aspect-conditioned sentiment ablation clarifies the sentiment issue but does not improve the lexical LOAO baseline when implemented with a shallow TF-IDF classifier. The stronger DistilBERT aspect-conditioned sentiment model fixes much of that sentiment weakness, but the full DistilBERT LOAO result still does not improve the all-row robustness headline. This is useful negative evidence: stronger local encoders can perform very well on a fixed held-out-aspect split, yet still fail to generalise uniformly when every aspect becomes the unseen topic in turn.
+
+The main bottleneck is now aspect relevance under taxonomy shift. The DistilBERT LOAO run has high mean aspect micro F1 because most rows are true negatives for a one-aspect fold, but pair micro F1 and per-aspect spread show that the model is unstable for rare, ambiguous, or less lexically transparent aspects. This supports presenting the local DistilBERT pipeline as the strongest fixed-split non-LLM baseline, while using LOAO as the robustness diagnostic that motivates LLM-assisted candidate-label reasoning and selective escalation.
 
 ## Reproduction
 
@@ -197,10 +248,23 @@ Run a tiny cross-encoder smoke test:
 python .\scripts\run_loao_heldout_aspect.py --baseline cross_encoder --strategy label_masked --heldout-aspect "Staff support: Email" --epochs 1 --batch-size 16 --eval-batch-size 32 --learning-rate 2e-5 --negatives-per-positive 1 --train-limit 100 --eval-limit 100 --output-dir .\outputs\baselines\loao_cross_encoder_tiny_smoke
 ```
 
+Run the preferred full DistilBERT LOAO result:
+
+```powershell
+python .\scripts\run_loao_heldout_aspect.py --baseline cross_encoder --strategy example_filtered --eval-row-scope all --selection-metric pair_micro_f1 --sentiment-mode transformer_aspect_conditioned --sentiment-epochs 3 --sentiment-learning-rate 2e-5 --sentiment-batch-size 16 --sentiment-eval-batch-size 64 --sentiment-class-weight balanced --sentiment-selection-metric accuracy --epochs 3 --batch-size 32 --eval-batch-size 96 --learning-rate 3e-5 --negatives-per-positive 3 --output-dir .\outputs\baselines\loao_cross_encoder_transformer_sentiment_example_filtered_micro_selection_YYYYMMDD
+```
+
+Run the LR `2e-5` tuning check:
+
+```powershell
+python .\scripts\run_loao_heldout_aspect.py --baseline cross_encoder --strategy example_filtered --eval-row-scope all --selection-metric pair_micro_f1 --sentiment-mode transformer_aspect_conditioned --sentiment-epochs 3 --sentiment-learning-rate 2e-5 --sentiment-batch-size 16 --sentiment-eval-batch-size 64 --sentiment-class-weight balanced --sentiment-selection-metric accuracy --epochs 3 --batch-size 32 --eval-batch-size 96 --learning-rate 2e-5 --negatives-per-positive 3 --output-dir .\outputs\baselines\loao_cross_encoder_transformer_sentiment_example_filtered_micro_selection_lr2e-5_YYYYMMDD
+```
+
 ## Next Step
 
-The lightweight aspect-conditioned sentiment pipeline is now implemented and evaluated. The next methodological step is not more lexical tuning. The useful next options are:
+The strongest local non-LLM fixed-split baseline and the strongest DistilBERT LOAO robustness check are now both complete. More DistilBERT LOAO hyperparameter tuning is unlikely to change the dissertation story. The useful next options are:
 
-- train a stronger aspect-conditioned sentiment model, such as a DistilBERT cross-encoder for `(review, candidate aspect) -> sentiment`
-- move to joint pair scoring: `(review, candidate aspect + sentiment) -> applicable / not applicable`
-- add the hosted Gemini indexed candidate-label baseline before spending local GPU time on full Qwen fine-tuning
+- test candidate-aspect descriptions as label-representation support
+- write a qualitative error taxonomy for the fixed held-out-aspect and LOAO failures
+- use the hosted Gemini indexed candidate-label and local-to-Gemini cascade results as the next LLM-centred evidence block
+- run Qwen fine-tuning/evaluation once stronger GPU access is available

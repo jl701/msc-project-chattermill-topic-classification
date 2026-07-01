@@ -52,6 +52,7 @@ Before doing new work, please inspect these files. If a `D:\Msc_Project` path is
 19. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\gemini_error_analysis.md
 20. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\local_gemini_cascade.md
 21. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\tasks_1_to_3_thesis_prep.md
+22. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\llm_next_experiment_directions.md
 
 Immediate instruction for the new chat:
 
@@ -222,7 +223,11 @@ Leave-one-aspect-out held-out aspect:
 - The headline metric remains pair samples F1, but all-row threshold selection should not rely on sample-F1 alone because it does not reward true-negative empty rows and can hide false positives.
 - Positive-row LOAO is much higher, about 0.88 test pair samples F1, but aspect F1 is trivially 1.0000 and it should be treated as a sentiment diagnostic.
 - Positive-row LOAO with lightweight aspect-conditioned sentiment is about 0.86 label-masked / 0.84 example-filtered test pair samples F1, slightly below global sentiment.
-- Full DistilBERT cross-encoder LOAO was not completed locally; a single full fold did not finish within 30 minutes on the 6 GB GPU. A tiny cross-encoder smoke test passed.
+- Full DistilBERT cross-encoder LOAO with DistilBERT aspect-conditioned sentiment is now complete for `example_filtered`, all-row evaluation, and pair-micro-F1 threshold selection.
+  - selector LR `3e-5`: pair samples F1 mean 0.0550, pair micro F1 mean 0.3128, precision 0.3345, recall 0.4315, pair macro F1 mean 0.2285, aspect micro F1 mean 0.7862, sentiment accuracy when gold aspect predicted 0.9319.
+  - selector LR `2e-5`: pair samples F1 mean 0.0577, pair micro F1 mean 0.2941, precision 0.3021, recall 0.3921, pair macro F1 mean 0.2250, aspect micro F1 mean 0.7840, sentiment accuracy when gold aspect predicted 0.9301.
+  - The LR `3e-5` run is the preferred DistilBERT LOAO setting by pair micro F1, but it does not beat the documented lexical global-sentiment micro-selected LOAO lower bound.
+  - Interpretation: the fixed three-aspect local DistilBERT result is strong, but full LOAO exposes weak unseen-aspect relevance detection and threshold calibration. Sentiment is not the main bottleneck.
 - See `docs/loao_heldout_aspect.md`.
 
 Held-out aspect error analysis:
@@ -340,8 +345,14 @@ Gemini / Vertex AI access:
   - fixed-split hosted Pareto baselines are now complete: Gemini Flash-Lite, Flash, and Pro
   - local-to-Gemini uncertainty cascade is now complete
   - Tasks 1-3 are consolidated for thesis/task-4 handoff in `docs/tasks_1_to_3_thesis_prep.md`
-  - next test Gemini-generated candidate-aspect descriptions as label-representation support, without validation/test leakage
-  - then use Gemini Pro for qualitative error-taxonomy assistance, with manual review and no automatic metric claims
+  - the next LLM roadmap is recorded in `docs/llm_next_experiment_directions.md`
+  - recommended order:
+    - candidate-aspect descriptions with Gemini Flash
+    - sampled Gemini LOAO diagnostic, not full Gemini LOAO
+    - cascade uncertainty improvement using local score/margin export and existing Gemini predictions
+    - qualitative error taxonomy with manual review
+    - Qwen fine-tuning/evaluation once stronger GPU access is available
+  - full Gemini LOAO is not the default because estimated all-row LOAO cost/latency is high relative to the expected dissertation value
 - Important Gemini finding: `max_tokens=512` caused truncated JSON because Gemini spent most completion tokens thinking first. Use `max_tokens=2048` for this prompt unless a later sweep proves a cheaper reliable setting.
 - The runner defaults to `response_format=json_schema`, JSON object wrapper `{"labels": [...]}`, and indexed candidate IDs; it can fall back to plain JSON if the endpoint rejects response format.
 
@@ -435,6 +446,7 @@ python .\scripts\run_loao_heldout_aspect.py --baseline lexical --strategy both -
 python .\scripts\run_loao_heldout_aspect.py --baseline lexical --strategy both --sentiment-mode global --selection-metric pair_micro_f1 --output-dir .\outputs\baselines\loao_heldout_aspect_lexical_all_rows_micro_selection
 python .\scripts\run_loao_heldout_aspect.py --baseline lexical --strategy both --sentiment-mode aspect_conditioned --selection-metric pair_micro_f1 --output-dir .\outputs\baselines\loao_heldout_aspect_lexical_aspect_conditioned_micro_selection
 python .\scripts\run_loao_heldout_aspect.py --baseline lexical --strategy both --sentiment-mode aspect_conditioned --eval-row-scope containing_heldout --ensure-one --output-dir .\outputs\baselines\loao_heldout_aspect_lexical_aspect_conditioned_positive_rows
+python .\scripts\run_loao_heldout_aspect.py --baseline cross_encoder --strategy example_filtered --eval-row-scope all --selection-metric pair_micro_f1 --sentiment-mode transformer_aspect_conditioned --sentiment-epochs 3 --sentiment-learning-rate 2e-5 --sentiment-batch-size 16 --sentiment-eval-batch-size 64 --sentiment-class-weight balanced --sentiment-selection-metric accuracy --epochs 3 --batch-size 32 --eval-batch-size 96 --learning-rate 3e-5 --negatives-per-positive 3 --output-dir .\outputs\baselines\loao_cross_encoder_transformer_sentiment_example_filtered_micro_selection_YYYYMMDD
 python .\scripts\run_qwen_heldout_aspect_smoke.py --split validation --limit 10000 --load-in-4bit --prompt-variant indexed
 python .\scripts\run_qwen_heldout_aspect_smoke.py --split test --limit 10000 --load-in-4bit --prompt-variant indexed
 python .\scripts\prepare_qwen_heldout_aspect_sft_data.py --strategy both --prompt-variant indexed
@@ -449,12 +461,14 @@ Recommended next steps:
 
 1. First inspect the repo and confirm the current state with `git status`.
 2. Perform the strict audit described near the top of this prompt before implementing the next task.
-3. LOAO lexical evaluation, lightweight aspect-conditioned sentiment, and DistilBERT aspect-conditioned sentiment have been implemented and documented.
+3. LOAO lexical evaluation, lightweight aspect-conditioned sentiment, and the full DistilBERT selector + DistilBERT aspect-conditioned sentiment LOAO robustness check have been implemented and documented.
 4. Keep using the LOAO all-row view for robustness checks and the positive-row view only as a sentiment diagnostic.
 5. Treat candidate-aspect DistilBERT selector + DistilBERT aspect-conditioned sentiment as the current strongest non-LLM fixed held-out-aspect baseline.
-6. Treat Gemini Flash as the completed hosted fixed held-out-aspect baseline, but do not run full Gemini LOAO unless the cost/benefit is explicitly justified.
-7. The local-to-Gemini cascade is complete; useful next options are aspect descriptions and qualitative error taxonomy, then Qwen fine-tuning/evaluation on stronger GPU access if available.
-8. If I ask to publish changes, commit/push only clean code and documentation, without committing outputs, data, credentials, checkpoints, or generated artifacts.
+6. Treat the completed DistilBERT LOAO result as a robustness caveat, not as a new headline model improvement.
+7. Treat Gemini Flash as the completed hosted fixed held-out-aspect baseline, but do not run full Gemini LOAO unless the cost/benefit is explicitly justified.
+8. The local-to-Gemini cascade is complete; follow `docs/llm_next_experiment_directions.md` for the next 1-5 experiment roadmap.
+9. The next experiment order is candidate-aspect descriptions, sampled Gemini LOAO diagnostic, cascade score/margin uncertainty, qualitative error taxonomy, then Qwen fine-tuning/evaluation.
+10. If I ask to publish changes, commit/push only clean code and documentation, without committing outputs, data, credentials, checkpoints, or generated artifacts.
 
 Please start by summarising what you find in the current docs and repo state, then perform the strict audit, then propose the next concrete plan before implementing.
 ```

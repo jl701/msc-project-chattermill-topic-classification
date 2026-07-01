@@ -336,10 +336,12 @@ Do not run full Gemini LOAO by default. Full Pro validation/test, Flash-Lite val
 
 Tasks 1-3 of the Gemini follow-up are consolidated for thesis writing and Task 4 handoff in `docs/tasks_1_to_3_thesis_prep.md`.
 
-The remaining Gemini/local experiments should be framed around dissertation value rather than raw leaderboard chasing:
+The next LLM-centred roadmap is recorded in `docs/llm_next_experiment_directions.md`. The remaining Gemini/local experiments should be framed around dissertation value rather than raw leaderboard chasing:
 
-1. Test Gemini-generated candidate-aspect descriptions as label-representation support, generated without validation/test leakage.
-2. Use Gemini Pro as a qualitative error-taxonomy aid with manual review, not as an automatic evaluator.
-3. If time and budget permit, export local DistilBERT selector scores in a future rerun and repeat the cascade with calibrated score/margin uncertainty features.
+1. Test candidate-aspect descriptions as label-representation support, generated without validation/test leakage.
+2. Run a sampled Gemini LOAO diagnostic rather than full Gemini LOAO.
+3. Export local DistilBERT selector scores and rerun cascade selection with score/margin uncertainty features, reusing existing Gemini predictions.
+4. Use Gemini Pro as a qualitative error-taxonomy aid with manual review, not as an automatic evaluator.
+5. Move to Qwen fine-tuning/evaluation once stronger GPU access is available.
 
 This sequence supports a stronger industrial MSc story: local models, cheap hosted models, and stronger hosted models can be compared not only on F1, but also on cost, latency, governance, and selective deployment strategy.
