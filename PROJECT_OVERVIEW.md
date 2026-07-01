@@ -656,6 +656,16 @@ Held-out aspect, Qwen3-4B indexed zero-shot:
   test pair samples F1:       0.537
   valid JSON rate:            1.000
 
+LOAO held-out aspect, Qwen3-4B indexed zero-shot all-row mean:
+  validation pair samples F1 mean: 0.119
+  validation pair micro F1 mean:   0.329
+  test pair samples F1 mean:       0.121
+  test pair micro F1 mean:         0.338
+  test pair macro F1 mean:         0.241
+  test valid JSON rate:            1.000
+  test schema-valid rate:          0.995
+  interpretation: strong positive-row semantic matching, weak empty-gold absence calibration
+
 Held-out aspect, Gemini 2.5 Flash indexed JSON-schema:
   validation pair samples F1: 0.615
   test pair samples F1:       0.607
@@ -698,6 +708,7 @@ Qwen held-out-aspect status:
 Completed:
   indexed candidate-label prompt design
   zero-shot validation/test evaluation
+  zero-shot 12-aspect all-row LOAO validation/test evaluation
   row-level error analysis
   GPU-ready SFT/evaluation JSONL preparation script
   strongest current non-LLM fixed held-out-aspect baseline:
@@ -708,7 +719,7 @@ Not yet completed:
   full Qwen validation/test fine-tuned evaluation
 ```
 
-The current Qwen held-out-aspect result is therefore a zero-shot prompt baseline, not a fine-tuned Qwen result. Full Qwen candidate-label fine-tuning should run later on stronger GPU access using the indexed SFT/evaluation data generation workflow.
+The current Qwen held-out-aspect and LOAO results are therefore zero-shot prompt baselines, not fine-tuned Qwen results. The full all-row LOAO test mean is `0.1212` pair samples F1 and `0.3378` pair micro F1. Positive-gold rows are much stronger (`0.8194` pair samples F1 mean and `0.8659` pair micro F1 mean), so the main Qwen zero-shot weakness is empty-gold absence calibration. Full Qwen candidate-label fine-tuning should run later on stronger GPU access using the indexed SFT/evaluation data generation workflow, and it should be evaluated with the same all-row LOAO protocol.
 
 Gemini hosted candidate-label status:
 
@@ -766,7 +777,7 @@ Future dissertation-writing work should edit the LaTeX source directly. Markdown
    - There are no formal descriptions, but Aji may be able to find human scoring guidance.
 
 2. What GPU environment should be used for full Qwen experiments?
-   - Local QLoRA works, but the laptop GPU is too slow for serious full runs.
+   - Local QLoRA works, and local zero-shot Qwen LOAO is complete, but full fine-tuning is still better suited to stronger GPU access.
    - Indexed held-out-aspect Qwen prompt/evaluation data is now prepared for stronger GPU experiments.
 
 3. Should the open-topic setting include only held-out aspects, or also combined held-out organisation plus held-out aspect evaluation?
@@ -780,6 +791,7 @@ Future dissertation-writing work should edit the LaTeX source directly. Markdown
    - Candidate-aspect DistilBERT selector plus DistilBERT aspect-conditioned sentiment is now the strongest fixed held-out-aspect non-LLM result.
    - The full all-row DistilBERT LOAO robustness check is also complete. Its preferred LR `3e-5` run reaches only `0.3128` mean pair micro F1 across the 12 held-out aspects, below the documented lexical global-sentiment LOAO lower bound. This should be treated as a robustness caveat, not a new headline improvement.
    - The DistilBERT LOAO result suggests the main remaining local-model bottleneck is unseen-aspect relevance detection and threshold calibration under taxonomy shift. Sentiment accuracy when the gold aspect is predicted is high, around `0.93`.
+   - The Qwen zero-shot all-row LOAO baseline is also complete. It slightly improves the DistilBERT LOAO mean pair micro F1 (`0.3378` vs `0.3128`) and has much higher recall, but it over-predicts empty-gold rows. The positive-row diagnostic is strong, which supports Qwen fine-tuning/calibration rather than treating zero-shot as sufficient.
    - Gemini 2.5 Flash now matches the local non-LLM fixed held-out-aspect headline score and improves pair micro/macro F1, but has hosted-API cost, latency, and governance trade-offs.
    - Gemini error analysis shows higher precision and fewer aspect over-predictions than the local DistilBERT pipeline, but weaker recall for `Company brand: Competitor`.
    - Gemini Pro is the strongest fixed-split hosted baseline, but with substantially higher latency and cost.
@@ -787,7 +799,7 @@ Future dissertation-writing work should edit the LaTeX source directly. Markdown
    - The local-to-Gemini cascade is complete and is the strongest fixed-split system result, but it remains fixed three-aspect evidence rather than LOAO robustness evidence.
    - The Pro cascade beats pure Pro through error complementarity: Pro handles most uncertain rows, while the local fallback protects against Pro abstentions and some local-reliable rows.
    - The strongest next dissertation-oriented Gemini/local work is not more DistilBERT LOAO or full Pro LOAO. The roadmap is recorded in `docs/llm_next_experiment_directions.md`.
-   - Recommended order: candidate-aspect descriptions, sampled Gemini LOAO diagnostic, cascade uncertainty improvement using local score/margin export, qualitative error taxonomy, then Qwen fine-tuning/evaluation on stronger GPU access.
+   - Recommended order after this Qwen LOAO baseline: Qwen fine-tuning/calibration planning, candidate-aspect descriptions, sampled Gemini LOAO diagnostic only if needed, cascade uncertainty improvement using local score/margin export, and qualitative error taxonomy.
 
 ## 16. Immediate Next Steps
 
@@ -803,13 +815,15 @@ Future dissertation-writing work should edit the LaTeX source directly. Markdown
 
 6. Treat the completed DistilBERT all-row LOAO result as the robustness caveat for the local non-LLM branch: strong fixed three-aspect performance, weak and highly variable full LOAO performance.
 
-7. Treat the fixed-split hosted Pareto comparison as complete: Flash-Lite, Flash, and Pro have all been run on validation/test.
+7. Treat the completed Qwen all-row LOAO result as the local open-weight zero-shot robustness baseline before Qwen fine-tuning. It is strong on positive rows but weak on all-row absence calibration, so do not treat it as a finished calibrated open-topic system.
 
-8. Treat the local-to-Gemini cascade as complete fixed-split selective-deployment evidence; its Pro variant beats pure Pro through fallback recovery and lower false-negative count, not because local is globally stronger. Use `docs/tasks_1_to_3_thesis_prep.md` as the clean evidence map before starting Task 4.
+8. Treat the fixed-split hosted Pareto comparison as complete: Flash-Lite, Flash, and Pro have all been run on validation/test.
 
-9. Follow the LLM next-experiment roadmap in `docs/llm_next_experiment_directions.md`: candidate-aspect descriptions, sampled Gemini LOAO diagnostic, cascade score/margin uncertainty, qualitative error taxonomy, then Qwen fine-tuning/evaluation.
+9. Treat the local-to-Gemini cascade as complete fixed-split selective-deployment evidence; its Pro variant beats pure Pro through fallback recovery and lower false-negative count, not because local is globally stronger. Use `docs/tasks_1_to_3_thesis_prep.md` as the clean evidence map before starting Task 4.
 
-10. Do not run full Gemini Pro LOAO unless the dissertation value justifies the added cost and latency.
+10. Follow the LLM next-experiment roadmap with the new Qwen LOAO baseline in mind: Qwen fine-tuning/calibration planning, candidate-aspect descriptions, sampled Gemini LOAO diagnostic only if needed, cascade score/margin uncertainty, and qualitative error taxonomy.
+
+11. Do not run full Gemini Pro LOAO unless the dissertation value justifies the added cost and latency.
 
 ## 17. Notes For Repository Hygiene
 

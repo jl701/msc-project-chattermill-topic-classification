@@ -44,6 +44,7 @@ class CandidateParseDiagnostics:
     conflicting_sentiment_count: int = 0
     aspect_name_reference_count: int = 0
     numeric_aspect_id_count: int = 0
+    prefixed_aspect_id_count: int = 0
 
 
 @dataclass(frozen=True)
@@ -334,6 +335,7 @@ def parse_candidate_output(
     conflict_count = 0
     aspect_name_count = 0
     numeric_id_count = 0
+    prefixed_id_count = 0
     valid_item_count = 0
 
     for item in items:
@@ -354,6 +356,11 @@ def parse_candidate_output(
             elif raw_aspect_id in numeric_ids:
                 aspect = numeric_ids[raw_aspect_id]
                 used_numeric_id = True
+            else:
+                prefixed_match = re.match(r"^(A\d+)\b", upper_id)
+                if prefixed_match and prefixed_match.group(1) in allowed_ids:
+                    aspect = allowed_ids[prefixed_match.group(1)]
+                    prefixed_id_count += 1
 
         sentiment = str(item.get("sentiment", "")).strip().lower()
 
@@ -392,6 +399,7 @@ def parse_candidate_output(
         and conflict_count == 0
         and (not require_aspect_id or aspect_name_count == 0)
         and numeric_id_count == 0
+        and prefixed_id_count == 0
     )
 
     return ParsedCandidateOutput(
@@ -411,6 +419,7 @@ def parse_candidate_output(
             conflicting_sentiment_count=conflict_count,
             aspect_name_reference_count=aspect_name_count,
             numeric_aspect_id_count=numeric_id_count,
+            prefixed_aspect_id_count=prefixed_id_count,
         ),
     )
 
@@ -516,6 +525,7 @@ def aggregate_llm_diagnostics(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "non_object_item_count": int(sum(row.get("non_object_item_count", 0) for row in rows)),
         "aspect_name_reference_count": int(sum(row.get("aspect_name_reference_count", 0) for row in rows)),
         "numeric_aspect_id_count": int(sum(row.get("numeric_aspect_id_count", 0) for row in rows)),
+        "prefixed_aspect_id_count": int(sum(row.get("prefixed_aspect_id_count", 0) for row in rows)),
         "empty_prediction_count": sum(1 for row in rows if not row.get("pred_pair_labels")),
         "mean_latency_seconds": float(mean(seconds)) if seconds else None,
         "median_latency_seconds": float(median(seconds)) if seconds else None,

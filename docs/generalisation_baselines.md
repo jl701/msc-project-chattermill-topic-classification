@@ -23,6 +23,7 @@ Headline metric: **pair samples F1**. Pair micro F1 and pair macro F1 are report
 | Held-out aspect, label-masked | Candidate-aspect cross-encoder + DistilBERT aspect-conditioned sentiment | 0.5412 | 0.5343 | 0.4713 | 0.6088 |
 | Held-out aspect, example-filtered | Candidate-aspect cross-encoder + DistilBERT aspect-conditioned sentiment | 0.6071 | 0.5917 | 0.4890 | 0.6651 |
 | LOAO held-out aspect, all-row mean | Candidate-aspect cross-encoder + DistilBERT aspect-conditioned sentiment | 0.0550 | 0.3128 | 0.2285 | 0.7862 |
+| LOAO held-out aspect, all-row mean | Qwen3-4B-Instruct indexed zero-shot | 0.1212 | 0.3378 | 0.2412 | 0.1274 |
 | Held-out aspect | Qwen3-4B-Instruct indexed zero-shot | 0.5374 | 0.5300 | 0.4374 | 0.6340 |
 | Held-out aspect | Gemini 2.5 Flash-Lite indexed JSON-schema | 0.5516 | 0.5872 | 0.4876 | 0.6062 |
 | Held-out aspect | Gemini 2.5 Flash indexed JSON-schema | 0.6071 | 0.6541 | 0.5547 | 0.6747 |
@@ -306,13 +307,57 @@ Full fixed-split hosted Pareto and selective cascade results were then added. Co
 
 The cascade selects escalation policies on validation only. The best validation-selected Pro cascade escalates 253 of 281 test rows and reaches `0.8102` pair samples F1. A budgeted diagnostic shows that an 80% Pro call-rate constraint reaches `0.8149` test pair samples F1, but that row is not the headline because the headline must remain validation-selected rather than test-selected. See `docs/local_gemini_cascade.md`.
 
+## Qwen LOAO Zero-Shot Robustness
+
+The missing local open-weight LLM robustness baseline was completed with the same indexed candidate-label prompt as the fixed held-out-aspect Qwen run, but rotated every FABSA aspect into the held-out position.
+
+Protocol:
+
+- Model: `Qwen/Qwen3-4B-Instruct-2507`.
+- Loading: local Transformers causal LM, 4-bit bitsandbytes NF4 double quantisation.
+- Prompt variant: `indexed`, with one candidate aspect per LOAO fold and JSON array outputs using `aspect_id`.
+- Evaluation scope: all official validation/test rows, with gold labels filtered to the held-out aspect and empty predictions allowed.
+- Output directories:
+  - `outputs/llm/qwen_loao_heldout_aspect_all_rows_validation_20260701/`
+  - `outputs/llm/qwen_loao_heldout_aspect_all_rows_test_20260701/`
+
+Commands:
+
+```powershell
+python .\scripts\run_qwen_loao_heldout_aspect.py --split validation --prompt-variant indexed --load-in-4bit --resume --output-dir .\outputs\llm\qwen_loao_heldout_aspect_all_rows_validation_20260701
+python .\scripts\run_qwen_loao_heldout_aspect.py --split test --prompt-variant indexed --load-in-4bit --resume --output-dir .\outputs\llm\qwen_loao_heldout_aspect_all_rows_test_20260701
+python .\scripts\analyse_qwen_loao_predictions.py --validation-dir .\outputs\llm\qwen_loao_heldout_aspect_all_rows_validation_20260701 --test-dir .\outputs\llm\qwen_loao_heldout_aspect_all_rows_test_20260701 --output-dir .\outputs\analysis\qwen_loao_positive_diagnostic_20260701
+```
+
+Aggregate all-row LOAO spread:
+
+| Split | Pair Samples F1 Mean | Pair Micro F1 Mean | Pair Precision Mean | Pair Recall Mean | Pair Macro F1 Mean | FP Rows / 100 Mean | Valid JSON | Schema Valid | Seconds / Example |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| validation | 0.1194 | 0.3293 | 0.2310 | 0.8115 | 0.2340 | 34.7446 | 1.0000 | 0.9961 | 0.9756 |
+| test | 0.1212 | 0.3378 | 0.2379 | 0.8182 | 0.2412 | 34.4150 | 1.0000 | 0.9955 | 1.1184 |
+
+The strongest and weakest test aspects by pair micro F1 were:
+
+| Rank | Aspect | Pair Micro F1 | Pair Samples F1 | Precision | Recall | FP Rows / 100 |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| weakest | `Company brand: Reviews` | 0.0513 | 0.0176 | 0.0266 | 0.7368 | 64.2722 |
+| weak | `Staff support: Email` | 0.1144 | 0.0132 | 0.0609 | 0.9545 | 20.3529 |
+| weak | `Account management: Account access` | 0.1527 | 0.0378 | 0.0849 | 0.7595 | 40.1386 |
+| strong | `Logistics rides: Speed` | 0.5660 | 0.1040 | 0.4188 | 0.8730 | 14.3037 |
+| strong | `Staff support: Attitude of staff` | 0.5685 | 0.1059 | 0.4308 | 0.8358 | 13.6736 |
+| strongest | `Online experience: App website` | 0.6011 | 0.3527 | 0.4969 | 0.7604 | 34.1525 |
+
+A positive-gold-row diagnostic, computed from the same all-row predictions without new model calls, gives much higher test scores: pair samples F1 mean `0.8194`, pair micro F1 mean `0.8659`, pair precision mean `0.9338`, and sentiment accuracy when the gold aspect is predicted `0.9314`. This confirms that the all-row weakness is mainly absence detection on empty-gold rows, not JSON formatting or sentiment assignment on positive rows.
+
+Compared with the strongest DistilBERT LOAO run, Qwen has higher mean pair samples F1 (`0.1212` vs `0.0550`) and slightly higher mean pair micro F1 (`0.3378` vs `0.3128`), but it reaches this through much higher recall (`0.8182`) and much lower precision (`0.2379`). DistilBERT is more conservative and has far fewer empty-gold false-positive rows (`12.7022` per 100 reviews versus Qwen's `34.4150`). Qwen is therefore a useful zero-shot semantic matcher, but it is not yet calibrated enough for all-row open-topic deployment.
+
 ## Interpretation
 
 The closed-topic DistilBERT result remains the strongest current benchmark on the provided split.
 
 The held-out organisation traditional result is close to the closed-topic traditional baseline on pair samples F1, but pair macro F1 drops. The held-out-organisation DistilBERT run gives a clear improvement over the traditional model, but its macro F1 remains lower than closed-topic DistilBERT. This suggests that domain shift is still hurting long-tail labels even when overall performance is strong.
 
-The held-out aspect results are much lower than the closed-topic and held-out-organisation results, as expected. A fixed-output supervised classifier is not a meaningful model for unseen labels. The candidate-aspect cross-encoder is a stronger label-aware baseline and improves substantially over the lexical lower bound on the fixed split, but the completed DistilBERT LOAO run shows that this fixed-split strength is not uniformly robust across all aspects. Qwen indexed zero-shot is competitive, but it does not beat the best local fixed held-out-aspect result. Gemini 2.5 Flash with indexed JSON-schema prompting matches the current strongest non-LLM fixed held-out-aspect headline score (`0.6071` test pair samples F1) and improves pair micro/macro F1, but it has hosted-API latency, cost, and governance trade-offs. The follow-up Gemini error analysis shows that this gain comes mainly from higher pair precision and fewer aspect over-predictions, while Gemini is conservative on `Company brand: Competitor` and returns more empty predictions than the local DistilBERT pipeline. Gemini 2.5 Pro is the strongest fixed-split hosted result (`0.7141` test pair samples F1), while Flash-Lite provides a very cheap/fast hosted point (`0.5516` test pair samples F1, 0.3719 s/test example). The local-to-Gemini cascade is now the strongest fixed-split system result: Flash cascade reaches `0.7459`, and Pro cascade reaches `0.8102`. The cascade should be presented as selective deployment evidence, not as LOAO robustness evidence. The global sentiment limitation has been tested carefully: DistilBERT aspect-conditioned sentiment improves the controlled lexical setup and the example-filtered strong pipeline, but it does not improve label-masked training. This supports using example-filtered as the cleaner fixed-split result while keeping label-masked as an incomplete-label-noise ablation. The next major modelling stage should not be more fixed-split sentiment or DistilBERT LOAO tuning; useful next checks are candidate-label descriptions, qualitative error taxonomy, Qwen fine-tuning/evaluation on stronger GPU access, and LLM-centred robustness extensions if budget permits.
+The held-out aspect results are much lower than the closed-topic and held-out-organisation results, as expected. A fixed-output supervised classifier is not a meaningful model for unseen labels. The candidate-aspect cross-encoder is a stronger label-aware baseline and improves substantially over the lexical lower bound on the fixed split, but the completed DistilBERT LOAO run shows that this fixed-split strength is not uniformly robust across all aspects. Qwen indexed zero-shot is competitive on the fixed held-out-aspect split, but it does not beat the best local fixed held-out-aspect result. Its new full LOAO result is dissertation-useful because it separates semantic matching strength from absence calibration: positive-gold rows are strong, but all-row precision is low and empty-gold false positives are frequent. Gemini 2.5 Flash with indexed JSON-schema prompting matches the current strongest non-LLM fixed held-out-aspect headline score (`0.6071` test pair samples F1) and improves pair micro/macro F1, but it has hosted-API latency, cost, and governance trade-offs. The follow-up Gemini error analysis shows that this gain comes mainly from higher pair precision and fewer aspect over-predictions, while Gemini is conservative on `Company brand: Competitor` and returns more empty predictions than the local DistilBERT pipeline. Gemini 2.5 Pro is the strongest fixed-split hosted result (`0.7141` test pair samples F1), while Flash-Lite provides a very cheap/fast hosted point (`0.5516` test pair samples F1, 0.3719 s/test example). The local-to-Gemini cascade is now the strongest fixed-split system result: Flash cascade reaches `0.7459`, and Pro cascade reaches `0.8102`. The Gemini and cascade results should be presented as fixed-split or selective-deployment evidence, not as LOAO robustness evidence. The global sentiment limitation has been tested carefully: DistilBERT aspect-conditioned sentiment improves the controlled lexical setup and the example-filtered strong pipeline, but it does not improve label-masked training. This supports using example-filtered as the cleaner fixed-split result while keeping label-masked as an incomplete-label-noise ablation. The next major modelling stage should not be more fixed-split sentiment or DistilBERT LOAO tuning; useful next checks are Qwen fine-tuning with all-row LOAO evaluation, candidate-label descriptions, qualitative error taxonomy, and LLM-centred robustness extensions if budget permits.
 
 See `docs/heldout_aspect_error_analysis.md` for the earlier Qwen/local row-level analysis, `docs/gemini_error_analysis.md` for the Gemini Flash fixed-split error analysis, and `docs/local_gemini_cascade.md` for the selective escalation experiment.
 
@@ -364,6 +409,13 @@ Run the preferred DistilBERT LOAO robustness check:
 
 ```powershell
 python .\scripts\run_loao_heldout_aspect.py --baseline cross_encoder --strategy example_filtered --eval-row-scope all --selection-metric pair_micro_f1 --sentiment-mode transformer_aspect_conditioned --sentiment-epochs 3 --sentiment-learning-rate 2e-5 --sentiment-batch-size 16 --sentiment-eval-batch-size 64 --sentiment-class-weight balanced --sentiment-selection-metric accuracy --epochs 3 --batch-size 32 --eval-batch-size 96 --learning-rate 3e-5 --negatives-per-positive 3 --output-dir .\outputs\baselines\loao_cross_encoder_transformer_sentiment_example_filtered_micro_selection_YYYYMMDD
+```
+
+Run the Qwen indexed zero-shot all-row LOAO robustness baseline:
+
+```powershell
+python .\scripts\run_qwen_loao_heldout_aspect.py --split validation --prompt-variant indexed --load-in-4bit --resume --output-dir .\outputs\llm\qwen_loao_heldout_aspect_all_rows_validation_YYYYMMDD
+python .\scripts\run_qwen_loao_heldout_aspect.py --split test --prompt-variant indexed --load-in-4bit --resume --output-dir .\outputs\llm\qwen_loao_heldout_aspect_all_rows_test_YYYYMMDD
 ```
 
 Run the Qwen indexed zero-shot held-out-aspect smoke test:

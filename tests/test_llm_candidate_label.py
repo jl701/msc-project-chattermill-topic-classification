@@ -125,6 +125,18 @@ class LlmCandidateLabelTest(unittest.TestCase):
         self.assertEqual(parsed.pair_labels, ["Value: Discounts promotions | positive"])
         self.assertEqual(parsed.diagnostics.aspect_name_reference_count, 1)
 
+    def test_parse_recovers_prefixed_aspect_id_but_marks_schema_invalid(self) -> None:
+        parsed = parse_candidate_output(
+            '[{"aspect_id": "A1. Account management: Account access", "sentiment": "neutral"}]',
+            ASPECTS,
+            require_aspect_id=True,
+        )
+
+        self.assertTrue(parsed.valid_json)
+        self.assertFalse(parsed.schema_valid)
+        self.assertEqual(parsed.pair_labels, ["Account management: Account access | neutral"])
+        self.assertEqual(parsed.diagnostics.prefixed_aspect_id_count, 1)
+
     def test_extract_usage_supports_openai_and_gemini_fields(self) -> None:
         openai_usage = extract_usage(
             {

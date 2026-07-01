@@ -1414,6 +1414,158 @@ python -m compileall -q src scripts tests
 | Unit tests | 63 tests OK |
 | Compile check | passed |
 
+## 2026-07-01: Qwen Zero-Shot Full All-Row LOAO Baseline
+
+### Purpose
+
+- Complete the missing local open-weight LLM zero-shot LOAO robustness baseline before Qwen fine-tuning.
+- Use the actual project model, `Qwen/Qwen3-4B-Instruct-2507`, without fine-tuning.
+- Evaluate whether indexed candidate-label prompting remains robust when every FABSA aspect is rotated into the unseen candidate position.
+- Keep this evidence separate from fixed three-aspect Qwen/Gemini results and from Gemini cascade deployment evidence.
+
+### Code Or Protocol Changes
+
+- Added `src/msc_project/llm/qwen_local.py` with shared local Qwen chat-template, 4-bit loading, and deterministic generation helpers.
+- Added `scripts/run_qwen_loao_heldout_aspect.py`.
+  - Defaults to indexed candidate labels and 4-bit loading.
+  - Runs all 12 FABSA aspects unless `--heldout-aspect` is supplied.
+  - Uses all-row validation/test evaluation by default.
+  - Writes request/prediction JSONL under ignored `outputs/`.
+  - Supports `--resume` for complete or partial prediction JSONL files.
+  - Writes per-aspect CSV/JSON summaries and aggregate spread tables.
+- Reused `msc_project.llm.candidate_label` parsing/diagnostics and `evaluate_pair_and_aspect`.
+- Updated the central candidate-label parser to recover prefixed IDs such as `A1. Account management: Account access`, while still counting those rows as schema-invalid.
+- Added tests for the Qwen LOAO runner helpers and prefixed-ID parsing.
+
+### Setup
+
+- Dataset: FABSA official validation/test splits.
+- Protocol: leave-one-aspect-out over all 12 FABSA aspects.
+- Main evaluation scope: all official validation/test rows for each fold.
+- Gold labels: filtered to the held-out aspect only.
+- Candidate set: exactly the current held-out aspect.
+- Empty predictions: allowed.
+- Prompt: indexed candidate-label JSON array with `aspect_id`.
+- Model: `Qwen/Qwen3-4B-Instruct-2507`.
+- Loading: local Transformers causal LM, 4-bit bitsandbytes NF4 double quantisation.
+- Decoding: deterministic generation, `max_input_tokens=1024`, `max_new_tokens=192`.
+- Hardware: RTX 5050 Laptop GPU, 8 GB VRAM.
+
+### Commands
+
+Smoke tests:
+
+```powershell
+python .\scripts\run_qwen_loao_heldout_aspect.py --split both --heldout-aspect "Account management: Account access" --limit 30 --prompt-variant indexed --load-in-4bit --resume --output-dir .\outputs\llm\qwen_loao_smoke_account_access_20260701
+python .\scripts\run_qwen_loao_heldout_aspect.py --split validation --heldout-aspect "Account management: Account access" --limit 12 --prompt-variant indexed --load-in-4bit --output-dir .\outputs\llm\qwen_loao_smoke_parser_check_20260701
+```
+
+Full LOAO:
+
+```powershell
+python .\scripts\run_qwen_loao_heldout_aspect.py --split validation --prompt-variant indexed --load-in-4bit --resume --output-dir .\outputs\llm\qwen_loao_heldout_aspect_all_rows_validation_20260701
+python .\scripts\run_qwen_loao_heldout_aspect.py --split test --prompt-variant indexed --load-in-4bit --resume --output-dir .\outputs\llm\qwen_loao_heldout_aspect_all_rows_test_20260701
+```
+
+Derived positive-gold diagnostic, computed from the same prediction files without new model calls:
+
+```powershell
+python .\scripts\analyse_qwen_loao_predictions.py --validation-dir .\outputs\llm\qwen_loao_heldout_aspect_all_rows_validation_20260701 --test-dir .\outputs\llm\qwen_loao_heldout_aspect_all_rows_test_20260701 --output-dir .\outputs\analysis\qwen_loao_positive_diagnostic_20260701
+```
+
+### Outputs
+
+- Local ignored outputs:
+  - `outputs/llm/qwen_loao_smoke_account_access_20260701/`
+  - `outputs/llm/qwen_loao_smoke_parser_check_20260701/`
+  - `outputs/llm/qwen_loao_heldout_aspect_all_rows_validation_20260701/`
+  - `outputs/llm/qwen_loao_heldout_aspect_all_rows_test_20260701/`
+  - `outputs/analysis/qwen_loao_positive_diagnostic_20260701/`
+- Raw predictions contain review text and remain uncommitted under ignored `outputs/`.
+- Committed files are limited to code, tests, and aggregate documentation.
+
+### Results
+
+Smoke checks:
+
+- Model loaded in 4-bit on the RTX 5050 Laptop GPU.
+- Valid JSON was stable.
+- Candidate IDs mapped back to canonical aspects.
+- A recoverable schema issue was found and fixed: Qwen sometimes emitted `aspect_id` values like `A1. Account management: Account access`; these now map to `A1` but still count as schema-invalid.
+- Smoke speed was about `0.7-1.1` seconds/example for the sampled all-row one-candidate setting.
+
+Full all-row LOAO aggregate spread:
+
+| Split | Rows / Fold | Wall Runtime | Pair Samples F1 Mean | Pair Micro F1 Mean | Pair Precision Mean | Pair Recall Mean | Pair Macro F1 Mean | FP Rows / 100 Mean | Valid JSON | Schema Valid | Seconds / Example |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| validation | 1,057 | 3.45 h | 0.1194 | 0.3293 | 0.2310 | 0.8115 | 0.2340 | 34.7446 | 1.0000 | 0.9961 | 0.9756 |
+| test | 1,587 | 5.93 h | 0.1212 | 0.3378 | 0.2379 | 0.8182 | 0.2412 | 34.4150 | 1.0000 | 0.9955 | 1.1184 |
+
+Test pair micro F1 ranged from `0.0513` for `Company brand: Reviews` to `0.6011` for `Online experience: App website`.
+
+Hardest test aspects by pair micro F1:
+
+| Held-Out Aspect | Pair Samples F1 | Pair Micro F1 | Precision | Recall | FP Rows / 100 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `Company brand: Reviews` | 0.0176 | 0.0513 | 0.0266 | 0.7368 | 64.2722 |
+| `Staff support: Email` | 0.0132 | 0.1144 | 0.0609 | 0.9545 | 20.3529 |
+| `Account management: Account access` | 0.0378 | 0.1527 | 0.0849 | 0.7595 | 40.1386 |
+| `Value: Discounts promotions` | 0.0473 | 0.1913 | 0.1079 | 0.8427 | 38.5003 |
+
+Strongest test aspects by pair micro F1:
+
+| Held-Out Aspect | Pair Samples F1 | Pair Micro F1 | Precision | Recall | FP Rows / 100 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `Logistics rides: Speed` | 0.1040 | 0.5660 | 0.4188 | 0.8730 | 14.3037 |
+| `Staff support: Attitude of staff` | 0.1059 | 0.5685 | 0.4308 | 0.8358 | 13.6736 |
+| `Online experience: App website` | 0.3527 | 0.6011 | 0.4969 | 0.7604 | 34.1525 |
+
+Positive-gold-row diagnostic from the same predictions:
+
+| Split | Pair Samples F1 Mean | Pair Micro F1 Mean | Pair Precision Mean | Pair Recall Mean | Pair Macro F1 Mean | Sentiment Accuracy When Gold Aspect Predicted |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| validation | 0.8129 | 0.8692 | 0.9481 | 0.8115 | 0.6024 | 0.9451 |
+| test | 0.8194 | 0.8659 | 0.9338 | 0.8182 | 0.6184 | 0.9314 |
+
+### Interpretation
+
+- Qwen zero-shot structured output is reliable: valid JSON is `1.0000` on both full all-row splits.
+- Full all-row LOAO exposes high recall but weak absence calibration. On test, Qwen's mean recall is `0.8182`, but mean precision is only `0.2379`, with `34.4150` false-positive rows per 100 reviews.
+- The positive-gold diagnostic is strong, so the main failure mode is not sentiment assignment or canonical ID mapping once the held-out aspect is present. The bottleneck is deciding that a candidate aspect is absent from empty-gold rows.
+- Compared with the strongest DistilBERT LOAO run, Qwen has higher mean pair samples F1 (`0.1212` vs `0.0550`) and slightly higher mean pair micro F1 (`0.3378` vs `0.3128`), but with much lower precision and many more false-positive rows. Qwen is a better recall-oriented semantic matcher; DistilBERT is more conservative.
+- Compared with the fixed held-out-aspect Qwen result (`0.5374` test pair samples F1, `0.5300` pair micro F1), full all-row LOAO is far harder and should be treated as the robustness evidence.
+- Gemini fixed and cascade results remain conceptually separate. They are not LOAO robustness evidence.
+- This result supports Qwen fine-tuning or calibration as the next open-weight LLM step. Zero-shot Qwen is useful but not deployable as a calibrated open-topic all-row detector.
+
+### Limitations
+
+- The run used one candidate aspect per LOAO fold, matching the frozen LOAO protocol. It does not test multi-candidate full-taxonomy prompting.
+- The split-builder `strategy` is recorded as `label_masked`, but no training is performed and all-row evaluation rows are unchanged by that setting.
+- The positive-row diagnostic is not a robustness result; it only explains behaviour after filtering to rows where the held-out aspect is present.
+- Aspect-only LOAO metrics should be treated cautiously in one-candidate all-row settings because true-negative-heavy rows can make them look more optimistic than pair metrics.
+
+### Next Step
+
+- Use this as the local open-weight zero-shot LOAO baseline before Qwen fine-tuning.
+- Keep the indexed candidate-label format for Qwen SFT/QLoRA.
+- Prioritise absence calibration and all-row LOAO evaluation after any Qwen fine-tuning improvement.
+
+### Validation
+
+```powershell
+python -m unittest discover -s tests
+python -m compileall -q src scripts tests
+git diff --check
+rg -n "sk-[A-Za-z0-9_-]{12,}|AIza[0-9A-Za-z_-]{20,}|OPENAI_API_KEY|GEMINI_API_KEY|GOOGLE_API_KEY|OPENAI_BASE_URL|Bearer [A-Za-z0-9._-]{20,}" . --glob '!outputs/**' --glob '!data/**' --glob '!models/**' --glob '!checkpoints/**' --glob '!artifacts/**' --glob '!runs/**' --glob '!.git/**'
+```
+
+| Check | Result |
+| --- | --- |
+| Unit tests | 68 tests OK |
+| Compile check | passed |
+| Diff whitespace check | passed, with CRLF conversion warnings only |
+| Sensitive information scan | no real API key found; only existing placeholder endpoint/env-var documentation and script env-var names matched |
+
 ## 2026-07-01: Experiment Reproducibility Audit
 
 ### Purpose
@@ -1478,6 +1630,36 @@ The dissertation-relevant results are reproducible enough for thesis use after t
 ### Next Step
 
 For future experiments, add exact command, git commit, parsed CLI arguments, hardware/API metadata, and package versions to each run summary where feasible.
+
+## 2026-07-01: Frozen LOAO Open-Topic Protocol
+
+### Purpose
+
+- Freeze the canonical leave-one-aspect-out protocol before the Qwen zero-shot LOAO and later Qwen fine-tuning branch.
+- Prevent fixed three-aspect, all-row LOAO, positive-row LOAO, and hosted cascade results from being mixed as if they were the same benchmark.
+- Define the metric hierarchy for open-topic robustness.
+
+### Code Or Protocol Changes
+
+- Updated `docs/evaluation_protocol.md` with protocol version `loao_open_topic_all_row_v1`.
+- Updated `docs/loao_heldout_aspect.md` to point future LOAO work to the frozen protocol.
+
+### Frozen Decisions
+
+- Main open-topic robustness view: all-row LOAO over all 12 FABSA aspects.
+- Evaluation rows: all official validation/test rows per held-out aspect.
+- Evaluation labels: gold labels filtered to the current held-out aspect.
+- Candidate set: exactly the current held-out aspect.
+- Empty predictions: allowed.
+- Primary robustness comparison metric: mean test `pair_micro_f1` across held-out aspects.
+- Pair samples F1: still reported for continuity, but not used alone for all-row LOAO selection or interpretation.
+- Primary future training strategy: `example_filtered`; `label_masked` remains an incomplete-label-noise ablation.
+- Positive-row LOAO: sentiment diagnostic only, not open-topic robustness evidence.
+- Gemini fixed/cascade results: hosted reference and selective-deployment evidence, not LOAO evidence unless a labelled LOAO diagnostic is run.
+
+### Next Step
+
+Use this frozen protocol to interpret the Qwen zero-shot LOAO run recorded below. Later Qwen LoRA/QLoRA fine-tuning should use the same protocol unless a new version is explicitly named.
 
 ## 2026-07-01: LLM Next Experiment Roadmap
 

@@ -162,6 +162,87 @@ python .\scripts\prepare_qwen_heldout_aspect_sft_data.py --strategy both --promp
 
 The training split uses seen-aspect supervision only. Validation and test use held-out candidate aspects and held-out labels only.
 
+## Full LOAO Zero-Shot Baseline
+
+A full local open-weight Qwen LOAO zero-shot run was completed on 2026-07-01 before Qwen fine-tuning. This is not a fine-tuned result. It is a robustness baseline for the indexed candidate-label prompt under taxonomy shift.
+
+Protocol:
+
+- Model: `Qwen/Qwen3-4B-Instruct-2507`.
+- Loading: local Transformers causal LM, default 4-bit bitsandbytes NF4 double quantisation.
+- Prompt: indexed candidate label, top-level JSON array output, `aspect_id` mapped back to the canonical FABSA aspect.
+- Decoding: deterministic generation, `max_input_tokens=1024`, `max_new_tokens=192`.
+- LOAO folds: all 12 FABSA aspects, one held-out aspect supplied as the only candidate label in each fold.
+- Main evaluation scope: all official validation/test rows, with gold labels filtered to the held-out aspect and empty predictions allowed.
+- Split-builder metadata: `strategy=label_masked`; this does not affect zero-shot evaluation rows under all-row LOAO.
+- Hardware: local RTX 5050 Laptop GPU, 8 GB VRAM.
+
+Commands:
+
+```powershell
+python .\scripts\run_qwen_loao_heldout_aspect.py --split validation --prompt-variant indexed --load-in-4bit --resume --output-dir .\outputs\llm\qwen_loao_heldout_aspect_all_rows_validation_20260701
+python .\scripts\run_qwen_loao_heldout_aspect.py --split test --prompt-variant indexed --load-in-4bit --resume --output-dir .\outputs\llm\qwen_loao_heldout_aspect_all_rows_test_20260701
+python .\scripts\analyse_qwen_loao_predictions.py --validation-dir .\outputs\llm\qwen_loao_heldout_aspect_all_rows_validation_20260701 --test-dir .\outputs\llm\qwen_loao_heldout_aspect_all_rows_test_20260701 --output-dir .\outputs\analysis\qwen_loao_positive_diagnostic_20260701
+```
+
+Local ignored outputs:
+
+- `outputs/llm/qwen_loao_heldout_aspect_all_rows_validation_20260701/`
+- `outputs/llm/qwen_loao_heldout_aspect_all_rows_test_20260701/`
+- derived positive-row diagnostic: `outputs/analysis/qwen_loao_positive_diagnostic_20260701/`
+
+Aggregate all-row LOAO spread:
+
+| Split | Rows / Fold | Pair Samples F1 Mean | Pair Samples F1 Min-Max | Pair Micro F1 Mean | Pair Micro F1 Min-Max | Pair Macro F1 Mean | Pair Precision Mean | Pair Recall Mean | FP Rows / 100 Mean | Valid JSON | Schema Valid | Seconds / Example |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| validation | 1,057 | 0.1194 | 0.0104-0.3500 | 0.3293 | 0.0449-0.5916 | 0.2340 | 0.2310 | 0.8115 | 34.7446 | 1.0000 | 0.9961 | 0.9756 |
+| test | 1,587 | 0.1212 | 0.0132-0.3527 | 0.3378 | 0.0513-0.6011 | 0.2412 | 0.2379 | 0.8182 | 34.4150 | 1.0000 | 0.9955 | 1.1184 |
+
+Test per-aspect pair micro F1 ranked from hardest to easiest:
+
+| Held-Out Aspect | Pair Samples F1 | Pair Micro F1 | Precision | Recall | Pair Macro F1 | FP Rows / 100 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `Company brand: Reviews` | 0.0176 | 0.0513 | 0.0266 | 0.7368 | 0.0426 | 64.2722 |
+| `Staff support: Email` | 0.0132 | 0.1144 | 0.0609 | 0.9545 | 0.0805 | 20.3529 |
+| `Account management: Account access` | 0.0378 | 0.1527 | 0.0849 | 0.7595 | 0.1910 | 40.1386 |
+| `Value: Discounts promotions` | 0.0473 | 0.1913 | 0.1079 | 0.8427 | 0.1733 | 38.5003 |
+| `Staff support: Phone` | 0.0227 | 0.2188 | 0.1241 | 0.9231 | 0.1509 | 15.8790 |
+| `Company brand: Competitor` | 0.0340 | 0.2298 | 0.1547 | 0.4463 | 0.1566 | 18.3995 |
+| `Value: Price value for money` | 0.1204 | 0.2679 | 0.1566 | 0.9272 | 0.1837 | 64.0832 |
+| `Company brand: General satisfaction` | 0.3056 | 0.5446 | 0.4038 | 0.8362 | 0.3317 | 44.1714 |
+| `Purchase booking experience: Ease of use` | 0.2932 | 0.5469 | 0.3887 | 0.9228 | 0.3439 | 45.0536 |
+| `Logistics rides: Speed` | 0.1040 | 0.5660 | 0.4188 | 0.8730 | 0.3684 | 14.3037 |
+| `Staff support: Attitude of staff` | 0.1059 | 0.5685 | 0.4308 | 0.8358 | 0.3788 | 13.6736 |
+| `Online experience: App website` | 0.3527 | 0.6011 | 0.4969 | 0.7604 | 0.4927 | 34.1525 |
+
+Positive-gold-row diagnostic from the same predictions:
+
+| Split | Pair Samples F1 Mean | Pair Micro F1 Mean | Pair Precision Mean | Pair Recall Mean | Pair Macro F1 Mean | Sentiment Accuracy When Gold Aspect Predicted |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| validation | 0.8129 | 0.8692 | 0.9481 | 0.8115 | 0.6024 | 0.9451 |
+| test | 0.8194 | 0.8659 | 0.9338 | 0.8182 | 0.6184 | 0.9314 |
+
+Interpretation:
+
+- Qwen's structured output is stable locally: valid JSON is 1.0000 on both full all-row splits.
+- The only schema issue observed was recoverable `aspect_id` formatting such as `A1. Account management: Account access`; these rows are mapped back to `A1` but still counted as schema-invalid.
+- Full all-row LOAO exposes a high-recall, low-precision behaviour. On the test split, mean recall is 0.8182 but mean precision is only 0.2379, with 34.4150 empty-gold false-positive rows per 100 reviews.
+- Positive-gold rows are much stronger than all-row rows. This indicates that the main zero-shot failure mode is deciding when the single candidate aspect is absent, not producing parseable JSON or assigning sentiment once the aspect is truly present.
+- The hardest test aspects are `Company brand: Reviews`, `Staff support: Email`, `Account management: Account access`, and `Value: Discounts promotions` by pair micro F1. `Company brand: Reviews` and `Value: Price value for money` are especially over-predicted on empty-gold rows.
+- This supports the need for Qwen fine-tuning or calibration before treating local open-weight LLMs as robust open-topic classifiers. The zero-shot prompt is semantically useful, but it is not calibrated for all-row absence detection under taxonomy shift.
+
+Comparison boundaries:
+
+- The earlier fixed held-out-aspect Qwen result (`0.5374` test pair samples F1, `0.5300` pair micro F1) used the fixed three held-out aspects and evaluated rows containing those aspects. It should not be compared directly with all-row LOAO, but the large drop confirms that the fixed split was easier.
+- The strongest DistilBERT LOAO result has lower mean test pair samples F1 (`0.0550`) and slightly lower mean pair micro F1 (`0.3128`) than Qwen LOAO, but it has much higher precision and fewer false-positive rows. Qwen is therefore better at recall-oriented semantic matching, while DistilBERT is more conservative.
+- Gemini fixed/cascade results remain fixed held-out-aspect or selective-deployment evidence, not LOAO robustness evidence.
+
+Next step:
+
+- Use this as the local open-weight zero-shot LOAO baseline before Qwen SFT/QLoRA.
+- For Qwen fine-tuning, keep the indexed candidate-label format and explicitly evaluate all-row LOAO after any fixed-split improvement.
+- Consider calibration or an absence-aware prompt/objective, because empty-gold false positives are the main all-row bottleneck.
+
 ## Gemini Comparison Result
 
 A Gemini hosted candidate-label runner was added and evaluated on 2026-07-01 to provide a closed hosted-LLM comparison under the same indexed held-out-aspect protocol:

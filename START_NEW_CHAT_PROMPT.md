@@ -86,12 +86,12 @@ Aji's confirmed direction:
 - New splits have been built for held-out organisation and held-out aspect evaluation.
 - Open-topic should use candidate labels at inference.
 - The model should select from canonical labels and should not freely invent topic names.
-- Qwen full experiments should wait for better GPU access; local QLoRA is only for smoke tests.
+- Qwen zero-shot full all-row LOAO has now been completed locally; full Qwen fine-tuning still waits for stronger GPU access.
 
 Latest Aji update from 2026-06-21:
 
 - Keep the overall held-out aspect protocol; do not redesign it from scratch.
-- Before heavy Qwen fine-tuning, rotate held-out aspects. The next robustness experiment should be leave-one-aspect-out across the 12 FABSA aspects and report the spread.
+- Before heavy Qwen fine-tuning, rotate held-out aspects. This has now been done for zero-shot Qwen across the 12 FABSA aspects; use it as the open-weight LLM LOAO robustness baseline before fine-tuning.
 - Treat label-masked vs example-filtered as an ablation about incomplete-label noise. Label-masked can keep text containing a held-out aspect while removing that aspect from supervision, creating false-negative or censored-label noise. Example-filtered removes these rows, giving cleaner but smaller training data.
 - The earlier lexical and candidate-aspect cross-encoder baselines used global sentiment: one document-level polarity was applied to all selected aspects. This is a limitation for FABSA because sentiment is per-aspect. A lightweight aspect-conditioned sentiment pipeline was cleaner methodologically but slightly weaker than the global sentiment baseline. A stronger DistilBERT aspect-conditioned sentiment pipeline has now been implemented and evaluated; it improves the controlled lexical sentiment ablation and the example-filtered strong fixed held-out-aspect baseline, but not label-masked training.
 - Full Qwen fine-tuning remains parked until stronger GPU access is clearer.
@@ -207,6 +207,7 @@ Held-out aspect Qwen zero-shot:
 - Full test pair macro F1: 0.4374
 - Valid JSON rate: 1.0000
 - Plain canonical string prompts often produced near-miss aspect names such as `Account management`; indexed prompts fixed this.
+- This is the fixed three-aspect held-out evaluation, not LOAO robustness evidence.
 
 Leave-one-aspect-out held-out aspect:
 - Added after Aji's 2026-06-21 feedback.
@@ -229,6 +230,25 @@ Leave-one-aspect-out held-out aspect:
   - selector LR `2e-5`: pair samples F1 mean 0.0577, pair micro F1 mean 0.2941, precision 0.3021, recall 0.3921, pair macro F1 mean 0.2250, aspect micro F1 mean 0.7840, sentiment accuracy when gold aspect predicted 0.9301.
   - The LR `3e-5` run is the preferred DistilBERT LOAO setting by pair micro F1, but it does not beat the documented lexical global-sentiment micro-selected LOAO lower bound.
   - Interpretation: the fixed three-aspect local DistilBERT result is strong, but full LOAO exposes weak unseen-aspect relevance detection and threshold calibration. Sentiment is not the main bottleneck.
+- Full Qwen zero-shot LOAO is now complete:
+  - model: `Qwen/Qwen3-4B-Instruct-2507`
+  - loading: local 4-bit bitsandbytes NF4
+  - prompt: indexed candidate labels, one held-out aspect per fold, JSON array with `aspect_id`
+  - evaluation: all official validation/test rows, gold labels filtered to the held-out aspect, empty predictions allowed
+  - validation mean pair samples F1: 0.1194
+  - validation mean pair micro F1: 0.3293
+  - validation mean pair macro F1: 0.2340
+  - validation valid JSON / schema valid: 1.0000 / 0.9961
+  - test mean pair samples F1: 0.1212
+  - test mean pair micro F1: 0.3378
+  - test mean pair macro F1: 0.2412
+  - test mean precision / recall: 0.2379 / 0.8182
+  - test false-positive rows per 100 reviews: 34.4150
+  - test valid JSON / schema valid: 1.0000 / 0.9955
+  - hardest test aspect by pair micro F1: `Company brand: Reviews` at 0.0513, with 64.2722 false-positive rows per 100 reviews
+  - strongest test aspect by pair micro F1: `Online experience: App website` at 0.6011
+  - positive-gold-row diagnostic from the same predictions is much stronger: test mean pair samples F1 0.8194 and pair micro F1 0.8659
+  - interpretation: Qwen zero-shot has strong semantic matching when the held-out aspect is present, but it over-predicts on empty-gold rows and needs fine-tuning/calibration for all-row open-topic robustness.
 - See `docs/loao_heldout_aspect.md`.
 
 Held-out aspect error analysis:
@@ -240,12 +260,12 @@ Held-out aspect error analysis:
 Qwen feasibility:
 - Model: Qwen/Qwen3-4B-Instruct-2507
 - Previous local pilot was on an RTX 5050 Laptop GPU, 8 GB VRAM.
-- Current new machine has NVIDIA GeForce GTX 1660 Ti with Max-Q Design, 6 GB VRAM.
+- Current local machine has NVIDIA GeForce RTX 5050 Laptop GPU, 8 GB VRAM.
 - 4-bit QLoRA with rank-8 LoRA runs locally.
 - Results are only on the first 100 validation rows, not full validation/test.
 - Zero-shot first-100 validation pair micro F1: 0.541
 - Best local LoRA pilot first-100 validation pair micro F1: 0.762
-- Use local Qwen only for smoke tests until proper GPU access is available.
+- Local zero-shot full all-row Qwen LOAO is now complete; use local Qwen for prompt/zero-shot baselines and smoke tests, but still use stronger GPU access for full fine-tuning.
 
 Gemini / Vertex AI access:
 - Aji provided an OpenAI-compatible endpoint:
@@ -455,6 +475,9 @@ python .\scripts\run_loao_heldout_aspect.py --baseline lexical --strategy both -
 python .\scripts\run_loao_heldout_aspect.py --baseline cross_encoder --strategy example_filtered --eval-row-scope all --selection-metric pair_micro_f1 --sentiment-mode transformer_aspect_conditioned --sentiment-epochs 3 --sentiment-learning-rate 2e-5 --sentiment-batch-size 16 --sentiment-eval-batch-size 64 --sentiment-class-weight balanced --sentiment-selection-metric accuracy --epochs 3 --batch-size 32 --eval-batch-size 96 --learning-rate 3e-5 --negatives-per-positive 3 --output-dir .\outputs\baselines\loao_cross_encoder_transformer_sentiment_example_filtered_micro_selection_YYYYMMDD
 python .\scripts\run_qwen_heldout_aspect_smoke.py --split validation --limit 10000 --load-in-4bit --prompt-variant indexed
 python .\scripts\run_qwen_heldout_aspect_smoke.py --split test --limit 10000 --load-in-4bit --prompt-variant indexed
+python .\scripts\run_qwen_loao_heldout_aspect.py --split validation --prompt-variant indexed --load-in-4bit --resume --output-dir .\outputs\llm\qwen_loao_heldout_aspect_all_rows_validation_YYYYMMDD
+python .\scripts\run_qwen_loao_heldout_aspect.py --split test --prompt-variant indexed --load-in-4bit --resume --output-dir .\outputs\llm\qwen_loao_heldout_aspect_all_rows_test_YYYYMMDD
+python .\scripts\analyse_qwen_loao_predictions.py --validation-dir .\outputs\llm\qwen_loao_heldout_aspect_all_rows_validation_YYYYMMDD --test-dir .\outputs\llm\qwen_loao_heldout_aspect_all_rows_test_YYYYMMDD --output-dir .\outputs\analysis\qwen_loao_positive_diagnostic_YYYYMMDD
 python .\scripts\prepare_qwen_heldout_aspect_sft_data.py --strategy both --prompt-variant indexed
 python .\scripts\run_gemini_heldout_aspect.py --dry-run --split validation --limit 2 --response-format json_schema --output-dir .\outputs\llm\gemini_candidate_label_dry_run_check
 python .\scripts\run_gemini_heldout_aspect.py --split both --limit 10000 --prompt-variant indexed --response-format json_schema --response-format-fallback --max-tokens 2048 --output-dir .\outputs\llm\gemini_candidate_label_YYYYMMDD_HHMMSS
@@ -468,13 +491,14 @@ Recommended next steps:
 1. First inspect the repo and confirm the current state with `git status`.
 2. Perform the strict audit described near the top of this prompt before implementing the next task.
 3. LOAO lexical evaluation, lightweight aspect-conditioned sentiment, and the full DistilBERT selector + DistilBERT aspect-conditioned sentiment LOAO robustness check have been implemented and documented.
-4. Keep using the LOAO all-row view for robustness checks and the positive-row view only as a sentiment diagnostic.
-5. Treat candidate-aspect DistilBERT selector + DistilBERT aspect-conditioned sentiment as the current strongest non-LLM fixed held-out-aspect baseline.
-6. Treat the completed DistilBERT LOAO result as a robustness caveat, not as a new headline model improvement.
-7. Treat Gemini Flash as the completed hosted fixed held-out-aspect baseline, but do not run full Gemini LOAO unless the cost/benefit is explicitly justified.
-8. The local-to-Gemini cascade is complete; follow `docs/llm_next_experiment_directions.md` for the next 1-5 experiment roadmap.
-9. The next experiment order is candidate-aspect descriptions, sampled Gemini LOAO diagnostic, cascade score/margin uncertainty, qualitative error taxonomy, then Qwen fine-tuning/evaluation.
-10. If I ask to publish changes, commit/push only clean code and documentation, without committing outputs, data, credentials, checkpoints, or generated artifacts.
+4. Qwen zero-shot full all-row LOAO is now implemented, run, and documented as the local open-weight LLM robustness baseline before fine-tuning.
+5. Keep using the LOAO all-row view for robustness checks and the positive-row view only as a sentiment diagnostic.
+6. Treat candidate-aspect DistilBERT selector + DistilBERT aspect-conditioned sentiment as the current strongest non-LLM fixed held-out-aspect baseline.
+7. Treat the completed DistilBERT LOAO result as a robustness caveat, not as a new headline model improvement.
+8. Treat Gemini Flash as the completed hosted fixed held-out-aspect baseline, but do not run full Gemini LOAO unless the cost/benefit is explicitly justified.
+9. The local-to-Gemini cascade is complete; follow `docs/llm_next_experiment_directions.md` with the new Qwen LOAO result in mind.
+10. The next experiment order should prioritise Qwen fine-tuning/calibration planning, candidate-aspect descriptions, sampled Gemini LOAO only if still useful, cascade score/margin uncertainty, and qualitative error taxonomy.
+11. If I ask to publish changes, commit/push only clean code and documentation, without committing outputs, data, credentials, checkpoints, or generated artifacts.
 
 Please start by summarising what you find in the current docs and repo state, then perform the strict audit, then propose the next concrete plan before implementing.
 ```

@@ -79,6 +79,124 @@ Leakage checks for both strategies:
 - Train-vs-test held-out supervision aspect overlap: `0`.
 - Organisation overlap is expected because this protocol isolates the label axis, not the company axis.
 
+## 4. Frozen LOAO Open-Topic Protocol
+
+Protocol version: `loao_open_topic_all_row_v1`
+
+Status: frozen for the Qwen/Gemini/DistilBERT robustness stage as of 2026-07-01.
+
+This is the canonical robustness protocol for the open-topic claim. Fixed held-out-aspect experiments remain useful capability and deployment evidence, but they must not be presented as full open-topic robustness evidence.
+
+### Fold Construction
+
+For each of the 12 FABSA aspects:
+
+1. Hold out exactly one aspect.
+2. For supervised or fine-tuned models, train without held-out-aspect supervision.
+3. Use `example_filtered` as the primary clean training strategy for future headline LOAO experiments: remove any training row containing the held-out aspect.
+4. Keep `label_masked` only as an incomplete-label-noise ablation unless a specific experiment justifies making it primary.
+5. Evaluation uses the official validation and test rows without row filtering.
+6. Gold labels are filtered to the current held-out aspect only.
+7. Candidate labels at inference contain exactly the current held-out aspect.
+8. Empty predictions are allowed and are required for rows that do not mention the held-out aspect.
+
+This all-row design is stricter than evaluating only rows that contain the held-out aspect. It tests whether a model can decide that a new candidate topic is absent as well as present.
+
+### Prediction Target
+
+The evaluated labels are aspect+sentiment pairs:
+
+```text
+<held-out aspect> | positive
+<held-out aspect> | neutral
+<held-out aspect> | negative
+```
+
+For LLM systems, the frozen prompt family is indexed candidate-label structured output. The model should return candidate IDs rather than copied aspect names, and the parser should map valid IDs back to canonical labels before scoring. Invalid JSON, invalid candidate IDs, invalid sentiments, duplicate items, and conflicting sentiments must be counted in diagnostics. Generated prediction files may contain review text and must remain under ignored `outputs/`.
+
+### Main Metrics
+
+For the all-row LOAO protocol, the primary robustness comparison metric is:
+
+- mean test `pair_micro_f1` across the 12 held-out aspects.
+
+The primary metric is pair micro F1 rather than pair samples F1 because all-row LOAO contains many empty-gold rows. Sample-level F1 does not reward true-negative empty predictions and can hide false-positive behaviour on empty-gold rows. Pair samples F1 must still be reported for continuity with the rest of the project, but it should not be the sole LOAO selection or interpretation metric.
+
+Report these metrics for validation and test:
+
+- per-aspect `pair_samples_f1`
+- per-aspect `pair_micro_f1`
+- per-aspect `pair_micro_precision`
+- per-aspect `pair_micro_recall`
+- per-aspect `pair_macro_f1`
+- false-positive rows per 100 reviews
+- false-positive labels per 100 reviews
+- false-negative rows per 100 reviews
+- exact-match rate
+- aspect samples/micro/macro F1
+- sentiment accuracy when the gold aspect is predicted
+
+For LLM runs, also report:
+
+- valid JSON rate
+- schema-valid or parser-valid rate, when applicable
+- invalid candidate-ID count
+- invalid sentiment count
+- duplicate prediction count
+- conflicting-sentiment count
+- seconds per example
+- hardware or API endpoint family
+- token usage and approximate cost, when relevant
+
+### Aggregation
+
+The main LOAO table should report the unweighted mean, standard deviation, minimum, and maximum across the 12 held-out aspects. Per-aspect tables should also be kept because aspect difficulty is part of the result.
+
+Pooled micro F1 across all folds may be reported as an optional diagnostic, but it must not replace the unweighted aspect-level spread because pooled scores are dominated by more frequent aspects.
+
+### Selection Rules
+
+Validation data may be used for model, threshold, prompt, and hyperparameter selection. Test labels must only be used after the selected configuration is fixed.
+
+For thresholded local models:
+
+- select thresholds within each fold on validation data
+- use validation `pair_micro_f1` as the preferred all-row LOAO selection metric
+- report the selected threshold per aspect
+
+For zero-shot LLM runs:
+
+- fix the prompt variant before full test evaluation
+- do not select prompt variants or parsing policies using test labels
+- use validation only for smoke checks, prompt selection, and failure diagnosis
+
+For fine-tuned Qwen or other trained LLMs:
+
+- select the final training configuration by validation aggregate LOAO performance
+- evaluate the selected configuration once on test
+- record all training data filters, seeds, LoRA/QLoRA parameters, epochs, batch sizes, gradient accumulation, sequence length, and checkpoint-selection rules
+
+### Diagnostic Variants
+
+Positive-row LOAO is allowed only as a diagnostic:
+
+- validation/test rows contain the held-out aspect
+- the candidate set contains only the held-out aspect
+- at least one prediction may be forced
+
+This view mostly measures sentiment assignment once aspect presence is assumed. It must not be used as the main open-topic robustness result.
+
+Sampled hosted-LLM LOAO is allowed when API cost makes full LOAO unreasonable, but it must be labelled as a sampled diagnostic. It cannot replace the full all-row local/selected-model LOAO result.
+
+### Comparability Rules
+
+- Do not directly compare fixed three-aspect scores with all-row LOAO scores as if they were the same benchmark.
+- Use fixed held-out-aspect scores for controlled candidate-label capability and deployment/cascade analysis.
+- Use all-row LOAO scores for the open-topic robustness claim.
+- Use positive-row LOAO only for sentiment diagnostics.
+- Use hosted Gemini fixed/cascade results as hosted-LLM reference or upper-bound evidence unless a clearly labelled Gemini LOAO diagnostic is run.
+- Any future change to row scope, candidate-set size, aggregation, or primary metric must be named as a new protocol version rather than silently replacing `loao_open_topic_all_row_v1`.
+
 ## Reproduction
 
 Analyse split candidates:
