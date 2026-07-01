@@ -49,6 +49,7 @@ Before doing new work, please inspect these files. If a `D:\Msc_Project` path is
 16. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\dissertation_internal_spec.md
 17. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\literature_review_matrix.md
 18. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\gemini_candidate_label_baseline.md
+19. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\gemini_error_analysis.md
 
 Immediate instruction for the new chat:
 
@@ -270,6 +271,15 @@ Gemini / Vertex AI access:
   - test valid JSON / schema-valid: 1.0000 / 1.0000
   - test mean latency: 2.3721 seconds/example
   - test tokens: 56,338 input, 113,067 output/completion, 102,574 reasoning, 169,405 total
+- Gemini fixed-split error analysis:
+  - documented in `docs/gemini_error_analysis.md`
+  - Gemini and the strongest local DistilBERT pipeline both score 0.6071 test pair samples F1, but Gemini has higher pair precision (0.6475 vs 0.5333) and fewer aspect over-prediction rows (80 vs 119)
+  - Gemini predicts fewer labels per row (1.0498 vs 1.2811) and has more empty predictions (42 vs 0)
+  - the main Gemini recall weakness is `Company brand: Competitor`, especially positive competitor mentions
+- Gemini Pro status:
+  - requested Pro small subset has not been run because the active shell had no `OPENAI_BASE_URL`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, or `GOOGLE_API_KEY`
+  - do not copy any key from chat history into commands or files; read credentials only from shell environment variables
+  - prepared fair comparison: test split, `--limit 50 --sample --seed 13`; existing Flash predictions filtered to that same subset score 0.6360 pair samples F1, 0.6731 pair micro F1, 0.4627 pair macro F1
 - Important Gemini finding: `max_tokens=512` caused truncated JSON because Gemini spent most completion tokens thinking first. Use `max_tokens=2048` for this prompt unless a later sweep proves a cheaper reliable setting.
 - The runner defaults to `response_format=json_schema`, JSON object wrapper `{"labels": [...]}`, and indexed candidate IDs; it can fall back to plain JSON if the endpoint rejects response format.
 
@@ -303,6 +313,7 @@ Latest user decision and completed local baseline phase from 2026-06-27:
   - `docs/non_llm_open_topic_baseline.md`
   - `docs/next_stage_and_literature_review_plan.md`
   - `docs/gemini_candidate_label_baseline.md`
+  - `docs/gemini_error_analysis.md`
 
 Latest Aji/literature-review framing update from 2026-06-29:
 
@@ -366,6 +377,8 @@ python .\scripts\run_qwen_heldout_aspect_smoke.py --split test --limit 10000 --l
 python .\scripts\prepare_qwen_heldout_aspect_sft_data.py --strategy both --prompt-variant indexed
 python .\scripts\run_gemini_heldout_aspect.py --dry-run --split validation --limit 2 --response-format json_schema --output-dir .\outputs\llm\gemini_candidate_label_dry_run_check
 python .\scripts\run_gemini_heldout_aspect.py --split both --limit 10000 --prompt-variant indexed --response-format json_schema --response-format-fallback --max-tokens 2048 --output-dir .\outputs\llm\gemini_candidate_label_YYYYMMDD_HHMMSS
+python .\scripts\analyse_gemini_heldout_aspect_errors.py --output-dir .\outputs\analysis\gemini_error_analysis
+python .\scripts\run_gemini_heldout_aspect.py --model vertex_ai/gemini-2.5-pro --split test --limit 50 --sample --seed 13 --prompt-variant indexed --response-format json_schema --response-format-fallback --max-tokens 2048 --output-dir .\outputs\llm\gemini_candidate_label_YYYYMMDD_HHMM_pro_test50
 ```
 
 Recommended next steps:
@@ -376,7 +389,7 @@ Recommended next steps:
 4. Keep using the LOAO all-row view for robustness checks and the positive-row view only as a sentiment diagnostic.
 5. Treat candidate-aspect DistilBERT selector + DistilBERT aspect-conditioned sentiment as the current strongest non-LLM fixed held-out-aspect baseline.
 6. Treat Gemini Flash as the completed hosted fixed held-out-aspect baseline, but do not run full Gemini LOAO unless the cost/benefit is explicitly justified.
-7. Useful next options are Gemini error analysis, a small Gemini Pro subset, Qwen fine-tuning/evaluation on stronger GPU access, or LOAO robustness for the selected branch.
+7. Useful next options are the prepared 50-row Gemini Pro subset once endpoint variables are present, Qwen fine-tuning/evaluation on stronger GPU access, or LOAO robustness for the selected branch.
 8. If I ask to publish changes, commit/push only clean code and documentation, without committing outputs, data, credentials, checkpoints, or generated artifacts.
 
 Please start by summarising what you find in the current docs and repo state, then perform the strict audit, then propose the next concrete plan before implementing.

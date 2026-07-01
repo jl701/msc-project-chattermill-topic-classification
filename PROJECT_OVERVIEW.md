@@ -700,6 +700,7 @@ Completed:
   real hosted Gemini API smoke test
   validation prompt/JSON-mode sweep
   full fixed held-out-aspect validation/test evaluation
+  targeted fixed held-out-aspect error analysis
 
 Final fixed held-out-aspect test:
   model: vertex_ai/gemini-2.5-flash
@@ -714,6 +715,8 @@ Final fixed held-out-aspect test:
 ```
 
 The Gemini implementation initially blocked on missing credentials, but the fixed held-out-aspect run was completed after Aji's endpoint/key details were supplied. The key was not committed. This is still a fixed three-aspect result, not Gemini LOAO robustness evidence.
+
+The Gemini fixed-split error analysis is now documented in `docs/gemini_error_analysis.md`. The main finding is that Gemini Flash ties the strongest local non-LLM pair samples F1 through a different error profile: it predicts fewer labels per row, has higher pair precision and fewer aspect over-predictions, but returns more empty predictions and is conservative on `Company brand: Competitor`. The requested Gemini Pro 50-row subset has not been run yet because the active shell environment did not contain `OPENAI_BASE_URL` or an API-key variable; under the current credential rule, the key should be supplied through environment variables only.
 
 The current Tier 1 literature-review foundation is recorded in `docs/tier1_core_literature_review_matrix.md`. It covers customer review mining, ABSA, FABSA, multi-label evaluation, domain generalisation, candidate-label taxonomy shift, and structured-output LLM evaluation, while leaving detailed Qwen/Gemini fine-tuning and deployment-governance work as later optional branches.
 
@@ -749,7 +752,8 @@ Future dissertation-writing work should edit the LaTeX source directly. Markdown
 5. Which LLM stage should follow the completed non-LLM held-out-aspect baseline?
    - Candidate-aspect DistilBERT selector plus DistilBERT aspect-conditioned sentiment is now the strongest fixed held-out-aspect non-LLM result.
    - Gemini 2.5 Flash now matches the local non-LLM fixed held-out-aspect headline score and improves pair micro/macro F1, but has hosted-API cost, latency, and governance trade-offs.
-   - The next major options are targeted Gemini error analysis, a small Gemini Pro subset, Qwen fine-tuning/evaluation on stronger GPU access, or LOAO robustness for the selected local/Gemini branch if budget permits.
+   - Gemini error analysis shows higher precision and fewer aspect over-predictions than the local DistilBERT pipeline, but weaker recall for `Company brand: Competitor`.
+   - The next major options are the prepared 50-row Gemini Pro subset once endpoint variables are available, Qwen fine-tuning/evaluation on stronger GPU access, or LOAO robustness for the selected local/Gemini branch if budget permits.
 
 ## 16. Immediate Next Steps
 
@@ -762,6 +766,8 @@ Future dissertation-writing work should edit the LaTeX source directly. Markdown
 4. Treat the completed Gemini Flash fixed held-out-aspect result as a hosted baseline, but do not over-claim it as LOAO evidence.
 
 5. Keep LOAO all-row evaluation as the robustness view and positive-row LOAO only as a sentiment diagnostic.
+
+6. Run only the prepared 50-row Gemini Pro subset when endpoint variables are available; do not run full Gemini Pro or full Gemini LOAO unless the small subset justifies the added cost and latency.
 
 ## 17. Notes For Repository Hygiene
 

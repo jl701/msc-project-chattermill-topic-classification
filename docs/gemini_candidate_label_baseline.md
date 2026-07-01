@@ -15,6 +15,7 @@ Implemented:
 - real hosted Gemini smoke test
 - small validation sweep over prompt/max-token settings
 - full fixed held-out-aspect validation/test evaluation
+- targeted fixed-split Gemini Flash error analysis
 
 Completed hosted result:
 
@@ -206,6 +207,10 @@ Gemini Flash is now a serious fixed held-out-aspect baseline. On the test split 
 
 Gemini is stronger than Qwen zero-shot and has better pair micro/macro F1 than the local non-LLM fixed result, while matching the local headline pair samples F1. However, the comparison is still only for the fixed three-aspect held-out protocol. It should not be treated as LOAO robustness evidence, and it should be discussed alongside latency, hosted-API governance, and cost.
 
+The fixed-split error analysis in `docs/gemini_error_analysis.md` explains why the headline samples F1 ties the local DistilBERT result while micro/macro F1 improves. Gemini predicts fewer labels per row than the local candidate-aspect DistilBERT pipeline (`1.0498` versus `1.2811`) and has much higher pair precision (`0.6475` versus `0.5333`), but it also returns 42 empty predictions and misses many `Company brand: Competitor` labels. The local pipeline has slightly more exact rows, while Gemini has fewer aspect over-prediction rows.
+
+The requested Gemini Pro comparison has not been run yet because the current shell environment is missing `OPENAI_BASE_URL` and API-key variables. Under the current credential rule, the key must be supplied through the active shell environment rather than copied from chat history. A deterministic 50-row test subset has been prepared for the Pro comparison; the existing Flash predictions on that same subset score `0.6360` pair samples F1, `0.6731` pair micro F1, and `0.4627` pair macro F1.
+
 ## Reproduction Commands
 
 Dry-run request construction without calling the API:
@@ -281,4 +286,4 @@ Results:
 
 ## Next Step
 
-Do not run full Gemini LOAO by default. The next useful hosted checks are a small `gemini-2.5-pro` subset or a targeted qualitative error analysis of the fixed Gemini Flash predictions, but only if the dissertation needs stronger hosted-LLM evidence.
+Do not run full Gemini LOAO by default. The next useful hosted check is the prepared 50-row `gemini-2.5-pro` subset once the endpoint variables are present in the shell. A full Pro validation/test run or Pro LOAO should wait until the small subset shows a clear value gain over Flash.

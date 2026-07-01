@@ -1068,3 +1068,102 @@ The endpoint reports `input_tokens + output_tokens = total_tokens`, and `reasoni
   - a small Gemini Pro subset if the dissertation needs an upper hosted-LLM comparison;
   - Qwen fine-tuning/evaluation on stronger GPU access;
   - LOAO robustness only if the cost/benefit is explicitly justified.
+
+## 2026-07-01: Gemini Flash Fixed-Split Error Analysis And Pro Subset Preparation
+
+### Purpose
+
+- Analyse the completed Gemini Flash fixed held-out-aspect predictions beyond aggregate F1.
+- Explain why Gemini matches the strongest local non-LLM pair samples F1 while improving pair micro/macro F1.
+- Prepare the requested Gemini Pro small-subset comparison without running a full Pro or LOAO job.
+
+### Code Or Protocol Changes
+
+- Added `scripts/analyse_gemini_heldout_aspect_errors.py`.
+- Added `docs/gemini_error_analysis.md`.
+- Updated project summary docs with the Gemini error profile and Pro-subset status.
+- No API credentials were written to code, docs, outputs, or Git.
+
+### Setup
+
+- Dataset: FABSA fixed held-out-aspect test split.
+- Held-out aspects:
+  - `Account management: Account access`
+  - `Company brand: Competitor`
+  - `Value: Discounts promotions`
+- Evaluation scope: held-out aspect+sentiment pair labels only.
+- Gemini Flash source output: `outputs/llm/gemini_candidate_label_20260701_0145_fixed_full/`.
+- Local comparator: candidate-aspect DistilBERT selector + DistilBERT aspect-conditioned sentiment, example-filtered, selector LR `3e-5`.
+- Qwen comparator: Qwen3-4B indexed zero-shot test output.
+- Pro subset status: not run because the active shell was missing `OPENAI_BASE_URL`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, and `GOOGLE_API_KEY`. Under the current credential rule, the API key must be read only from shell environment variables.
+
+### Commands
+
+```powershell
+python .\scripts\analyse_gemini_heldout_aspect_errors.py --output-dir .\outputs\analysis\gemini_error_analysis
+```
+
+Prepared but not run until endpoint variables are available:
+
+```powershell
+python .\scripts\run_gemini_heldout_aspect.py --model vertex_ai/gemini-2.5-pro --split test --limit 50 --sample --seed 13 --prompt-variant indexed --response-format json_schema --response-format-fallback --max-tokens 2048 --output-dir .\outputs\llm\gemini_candidate_label_YYYYMMDD_HHMM_pro_test50
+```
+
+### Outputs
+
+- Local ignored analysis output: `outputs/analysis/gemini_error_analysis/summary.json`.
+- Committed documentation summary: `docs/gemini_error_analysis.md`.
+- Generated outputs remain ignored by Git because prediction and per-row files may contain review text.
+
+### Results
+
+Aggregate fixed test comparison:
+
+| Model | Pair Samples F1 | Pair Micro Precision | Pair Micro Recall | Pair Micro F1 | Pair Macro F1 | Exact Rows |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Local DistilBERT selector + DistilBERT sentiment | 0.6071 | 0.5333 | 0.6644 | 0.5917 | 0.4890 | 144 |
+| Qwen3-4B indexed zero-shot | 0.5374 | 0.4870 | 0.5813 | 0.5300 | 0.4374 | 125 |
+| Gemini 2.5 Flash indexed JSON-schema | 0.6071 | 0.6475 | 0.6609 | 0.6541 | 0.5547 | 138 |
+
+Prediction-cardinality diagnostics:
+
+| Model | Pred Labels / Row | Empty Prediction Rows | Aspect Over-Predict Rows | Aspect Miss Rows | Sentiment Error Rows |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Local DistilBERT selector + DistilBERT sentiment | 1.2811 | 0 | 119 | 78 | 18 |
+| Qwen3-4B indexed zero-shot | 1.2278 | 15 | 117 | 86 | 35 |
+| Gemini 2.5 Flash indexed JSON-schema | 1.0498 | 42 | 80 | 78 | 20 |
+
+Gemini aspect-level behaviour:
+
+| Aspect | Precision | Recall | F1 |
+| --- | ---: | ---: | ---: |
+| Account management: Account access | 0.6260 | 0.9747 | 0.7624 |
+| Company brand: Competitor | 0.8906 | 0.4711 | 0.6162 |
+| Value: Discounts promotions | 0.7130 | 0.8652 | 0.7817 |
+
+Flash baseline on the prepared Pro 50-row test subset (`--limit 50 --sample --seed 13`):
+
+| Model / Subset | Rows | Pair Samples F1 | Pair Micro F1 | Pair Macro F1 | Aspect Samples F1 | Valid JSON | Schema Valid |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Gemini Flash, same Pro subset | 50 | 0.6360 | 0.6731 | 0.4627 | 0.7560 | 1.0000 | 1.0000 |
+
+Same-subset Flash token/latency diagnostics:
+
+| Input Tokens | Output Tokens, Including Thinking | Reasoning Tokens | Total Tokens | Mean Latency | Approx Flash Cost |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 9,728 | 18,164 | 16,274 | 27,892 | 2.1751 s | $0.0483 |
+
+Using public Gemini API Standard rates from the [Gemini API pricing page](https://ai.google.dev/gemini-api/docs/pricing), checked on 2026-07-01, a same-token Gemini 2.5 Pro planning estimate for this 50-row subset is about `$0.1938`. Actual Pro cost may differ because Pro may spend different reasoning/output tokens.
+
+### Interpretation
+
+- Gemini Flash ties the local DistilBERT headline samples F1 through a different error profile, not because the two models make the same predictions.
+- Gemini is more selective and precise: fewer predicted labels per row and fewer aspect over-predictions.
+- The local DistilBERT pipeline has slightly more exact rows and no empty predictions, but it over-predicts candidate aspects much more often.
+- Gemini's main aspect-level weakness is recall for `Company brand: Competitor`, especially positive competitor mentions.
+- The 50-row Pro subset is justified as a small upper-bound check once credentials are present, but full Pro validation/test or Pro LOAO is not justified until the subset shows a clear gain over Flash.
+
+### Next Step
+
+- Set `OPENAI_BASE_URL` and an API-key variable in the shell, then run only the prepared 50-row Gemini Pro subset.
+- Do not run full Gemini Pro or Gemini LOAO unless the small subset provides a strong cost/latency/value reason.
