@@ -237,6 +237,8 @@ Comparison boundaries:
 - The strongest DistilBERT LOAO result has lower mean test pair samples F1 (`0.0550`) and slightly lower mean pair micro F1 (`0.3128`) than Qwen LOAO, but it has much higher precision and fewer false-positive rows. Qwen is therefore better at recall-oriented semantic matching, while DistilBERT is more conservative.
 - Gemini fixed/cascade results remain fixed held-out-aspect or selective-deployment evidence, not LOAO robustness evidence.
 
+The full dissertation-oriented comparison, including the per-aspect Qwen-vs-DistilBERT LOAO table, the positive-gold diagnostic gap, metric interpretation, and article contribution framing, is recorded in `docs/qwen_loao_experiment_analysis.md`.
+
 Next step:
 
 - Use this as the local open-weight zero-shot LOAO baseline before Qwen SFT/QLoRA.

@@ -700,7 +700,7 @@ Held-out aspect, local-to-Gemini selective cascade:
 
 See `docs/generalisation_baselines.md` for details.
 
-The strongest current local non-LLM open-topic baseline is documented separately in `docs/non_llm_open_topic_baseline.md`. The paused next-stage modelling plan and literature-review framing are recorded in `docs/next_stage_and_literature_review_plan.md`, with the first local-paper scoping pass in `docs/literature_review_scoping_2026_06_29.md`, the current internal dissertation spec in `docs/dissertation_internal_spec.md`, the literature matrix in `docs/literature_review_matrix.md`, the latest Aji guidance in `docs/aji_updates_2026_06_29.md`, the Gemini hosted baseline implementation status in `docs/gemini_candidate_label_baseline.md`, and the consolidated experiment reproducibility audit in `docs/experiment_reproducibility_register.md`.
+The strongest current local non-LLM open-topic baseline is documented separately in `docs/non_llm_open_topic_baseline.md`. The detailed Qwen zero-shot LOAO analysis and thesis-use framing are recorded in `docs/qwen_loao_experiment_analysis.md`. The paused next-stage modelling plan and literature-review framing are recorded in `docs/next_stage_and_literature_review_plan.md`, with the first local-paper scoping pass in `docs/literature_review_scoping_2026_06_29.md`, the current internal dissertation spec in `docs/dissertation_internal_spec.md`, the literature matrix in `docs/literature_review_matrix.md`, the latest Aji guidance in `docs/aji_updates_2026_06_29.md`, the Gemini hosted baseline implementation status in `docs/gemini_candidate_label_baseline.md`, and the consolidated experiment reproducibility audit in `docs/experiment_reproducibility_register.md`.
 
 Qwen held-out-aspect status:
 
@@ -719,7 +719,7 @@ Not yet completed:
   full Qwen validation/test fine-tuned evaluation
 ```
 
-The current Qwen held-out-aspect and LOAO results are therefore zero-shot prompt baselines, not fine-tuned Qwen results. The full all-row LOAO test mean is `0.1212` pair samples F1 and `0.3378` pair micro F1. Positive-gold rows are much stronger (`0.8194` pair samples F1 mean and `0.8659` pair micro F1 mean), so the main Qwen zero-shot weakness is empty-gold absence calibration. Full Qwen candidate-label fine-tuning should run later on stronger GPU access using the indexed SFT/evaluation data generation workflow, and it should be evaluated with the same all-row LOAO protocol.
+The current Qwen held-out-aspect and LOAO results are therefore zero-shot prompt baselines, not fine-tuned Qwen results. The full all-row LOAO test mean is `0.1212` pair samples F1 and `0.3378` pair micro F1. Positive-gold rows are much stronger (`0.8194` pair samples F1 mean and `0.8659` pair micro F1 mean), so the main Qwen zero-shot weakness is empty-gold absence calibration. The full analysis shows a 6/6 per-aspect split against the preferred DistilBERT LOAO row: Qwen gains on broader semantic aspects such as app/website, general satisfaction, speed, and staff attitude, while DistilBERT remains better on narrower support-channel, account, and value aspects. Full Qwen candidate-label fine-tuning should run later on stronger GPU access using the indexed SFT/evaluation data generation workflow, and it should be evaluated with the same all-row LOAO protocol.
 
 Gemini hosted candidate-label status:
 

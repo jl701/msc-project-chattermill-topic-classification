@@ -32,6 +32,8 @@ Headline metric: **pair samples F1**. Pair micro F1 and pair macro F1 are report
 | Held-out aspect cascade | Local -> Gemini 2.5 Flash | 0.7459 | 0.7348 | 0.6223 | 0.7993 |
 | Held-out aspect cascade | Local -> Gemini 2.5 Pro | 0.8102 | 0.7955 | 0.6809 | 0.8493 |
 
+The detailed Qwen LOAO analysis is recorded in `docs/qwen_loao_experiment_analysis.md`. Its main conclusion is that Qwen zero-shot slightly exceeds the preferred DistilBERT LOAO row on mean pair micro F1 (`0.3378` vs `0.3128`) through much higher recall, but it is substantially less calibrated on empty-gold rows.
+
 ## Held-Out Organisation
 
 Protocol:

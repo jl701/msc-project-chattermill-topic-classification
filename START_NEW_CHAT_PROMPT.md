@@ -248,6 +248,8 @@ Leave-one-aspect-out held-out aspect:
   - hardest test aspect by pair micro F1: `Company brand: Reviews` at 0.0513, with 64.2722 false-positive rows per 100 reviews
   - strongest test aspect by pair micro F1: `Online experience: App website` at 0.6011
   - positive-gold-row diagnostic from the same predictions is much stronger: test mean pair samples F1 0.8194 and pair micro F1 0.8659
+  - detailed comparison with the preferred DistilBERT LOAO row is recorded in `docs/qwen_loao_experiment_analysis.md`
+  - Qwen and DistilBERT split the 12 aspects 6/6 by pair micro F1; Qwen wins broad semantic aspects but loses on several support-channel, account, and value aspects because of empty-gold over-prediction
   - interpretation: Qwen zero-shot has strong semantic matching when the held-out aspect is present, but it over-predicts on empty-gold rows and needs fine-tuning/calibration for all-row open-topic robustness.
 - See `docs/loao_heldout_aspect.md`.
 
@@ -405,6 +407,7 @@ Latest user decision and completed local baseline phase from 2026-06-27:
   - This is not LOAO robustness evidence and should not be over-claimed.
 - Detailed write-up:
   - `docs/non_llm_open_topic_baseline.md`
+  - `docs/qwen_loao_experiment_analysis.md`
   - `docs/next_stage_and_literature_review_plan.md`
   - `docs/gemini_candidate_label_baseline.md`
   - `docs/gemini_error_analysis.md`

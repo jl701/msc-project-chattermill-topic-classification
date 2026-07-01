@@ -1414,6 +1414,112 @@ python -m compileall -q src scripts tests
 | Unit tests | 63 tests OK |
 | Compile check | passed |
 
+## 2026-07-01: Qwen LOAO Full Interpretation Analysis
+
+### Purpose
+
+- Convert the completed Qwen full all-row LOAO run into a dissertation-ready evidence block.
+- Compare Qwen zero-shot LOAO against the preferred local DistilBERT LOAO result, not only against fixed held-out-aspect baselines.
+- Separate all-row open-topic robustness from positive-gold-row sentiment diagnostics and fixed held-out-aspect Gemini/cascade evidence.
+
+### Code Or Protocol Changes
+
+- Added `scripts/analyse_qwen_loao_comparison.py`.
+- Added `tests/test_qwen_loao_comparison.py`.
+- The script reads existing Qwen LOAO summaries, Qwen positive-gold diagnostic summaries, and DistilBERT LOAO CSV summaries, then writes derived comparison CSV/JSON under ignored `outputs/analysis/`.
+- No new model inference was run.
+- No raw prediction file, review text, data file, checkpoint, credential, or model weight is committed.
+
+### Setup
+
+- Qwen model: `Qwen/Qwen3-4B-Instruct-2507`.
+- Qwen loading: local 4-bit bitsandbytes NF4 double quantisation.
+- Prompt: indexed candidate-label JSON array using `aspect_id`.
+- LOAO protocol: all 12 FABSA aspects, one held-out candidate aspect per fold.
+- Main evaluation: all official validation/test rows, gold labels filtered to the held-out aspect, empty predictions allowed.
+- Local comparator: candidate-aspect DistilBERT cross-encoder + DistilBERT aspect-conditioned sentiment, `example_filtered`, validation pair-micro-F1 threshold selection, selector LR `3e-5`.
+
+### Command
+
+```powershell
+python .\scripts\analyse_qwen_loao_comparison.py --qwen-validation-dir .\outputs\llm\qwen_loao_heldout_aspect_all_rows_validation_20260701 --qwen-test-dir .\outputs\llm\qwen_loao_heldout_aspect_all_rows_test_20260701 --qwen-positive-dir .\outputs\analysis\qwen_loao_positive_diagnostic_20260701 --distilbert-loao-dir .\outputs\baselines\loao_cross_encoder_transformer_sentiment_example_filtered_micro_selection_20260630 --distilbert-lr2e5-dir .\outputs\baselines\loao_cross_encoder_transformer_sentiment_example_filtered_micro_selection_lr2e-5_20260701 --output-dir .\outputs\analysis\qwen_loao_full_interpretation_20260701
+```
+
+### Outputs
+
+- Local ignored derived output directory: `outputs/analysis/qwen_loao_full_interpretation_20260701/`.
+- Files written:
+  - `loao_system_comparison.csv`
+  - `qwen_vs_distilbert_per_aspect_test.csv`
+  - `qwen_all_row_vs_positive_gold_test.csv`
+  - `summary.json`
+- Committed documentation:
+  - `docs/qwen_loao_experiment_analysis.md`
+  - updated Qwen, LOAO, generalisation, project overview, handoff, and reproducibility docs.
+
+### Results
+
+Test all-row LOAO mean across 12 held-out aspects:
+
+| System | Pair Samples F1 | Pair Micro F1 | Precision | Recall | Pair Macro F1 | FP Rows / 100 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Qwen3-4B indexed zero-shot | 0.1212 | 0.3378 | 0.2379 | 0.8182 | 0.2412 | 34.4150 |
+| DistilBERT cross-encoder + DistilBERT sentiment, LR `3e-5` | 0.0550 | 0.3128 | 0.3345 | 0.4315 | 0.2285 | 12.7022 |
+
+Qwen positive-gold-row diagnostic from the same prediction files:
+
+| Split | Pair Samples F1 Mean | Pair Micro F1 Mean | Precision Mean | Recall Mean | Sentiment Accuracy When Gold Aspect Predicted |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| test | 0.8194 | 0.8659 | 0.9338 | 0.8182 | 0.9314 |
+
+Per-aspect comparison:
+
+- Qwen beats the preferred DistilBERT LOAO row on 6 of 12 aspects by pair micro F1.
+- DistilBERT beats Qwen on 6 of 12 aspects.
+- Qwen's largest gains are on `Online experience: App website`, `Company brand: General satisfaction`, `Logistics rides: Speed`, and `Staff support: Attitude of staff`.
+- Qwen's largest losses are on `Staff support: Phone`, `Staff support: Email`, `Account management: Account access`, and `Value: Price value for money`.
+
+Runtime and output reliability:
+
+- Qwen validation+test generation time from recorded summaries: about 9.35 hours.
+- Weighted Qwen validation+test throughput: about 1.0613 seconds/example.
+- Qwen test valid JSON rate: 1.0000.
+- Qwen test schema-valid rate: 0.9955, with recoverable prefixed aspect IDs as the main schema issue.
+
+### Interpretation
+
+- Qwen zero-shot is a useful local open-weight LOAO baseline before fine-tuning, but it is not a calibrated open-topic system.
+- The Qwen advantage over DistilBERT is recall-driven. It recognises many more true held-out positives, but predicts the candidate aspect too often on empty-gold rows.
+- The positive-gold diagnostic shows that Qwen's semantic recognition and sentiment assignment are strong when the held-out aspect is present.
+- The all-row result shows that the hard problem is absence calibration under taxonomy shift.
+- Fixed held-out-aspect Qwen/Gemini/cascade results remain conceptually separate. They are not LOAO robustness evidence.
+
+### Next Step
+
+- Treat `docs/qwen_loao_experiment_analysis.md` as the main thesis-facing Qwen LOAO analysis note.
+- Use this as the zero-shot open-weight comparator before Qwen fine-tuning or calibration.
+- If Qwen fine-tuning proceeds, keep the indexed candidate-label prompt format and evaluate with the same all-row LOAO protocol.
+
+### Validation
+
+```powershell
+python .\scripts\analyse_qwen_loao_comparison.py --qwen-validation-dir .\outputs\llm\qwen_loao_heldout_aspect_all_rows_validation_20260701 --qwen-test-dir .\outputs\llm\qwen_loao_heldout_aspect_all_rows_test_20260701 --qwen-positive-dir .\outputs\analysis\qwen_loao_positive_diagnostic_20260701 --distilbert-loao-dir .\outputs\baselines\loao_cross_encoder_transformer_sentiment_example_filtered_micro_selection_20260630 --distilbert-lr2e5-dir .\outputs\baselines\loao_cross_encoder_transformer_sentiment_example_filtered_micro_selection_lr2e-5_20260701 --output-dir .\outputs\analysis\qwen_loao_full_interpretation_20260701
+python -m unittest discover -s tests
+python -m compileall -q src scripts tests
+git diff --check
+rg -n "sk-[A-Za-z0-9_-]{12,}|AIza[0-9A-Za-z_-]{20,}|Bearer [A-Za-z0-9._-]{20,}" . --glob '!outputs/**' --glob '!data/**' --glob '!models/**' --glob '!checkpoints/**' --glob '!artifacts/**' --glob '!runs/**' --glob '!.git/**'
+git ls-files outputs data models checkpoints artifacts runs
+```
+
+| Check | Result |
+| --- | --- |
+| Comparison script | passed |
+| Unit tests | 71 tests OK |
+| Compile check | passed |
+| Diff whitespace check | passed, with CRLF conversion warnings only |
+| Secret scan over tracked code/docs paths | no real API key found |
+| Tracked generated-output/data directories | none found |
+
 ## 2026-07-01: Qwen Zero-Shot Full All-Row LOAO Baseline
 
 ### Purpose

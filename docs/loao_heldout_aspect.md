@@ -227,6 +227,8 @@ The same prediction files were filtered to positive-gold rows as a diagnostic, w
 
 Compared with the preferred DistilBERT LOAO row, Qwen has higher mean test pair samples F1 (`0.1212` vs `0.0550`) and slightly higher mean pair micro F1 (`0.3378` vs `0.3128`), but substantially lower precision and many more empty-gold false-positive rows (`34.4150` vs `12.7022` per 100 reviews). Qwen is therefore a stronger recall-oriented semantic matcher, while DistilBERT is more conservative.
 
+The full cross-system interpretation and thesis-use framing are recorded in `docs/qwen_loao_experiment_analysis.md`.
+
 ## Positive-Row Diagnostic Results
 
 Output directory:
