@@ -1167,3 +1167,86 @@ Using public Gemini API Standard rates from the [Gemini API pricing page](https:
 
 - Set `OPENAI_BASE_URL` and an API-key variable in the shell, then run only the prepared 50-row Gemini Pro subset.
 - Do not run full Gemini Pro or Gemini LOAO unless the small subset provides a strong cost/latency/value reason.
+
+## 2026-07-01: Gemini Pro 50-Row Fixed-Subset Comparison
+
+### Purpose
+
+- Run the requested small Gemini Pro comparison after the user explicitly authorised API use beyond the earlier environment-variable-only restriction.
+- Compare Pro against Flash on the same deterministic fixed held-out-aspect test subset.
+- Decide whether full Pro validation/test or Pro LOAO is justified.
+
+### Code Or Protocol Changes
+
+- Extended `scripts/analyse_gemini_heldout_aspect_errors.py` with optional `--pro-predictions` support.
+- Updated Gemini documentation with the completed Pro subset result.
+- No API key was committed, written into project documentation, or written into model output JSON.
+
+### Setup
+
+- Dataset: FABSA fixed held-out-aspect test split.
+- Row selection: `--limit 50 --sample --seed 13`.
+- Labels: held-out aspect+sentiment pair labels only.
+- Model: `vertex_ai/gemini-2.5-pro`.
+- Prompt: indexed candidate labels.
+- Response format: `json_schema`.
+- Max tokens: `2048`.
+- Temperature: `0`.
+
+### Commands
+
+```powershell
+python .\scripts\run_gemini_heldout_aspect.py --model vertex_ai/gemini-2.5-pro --split test --limit 50 --sample --seed 13 --prompt-variant indexed --response-format json_schema --response-format-fallback --max-tokens 2048 --output-dir .\outputs\llm\gemini_candidate_label_20260701_025042_pro_test50
+
+python .\scripts\analyse_gemini_heldout_aspect_errors.py --pro-predictions .\outputs\llm\gemini_candidate_label_20260701_025042_pro_test50\predictions_test_indexed.jsonl --output-dir .\outputs\analysis\gemini_error_analysis_with_pro
+```
+
+### Outputs
+
+- Local ignored Pro output: `outputs/llm/gemini_candidate_label_20260701_025042_pro_test50/`.
+- Local ignored analysis output: `outputs/analysis/gemini_error_analysis_with_pro/summary.json`.
+- Documentation updated in:
+  - `docs/gemini_error_analysis.md`
+  - `docs/gemini_candidate_label_baseline.md`
+  - `docs/generalisation_baselines.md`
+  - `PROJECT_OVERVIEW.md`
+  - `START_NEW_CHAT_PROMPT.md`
+
+### Results
+
+Same 50-row test subset comparison:
+
+| Model | Pair Samples F1 | Pair Micro P | Pair Micro R | Pair Micro F1 | Pair Macro F1 | Aspect Samples F1 | Valid JSON | Schema Valid |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Gemini Flash | 0.6360 | 0.6604 | 0.6863 | 0.6731 | 0.4627 | 0.7560 | 1.0000 | 1.0000 |
+| Gemini Pro | 0.6933 | 0.7308 | 0.7451 | 0.7379 | 0.5250 | 0.7933 | 1.0000 | 1.0000 |
+
+Row-level exactness:
+
+| Comparison | Rows |
+| --- | ---: |
+| Both exact | 24 |
+| Pro only exact | 6 |
+| Flash only exact | 3 |
+| Neither exact | 17 |
+
+Latency and token/cost diagnostics:
+
+| Model | Mean Latency | Input Tokens | Output Tokens, Including Thinking | Reasoning Tokens | Total Tokens | Approx Cost |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Gemini Flash | 2.1751 s | 9,728 | 18,164 | 16,274 | 27,892 | $0.0483 |
+| Gemini Pro | 4.9026 s | 9,728 | 25,507 | 23,625 | 35,235 | $0.2672 |
+
+Approximate cost uses public Gemini API Standard rates from the [Gemini API pricing page](https://ai.google.dev/gemini-api/docs/pricing), checked on 2026-07-01. Output tokens include thinking tokens.
+
+### Interpretation
+
+- Pro is directionally stronger than Flash on this small fixed-subset check: `+0.0573` pair samples F1, `+0.0648` pair micro F1, `+0.0623` pair macro F1.
+- Pro also keeps perfect JSON/schema validity on this subset.
+- The improvement is bought with about `2.25x` higher mean latency and `5.53x` higher approximate cost.
+- This is useful as an upper hosted-LLM diagnostic, but it is not a full benchmark and should not be mixed with full-split Flash results without the subset qualifier.
+
+### Next Step
+
+- Do not run full Gemini Pro validation/test or Pro LOAO by default.
+- Full Pro is only worth considering if the dissertation needs a stronger hosted-LLM upper-bound comparison and the added cost/latency can be justified explicitly.

@@ -11,6 +11,7 @@ No review text is quoted below. Qualitative examples use only row IDs plus gold/
 Analysed local ignored outputs:
 
 - Gemini Flash: `outputs/llm/gemini_candidate_label_20260701_0145_fixed_full/`
+- Gemini Pro subset: `outputs/llm/gemini_candidate_label_20260701_025042_pro_test50/`
 - Local non-LLM comparator: `outputs/baselines/aspect_label_aware_transformer_sentiment_lr3e-5_ep3_neg3_example_filtered/example_filtered/best_test_predictions.jsonl`
 - Qwen comparator: `outputs/qwen_heldout_aspect_smoke/test_indexed_full/predictions_indexed.jsonl`
 
@@ -18,6 +19,7 @@ Reproduction command:
 
 ```powershell
 python .\scripts\analyse_gemini_heldout_aspect_errors.py --output-dir .\outputs\analysis\gemini_error_analysis
+python .\scripts\analyse_gemini_heldout_aspect_errors.py --pro-predictions .\outputs\llm\gemini_candidate_label_20260701_025042_pro_test50\predictions_test_indexed.jsonl --output-dir .\outputs\analysis\gemini_error_analysis_with_pro
 ```
 
 The generated analysis summary is intentionally left under ignored `outputs/analysis/gemini_error_analysis/summary.json`.
@@ -97,40 +99,44 @@ These examples intentionally omit review text.
 | Competitor positive missed entirely | `test:301984923` | `Company brand: Competitor | positive` | empty prediction |
 | Discounts negative correctly recovered where Qwen missed sentiment | `test:301988596` | `Value: Discounts promotions | negative` | `Value: Discounts promotions | negative` |
 
-## Gemini Pro Small-Subset Status
+## Gemini Pro Small-Subset Result
 
-The requested Gemini Pro small subset was not run in this pass because the current shell environment has no Gemini/OpenAI-compatible endpoint variables set:
+After the user explicitly lifted the earlier environment-variable-only constraint, a 50-row Gemini Pro subset was run. The key was used only as a process-local environment variable and was not written to the repository, documentation, summary JSON, or prediction files.
 
-```text
-OPENAI_BASE_URL: missing
-OPENAI_API_KEY: missing
-GEMINI_API_KEY: missing
-GOOGLE_API_KEY: missing
-```
-
-Under the current safety rule, credentials must be read only from the active shell environment, so no API key was copied from chat history into a command or file.
-
-The exact planned subset is:
+Command:
 
 ```powershell
-python .\scripts\run_gemini_heldout_aspect.py --model vertex_ai/gemini-2.5-pro --split test --limit 50 --sample --seed 13 --prompt-variant indexed --response-format json_schema --response-format-fallback --max-tokens 2048 --output-dir .\outputs\llm\gemini_candidate_label_YYYYMMDD_HHMM_pro_test50
+python .\scripts\run_gemini_heldout_aspect.py --model vertex_ai/gemini-2.5-pro --split test --limit 50 --sample --seed 13 --prompt-variant indexed --response-format json_schema --response-format-fallback --max-tokens 2048 --output-dir .\outputs\llm\gemini_candidate_label_20260701_025042_pro_test50
 ```
 
-For a fair comparison, Flash was evaluated on the same deterministic 50-row test subset by filtering the existing full Flash prediction file:
+For a fair comparison, Flash was evaluated on the same deterministic 50-row test subset by filtering the existing full Flash prediction file.
 
 | Model / Subset | Rows | Pair Samples F1 | Pair Micro F1 | Pair Macro F1 | Aspect Samples F1 | Valid JSON | Schema Valid |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | Gemini Flash, test sample seed 13 | 50 | 0.6360 | 0.6731 | 0.4627 | 0.7560 | 1.0000 | 1.0000 |
+| Gemini Pro, test sample seed 13 | 50 | 0.6933 | 0.7379 | 0.5250 | 0.7933 | 1.0000 | 1.0000 |
 
-Flash same-subset diagnostics:
+Row-level exactness on the same 50 rows:
 
-| Input Tokens | Output Tokens, Including Thinking | Reasoning Tokens | Total Tokens | Mean Latency | Approx Flash Cost |
-| ---: | ---: | ---: | ---: | ---: | ---: |
-| 9,728 | 18,164 | 16,274 | 27,892 | 2.1751 s | $0.0483 |
+| Comparison | Rows |
+| --- | ---: |
+| Both exact | 24 |
+| Pro only exact | 6 |
+| Flash only exact | 3 |
+| Neither exact | 17 |
 
-Using public Gemini API Standard rates from the [Gemini API pricing page](https://ai.google.dev/gemini-api/docs/pricing), checked on 2026-07-01, a same-token Gemini 2.5 Pro planning estimate for this 50-row subset is about `$0.1938` (`$1.25 / 1M input tokens`, `$10.00 / 1M output tokens` for prompts up to 200k tokens). The actual Pro cost may differ because Pro may spend a different number of reasoning/output tokens.
+Pro therefore improves the same-subset row-level samples F1 by `+0.0573`, pair micro F1 by `+0.0648`, pair macro F1 by `+0.0623`, and aspect samples F1 by `+0.0373`.
 
-Decision: a 50-row Pro subset is reasonable once environment variables are set, because it should be small enough to answer whether Pro materially improves the fixed protocol. A full Pro validation/test run or Pro LOAO is not justified until the 50-row subset shows a clear accuracy gain that is worth the higher latency and output-token cost.
+Token, latency, and cost diagnostics:
+
+| Model / Subset | Input Tokens | Output Tokens, Including Thinking | Reasoning Tokens | Total Tokens | Mean Latency | Approx Cost |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Gemini Flash, same 50 rows | 9,728 | 18,164 | 16,274 | 27,892 | 2.1751 s | $0.0483 |
+| Gemini Pro, same 50 rows | 9,728 | 25,507 | 23,625 | 35,235 | 4.9026 s | $0.2672 |
+
+Approximate cost uses public Gemini API Standard rates from the [Gemini API pricing page](https://ai.google.dev/gemini-api/docs/pricing), checked on 2026-07-01. Flash uses `$0.30 / 1M input tokens` and `$2.50 / 1M output tokens`; Pro uses `$1.25 / 1M input tokens` and `$10.00 / 1M output tokens` for prompts up to 200k tokens. The endpoint's output-token count includes thinking tokens, so reasoning is counted through output-token billing and reported separately.
+
+Decision: Pro is directionally stronger on this small fixed-subset comparison, but it is also about `2.25x` slower and `5.53x` more expensive than Flash on the same rows. This is enough to document Pro as a small upper hosted-LLM check. It is not enough by itself to justify full Pro validation/test or Pro LOAO without an explicit dissertation-value reason.
 
 ## Current Interpretation
 

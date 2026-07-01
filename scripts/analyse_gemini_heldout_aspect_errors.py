@@ -265,6 +265,7 @@ def main() -> None:
     parser.add_argument("--gemini-dir", type=Path, default=DEFAULT_GEMINI)
     parser.add_argument("--local-predictions", type=Path, default=DEFAULT_LOCAL)
     parser.add_argument("--qwen-predictions", type=Path, default=DEFAULT_QWEN)
+    parser.add_argument("--pro-predictions", type=Path, default=None)
     parser.add_argument("--output-dir", type=Path, default=PROJECT_ROOT / "outputs" / "analysis" / "gemini_error_analysis")
     parser.add_argument("--pro-subset-limit", type=int, default=50)
     parser.add_argument("--pro-subset-seed", type=int, default=13)
@@ -278,6 +279,8 @@ def main() -> None:
         "local_distilbert_test": args.local_predictions,
         "qwen_test": args.qwen_predictions,
     }
+    if args.pro_predictions is not None:
+        paths["gemini_pro_test_subset"] = args.pro_predictions
 
     missing_paths = {}
     for name, path in paths.items():
@@ -309,6 +312,17 @@ def main() -> None:
                 comparison_name.replace("_test", ""),
                 args.max_examples,
             )
+
+    if "gemini_pro_test_subset" in model_rows:
+        pro_keys = {row_key(row) for row in model_rows["gemini_pro_test_subset"]}
+        flash_matching_pro = [row for row in model_rows["gemini_flash_test"] if row_key(row) in pro_keys]
+        report["comparisons"]["gemini_pro_test_subset_vs_flash_same_rows"] = compare_models(
+            model_rows["gemini_pro_test_subset"],
+            flash_matching_pro,
+            "gemini_pro",
+            "gemini_flash",
+            args.max_examples,
+        )
 
     flash_subset = sampled_subset(
         model_rows["gemini_flash_test"],

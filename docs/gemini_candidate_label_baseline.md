@@ -16,6 +16,7 @@ Implemented:
 - small validation sweep over prompt/max-token settings
 - full fixed held-out-aspect validation/test evaluation
 - targeted fixed-split Gemini Flash error analysis
+- 50-row Gemini Pro fixed-split subset comparison
 
 Completed hosted result:
 
@@ -209,7 +210,7 @@ Gemini is stronger than Qwen zero-shot and has better pair micro/macro F1 than t
 
 The fixed-split error analysis in `docs/gemini_error_analysis.md` explains why the headline samples F1 ties the local DistilBERT result while micro/macro F1 improves. Gemini predicts fewer labels per row than the local candidate-aspect DistilBERT pipeline (`1.0498` versus `1.2811`) and has much higher pair precision (`0.6475` versus `0.5333`), but it also returns 42 empty predictions and misses many `Company brand: Competitor` labels. The local pipeline has slightly more exact rows, while Gemini has fewer aspect over-prediction rows.
 
-The requested Gemini Pro comparison has not been run yet because the current shell environment is missing `OPENAI_BASE_URL` and API-key variables. Under the current credential rule, the key must be supplied through the active shell environment rather than copied from chat history. A deterministic 50-row test subset has been prepared for the Pro comparison; the existing Flash predictions on that same subset score `0.6360` pair samples F1, `0.6731` pair micro F1, and `0.4627` pair macro F1.
+A deterministic 50-row test subset was then used for a small Gemini Pro comparison. On the same rows, Pro improves over Flash from `0.6360` to `0.6933` pair samples F1, from `0.6731` to `0.7379` pair micro F1, and from `0.4627` to `0.5250` pair macro F1. The trade-off is practical: Pro is about `2.25x` slower and `5.53x` more expensive than Flash on this subset. This supports documenting Pro as an upper hosted-LLM check, but it does not by itself justify full Pro validation/test or Pro LOAO.
 
 ## Reproduction Commands
 
@@ -286,4 +287,4 @@ Results:
 
 ## Next Step
 
-Do not run full Gemini LOAO by default. The next useful hosted check is the prepared 50-row `gemini-2.5-pro` subset once the endpoint variables are present in the shell. A full Pro validation/test run or Pro LOAO should wait until the small subset shows a clear value gain over Flash.
+Do not run full Gemini LOAO by default. The 50-row `gemini-2.5-pro` subset shows a directional accuracy gain over Flash, but with substantially higher latency and cost. A full Pro validation/test run or Pro LOAO should still require an explicit dissertation-value justification before spending the time and hosted budget.

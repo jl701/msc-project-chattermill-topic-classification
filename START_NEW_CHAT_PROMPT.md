@@ -277,9 +277,12 @@ Gemini / Vertex AI access:
   - Gemini predicts fewer labels per row (1.0498 vs 1.2811) and has more empty predictions (42 vs 0)
   - the main Gemini recall weakness is `Company brand: Competitor`, especially positive competitor mentions
 - Gemini Pro status:
-  - requested Pro small subset has not been run because the active shell had no `OPENAI_BASE_URL`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, or `GOOGLE_API_KEY`
-  - do not copy any key from chat history into commands or files; read credentials only from shell environment variables
-  - prepared fair comparison: test split, `--limit 50 --sample --seed 13`; existing Flash predictions filtered to that same subset score 0.6360 pair samples F1, 0.6731 pair micro F1, 0.4627 pair macro F1
+  - completed a small 50-row fixed test subset after the user explicitly authorised API use beyond the earlier environment-variable-only restriction
+  - command: test split, `--limit 50 --sample --seed 13`, indexed JSON-schema, `max_tokens=2048`
+  - Pro subset result: pair samples F1 0.6933, pair micro F1 0.7379, pair macro F1 0.5250, aspect samples F1 0.7933
+  - Flash on the same subset: pair samples F1 0.6360, pair micro F1 0.6731, pair macro F1 0.4627, aspect samples F1 0.7560
+  - Pro same-subset latency/cost trade-off: about 2.25x slower and 5.53x more expensive than Flash
+  - do not run full Gemini Pro or full Gemini LOAO unless an explicit dissertation-value justification is given first
 - Important Gemini finding: `max_tokens=512` caused truncated JSON because Gemini spent most completion tokens thinking first. Use `max_tokens=2048` for this prompt unless a later sweep proves a cheaper reliable setting.
 - The runner defaults to `response_format=json_schema`, JSON object wrapper `{"labels": [...]}`, and indexed candidate IDs; it can fall back to plain JSON if the endpoint rejects response format.
 
@@ -389,7 +392,7 @@ Recommended next steps:
 4. Keep using the LOAO all-row view for robustness checks and the positive-row view only as a sentiment diagnostic.
 5. Treat candidate-aspect DistilBERT selector + DistilBERT aspect-conditioned sentiment as the current strongest non-LLM fixed held-out-aspect baseline.
 6. Treat Gemini Flash as the completed hosted fixed held-out-aspect baseline, but do not run full Gemini LOAO unless the cost/benefit is explicitly justified.
-7. Useful next options are the prepared 50-row Gemini Pro subset once endpoint variables are present, Qwen fine-tuning/evaluation on stronger GPU access, or LOAO robustness for the selected branch.
+7. Useful next options are Qwen fine-tuning/evaluation on stronger GPU access, or LOAO robustness for the selected branch if the dissertation needs stronger open-topic evidence.
 8. If I ask to publish changes, commit/push only clean code and documentation, without committing outputs, data, credentials, checkpoints, or generated artifacts.
 
 Please start by summarising what you find in the current docs and repo state, then perform the strict audit, then propose the next concrete plan before implementing.
