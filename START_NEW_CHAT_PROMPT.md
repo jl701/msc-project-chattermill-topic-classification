@@ -282,7 +282,28 @@ Gemini / Vertex AI access:
   - Pro subset result: pair samples F1 0.6933, pair micro F1 0.7379, pair macro F1 0.5250, aspect samples F1 0.7933
   - Flash on the same subset: pair samples F1 0.6360, pair micro F1 0.6731, pair macro F1 0.4627, aspect samples F1 0.7560
   - Pro same-subset latency/cost trade-off: about 2.25x slower and 5.53x more expensive than Flash
-  - do not run full Gemini Pro or full Gemini LOAO unless an explicit dissertation-value justification is given first
+  - full fixed-split Pro validation/test is now complete:
+    - validation pair samples F1 0.7270
+    - test pair samples F1 0.7141
+    - test pair micro F1 0.7425
+    - test pair macro F1 0.6287
+    - test mean latency 5.6510 seconds/example
+    - validation + test approximate cost $2.9781
+  - do not run full Gemini Pro LOAO unless an explicit dissertation-value justification is given first
+- Gemini Flash-Lite status:
+  - full fixed-split Flash-Lite validation/test is complete:
+    - validation pair samples F1 0.5876
+    - test pair samples F1 0.5516
+    - test pair micro F1 0.5872
+    - test pair macro F1 0.4876
+    - test mean latency 0.3719 seconds/example
+    - validation + test approximate cost $0.0171
+  - Flash-Lite is the cheapest/fastest hosted point; Pro is strongest; Flash is the balanced hosted baseline
+- Gemini/local dissertation-value roadmap:
+  - fixed-split hosted Pareto baselines are now complete: Gemini Flash-Lite, Flash, and Pro
+  - next build a local-to-Gemini uncertainty cascade, escalating only uncertain local predictions and reporting escalation rate, F1, latency, and cost
+  - then test Gemini-generated candidate-aspect descriptions as label-representation support, without validation/test leakage
+  - then use Gemini Pro for qualitative error-taxonomy assistance, with manual review and no automatic metric claims
 - Important Gemini finding: `max_tokens=512` caused truncated JSON because Gemini spent most completion tokens thinking first. Use `max_tokens=2048` for this prompt unless a later sweep proves a cheaper reliable setting.
 - The runner defaults to `response_format=json_schema`, JSON object wrapper `{"labels": [...]}`, and indexed candidate IDs; it can fall back to plain JSON if the endpoint rejects response format.
 
@@ -392,7 +413,7 @@ Recommended next steps:
 4. Keep using the LOAO all-row view for robustness checks and the positive-row view only as a sentiment diagnostic.
 5. Treat candidate-aspect DistilBERT selector + DistilBERT aspect-conditioned sentiment as the current strongest non-LLM fixed held-out-aspect baseline.
 6. Treat Gemini Flash as the completed hosted fixed held-out-aspect baseline, but do not run full Gemini LOAO unless the cost/benefit is explicitly justified.
-7. Useful next options are Qwen fine-tuning/evaluation on stronger GPU access, or LOAO robustness for the selected branch if the dissertation needs stronger open-topic evidence.
+7. Useful next options are tackling cascade, aspect descriptions, and qualitative error taxonomy one by one.
 8. If I ask to publish changes, commit/push only clean code and documentation, without committing outputs, data, credentials, checkpoints, or generated artifacts.
 
 Please start by summarising what you find in the current docs and repo state, then perform the strict audit, then propose the next concrete plan before implementing.

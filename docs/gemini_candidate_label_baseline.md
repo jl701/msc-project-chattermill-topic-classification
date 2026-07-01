@@ -17,6 +17,9 @@ Implemented:
 - full fixed held-out-aspect validation/test evaluation
 - targeted fixed-split Gemini Flash error analysis
 - 50-row Gemini Pro fixed-split subset comparison
+- full fixed-split Gemini Pro validation/test evaluation
+- full fixed-split Gemini Flash-Lite validation/test evaluation
+- local-to-Gemini uncertainty cascade sweep over Flash-Lite, Flash, and Pro escalators
 
 Completed hosted result:
 
@@ -31,6 +34,35 @@ Test pair samples F1: 0.6071
 Test valid JSON rate: 1.0000
 Test schema-valid rate: 1.0000
 ```
+
+Completed hosted Pareto extensions:
+
+```text
+Model: vertex_ai/gemini-2.5-pro
+Test pair samples F1: 0.7141
+Test pair micro F1: 0.7425
+Test pair macro F1: 0.6287
+Test mean latency: 5.6510 seconds/example
+Validation + test approximate cost: $2.9781
+
+Model: vertex_ai/gemini-2.5-flash-lite
+Test pair samples F1: 0.5516
+Test pair micro F1: 0.5872
+Test pair macro F1: 0.4876
+Test mean latency: 0.3719 seconds/example
+Validation + test approximate cost: $0.0171
+```
+
+Completed selective cascade:
+
+| System | Test Pair Samples F1 | Test Pair Micro F1 | Test Pair Macro F1 | Test Aspect Samples F1 | Test Gemini Cost |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Local DistilBERT pipeline | 0.6071 | 0.5917 | 0.4890 | 0.6651 | n/a |
+| Local -> Flash-Lite cascade | 0.6679 | 0.6579 | 0.5401 | 0.7259 | $0.0052 |
+| Local -> Flash cascade | 0.7459 | 0.7348 | 0.6223 | 0.7993 | $0.2789 |
+| Local -> Pro cascade | 0.8102 | 0.7955 | 0.6809 | 0.8493 | $1.5421 |
+
+The cascade details are documented in `docs/local_gemini_cascade.md`.
 
 Historical note: the first implementation pass was blocked because no compatible credentials were available in the process environment. The hosted run below was completed after the user supplied Aji's endpoint details and key. The key was used only as a process-local environment variable and was not written to the repository.
 
@@ -210,7 +242,19 @@ Gemini is stronger than Qwen zero-shot and has better pair micro/macro F1 than t
 
 The fixed-split error analysis in `docs/gemini_error_analysis.md` explains why the headline samples F1 ties the local DistilBERT result while micro/macro F1 improves. Gemini predicts fewer labels per row than the local candidate-aspect DistilBERT pipeline (`1.0498` versus `1.2811`) and has much higher pair precision (`0.6475` versus `0.5333`), but it also returns 42 empty predictions and misses many `Company brand: Competitor` labels. The local pipeline has slightly more exact rows, while Gemini has fewer aspect over-prediction rows.
 
-A deterministic 50-row test subset was then used for a small Gemini Pro comparison. On the same rows, Pro improves over Flash from `0.6360` to `0.6933` pair samples F1, from `0.6731` to `0.7379` pair micro F1, and from `0.4627` to `0.5250` pair macro F1. The trade-off is practical: Pro is about `2.25x` slower and `5.53x` more expensive than Flash on this subset. This supports documenting Pro as an upper hosted-LLM check, but it does not by itself justify full Pro validation/test or Pro LOAO.
+A deterministic 50-row test subset was then used for a small Gemini Pro comparison. On the same rows, Pro improved over Flash from `0.6360` to `0.6933` pair samples F1, from `0.6731` to `0.7379` pair micro F1, and from `0.4627` to `0.5250` pair macro F1. The trade-off was practical: Pro was about `2.25x` slower and `5.53x` more expensive than Flash on this subset. This subset result justified full fixed-split Pro validation/test, but not full Pro LOAO.
+
+The full fixed-split Pro run confirmed the subset direction:
+
+| Model | Test Pair Samples F1 | Test Pair Micro F1 | Test Pair Macro F1 | Test Aspect Samples F1 | Mean Latency | Validation + Test Cost |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Gemini 2.5 Flash-Lite | 0.5516 | 0.5872 | 0.4876 | 0.6062 | 0.3719 s | $0.0171 |
+| Gemini 2.5 Flash | 0.6071 | 0.6541 | 0.5547 | 0.6747 | 2.3721 s | $0.5348 |
+| Gemini 2.5 Pro | 0.7141 | 0.7425 | 0.6287 | 0.7746 | 5.6510 s | $2.9781 |
+
+This is now a useful hosted Pareto comparison. Flash-Lite is extremely cheap and fast but below the strongest local/Flash results. Flash is the balanced hosted baseline and matches the strongest local fixed-split headline result. Pro is clearly strongest on the fixed split, but with substantially higher latency and cost.
+
+The local-to-Gemini cascade is the strongest fixed-split system result so far. It selects escalation policies using validation-only local reliability features, then evaluates those policies on test. Validation-selected selective escalation reaches `0.6679` test pair samples F1 with Flash-Lite, `0.7459` with Flash, and `0.8102` with Pro. This is more dissertation-relevant than full Gemini LOAO because it tests a realistic selective-deployment pattern: local model first, hosted LLM only for locally uncertain rows.
 
 ## Reproduction Commands
 
@@ -285,6 +329,14 @@ Results:
 | 50-row validation sweep | completed |
 | Full validation/test evaluation | completed |
 
-## Next Step
+## Remaining Follow-Up
 
-Do not run full Gemini LOAO by default. The 50-row `gemini-2.5-pro` subset shows a directional accuracy gain over Flash, but with substantially higher latency and cost. A full Pro validation/test run or Pro LOAO should still require an explicit dissertation-value justification before spending the time and hosted budget.
+Do not run full Gemini LOAO by default. Full Pro validation/test, Flash-Lite validation/test, and the local-to-Gemini cascade are now complete. A full Pro LOAO remains unjustified without a separate dissertation-value argument.
+
+The remaining Gemini/local experiments should be framed around dissertation value rather than raw leaderboard chasing:
+
+1. Test Gemini-generated candidate-aspect descriptions as label-representation support, generated without validation/test leakage.
+2. Use Gemini Pro as a qualitative error-taxonomy aid with manual review, not as an automatic evaluator.
+3. If time and budget permit, export local DistilBERT selector scores in a future rerun and repeat the cascade with calibrated score/margin uncertainty features.
+
+This sequence supports a stronger industrial MSc story: local models, cheap hosted models, and stronger hosted models can be compared not only on F1, but also on cost, latency, governance, and selective deployment strategy.

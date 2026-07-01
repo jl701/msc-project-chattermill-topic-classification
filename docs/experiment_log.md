@@ -1250,3 +1250,158 @@ Approximate cost uses public Gemini API Standard rates from the [Gemini API pric
 
 - Do not run full Gemini Pro validation/test or Pro LOAO by default.
 - Full Pro is only worth considering if the dissertation needs a stronger hosted-LLM upper-bound comparison and the added cost/latency can be justified explicitly.
+
+## 2026-07-01: Gemini Follow-Up Experiment Rationale
+
+### Purpose
+
+- Record the dissertation-driven rationale for the next Gemini/local experiments before running additional hosted jobs.
+- Separate low-cost fixed-split hosted baselines from expensive LOAO expansion.
+- Preserve the insight that the most valuable future Gemini work is system and methods evidence, not only a higher F1 table.
+
+### Code Or Protocol Changes
+
+- Updated project planning documentation only.
+- No model code changed in this rationale step.
+
+### Setup
+
+- Existing evidence:
+  - full fixed-split Gemini Flash validation/test is complete;
+  - 50-row Gemini Pro subset improves over Flash but is slower and more expensive;
+  - local DistilBERT remains a strong non-hosted fixed-split baseline;
+  - full Gemini Pro LOAO is still expensive and not justified by default.
+
+### Results
+
+The selected near-term sequence is:
+
+1. Run full fixed-split Gemini Pro validation/test as the stronger hosted upper-bound baseline.
+2. Run full fixed-split Gemini Flash-Lite validation/test as the cheapest hosted baseline.
+3. Build a local-to-Gemini uncertainty cascade after the hosted Pareto table is complete.
+4. Test Gemini-generated candidate-aspect descriptions as a label-representation experiment without validation/test leakage.
+5. Use Gemini Pro as a qualitative error-taxonomy aid with manual review, not as an automatic evaluator.
+
+### Interpretation
+
+- Full Pro fixed validation/test is now justified because it is expected to cost only a few dollars and removes the subset caveat.
+- Flash-Lite is useful because it gives the cheapest hosted point in an accuracy-cost-latency Pareto comparison.
+- The cascade experiment is likely the most industrially relevant follow-up because it tests whether local models can handle most rows while Gemini handles uncertain cases.
+- Candidate descriptions are methodologically valuable because they probe how new candidate labels should be represented.
+- Qualitative error taxonomy helps the dissertation discussion but should not be treated as metric evidence.
+
+### Next Step
+
+- Run full fixed-split Gemini Pro validation/test.
+- Run full fixed-split Gemini Flash-Lite validation/test.
+- Do not run full Gemini Pro LOAO in this phase.
+
+## 2026-07-01: Gemini Pro And Flash-Lite Full Fixed-Split Evaluation
+
+### Purpose
+
+- Complete the fixed-split hosted Pareto comparison after the 50-row Pro subset showed a clear directional gain over Flash.
+- Add a full Pro upper-bound hosted baseline.
+- Add a full Flash-Lite cheapest/lowest-latency hosted baseline.
+- Avoid full Gemini LOAO in this phase.
+
+### Code Or Protocol Changes
+
+- No runner changes were required.
+- Updated project documentation with the completed Pro and Flash-Lite results.
+- API credentials were used only for the hosted calls and were not committed or written into tracked files.
+
+### Setup
+
+- Dataset: FABSA fixed held-out-aspect validation and test splits.
+- Held-out aspects:
+  - `Account management: Account access`
+  - `Company brand: Competitor`
+  - `Value: Discounts promotions`
+- Evaluation scope: held-out aspect+sentiment pair labels only.
+- Prompt: indexed candidate labels.
+- Response format: `json_schema`.
+- Max tokens: `2048`.
+- Temperature: `0`.
+- Models:
+  - `vertex_ai/gemini-2.5-pro`
+  - `vertex_ai/gemini-2.5-flash-lite`
+
+### Commands
+
+```powershell
+python .\scripts\run_gemini_heldout_aspect.py --model vertex_ai/gemini-2.5-pro --split both --limit 10000 --prompt-variant indexed --response-format json_schema --response-format-fallback --max-tokens 2048 --input-cost-per-1m 1.25 --output-cost-per-1m 10.00 --output-dir .\outputs\llm\gemini_candidate_label_20260701_031040_pro_fixed_full
+
+python .\scripts\run_gemini_heldout_aspect.py --model vertex_ai/gemini-2.5-flash-lite --split both --limit 10000 --prompt-variant indexed --response-format json_schema --response-format-fallback --max-tokens 2048 --input-cost-per-1m 0.10 --output-cost-per-1m 0.40 --output-dir .\outputs\llm\gemini_candidate_label_20260701_034545_flash_lite_fixed_full
+```
+
+### Outputs
+
+- Local ignored Pro output: `outputs/llm/gemini_candidate_label_20260701_031040_pro_fixed_full/`.
+- Local ignored Flash-Lite output: `outputs/llm/gemini_candidate_label_20260701_034545_flash_lite_fixed_full/`.
+- Documentation updated in:
+  - `docs/gemini_candidate_label_baseline.md`
+  - `docs/generalisation_baselines.md`
+  - `PROJECT_OVERVIEW.md`
+  - `START_NEW_CHAT_PROMPT.md`
+
+### Results
+
+Fixed held-out-aspect validation/test:
+
+| Model | Split | Pair Samples F1 | Pair Micro F1 | Pair Macro F1 | Aspect Samples F1 | Valid JSON | Schema Valid | Mean Latency |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Gemini Flash-Lite | validation | 0.5876 | 0.5973 | 0.4477 | 0.6783 | 1.0000 | 1.0000 | 0.3605 s |
+| Gemini Flash-Lite | test | 0.5516 | 0.5872 | 0.4876 | 0.6062 | 1.0000 | 0.9964 | 0.3719 s |
+| Gemini Flash | validation | 0.6146 | 0.6446 | 0.4830 | 0.7129 | 1.0000 | 0.9953 | 2.5074 s |
+| Gemini Flash | test | 0.6071 | 0.6541 | 0.5547 | 0.6747 | 1.0000 | 1.0000 | 2.3721 s |
+| Gemini Pro | validation | 0.7270 | 0.7377 | 0.6092 | 0.7954 | 1.0000 | 0.9953 | 5.3514 s |
+| Gemini Pro | test | 0.7141 | 0.7425 | 0.6287 | 0.7746 | 1.0000 | 1.0000 | 5.6510 s |
+
+Token and approximate public-rate cost diagnostics:
+
+| Model | Split | Input Tokens | Output Tokens, Including Thinking | Reasoning Tokens | Total Tokens | Approx Cost |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| Gemini Flash-Lite | validation | 41,960 | 8,206 | not reported | 50,166 | $0.0075 |
+| Gemini Flash-Lite | test | 56,338 | 9,852 | not reported | 66,190 | $0.0096 |
+| Gemini Flash | validation | 41,960 | 89,052 | 80,780 | 131,012 | $0.2352 |
+| Gemini Flash | test | 56,338 | 113,067 | 102,574 | 169,405 | $0.2996 |
+| Gemini Pro | validation | 41,960 | 121,157 | 112,365 | 163,117 | $1.2640 |
+| Gemini Pro | test | 56,338 | 164,362 | 153,349 | 220,700 | $1.7140 |
+
+Approximate validation+test costs:
+
+| Model | Approx Cost |
+| --- | ---: |
+| Gemini Flash-Lite | $0.0171 |
+| Gemini Flash | $0.5348 |
+| Gemini Pro | $2.9781 |
+
+### Interpretation
+
+- The full Pro run confirms the 50-row subset direction. Pro is clearly the strongest fixed-split hosted model, with `0.7141` test pair samples F1 versus Flash's `0.6071`.
+- Flash-Lite is much cheaper and faster than Flash and Pro, but its test F1 is below the strongest local non-LLM baseline and below Flash.
+- Flash remains the balanced hosted baseline: it matches the strongest local fixed-split headline result while improving micro/macro F1.
+- The hosted Pareto table is now complete for the fixed three-aspect protocol.
+- These results are still not LOAO robustness evidence.
+
+### Next Step
+
+- Do not run full Gemini Pro LOAO by default.
+- Next dissertation-value experiments should be tackled separately:
+  - local-to-Gemini uncertainty cascade;
+  - Gemini-generated candidate-label descriptions;
+  - Gemini-assisted qualitative error taxonomy with manual review.
+
+### Validation
+
+```powershell
+python -m unittest discover -s tests
+python -m compileall -q src scripts tests
+```
+
+| Check | Result |
+| --- | --- |
+| Unit tests | 63 tests OK |
+| Compile check | passed |
+| Secret scan over tracked code/docs paths | no real API key found |
