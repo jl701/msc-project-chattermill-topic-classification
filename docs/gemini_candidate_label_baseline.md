@@ -20,6 +20,7 @@ Implemented:
 - full fixed-split Gemini Pro validation/test evaluation
 - full fixed-split Gemini Flash-Lite validation/test evaluation
 - local-to-Gemini uncertainty cascade sweep over Flash-Lite, Flash, and Pro escalators
+- Gemini-generated aspect-description ablation over Flash-Lite, Flash, and a Pro validation diagnostic
 
 Completed hosted result:
 
@@ -256,6 +257,8 @@ This is now a useful hosted Pareto comparison. Flash-Lite is extremely cheap and
 
 The local-to-Gemini cascade is the strongest fixed-split system result so far. It selects escalation policies using validation-only local reliability features, then evaluates those policies on test. Validation-selected selective escalation reaches `0.6679` test pair samples F1 with Flash-Lite, `0.7459` with Flash, and `0.8102` with Pro. This is more dissertation-relevant than full Gemini LOAO because it tests a realistic selective-deployment pattern: local model first, hosted LLM only for locally uncertain rows.
 
+The Gemini-generated aspect-description ablation is documented in `docs/gemini_aspect_descriptions.md`. The main positive result is for Flash-Lite: label-only Gemini-generated descriptions improve test pair samples F1 from `0.5516` to `0.5925`, pair micro F1 from `0.5872` to `0.6263`, pair macro F1 from `0.4876` to `0.5691`, and aspect samples F1 from `0.6062` to `0.6625`, with test cost increasing only from about `$0.0096` to `$0.0118`. The result is not monotonic across stronger models: Flash descriptions improve validation but reduce test pair samples F1 (`0.6071` to `0.5893`), and a Pro 50-row validation diagnostic worsens primary pair samples F1 (`0.8000` to `0.7467`). This should be written as evidence that explicit label semantics can help cheap hosted models, but description wording and model capacity create precision-recall trade-offs.
+
 ## Reproduction Commands
 
 Dry-run request construction without calling the API:
@@ -321,27 +324,27 @@ Results:
 
 | Check | Result |
 | --- | --- |
-| Parser/schema diagnostics tests | 11 tests OK |
-| Full unit test suite | 63 tests OK |
+| Parser/schema diagnostics tests | 14 tests OK |
+| Full unit test suite | 73 tests OK |
 | Compile check | passed |
 | Dry-run request construction | passed |
 | Hosted API smoke test | passed |
 | 50-row validation sweep | completed |
 | Full validation/test evaluation | completed |
 | Local-to-Gemini cascade sweep | completed |
+| Gemini-generated aspect-description ablation | completed |
 
 ## Remaining Follow-Up
 
-Do not run full Gemini LOAO by default. Full Pro validation/test, Flash-Lite validation/test, and the local-to-Gemini cascade are now complete. A full Pro LOAO remains unjustified without a separate dissertation-value argument.
+Do not run full Gemini LOAO by default. Full Pro validation/test, Flash-Lite validation/test, the local-to-Gemini cascade, and the Gemini-generated aspect-description ablation are now complete. A full Pro LOAO remains unjustified without a separate dissertation-value argument.
 
 Tasks 1-3 of the Gemini follow-up are consolidated for thesis writing and Task 4 handoff in `docs/tasks_1_to_3_thesis_prep.md`.
 
 The next LLM-centred roadmap is recorded in `docs/llm_next_experiment_directions.md`. The remaining Gemini/local experiments should be framed around dissertation value rather than raw leaderboard chasing:
 
-1. Test candidate-aspect descriptions as label-representation support, generated without validation/test leakage.
-2. Run a sampled Gemini LOAO diagnostic rather than full Gemini LOAO.
-3. Export local DistilBERT selector scores and rerun cascade selection with score/margin uncertainty features, reusing existing Gemini predictions.
-4. Use Gemini Pro as a qualitative error-taxonomy aid with manual review, not as an automatic evaluator.
-5. Move to Qwen fine-tuning/evaluation once stronger GPU access is available.
+1. Run a sampled Gemini LOAO diagnostic rather than full Gemini LOAO, if a small robustness signal is still needed.
+2. Export local DistilBERT selector scores and rerun cascade selection with score/margin uncertainty features, reusing existing Gemini predictions.
+3. Use Gemini Pro as a qualitative error-taxonomy aid with manual review, not as an automatic evaluator.
+4. Move to Qwen fine-tuning/evaluation once stronger GPU access is available.
 
 This sequence supports a stronger industrial MSc story: local models, cheap hosted models, and stronger hosted models can be compared not only on F1, but also on cost, latency, governance, and selective deployment strategy.

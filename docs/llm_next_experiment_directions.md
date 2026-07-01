@@ -6,12 +6,13 @@ This note records the recommended next LLM-centred experiments after the complet
 
 ## Current Evidence Position
 
-The project now has four complementary evidence blocks:
+The project now has five complementary evidence blocks:
 
 1. Strong local fixed-split non-LLM baseline: candidate-aspect DistilBERT selector plus DistilBERT aspect-conditioned sentiment reaches `0.6071` test pair samples F1.
 2. Local LOAO robustness caveat: the same DistilBERT branch drops to `0.3128` mean pair micro F1 in full all-row LOAO, showing weak unseen-aspect relevance detection and threshold calibration under taxonomy shift.
 3. Hosted Gemini fixed-split Pareto: Flash-Lite is cheap/fast, Flash matches local pair samples F1 with better pair micro/macro F1, and Pro is the strongest pure hosted fixed-split baseline.
 4. Local-to-Gemini cascade: selective escalation is the strongest fixed-split system result so far, reaching `0.7459` with Flash and `0.8102` with Pro.
+5. Gemini-generated aspect descriptions: label-only descriptions improve Flash-Lite test pair samples F1 from `0.5516` to `0.5925`, but stronger models show mixed precision-recall trade-offs rather than monotonic gains.
 
 The dissertation story should therefore not be "run every model on every expensive protocol". It should be:
 
@@ -53,41 +54,27 @@ These estimates are approximate because one-aspect LOAO prompts may be shorter t
 
 ## Recommended Experiment Roadmap
 
-### 1. Candidate-Aspect Descriptions
+### Completed: Candidate-Aspect Descriptions
 
 Purpose:
 
 - Test whether richer label semantics improve Gemini candidate-label prediction without changing the evaluation split.
 - Directly probe whether LLMs help because they understand aspect meanings better than local encoders.
 
-Recommended design:
+Status:
 
-- Keep the fixed held-out-aspect validation/test split.
-- Keep indexed candidate IDs to avoid near-miss copied labels.
-- Keep `response_format=json_schema`, `temperature=0`, and `max_tokens=2048`.
-- Generate or define descriptions without using validation/test review texts or validation/test labels.
-- Use validation only to select prompt/description variant, then evaluate once on test.
-- Start with Gemini Flash for cost efficiency.
-- Use Pro only if the Flash result is promising or diagnostically ambiguous.
+- Implemented in `src/msc_project/llm/candidate_label.py` and `scripts/run_gemini_heldout_aspect.py`.
+- Tracked configs live in `configs/gemini_aspect_descriptions_fixed_heldout.json` and `configs/gemini_aspect_descriptions_decision_boundary_heldout.json`.
+- Full results are recorded in `docs/gemini_aspect_descriptions.md`.
 
-Variants:
+Main finding:
 
-| Variant | Purpose |
-| --- | --- |
-| `indexed` | Current no-description baseline. |
-| Existing lightweight descriptive prompt | Recheck the current `indexed_descriptive` style. |
-| Gemini-generated aspect descriptions | Test richer label semantics. |
-| Optional manual/tagger-guidance descriptions | Use only if Aji can provide approved guidance or if descriptions are created from aspect names alone. |
+- Label-only descriptions help Flash-Lite substantially on test (`0.5516` to `0.5925` pair samples F1).
+- Decision-boundary descriptions win Flash-Lite validation but generalise less well on test.
+- Flash descriptions improve validation but reduce test pair samples F1, while improving micro/macro slightly.
+- Pro descriptions do not justify a full run based on the 50-row validation diagnostic.
 
-Key questions:
-
-- Do descriptions improve pair samples F1, pair micro F1, or pair macro F1?
-- Do they improve `Company brand: Competitor` recall without causing over-prediction?
-- Do they help rare neutral labels?
-- How much extra token cost and latency do descriptions introduce?
-- Do they affect JSON/schema reliability?
-
-### 2. Sampled Gemini LOAO Diagnostic
+### 1. Sampled Gemini LOAO Diagnostic
 
 Purpose:
 
@@ -113,7 +100,7 @@ Key questions:
 - Does Gemini also become conservative or empty on rare/ambiguous aspects?
 - Are the same error modes visible as in the fixed split?
 
-### 3. Cascade Uncertainty Improvement
+### 2. Cascade Uncertainty Improvement
 
 Purpose:
 
@@ -139,7 +126,7 @@ Key questions:
 - Does it reduce the current 90% Flash/Pro escalation rate?
 - Does it improve the dissertation defensibility of selective deployment?
 
-### 4. Qualitative Error Taxonomy
+### 3. Qualitative Error Taxonomy
 
 Purpose:
 
@@ -172,7 +159,7 @@ Key questions:
 - Which errors are caused by sentiment ambiguity?
 - Which errors are deployment-relevant, such as hosted abstention or local over-prediction?
 
-### 5. Qwen Fine-Tuning And Evaluation
+### 4. Qwen Fine-Tuning And Evaluation
 
 Purpose:
 
@@ -200,10 +187,9 @@ Key questions:
 
 ## Recommended Order
 
-1. Candidate-aspect descriptions with Gemini Flash.
-2. Sampled Gemini LOAO diagnostic.
-3. Cascade uncertainty improvement using local score/margin export.
-4. Qualitative error taxonomy.
-5. Qwen fine-tuning/evaluation once stronger GPU access is available.
+1. Sampled Gemini LOAO diagnostic, if a small robustness signal is still needed.
+2. Cascade uncertainty improvement using local score/margin export.
+3. Qualitative error taxonomy.
+4. Qwen fine-tuning/evaluation once stronger GPU access is available.
 
 This order maximises dissertation value per unit cost. It first tests the label-semantics hypothesis, then adds a lightweight robustness check, then strengthens the selective-deployment method without more hosted calls, then prepares the qualitative discussion, and finally moves to the larger open-LLM fine-tuning stage.

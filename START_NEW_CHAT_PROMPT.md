@@ -367,10 +367,14 @@ Gemini / Vertex AI access:
 - Gemini/local dissertation-value roadmap:
   - fixed-split hosted Pareto baselines are now complete: Gemini Flash-Lite, Flash, and Pro
   - local-to-Gemini uncertainty cascade is now complete
+  - Gemini-generated aspect descriptions are now complete
+  - label-only descriptions improve Flash-Lite test pair samples F1 from 0.5516 to 0.5925, pair micro F1 from 0.5872 to 0.6263, pair macro F1 from 0.4876 to 0.5691, and aspect samples F1 from 0.6062 to 0.6625
+  - Flash descriptions improve validation but reduce test pair samples F1, while slightly improving test micro/macro F1
+  - Pro 50-row validation diagnostic worsens primary pair samples F1, so full Pro descriptions are not justified
+  - details are in `docs/gemini_aspect_descriptions.md`
   - Tasks 1-3 are consolidated for thesis/task-4 handoff in `docs/tasks_1_to_3_thesis_prep.md`
   - the next LLM roadmap is recorded in `docs/llm_next_experiment_directions.md`
   - recommended order:
-    - candidate-aspect descriptions with Gemini Flash
     - sampled Gemini LOAO diagnostic, not full Gemini LOAO
     - cascade uncertainty improvement using local score/margin export and existing Gemini predictions
     - qualitative error taxonomy with manual review
@@ -500,7 +504,8 @@ Recommended next steps:
 7. Treat the completed DistilBERT LOAO result as a robustness caveat, not as a new headline model improvement.
 8. Treat Gemini Flash as the completed hosted fixed held-out-aspect baseline, but do not run full Gemini LOAO unless the cost/benefit is explicitly justified.
 9. The local-to-Gemini cascade is complete; follow `docs/llm_next_experiment_directions.md` with the new Qwen LOAO result in mind.
-10. The next experiment order should prioritise Qwen fine-tuning/calibration planning, candidate-aspect descriptions, sampled Gemini LOAO only if still useful, cascade score/margin uncertainty, and qualitative error taxonomy.
+10. Gemini-generated aspect descriptions are complete; do not rerun the same Task 4 API work unless a new variant or thesis question is explicitly requested.
+11. The next experiment order should prioritise sampled Gemini LOAO only if still useful, cascade score/margin uncertainty, qualitative error taxonomy, and Qwen fine-tuning/calibration planning once stronger GPU access is available.
 11. If I ask to publish changes, commit/push only clean code and documentation, without committing outputs, data, credentials, checkpoints, or generated artifacts.
 
 Please start by summarising what you find in the current docs and repo state, then perform the strict audit, then propose the next concrete plan before implementing.

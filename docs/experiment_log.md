@@ -1414,6 +1414,104 @@ python -m compileall -q src scripts tests
 | Unit tests | 63 tests OK |
 | Compile check | passed |
 
+## 2026-07-01 - Gemini-Generated Aspect Descriptions
+
+### Purpose
+
+Task 4 tested whether Gemini-generated natural-language descriptions for the three fixed held-out candidate aspects improve hosted candidate-label classification. Descriptions were generated from canonical aspect names only, without validation or test review text.
+
+### Code And Configs
+
+- Added generated-description prompt variants:
+  - `indexed_generated_descriptions`
+  - `indexed_conservative_generated_descriptions`
+- Added `--aspect-descriptions-json` to `scripts/run_gemini_heldout_aspect.py`.
+- Added non-sensitive tracked configs:
+  - `configs/gemini_aspect_descriptions_fixed_heldout.json`
+  - `configs/gemini_aspect_descriptions_decision_boundary_heldout.json`
+- Detailed write-up: `docs/gemini_aspect_descriptions.md`.
+
+### Commands
+
+Representative commands:
+
+```powershell
+python .\scripts\run_gemini_heldout_aspect.py --output-dir .\outputs\llm\gemini_generated_descriptions_dry_run_check --split validation --limit 2 --prompt-variant indexed_generated_descriptions --aspect-descriptions-json .\configs\gemini_aspect_descriptions_fixed_heldout.json --dry-run
+
+python .\scripts\run_gemini_heldout_aspect.py --output-dir .\outputs\llm\gemini_candidate_label_20260701_desc_flash_lite_validation_full --model vertex_ai/gemini-2.5-flash-lite --split validation --limit 10000 --prompt-variant indexed_generated_descriptions --prompt-variant indexed_conservative_generated_descriptions --aspect-descriptions-json .\configs\gemini_aspect_descriptions_fixed_heldout.json --response-format json_schema --response-format-fallback --max-tokens 2048 --input-cost-per-1m 0.10 --output-cost-per-1m 0.40
+
+python .\scripts\run_gemini_heldout_aspect.py --output-dir .\outputs\llm\gemini_candidate_label_20260701_desc_boundary_flash_lite_validation_full --model vertex_ai/gemini-2.5-flash-lite --split validation --limit 10000 --prompt-variant indexed_generated_descriptions --aspect-descriptions-json .\configs\gemini_aspect_descriptions_decision_boundary_heldout.json --response-format json_schema --response-format-fallback --max-tokens 2048 --input-cost-per-1m 0.10 --output-cost-per-1m 0.40
+
+python .\scripts\run_gemini_heldout_aspect.py --output-dir .\outputs\llm\gemini_candidate_label_20260701_desc_flash_validation_full --model vertex_ai/gemini-2.5-flash --split validation --limit 10000 --prompt-variant indexed_generated_descriptions --aspect-descriptions-json .\configs\gemini_aspect_descriptions_fixed_heldout.json --response-format json_schema --response-format-fallback --max-tokens 2048 --input-cost-per-1m 0.30 --output-cost-per-1m 2.50
+
+python .\scripts\run_gemini_heldout_aspect.py --output-dir .\outputs\llm\gemini_candidate_label_20260701_desc_pro_val50 --model vertex_ai/gemini-2.5-pro --split validation --limit 50 --sample --seed 13 --prompt-variant indexed_generated_descriptions --aspect-descriptions-json .\configs\gemini_aspect_descriptions_fixed_heldout.json --response-format json_schema --response-format-fallback --max-tokens 2048 --input-cost-per-1m 1.25 --output-cost-per-1m 10.00
+```
+
+### Outputs
+
+Local ignored outputs:
+
+- `outputs/llm/gemini_candidate_label_20260701_desc_flash_lite_val50/`
+- `outputs/llm/gemini_candidate_label_20260701_desc_flash_val50/`
+- `outputs/llm/gemini_candidate_label_20260701_desc_flash_lite_validation_full/`
+- `outputs/llm/gemini_candidate_label_20260701_desc_flash_lite_test_full/`
+- `outputs/llm/gemini_candidate_label_20260701_desc_boundary_flash_lite_validation_full/`
+- `outputs/llm/gemini_candidate_label_20260701_desc_boundary_flash_lite_test_full/`
+- `outputs/llm/gemini_candidate_label_20260701_desc_flash_validation_full/`
+- `outputs/llm/gemini_candidate_label_20260701_desc_flash_test_full/`
+- `outputs/llm/gemini_candidate_label_20260701_desc_pro_val50/`
+- `outputs/analysis/gemini_description_ablation_summary.json`
+
+Generated outputs remain ignored because prediction and request files can contain review text.
+
+### Results
+
+Flash-Lite full test:
+
+| Prompt | Pair Samples F1 | Pair Micro F1 | Pair Macro F1 | Aspect Samples F1 | Cost |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Indexed baseline | 0.5516 | 0.5872 | 0.4876 | 0.6062 | $0.0096 |
+| Label-only descriptions | 0.5925 | 0.6263 | 0.5691 | 0.6625 | $0.0118 |
+| Decision-boundary descriptions | 0.5724 | 0.6199 | 0.5456 | 0.6340 | $0.0119 |
+
+Flash full test:
+
+| Prompt | Pair Samples F1 | Pair Micro F1 | Pair Macro F1 | Aspect Samples F1 | Cost |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Indexed baseline | 0.6071 | 0.6541 | 0.5547 | 0.6747 | $0.2996 |
+| Label-only descriptions | 0.5893 | 0.6555 | 0.5655 | 0.6676 | $0.3390 |
+
+Pro 50-row validation diagnostic:
+
+| Prompt | Pair Samples F1 | Pair Micro F1 | Pair Macro F1 | Aspect Samples F1 |
+| --- | ---: | ---: | ---: | ---: |
+| Indexed baseline | 0.8000 | 0.8113 | 0.5985 | 0.8400 |
+| Label-only descriptions | 0.7467 | 0.7921 | 0.6128 | 0.8067 |
+
+### Interpretation
+
+- Description prompts are useful for Flash-Lite, where label-only descriptions substantially improve test F1 with a small cost increase.
+- Decision-boundary wording reduces false positives but can increase empty predictions and false negatives.
+- Flash descriptions improve validation but reduce test pair samples F1, while slightly improving test micro/macro F1.
+- Pro did not show a positive primary-metric signal on the validation diagnostic, so full Pro descriptions were not run.
+- The dissertation should frame this as a label-semantics ablation and precision-recall trade-off, not as a universal prompt improvement.
+
+### Validation
+
+```powershell
+python -m unittest discover -s tests
+python -m compileall -q src scripts tests
+rg -n "sk-[A-Za-z0-9_\-]{12,}" PROJECT_OVERVIEW.md START_NEW_CHAT_PROMPT.md report_notes.md configs docs scripts src tests
+git diff --check
+```
+
+| Check | Result |
+| --- | --- |
+| Unit tests | 73 tests OK |
+| Compile check | passed |
+| Secret scan | no matches |
+| Diff whitespace check | passed |
+
 ## 2026-07-01: Qwen LOAO Full Interpretation Analysis
 
 ### Purpose

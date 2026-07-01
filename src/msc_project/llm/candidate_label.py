@@ -24,6 +24,8 @@ PROMPT_VARIANTS = (
     "indexed_conservative",
     "indexed_descriptive",
     "indexed_conservative_descriptive",
+    "indexed_generated_descriptions",
+    "indexed_conservative_generated_descriptions",
 )
 
 
@@ -85,8 +87,15 @@ def aspect_id(index: int) -> str:
     return f"A{index + 1}"
 
 
-def aspect_line(aspect: str, index: int | None = None, with_keywords: bool = False) -> str:
+def aspect_line(
+    aspect: str,
+    index: int | None = None,
+    with_keywords: bool = False,
+    description: str | None = None,
+) -> str:
     prefix = f"{aspect_id(index)}. " if index is not None else "- "
+    if description:
+        return f"{prefix}{aspect} (description: {description})"
     if not with_keywords:
         return f"{prefix}{aspect}"
 
@@ -125,6 +134,7 @@ def build_candidate_user_prompt(
     aspects: list[str],
     prompt_variant: str = "indexed",
     output_container: str = "array",
+    aspect_descriptions: dict[str, str] | None = None,
 ) -> str:
     if prompt_variant not in PROMPT_VARIANTS:
         raise ValueError(f"Unknown prompt variant: {prompt_variant}")
@@ -142,11 +152,21 @@ def build_candidate_user_prompt(
         "conservative_descriptive",
         "indexed_conservative",
         "indexed_conservative_descriptive",
+        "indexed_conservative_generated_descriptions",
+    }
+    with_generated_descriptions = prompt_variant in {
+        "indexed_generated_descriptions",
+        "indexed_conservative_generated_descriptions",
     }
     indexed = prompt_variant.startswith("indexed")
 
     taxonomy = "\n".join(
-        aspect_line(aspect, index=index if indexed else None, with_keywords=with_keywords)
+        aspect_line(
+            aspect,
+            index=index if indexed else None,
+            with_keywords=with_keywords,
+            description=(aspect_descriptions or {}).get(aspect) if with_generated_descriptions else None,
+        )
         for index, aspect in enumerate(aspects)
     )
     if indexed:
@@ -200,6 +220,7 @@ def build_candidate_messages(
     prompt_variant: str = "indexed",
     gold_pair_labels: list[str] | None = None,
     output_container: str = "array",
+    aspect_descriptions: dict[str, str] | None = None,
 ) -> list[dict[str, str]]:
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
@@ -210,6 +231,7 @@ def build_candidate_messages(
                 aspects=aspects,
                 prompt_variant=prompt_variant,
                 output_container=output_container,
+                aspect_descriptions=aspect_descriptions,
             ),
         },
     ]

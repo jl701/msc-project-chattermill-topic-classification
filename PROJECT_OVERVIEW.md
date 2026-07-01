@@ -739,6 +739,7 @@ Completed:
   full Gemini Pro fixed validation/test evaluation
   full Gemini Flash-Lite fixed validation/test evaluation
   local-to-Gemini uncertainty cascade over Flash-Lite, Flash, and Pro
+  Gemini-generated aspect-description ablation
 
 Final fixed held-out-aspect test:
   model: vertex_ai/gemini-2.5-flash
@@ -755,6 +756,8 @@ Final fixed held-out-aspect test:
 The Gemini implementation initially blocked on missing credentials, but the fixed held-out-aspect run was completed after Aji's endpoint/key details were supplied. The key was not committed. This is still a fixed three-aspect result, not Gemini LOAO robustness evidence.
 
 The Gemini fixed-split error analysis is now documented in `docs/gemini_error_analysis.md`. The main finding is that Gemini Flash ties the strongest local non-LLM pair samples F1 through a different error profile: it predicts fewer labels per row, has higher pair precision and fewer aspect over-predictions, but returns more empty predictions and is conservative on `Company brand: Competitor`. The fixed-split hosted Pareto table is now complete: Flash-Lite is cheapest and fastest, Flash is the balanced hosted baseline, and Pro is clearly strongest but slower and more expensive. The local-to-Gemini cascade in `docs/local_gemini_cascade.md` is the strongest fixed-split system result so far, reaching `0.7459` pair samples F1 with Flash escalation and `0.8102` with Pro escalation. A Pro deep-dive shows that the cascade also beats pure Pro (`0.7141`) because `gemini_nonempty_else_local` recovers Pro's 28 empty prediction rows, reduces pair false negatives from 67 to 40, and increases exact-match rows from 167 to 194 while keeping false positives nearly flat. Tasks 1-3 of the Gemini follow-up are consolidated for thesis and Task 4 handoff in `docs/tasks_1_to_3_thesis_prep.md`.
+
+Task 4, Gemini-generated aspect descriptions, is now complete and documented in `docs/gemini_aspect_descriptions.md`. The headline positive result is for Flash-Lite: label-only descriptions improve test pair samples F1 from `0.5516` to `0.5925`, pair micro F1 from `0.5872` to `0.6263`, pair macro F1 from `0.4876` to `0.5691`, and aspect samples F1 from `0.6062` to `0.6625`. The result is mixed for stronger models: Flash descriptions improve validation but reduce test pair samples F1, and a Pro 50-row validation diagnostic does not justify a full Pro description run. Use this as a label-semantics and precision-recall trade-off result, not as a universal prompt improvement.
 
 The current Tier 1 literature-review foundation is recorded in `docs/tier1_core_literature_review_matrix.md`. It covers customer review mining, ABSA, FABSA, multi-label evaluation, domain generalisation, candidate-label taxonomy shift, and structured-output LLM evaluation, while leaving detailed Qwen/Gemini fine-tuning and deployment-governance work as later optional branches.
 
@@ -799,7 +802,7 @@ Future dissertation-writing work should edit the LaTeX source directly. Markdown
    - The local-to-Gemini cascade is complete and is the strongest fixed-split system result, but it remains fixed three-aspect evidence rather than LOAO robustness evidence.
    - The Pro cascade beats pure Pro through error complementarity: Pro handles most uncertain rows, while the local fallback protects against Pro abstentions and some local-reliable rows.
    - The strongest next dissertation-oriented Gemini/local work is not more DistilBERT LOAO or full Pro LOAO. The roadmap is recorded in `docs/llm_next_experiment_directions.md`.
-   - Recommended order after this Qwen LOAO baseline: Qwen fine-tuning/calibration planning, candidate-aspect descriptions, sampled Gemini LOAO diagnostic only if needed, cascade uncertainty improvement using local score/margin export, and qualitative error taxonomy.
+   - Candidate-aspect descriptions are now complete. Recommended order after this point: sampled Gemini LOAO diagnostic only if needed, cascade uncertainty improvement using local score/margin export, qualitative error taxonomy, and Qwen fine-tuning/calibration planning once stronger GPU access is available.
 
 ## 16. Immediate Next Steps
 
@@ -821,7 +824,7 @@ Future dissertation-writing work should edit the LaTeX source directly. Markdown
 
 9. Treat the local-to-Gemini cascade as complete fixed-split selective-deployment evidence; its Pro variant beats pure Pro through fallback recovery and lower false-negative count, not because local is globally stronger. Use `docs/tasks_1_to_3_thesis_prep.md` as the clean evidence map before starting Task 4.
 
-10. Follow the LLM next-experiment roadmap with the new Qwen LOAO baseline in mind: Qwen fine-tuning/calibration planning, candidate-aspect descriptions, sampled Gemini LOAO diagnostic only if needed, cascade score/margin uncertainty, and qualitative error taxonomy.
+10. Treat Gemini-generated aspect descriptions as complete Task 4 evidence. Next follow the updated LLM roadmap: sampled Gemini LOAO only if needed, cascade score/margin uncertainty, qualitative error taxonomy, and Qwen fine-tuning/calibration planning once stronger GPU access is available.
 
 11. Do not run full Gemini Pro LOAO unless the dissertation value justifies the added cost and latency.
 

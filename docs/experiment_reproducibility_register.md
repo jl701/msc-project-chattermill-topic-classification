@@ -41,6 +41,7 @@ Strongly recorded:
 - Qwen indexed zero-shot fixed-split and full all-row LOAO results
 - Gemini Flash/Flash-Lite/Pro fixed-split runs
 - local-to-Gemini cascade and Pro cascade deep-dive
+- Gemini-generated aspect-description ablation
 
 Recoverable from local artifacts but less well centralised before this register:
 
@@ -89,6 +90,7 @@ Remaining limitations:
 | Gemini | Full fixed-split Pro and Flash-Lite baselines | Complete | See `docs/tasks_1_to_3_thesis_prep.md` commands with explicit cost rates | `docs/gemini_candidate_label_baseline.md`, `docs/tasks_1_to_3_thesis_prep.md`, local summaries | Full hosted Pareto comparison is reproducible except for requiring local API credentials. |
 | Gemini cascade | Local-to-Gemini Flash-Lite/Flash/Pro cascade | Complete | See `docs/local_gemini_cascade.md` commands | `docs/local_gemini_cascade.md`, `outputs/analysis/local_gemini_cascade_*` | Policy search is validation-only; test labels used only for final evaluation and later explanation. |
 | Gemini cascade | Pro cascade deep-dive | Complete | `python .\scripts\analyse_local_gemini_cascade.py` | `docs/local_gemini_cascade.md`, `outputs/analysis/local_gemini_cascade_pro_deep_dive/summary.json` | Explains error complementarity and Pro-empty fallback. |
+| Gemini descriptions | Gemini-generated aspect-description ablation | Complete | See `docs/gemini_aspect_descriptions.md` commands and tracked configs under `configs/` | `docs/gemini_aspect_descriptions.md`, local summaries under `outputs/llm/gemini_candidate_label_20260701_desc_*`, `outputs/analysis/gemini_description_ablation_summary.json` | Uses descriptions generated from aspect names only, with no validation/test review text. Flash-Lite label-only descriptions improve test pair samples F1 from `0.5516` to `0.5925`; stronger models show mixed trade-offs. Raw predictions remain local-only. |
 | Roadmap | LLM next experiment directions | Complete planning note | n/a | `docs/llm_next_experiment_directions.md` | Not an experiment result; records future order and cost rationale. |
 
 ## Supplemental Qwen LoRA Pilot Parameters

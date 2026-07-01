@@ -57,6 +57,24 @@ def write_jsonl(rows: list[dict[str, Any]], path: Path) -> None:
             handle.write(json.dumps(row, ensure_ascii=False) + "\n")
 
 
+def load_aspect_descriptions(path: Path) -> dict[str, str]:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if isinstance(payload, dict) and isinstance(payload.get("aspect_descriptions"), dict):
+        payload = payload["aspect_descriptions"]
+    if not isinstance(payload, dict):
+        raise ValueError("Aspect descriptions JSON must be a mapping or contain an aspect_descriptions mapping.")
+
+    descriptions = {str(aspect): str(description).strip() for aspect, description in payload.items()}
+    missing = [aspect for aspect in DEFAULT_HELDOUT_ASPECTS if not descriptions.get(aspect)]
+    if missing:
+        raise ValueError(f"Missing descriptions for held-out aspects: {missing}")
+    return {aspect: descriptions[aspect] for aspect in DEFAULT_HELDOUT_ASPECTS}
+
+
+def variant_requires_aspect_descriptions(variant: str) -> bool:
+    return variant.endswith("_generated_descriptions")
+
+
 def select_eval_rows(frame, limit: int | None, sample: bool, seed: int):
     if limit is None or limit >= len(frame):
         return frame.copy()
@@ -210,6 +228,7 @@ def run_variant_split(
     variant: str,
     args,
     output_dir: Path,
+    aspect_descriptions: dict[str, str] | None = None,
     base_url: str | None = None,
     api_key: str | None = None,
 ) -> dict[str, Any]:
@@ -231,12 +250,14 @@ def run_variant_split(
             aspects=aspects,
             prompt_variant=variant,
             output_container=output_container,
+            aspect_descriptions=aspect_descriptions,
         )
         fallback_messages = build_candidate_messages(
             text=str(row["text"]),
             aspects=aspects,
             prompt_variant=variant,
             output_container=fallback_output_container,
+            aspect_descriptions=aspect_descriptions,
         )
         request_rows.append(
             {
@@ -310,6 +331,7 @@ def run_variant_split(
             "examples": int(len(eval_df)),
             "response_format": response_format,
             "output_container": output_container,
+            "aspect_descriptions_used": bool(aspect_descriptions),
             "requests_file": str(output_dir / f"requests_{split_name}_{variant}.jsonl"),
         }
 
@@ -325,6 +347,7 @@ def run_variant_split(
         "examples": int(len(eval_df)),
         "response_format": response_format,
         "output_container": output_container,
+        "aspect_descriptions_used": bool(aspect_descriptions),
         "seconds": elapsed,
         "seconds_per_example": elapsed / max(1, len(rows)),
         **metrics,
@@ -347,6 +370,12 @@ def main() -> None:
     parser.add_argument("--sample", action="store_true")
     parser.add_argument("--seed", type=int, default=13)
     parser.add_argument("--prompt-variant", action="append", choices=PROMPT_VARIANTS, default=[])
+    parser.add_argument(
+        "--aspect-descriptions-json",
+        type=Path,
+        default=None,
+        help="JSON mapping used by *_generated_descriptions prompt variants.",
+    )
     parser.add_argument("--response-format", choices=RESPONSE_FORMATS, default="json_schema")
     parser.add_argument("--response-format-fallback", action="store_true")
     parser.add_argument("--output-container", choices=["auto", "array", "object"], default="auto")
@@ -384,6 +413,16 @@ def main() -> None:
     )
     pair_classes = candidate_pair_labels(DEFAULT_HELDOUT_ASPECTS)
     variants = args.prompt_variant or ["indexed"]
+    requires_descriptions = any(variant_requires_aspect_descriptions(variant) for variant in variants)
+    if requires_descriptions and args.aspect_descriptions_json is None:
+        raise SystemExit("--aspect-descriptions-json is required for *_generated_descriptions prompt variants.")
+
+    aspect_descriptions = None
+    if args.aspect_descriptions_json is not None:
+        try:
+            aspect_descriptions = load_aspect_descriptions(args.aspect_descriptions_json)
+        except (OSError, json.JSONDecodeError, ValueError) as exc:
+            raise SystemExit(f"Could not load aspect descriptions: {exc}") from exc
     split_names = ["validation", "test"] if args.split == "both" else [args.split]
 
     summary: dict[str, Any] = {
@@ -398,6 +437,8 @@ def main() -> None:
         "temperature": float(args.temperature),
         "max_tokens": int(args.max_tokens),
         "thinking_budget": args.thinking_budget,
+        "aspect_descriptions_json": str(args.aspect_descriptions_json) if args.aspect_descriptions_json else None,
+        "aspect_descriptions": aspect_descriptions,
         "limit": args.limit,
         "sample": bool(args.sample),
         "seed": int(args.seed),
@@ -426,6 +467,7 @@ def main() -> None:
                 variant=variant,
                 args=args,
                 output_dir=output_dir,
+                aspect_descriptions=aspect_descriptions if variant_requires_aspect_descriptions(variant) else None,
                 base_url=base_url,
                 api_key=api_key,
             )

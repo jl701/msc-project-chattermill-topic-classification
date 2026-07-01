@@ -40,6 +40,33 @@ class LlmCandidateLabelTest(unittest.TestCase):
         self.assertIn('"labels"', messages[1]["content"])
         self.assertIn('"aspect_id"', messages[1]["content"])
 
+    def test_build_indexed_prompt_with_generated_descriptions(self) -> None:
+        description = "Mentions discounts, promotional offers, codes, rewards, cashback, or loyalty benefits."
+        messages = build_candidate_messages(
+            "The discount code worked.",
+            ASPECTS,
+            prompt_variant="indexed_generated_descriptions",
+            output_container="object",
+            aspect_descriptions={ASPECTS[2]: description},
+        )
+
+        prompt = messages[1]["content"]
+        self.assertIn(f"A3. Value: Discounts promotions (description: {description})", prompt)
+        self.assertNotIn("Value: Discounts promotions (keywords:", prompt)
+        self.assertIn('"aspect_id"', prompt)
+
+    def test_build_conservative_generated_description_prompt(self) -> None:
+        messages = build_candidate_messages(
+            "This app is much better than my old bank.",
+            ASPECTS,
+            prompt_variant="indexed_conservative_generated_descriptions",
+            aspect_descriptions={ASPECTS[1]: "Mentions comparisons with competing banks, apps, or providers."},
+        )
+
+        prompt = messages[1]["content"]
+        self.assertIn("A2. Company brand: Competitor (description:", prompt)
+        self.assertIn("Most reviews match at most one candidate aspect.", prompt)
+
     def test_candidate_json_schema_uses_labels_wrapper(self) -> None:
         schema = candidate_json_schema()
 
