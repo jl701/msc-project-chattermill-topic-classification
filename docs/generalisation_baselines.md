@@ -26,6 +26,9 @@ Headline metric: **pair samples F1**. Pair micro F1 and pair macro F1 are report
 | Held-out aspect | Gemini 2.5 Flash-Lite indexed JSON-schema | 0.5516 | 0.5872 | 0.4876 | 0.6062 |
 | Held-out aspect | Gemini 2.5 Flash indexed JSON-schema | 0.6071 | 0.6541 | 0.5547 | 0.6747 |
 | Held-out aspect | Gemini 2.5 Pro indexed JSON-schema | 0.7141 | 0.7425 | 0.6287 | 0.7746 |
+| Held-out aspect cascade | Local -> Gemini 2.5 Flash-Lite | 0.6679 | 0.6579 | 0.5401 | 0.7259 |
+| Held-out aspect cascade | Local -> Gemini 2.5 Flash | 0.7459 | 0.7348 | 0.6223 | 0.7993 |
+| Held-out aspect cascade | Local -> Gemini 2.5 Pro | 0.8102 | 0.7955 | 0.6809 | 0.8493 |
 
 ## Held-Out Organisation
 
@@ -224,8 +227,6 @@ This is a zero-shot prompt baseline, not a fine-tuned Qwen result. It is competi
 
 A hosted Gemini baseline was completed after Aji provided the Chattermill Vertex AI OpenAI-compatible endpoint. The runner is:
 
-The runner is:
-
 ```powershell
 python .\scripts\run_gemini_heldout_aspect.py
 ```
@@ -281,15 +282,29 @@ python .\scripts\run_gemini_heldout_aspect.py --split both --limit 10000 --promp
 
 Generated prediction files are ignored under `outputs/` and are not committed because they contain review text. See `docs/gemini_candidate_label_baseline.md` for the full sweep and cost notes.
 
+Full fixed-split hosted Pareto and selective cascade results were then added. Costs use the public Gemini API Standard rates checked on 2026-07-01 and count thinking tokens through output-token billing.
+
+| System | Test Pair Samples F1 | Test Pair Micro F1 | Test Pair Macro F1 | Test Aspect Samples F1 | Test Cost |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Local DistilBERT pipeline | 0.6071 | 0.5917 | 0.4890 | 0.6651 | n/a |
+| Gemini 2.5 Flash-Lite full | 0.5516 | 0.5872 | 0.4876 | 0.6062 | $0.0096 |
+| Gemini 2.5 Flash full | 0.6071 | 0.6541 | 0.5547 | 0.6747 | $0.2996 |
+| Gemini 2.5 Pro full | 0.7141 | 0.7425 | 0.6287 | 0.7746 | $1.7140 |
+| Local -> Flash-Lite cascade | 0.6679 | 0.6579 | 0.5401 | 0.7259 | $0.0052 |
+| Local -> Flash cascade | 0.7459 | 0.7348 | 0.6223 | 0.7993 | $0.2789 |
+| Local -> Pro cascade | 0.8102 | 0.7955 | 0.6809 | 0.8493 | $1.5421 |
+
+The cascade selects escalation policies on validation only. The best validation-selected Pro cascade escalates 253 of 281 test rows and reaches `0.8102` pair samples F1. A budgeted diagnostic shows that an 80% Pro call-rate constraint reaches `0.8149` test pair samples F1, but that row is not the headline because the headline must remain validation-selected rather than test-selected. See `docs/local_gemini_cascade.md`.
+
 ## Interpretation
 
 The closed-topic DistilBERT result remains the strongest current benchmark on the provided split.
 
 The held-out organisation traditional result is close to the closed-topic traditional baseline on pair samples F1, but pair macro F1 drops. The held-out-organisation DistilBERT run gives a clear improvement over the traditional model, but its macro F1 remains lower than closed-topic DistilBERT. This suggests that domain shift is still hurting long-tail labels even when overall performance is strong.
 
-The held-out aspect results are much lower than the closed-topic and held-out-organisation results, as expected. A fixed-output supervised classifier is not a meaningful model for unseen labels. The candidate-aspect cross-encoder is a stronger label-aware baseline and improves substantially over the lexical lower bound. Qwen indexed zero-shot is competitive, but it does not beat the best local fixed held-out-aspect result. Gemini 2.5 Flash with indexed JSON-schema prompting now matches the current strongest non-LLM fixed held-out-aspect headline score (`0.6071` test pair samples F1) and improves pair micro/macro F1, but it has hosted-API latency, cost, and governance trade-offs. The follow-up Gemini error analysis shows that this gain comes mainly from higher pair precision and fewer aspect over-predictions, while Gemini is conservative on `Company brand: Competitor` and returns more empty predictions than the local DistilBERT pipeline. Gemini 2.5 Pro is the strongest fixed-split hosted result (`0.7141` test pair samples F1), while Flash-Lite provides a very cheap/fast hosted point (`0.5516` test pair samples F1, 0.3719 s/test example). The global sentiment limitation has been tested carefully: DistilBERT aspect-conditioned sentiment improves the controlled lexical setup and the example-filtered strong pipeline, but it does not improve label-masked training. This supports using example-filtered as the cleaner fixed-split result while keeping label-masked as an incomplete-label-noise ablation. The next major modelling stage should not be more fixed-split sentiment tuning; useful next checks are the local-to-Gemini cascade, candidate-label descriptions, qualitative error taxonomy, Qwen fine-tuning/evaluation, or LOAO robustness for the selected local/Gemini branch if budget permits.
+The held-out aspect results are much lower than the closed-topic and held-out-organisation results, as expected. A fixed-output supervised classifier is not a meaningful model for unseen labels. The candidate-aspect cross-encoder is a stronger label-aware baseline and improves substantially over the lexical lower bound. Qwen indexed zero-shot is competitive, but it does not beat the best local fixed held-out-aspect result. Gemini 2.5 Flash with indexed JSON-schema prompting matches the current strongest non-LLM fixed held-out-aspect headline score (`0.6071` test pair samples F1) and improves pair micro/macro F1, but it has hosted-API latency, cost, and governance trade-offs. The follow-up Gemini error analysis shows that this gain comes mainly from higher pair precision and fewer aspect over-predictions, while Gemini is conservative on `Company brand: Competitor` and returns more empty predictions than the local DistilBERT pipeline. Gemini 2.5 Pro is the strongest fixed-split hosted result (`0.7141` test pair samples F1), while Flash-Lite provides a very cheap/fast hosted point (`0.5516` test pair samples F1, 0.3719 s/test example). The local-to-Gemini cascade is now the strongest fixed-split system result: Flash cascade reaches `0.7459`, and Pro cascade reaches `0.8102`. The cascade should be presented as selective deployment evidence, not as LOAO robustness evidence. The global sentiment limitation has been tested carefully: DistilBERT aspect-conditioned sentiment improves the controlled lexical setup and the example-filtered strong pipeline, but it does not improve label-masked training. This supports using example-filtered as the cleaner fixed-split result while keeping label-masked as an incomplete-label-noise ablation. The next major modelling stage should not be more fixed-split sentiment tuning; useful next checks are candidate-label descriptions, qualitative error taxonomy, Qwen fine-tuning/evaluation on stronger GPU access, or LOAO robustness for the selected local branch if budget permits.
 
-See `docs/heldout_aspect_error_analysis.md` for the earlier Qwen/local row-level analysis and `docs/gemini_error_analysis.md` for the Gemini Flash fixed-split error analysis and Pro-subset status.
+See `docs/heldout_aspect_error_analysis.md` for the earlier Qwen/local row-level analysis, `docs/gemini_error_analysis.md` for the Gemini Flash fixed-split error analysis, and `docs/local_gemini_cascade.md` for the selective escalation experiment.
 
 ## Reproduction
 

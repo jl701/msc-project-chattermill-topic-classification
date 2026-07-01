@@ -679,6 +679,13 @@ Held-out aspect, Gemini 2.5 Pro indexed JSON-schema:
   test pair macro F1:         0.629
   test mean latency:          5.651 seconds/example
   validation + test cost:     about $2.978
+
+Held-out aspect, local-to-Gemini selective cascade:
+  local -> Flash-Lite test pair samples F1: 0.668
+  local -> Flash test pair samples F1:      0.746
+  local -> Pro test pair samples F1:        0.810
+  policy selection: validation-only local reliability features
+  best Pro cascade call rate:               90.0% of test rows
 ```
 
 See `docs/generalisation_baselines.md` for details.
@@ -720,6 +727,7 @@ Completed:
   50-row Gemini Pro fixed-split subset comparison
   full Gemini Pro fixed validation/test evaluation
   full Gemini Flash-Lite fixed validation/test evaluation
+  local-to-Gemini uncertainty cascade over Flash-Lite, Flash, and Pro
 
 Final fixed held-out-aspect test:
   model: vertex_ai/gemini-2.5-flash
@@ -735,7 +743,7 @@ Final fixed held-out-aspect test:
 
 The Gemini implementation initially blocked on missing credentials, but the fixed held-out-aspect run was completed after Aji's endpoint/key details were supplied. The key was not committed. This is still a fixed three-aspect result, not Gemini LOAO robustness evidence.
 
-The Gemini fixed-split error analysis is now documented in `docs/gemini_error_analysis.md`. The main finding is that Gemini Flash ties the strongest local non-LLM pair samples F1 through a different error profile: it predicts fewer labels per row, has higher pair precision and fewer aspect over-predictions, but returns more empty predictions and is conservative on `Company brand: Competitor`. The fixed-split hosted Pareto table is now complete: Flash-Lite is cheapest and fastest, Flash is the balanced hosted baseline, and Pro is clearly strongest but slower and more expensive.
+The Gemini fixed-split error analysis is now documented in `docs/gemini_error_analysis.md`. The main finding is that Gemini Flash ties the strongest local non-LLM pair samples F1 through a different error profile: it predicts fewer labels per row, has higher pair precision and fewer aspect over-predictions, but returns more empty predictions and is conservative on `Company brand: Competitor`. The fixed-split hosted Pareto table is now complete: Flash-Lite is cheapest and fastest, Flash is the balanced hosted baseline, and Pro is clearly strongest but slower and more expensive. The local-to-Gemini cascade in `docs/local_gemini_cascade.md` is the strongest fixed-split system result so far, reaching `0.7459` pair samples F1 with Flash escalation and `0.8102` with Pro escalation.
 
 The current Tier 1 literature-review foundation is recorded in `docs/tier1_core_literature_review_matrix.md`. It covers customer review mining, ABSA, FABSA, multi-label evaluation, domain generalisation, candidate-label taxonomy shift, and structured-output LLM evaluation, while leaving detailed Qwen/Gemini fine-tuning and deployment-governance work as later optional branches.
 
@@ -774,8 +782,9 @@ Future dissertation-writing work should edit the LaTeX source directly. Markdown
    - Gemini error analysis shows higher precision and fewer aspect over-predictions than the local DistilBERT pipeline, but weaker recall for `Company brand: Competitor`.
    - Gemini Pro is the strongest fixed-split hosted baseline, but with substantially higher latency and cost.
    - Flash-Lite provides the cheapest and fastest hosted baseline.
-   - The strongest next dissertation-oriented Gemini/local work is not full Pro LOAO. It is: test a local-to-Gemini uncertainty cascade, then test candidate-aspect descriptions and qualitative error taxonomy.
-   - The next major options after that are Qwen fine-tuning/evaluation on stronger GPU access or LOAO robustness for the selected local/Gemini branch if budget permits.
+   - The local-to-Gemini cascade is complete and is the strongest fixed-split system result, but it remains fixed three-aspect evidence rather than LOAO robustness evidence.
+   - The strongest next dissertation-oriented Gemini/local work is not full Pro LOAO. It is candidate-aspect descriptions and qualitative error taxonomy.
+   - The next major options after that are Qwen fine-tuning/evaluation on stronger GPU access or LOAO robustness for the selected local branch if budget permits.
 
 ## 16. Immediate Next Steps
 
@@ -791,7 +800,7 @@ Future dissertation-writing work should edit the LaTeX source directly. Markdown
 
 6. Treat the fixed-split hosted Pareto comparison as complete: Flash-Lite, Flash, and Pro have all been run on validation/test.
 
-7. Prioritise local-to-Gemini cascade, Gemini-generated candidate descriptions, and Gemini-assisted qualitative error taxonomy as separate dissertation-value experiments.
+7. Treat the local-to-Gemini cascade as complete fixed-split selective-deployment evidence; prioritise Gemini-generated candidate descriptions and Gemini-assisted qualitative error taxonomy as separate dissertation-value experiments.
 
 8. Do not run full Gemini Pro LOAO unless the dissertation value justifies the added cost and latency.
 

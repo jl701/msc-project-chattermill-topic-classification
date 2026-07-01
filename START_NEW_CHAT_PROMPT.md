@@ -50,6 +50,7 @@ Before doing new work, please inspect these files. If a `D:\Msc_Project` path is
 17. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\literature_review_matrix.md
 18. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\gemini_candidate_label_baseline.md
 19. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\gemini_error_analysis.md
+20. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\local_gemini_cascade.md
 
 Immediate instruction for the new chat:
 
@@ -299,10 +300,36 @@ Gemini / Vertex AI access:
     - test mean latency 0.3719 seconds/example
     - validation + test approximate cost $0.0171
   - Flash-Lite is the cheapest/fastest hosted point; Pro is strongest; Flash is the balanced hosted baseline
+- Local-to-Gemini cascade status:
+  - implemented in `scripts/run_local_gemini_cascade.py`
+  - shared helpers in `src/msc_project/evaluation/cascade.py`
+  - tests in `tests/test_cascade_evaluation.py`
+  - documentation in `docs/local_gemini_cascade.md`
+  - policy selection uses validation-only local reliability features, not test labels
+  - each escalator sweep used 10,578 candidate policies with 1 percentage point ranked escalation steps
+  - local -> Flash-Lite cascade:
+    - test pair samples F1 0.6679
+    - test pair micro F1 0.6579
+    - test pair macro F1 0.5401
+    - call rate 50.9%
+    - test Gemini cost about $0.0052
+  - local -> Flash cascade:
+    - test pair samples F1 0.7459
+    - test pair micro F1 0.7348
+    - test pair macro F1 0.6223
+    - call rate 90.0%
+    - test Gemini cost about $0.2789
+  - local -> Pro cascade:
+    - test pair samples F1 0.8102
+    - test pair micro F1 0.7955
+    - test pair macro F1 0.6809
+    - call rate 90.0%
+    - test Gemini cost about $1.5421
+  - this is the strongest fixed-split system result so far, but it is still fixed three-aspect evidence rather than LOAO robustness evidence
 - Gemini/local dissertation-value roadmap:
   - fixed-split hosted Pareto baselines are now complete: Gemini Flash-Lite, Flash, and Pro
-  - next build a local-to-Gemini uncertainty cascade, escalating only uncertain local predictions and reporting escalation rate, F1, latency, and cost
-  - then test Gemini-generated candidate-aspect descriptions as label-representation support, without validation/test leakage
+  - local-to-Gemini uncertainty cascade is now complete
+  - next test Gemini-generated candidate-aspect descriptions as label-representation support, without validation/test leakage
   - then use Gemini Pro for qualitative error-taxonomy assistance, with manual review and no automatic metric claims
 - Important Gemini finding: `max_tokens=512` caused truncated JSON because Gemini spent most completion tokens thinking first. Use `max_tokens=2048` for this prompt unless a later sweep proves a cheaper reliable setting.
 - The runner defaults to `response_format=json_schema`, JSON object wrapper `{"labels": [...]}`, and indexed candidate IDs; it can fall back to plain JSON if the endpoint rejects response format.
@@ -338,6 +365,7 @@ Latest user decision and completed local baseline phase from 2026-06-27:
   - `docs/next_stage_and_literature_review_plan.md`
   - `docs/gemini_candidate_label_baseline.md`
   - `docs/gemini_error_analysis.md`
+  - `docs/local_gemini_cascade.md`
 
 Latest Aji/literature-review framing update from 2026-06-29:
 
@@ -403,6 +431,7 @@ python .\scripts\run_gemini_heldout_aspect.py --dry-run --split validation --lim
 python .\scripts\run_gemini_heldout_aspect.py --split both --limit 10000 --prompt-variant indexed --response-format json_schema --response-format-fallback --max-tokens 2048 --output-dir .\outputs\llm\gemini_candidate_label_YYYYMMDD_HHMMSS
 python .\scripts\analyse_gemini_heldout_aspect_errors.py --output-dir .\outputs\analysis\gemini_error_analysis
 python .\scripts\run_gemini_heldout_aspect.py --model vertex_ai/gemini-2.5-pro --split test --limit 50 --sample --seed 13 --prompt-variant indexed --response-format json_schema --response-format-fallback --max-tokens 2048 --output-dir .\outputs\llm\gemini_candidate_label_YYYYMMDD_HHMM_pro_test50
+python .\scripts\run_local_gemini_cascade.py --gemini-dir .\outputs\llm\gemini_candidate_label_20260701_0145_fixed_full --input-cost-per-1m 0.30 --output-cost-per-1m 2.50 --output-dir .\outputs\analysis\local_gemini_cascade_flash_grid1 --rank-rate-step 1
 ```
 
 Recommended next steps:
@@ -413,7 +442,7 @@ Recommended next steps:
 4. Keep using the LOAO all-row view for robustness checks and the positive-row view only as a sentiment diagnostic.
 5. Treat candidate-aspect DistilBERT selector + DistilBERT aspect-conditioned sentiment as the current strongest non-LLM fixed held-out-aspect baseline.
 6. Treat Gemini Flash as the completed hosted fixed held-out-aspect baseline, but do not run full Gemini LOAO unless the cost/benefit is explicitly justified.
-7. Useful next options are tackling cascade, aspect descriptions, and qualitative error taxonomy one by one.
+7. The local-to-Gemini cascade is complete; useful next options are aspect descriptions and qualitative error taxonomy, then Qwen fine-tuning/evaluation on stronger GPU access if available.
 8. If I ask to publish changes, commit/push only clean code and documentation, without committing outputs, data, credentials, checkpoints, or generated artifacts.
 
 Please start by summarising what you find in the current docs and repo state, then perform the strict audit, then propose the next concrete plan before implementing.

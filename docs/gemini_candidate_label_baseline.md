@@ -322,12 +322,13 @@ Results:
 | Check | Result |
 | --- | --- |
 | Parser/schema diagnostics tests | 11 tests OK |
-| Full unit test suite | 59 tests OK |
+| Full unit test suite | 63 tests OK |
 | Compile check | passed |
 | Dry-run request construction | passed |
 | Hosted API smoke test | passed |
 | 50-row validation sweep | completed |
 | Full validation/test evaluation | completed |
+| Local-to-Gemini cascade sweep | completed |
 
 ## Remaining Follow-Up
 

@@ -1405,3 +1405,107 @@ python -m compileall -q src scripts tests
 | Unit tests | 63 tests OK |
 | Compile check | passed |
 | Secret scan over tracked code/docs paths | no real API key found |
+
+## 2026-07-01: Local-To-Gemini Uncertainty Cascade
+
+### Purpose
+
+- Test the dissertation-relevant selective deployment pattern: local model first, hosted Gemini only for locally uncertain rows.
+- Compare Flash-Lite, Flash, and Pro as escalators under the same fixed held-out-aspect protocol.
+- Report F1, escalation rate, latency, token-cost estimates, and budgeted trade-offs without using test labels for policy selection.
+
+### Code Or Protocol Changes
+
+- Added `src/msc_project/evaluation/cascade.py` with row alignment, validation-derived reliability features, prediction-combination modes, and helper metrics.
+- Added `scripts/run_local_gemini_cascade.py`.
+- Added `tests/test_cascade_evaluation.py`.
+- Updated the cascade sweep to use 1 percentage point ranked escalation steps.
+- The historical local prediction files do not store calibrated aspect probabilities, so uncertainty is based on validation-derived local reliability proxies rather than score margins.
+
+### Setup
+
+- Dataset: FABSA fixed held-out-aspect split.
+- Held-out aspects:
+  - `Account management: Account access`
+  - `Company brand: Competitor`
+  - `Value: Discounts promotions`
+- Local baseline: candidate-aspect DistilBERT selector + DistilBERT aspect-conditioned sentiment, `example_filtered`, selector LR `3e-5`.
+- Gemini escalators:
+  - `vertex_ai/gemini-2.5-flash-lite`
+  - `vertex_ai/gemini-2.5-flash`
+  - `vertex_ai/gemini-2.5-pro`
+- Policy search: `10,578` candidate policies per escalator, selected on validation pair samples F1 with pair micro/macro F1 tie-breakers.
+- Combination modes included `replace`, `gemini_nonempty_else_local`, `union`, `intersection`, `agreement_or_gemini`, and `agreement_or_local`.
+
+### Commands
+
+```powershell
+python .\scripts\run_local_gemini_cascade.py --gemini-dir .\outputs\llm\gemini_candidate_label_20260701_034545_flash_lite_fixed_full --input-cost-per-1m 0.10 --output-cost-per-1m 0.40 --output-dir .\outputs\analysis\local_gemini_cascade_flash_lite_grid1 --rank-rate-step 1
+
+python .\scripts\run_local_gemini_cascade.py --gemini-dir .\outputs\llm\gemini_candidate_label_20260701_0145_fixed_full --input-cost-per-1m 0.30 --output-cost-per-1m 2.50 --output-dir .\outputs\analysis\local_gemini_cascade_flash_grid1 --rank-rate-step 1
+
+python .\scripts\run_local_gemini_cascade.py --gemini-dir .\outputs\llm\gemini_candidate_label_20260701_031040_pro_fixed_full --input-cost-per-1m 1.25 --output-cost-per-1m 10.00 --output-dir .\outputs\analysis\local_gemini_cascade_pro_grid1 --rank-rate-step 1
+```
+
+### Outputs
+
+- Local ignored analysis outputs:
+  - `outputs/analysis/local_gemini_cascade_flash_lite_grid1/`
+  - `outputs/analysis/local_gemini_cascade_flash_grid1/`
+  - `outputs/analysis/local_gemini_cascade_pro_grid1/`
+- Committed documentation:
+  - `docs/local_gemini_cascade.md`
+  - updated Gemini/generalisation/project handoff docs.
+- Generated outputs remain ignored because selected prediction files can contain review text.
+
+### Results
+
+Validation-selected test results:
+
+| Escalator | Policy Summary | Pair Samples F1 | Pair Micro F1 | Pair Macro F1 | Aspect Samples F1 | Calls | Call Rate | Test Gemini Cost |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| None, local only | n/a | 0.6071 | 0.5917 | 0.4890 | 0.6651 | 0 | 0.0000 | $0.0000 |
+| Flash-Lite | weighted pair+sentiment reliability, 51%, Gemini non-empty else local | 0.6679 | 0.6579 | 0.5401 | 0.7259 | 143 | 0.5089 | $0.0052 |
+| Flash | low minimum pair precision, 90%, Gemini non-empty else local | 0.7459 | 0.7348 | 0.6223 | 0.7993 | 253 | 0.9004 | $0.2789 |
+| Pro | low minimum pair precision, 90%, Gemini non-empty else local | 0.8102 | 0.7955 | 0.6809 | 0.8493 | 253 | 0.9004 | $1.5421 |
+
+Selected budget diagnostics:
+
+| Escalator | Budget | Pair Samples F1 | Pair Micro F1 | Pair Macro F1 | Calls | Cost |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Flash-Lite | 20% | 0.6511 | 0.6365 | 0.5155 | 48 | $0.0019 |
+| Flash-Lite | 50% | 0.6684 | 0.6547 | 0.5371 | 118 | $0.0044 |
+| Flash | 20% | 0.6636 | 0.6507 | 0.5399 | 56 | $0.0760 |
+| Flash | 50% | 0.7163 | 0.7038 | 0.5910 | 135 | $0.1632 |
+| Flash | 80% | 0.7495 | 0.7384 | 0.6175 | 222 | $0.2438 |
+| Pro | 20% | 0.6795 | 0.6646 | 0.5517 | 51 | $0.3108 |
+| Pro | 50% | 0.7515 | 0.7368 | 0.6314 | 140 | $0.8390 |
+| Pro | 80% | 0.8149 | 0.8013 | 0.6760 | 222 | $1.3461 |
+
+The 80% Pro budget row has the highest observed test pair samples F1, but it is recorded only as a budget diagnostic. The headline remains the validation-selected Pro cascade at `0.8102`.
+
+### Interpretation
+
+- The cascade is the strongest fixed held-out-aspect system result so far.
+- Flash-Lite is a very cheap escalator and improves local-only performance, but it is not the best quality point.
+- Flash is the practical selective-deployment point: large F1 gain over local-only at much lower cost and latency than Pro.
+- Pro is the upper hosted-quality point and reaches the best fixed-split F1.
+- This remains fixed three-aspect evidence, not LOAO robustness evidence.
+- A future local rerun could export DistilBERT selector probabilities and repeat the cascade with calibrated score/margin uncertainty features.
+
+### Next Step
+
+- Do not run full Gemini LOAO by default.
+- Next dissertation-value experiments should be candidate-aspect descriptions and qualitative error taxonomy.
+
+### Validation
+
+```powershell
+python -m unittest discover -s tests
+python -m compileall -q src scripts tests
+```
+
+| Check | Result |
+| --- | --- |
+| Unit tests | 63 tests OK |
+| Compile check | passed |
