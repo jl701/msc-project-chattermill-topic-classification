@@ -95,6 +95,12 @@ python .\scripts\run_local_gemini_cascade.py --gemini-dir .\outputs\llm\gemini_c
 python .\scripts\run_local_gemini_cascade.py --gemini-dir .\outputs\llm\gemini_candidate_label_20260701_031040_pro_fixed_full --input-cost-per-1m 1.25 --output-cost-per-1m 10.00 --output-dir .\outputs\analysis\local_gemini_cascade_pro_grid1 --rank-rate-step 1
 ```
 
+Pro cascade deep-dive:
+
+```powershell
+python .\scripts\analyse_local_gemini_cascade.py
+```
+
 Generated prediction and analysis outputs remain ignored under `outputs/` because they can contain review text.
 
 ## Full Hosted Baselines
@@ -120,6 +126,41 @@ Full Pro removes the earlier 50-row subset caveat. It is clearly stronger than F
 | Pro | low minimum pair precision, 90%, Gemini non-empty else local | 0.8102 | 0.7955 | 0.6809 | 0.8493 | 253 | 0.9004 | $1.5421 | 5.648 s |
 
 The main dissertation result is that selective escalation dominates either model family alone on the fixed split. The best local-only and Flash-only headline test score is `0.6071`, while Flash cascade reaches `0.7459` and Pro cascade reaches `0.8102`.
+
+## Why The Pro Cascade Beats Pure Pro
+
+The Pro cascade does not beat pure Pro because the local model is globally stronger. Pure Pro is still stronger than the local model on average: Pro reaches `0.7141` pair samples F1 versus local `0.6071`. The cascade wins because their errors are complementary and because the selected combination mode is `gemini_nonempty_else_local`.
+
+The validation-selected Pro policy escalates `253 / 281` test rows and keeps the local prediction for `28` rows. Pro is trusted when it returns a non-empty structured answer. If Pro returns no labels, or if the row was not selected for escalation, the cascade preserves the local prediction.
+
+| System | Pair Samples F1 | Pair Micro F1 | TP | FP | FN | Empty Prediction Rows | Exact Rows |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Local only | 0.6071 | 0.5917 | 192 | 168 | 97 | 0 | 144 |
+| Pure Pro | 0.7141 | 0.7425 | 222 | 87 | 67 | 28 | 167 |
+| Local -> Pro cascade | 0.8102 | 0.7955 | 249 | 88 | 40 | 0 | 194 |
+
+The largest pure-Pro failure mode is abstention. Pure Pro has `28` empty prediction rows on a test set where every evaluated row contains at least one held-out-aspect label. The cascade recovers all `28` of those rows with local predictions. On the Pro-empty rows, Pro has mean row sample F1 `0.0000`, while the local fallback and cascade both have `0.6905`.
+
+Row-level comparison confirms that the cascade gain is broad rather than a single-label artefact:
+
+- Cascade is better than pure Pro on `29` rows, equal on `250`, and worse on only `2`.
+- All `29` cascade-over-Pro gains come from preserving or falling back to the local prediction.
+- `20` of the `29` gains are directly from Pro-empty rows.
+- The cascade reduces pure-Pro pair false negatives from `67` to `40`, while keeping false positives almost unchanged (`87` to `88`).
+- Exact-match rows increase from `167` for pure Pro to `194` for the cascade.
+
+The main label-level gain is recall on `Company brand: Competitor`. At aspect level, cascade improves this aspect F1 from `0.7407` to `0.8487`, with `21` fewer false negatives and only `1` additional false positive. At pair level, the largest improvements are:
+
+| Pair Label | Pro F1 | Cascade F1 | Cascade - Pro F1 | FP Delta | FN Delta |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `Account management: Account access | neutral` | 0.7179 | 0.8696 | +0.1516 | +1 | -6 |
+| `Value: Discounts promotions | neutral` | 0.6154 | 0.7500 | +0.1346 | +1 | -2 |
+| `Company brand: Competitor | positive` | 0.6933 | 0.8263 | +0.1330 | 0 | -17 |
+| `Company brand: Competitor | negative` | 0.7619 | 0.8358 | +0.0739 | 0 | -4 |
+
+There is a small cost: `Account management: Account access` aspect F1 drops from `0.8432` under pure Pro to `0.8168` under the cascade because the cascade adds `6` false positives on that aspect. This is outweighed by the recall gain on competitor labels and by recovering Pro-empty rows.
+
+For the dissertation, the defensible interpretation is that the cascade is an error-complementarity result. Pro supplies stronger semantic generalisation for most uncertain local rows, while the local model acts as a deterministic safety net for hosted abstention and a small subset of rows where its fixed-label classifier is more reliable. The analysis uses test labels only after the validation-selected policy has been fixed, so it explains the result but does not select the headline policy.
 
 ## Budgeted Test Diagnostics
 

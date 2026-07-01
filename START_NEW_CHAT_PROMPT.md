@@ -325,6 +325,15 @@ Gemini / Vertex AI access:
     - test pair macro F1 0.6809
     - call rate 90.0%
     - test Gemini cost about $1.5421
+  - Pro cascade deep-dive:
+    - implemented in `scripts/analyse_local_gemini_cascade.py`
+    - documented in `docs/local_gemini_cascade.md`
+    - pure Pro test pair samples F1 is 0.7141, so local -> Pro is better than pure Pro by +0.0961
+    - reason: the winning `gemini_nonempty_else_local` policy keeps Pro on most escalated rows but falls back to local for Pro-empty/non-escalated rows
+    - pure Pro has 28 empty prediction rows; cascade recovers all 28 with local predictions
+    - cascade versus pure Pro: 29 better rows, 250 equal rows, 2 worse rows
+    - pair false negatives drop from 67 to 40 while false positives remain nearly flat, 87 to 88
+    - exact-match rows rise from 167 for pure Pro to 194 for the cascade
   - this is the strongest fixed-split system result so far, but it is still fixed three-aspect evidence rather than LOAO robustness evidence
 - Gemini/local dissertation-value roadmap:
   - fixed-split hosted Pareto baselines are now complete: Gemini Flash-Lite, Flash, and Pro

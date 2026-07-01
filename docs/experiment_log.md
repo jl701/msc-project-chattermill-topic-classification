@@ -1406,6 +1406,113 @@ python -m compileall -q src scripts tests
 | Compile check | passed |
 | Secret scan over tracked code/docs paths | no real API key found |
 
+## 2026-07-01: Local-To-Gemini Pro Cascade Deep-Dive
+
+### Purpose
+
+- Explain why the validation-selected local -> Pro cascade beats the pure Gemini Pro fixed-split baseline.
+- Separate global model strength from error complementarity.
+- Produce dissertation-ready diagnostics for row-level wins, Pro abstentions, false-positive/false-negative shifts, and label-level gains.
+
+### Code Or Protocol Changes
+
+- Added `scripts/analyse_local_gemini_cascade.py`.
+- The script aligns local, pure Pro, and selected cascade test predictions by row key.
+- It reconstructs the validation-selected escalation set from the cascade policy, then writes aggregate diagnostics under ignored `outputs/`.
+- Raw review text is not written to tracked documentation; generated examples contain only row ids, gold labels, predictions, and F1 values.
+
+### Setup
+
+- Dataset: FABSA fixed held-out-aspect test rows.
+- Held-out aspects:
+  - `Account management: Account access`
+  - `Company brand: Competitor`
+  - `Value: Discounts promotions`
+- Local baseline: candidate-aspect DistilBERT selector + DistilBERT aspect-conditioned sentiment, `example_filtered`.
+- Hosted baseline: full fixed-split `vertex_ai/gemini-2.5-pro`.
+- Cascade: validation-selected Pro policy from `outputs/analysis/local_gemini_cascade_pro_grid1/`.
+
+### Command
+
+```powershell
+python .\scripts\analyse_local_gemini_cascade.py
+```
+
+### Outputs
+
+- Local ignored output directory: `outputs/analysis/local_gemini_cascade_pro_deep_dive/`.
+- Files written:
+  - `summary.json`
+  - `pair_label_comparison.csv`
+  - `aspect_label_comparison.csv`
+  - `sentiment_label_comparison.csv`
+- Documentation updated in `docs/local_gemini_cascade.md`.
+
+### Results
+
+System-level comparison:
+
+| System | Pair Samples F1 | Pair Micro F1 | TP | FP | FN | Empty Prediction Rows | Exact Rows |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Local only | 0.6071 | 0.5917 | 192 | 168 | 97 | 0 | 144 |
+| Pure Pro | 0.7141 | 0.7425 | 222 | 87 | 67 | 28 | 167 |
+| Local -> Pro cascade | 0.8102 | 0.7955 | 249 | 88 | 40 | 0 | 194 |
+
+Row-level comparison:
+
+- Cascade is better than pure Pro on `29` rows, equal on `250`, and worse on `2`.
+- Pure Pro has `28` empty prediction rows; the cascade recovers all `28` with local predictions.
+- On Pro-empty rows, pure Pro mean row sample F1 is `0.0000`, while local fallback/cascade mean row sample F1 is `0.6905`.
+- The cascade reduces Pro pair false negatives from `67` to `40`, while false positives stay nearly flat (`87` to `88`).
+- Exact-match rows increase from `167` for Pro to `194` for the cascade.
+
+Largest label-level gains versus pure Pro:
+
+| Label | Pro F1 | Cascade F1 | F1 Delta | FP Delta | FN Delta |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `Account management: Account access | neutral` | 0.7179 | 0.8696 | +0.1516 | +1 | -6 |
+| `Value: Discounts promotions | neutral` | 0.6154 | 0.7500 | +0.1346 | +1 | -2 |
+| `Company brand: Competitor | positive` | 0.6933 | 0.8263 | +0.1330 | 0 | -17 |
+| `Company brand: Competitor | negative` | 0.7619 | 0.8358 | +0.0739 | 0 | -4 |
+
+Aspect-level diagnosis:
+
+- `Company brand: Competitor` improves from `0.7407` Pro F1 to `0.8487` cascade F1, mainly through `21` fewer false negatives.
+- `Value: Discounts promotions` is unchanged versus Pro.
+- `Account management: Account access` drops from `0.8432` Pro F1 to `0.8168` cascade F1 because the cascade adds `6` false positives, but this is outweighed by the larger recall gains elsewhere.
+
+### Interpretation
+
+- The cascade beats pure Pro because of error complementarity, not because the local model is stronger overall.
+- Pure Pro is much stronger than local on average, but it sometimes abstains or misses held-out labels, especially competitor labels.
+- The winning policy, `gemini_nonempty_else_local`, keeps Pro's semantic gains on most escalated rows and uses the local classifier as a deterministic safety net for Pro-empty or non-escalated rows.
+- This is useful dissertation evidence because it turns the hosted LLM into a selective deployment component rather than a simple full replacement.
+- The deep-dive uses test labels only after the validation-selected policy has been fixed, so it explains the headline result without selecting it.
+
+### Next Step
+
+- Treat task 3 as complete fixed-split selective-deployment evidence.
+- Use this analysis in the dissertation results/discussion chapter.
+- Keep LOAO robustness separate; this result should not be over-claimed as LOAO evidence.
+
+### Validation
+
+```powershell
+python .\scripts\analyse_local_gemini_cascade.py
+python -m unittest discover -s tests
+python -m compileall -q src scripts tests
+git diff --check
+rg -n "sk-[A-Za-z0-9_-]{12,}" . --glob '!outputs/**' --glob '!data/**' --glob '!models/**' --glob '!checkpoints/**' --glob '!.git/**'
+```
+
+| Check | Result |
+| --- | --- |
+| Deep-dive script | passed |
+| Unit tests | 63 tests OK |
+| Compile check | passed |
+| Diff whitespace check | passed, with CRLF conversion warnings only |
+| Secret scan over tracked code/docs paths | no real API key found |
+
 ## 2026-07-01: Local-To-Gemini Uncertainty Cascade
 
 ### Purpose
