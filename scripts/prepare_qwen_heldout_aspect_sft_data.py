@@ -72,7 +72,7 @@ def build_singleton_train_rows(
     candidate_aspects: list[str],
     prompt_variant: str,
     limit: int | None,
-    negative_ratio: int,
+    negative_ratio: float,
     seed: int,
 ) -> list[dict[str, object]]:
     rows = []
@@ -97,7 +97,7 @@ def build_singleton_train_rows(
             )
 
         negative_pool = [aspect for aspect in candidate_aspects if aspect not in set(positive_aspects)]
-        negative_count = min(len(negative_pool), max(1, len(positive_aspects)) * negative_ratio)
+        negative_count = singleton_negative_count(len(negative_pool), len(positive_aspects), negative_ratio, rng)
         for aspect in rng.sample(negative_pool, negative_count):
             rows.append(
                 sft_row(
@@ -111,6 +111,22 @@ def build_singleton_train_rows(
 
     rng.shuffle(rows)
     return rows
+
+
+def singleton_negative_count(
+    negative_pool_size: int,
+    positive_count: int,
+    negative_ratio: float,
+    rng: random.Random,
+) -> int:
+    if negative_ratio <= 0:
+        return 0
+    target_count = max(1, positive_count) * negative_ratio
+    whole_count = int(target_count)
+    fractional_count = target_count - whole_count
+    if fractional_count > 0 and rng.random() < fractional_count:
+        whole_count += 1
+    return min(negative_pool_size, whole_count)
 
 
 def selected_heldout_aspects(frame, requested_aspects: list[str]) -> list[str]:
@@ -185,7 +201,7 @@ def main() -> None:
     parser.add_argument("--heldout-aspect", action="append", default=[])
     parser.add_argument("--eval-row-scope", choices=["containing_heldout", "all"], default="containing_heldout")
     parser.add_argument("--train-candidate-mode", choices=["grouped", "singleton"], default="grouped")
-    parser.add_argument("--singleton-negative-ratio", type=int, default=1)
+    parser.add_argument("--singleton-negative-ratio", type=float, default=1.0)
     parser.add_argument("--seed", type=int, default=13)
     parser.add_argument("--limit", type=int, default=None)
     args = parser.parse_args()

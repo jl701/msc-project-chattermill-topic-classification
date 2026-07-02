@@ -614,3 +614,39 @@ Next optimisation:
   - train rows `24,368`, split almost 1:1 between non-empty and empty outputs.
 - Training budget is capped at `913` optimiser steps to match the standard-indexed primary run.
 - If this does not materially improve all-row validation, stop this single-fold optimisation and record that ordinary Qwen LoRA/SFT is insufficient without a more specialised calibration objective.
+
+Singleton neg1 completed validation result:
+
+- Validation rows: `1,057`.
+- Positive-gold rows: `86`.
+- Pair samples F1: `0.0028`.
+- Pair micro F1: `0.0625`.
+- Pair precision: `0.3000`.
+- Pair recall: `0.0349`.
+- FP rows / 100: `0.1892`.
+- FN rows / 100: `7.3794`.
+- Predicted labels per example: `0.0095`.
+- Valid JSON/schema-valid: `1.0000 / 1.0000`.
+- Training runtime: `5,863.1` seconds; validation runtime: `436.8` seconds.
+
+Interpretation:
+
+- This is a completed negative validation result.
+- The one-candidate 1:1 positive/negative SFT branch solved the over-prediction failure but became too conservative.
+- The evidence now brackets the calibration issue:
+  - grouped SFT over-predicts almost every all-row validation row;
+  - singleton neg1 under-predicts almost every held-out positive row.
+- Before stopping the single-fold optimisation, run one mid-ratio singleton branch (`--singleton-negative-ratio 0.25`) with the same `913` optimiser-step budget.
+- If this mid-ratio branch still fails to beat Qwen zero-shot validation pair micro F1 (`0.2397`) or has an unusable FP/FN trade-off, do not run test and do not start full 12-fold Qwen LoRA LOAO from the current SFT recipe.
+
+Planned mid-ratio data command:
+
+```powershell
+python .\scripts\prepare_qwen_heldout_aspect_sft_data.py --strategy example_filtered --prompt-variant indexed_conservative --heldout-aspect "Company brand: Competitor" --eval-row-scope all --train-candidate-mode singleton --singleton-negative-ratio 0.25 --seed 13 --output-dir .\outputs\qwen_lora_loao_sft_20260702\02_company_brand_competitor_allrow_singleton_neg025_indexed_conservative
+```
+
+Planned mid-ratio validation command:
+
+```powershell
+python .\scripts\run_qwen_lora_heldout_aspect.py --sft-data-dir .\outputs\qwen_lora_loao_sft_20260702\02_company_brand_competitor_allrow_singleton_neg025_indexed_conservative --strategy example_filtered --output-dir .\outputs\llm\qwen_lora_loao_single_fold_company_brand_competitor_singleton_neg025_r8_lr1e-5_steps913_allrow_20260702 --eval-split validation --epochs 1 --max-train-steps 913 --batch-size 1 --grad-accumulation-steps 8 --learning-rate 1e-5 --weight-decay 0.0 --warmup-ratio 0.05 --max-length 512 --max-input-tokens 1024 --max-new-tokens 192 --lora-r 8 --lora-alpha 16 --lora-dropout 0.05 --load-in-4bit --no-gradient-checkpointing --save-adapter --resume-predictions --skip-existing-predictions --save-epoch-adapters
+```

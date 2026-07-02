@@ -3242,3 +3242,67 @@ Stopping rule:
 
 - If singleton validation still fails to beat Qwen zero-shot validation pair micro F1 (`0.2397`) or does not reduce false positives materially, stop the single-fold optimisation and record that ordinary SFT plus prompt/data alignment was insufficient.
 - If it improves materially, run the same fold's test with the saved adapter before considering any additional folds.
+
+### Absence-Aware Singleton Neg1 Result and Mid-Ratio Optimisation Plan
+
+Observed singleton neg1 validation result:
+
+| Metric | Value |
+| --- | ---: |
+| examples | 1,057 |
+| positive-gold rows | 86 |
+| pair samples F1 | 0.0028 |
+| pair micro F1 | 0.0625 |
+| pair precision | 0.3000 |
+| pair recall | 0.0349 |
+| FP rows / 100 | 0.1892 |
+| FN rows / 100 | 7.3794 |
+| predicted labels / example | 0.0095 |
+| gold labels / example | 0.0814 |
+| valid JSON rate | 1.0000 |
+| schema-valid rate | 1.0000 |
+
+Runtime evidence:
+
+- Training rows: `24,368` original, `24,318` used after skipping `50` fully truncated-answer rows.
+- Optimiser steps completed: `913 / 913`.
+- Final train loss: `0.0703`.
+- Training runtime: `5,863.1` seconds.
+- Validation runtime: `436.8` seconds.
+- Adapter and predictions are local-only ignored outputs.
+
+Interpretation:
+
+- The singleton neg1 branch fixed the original over-prediction problem, but over-corrected into severe under-prediction.
+- This brackets the likely calibration problem:
+  - grouped SFT predicted the held-out aspect for nearly every all-row validation row;
+  - singleton neg1 SFT predicted almost no held-out aspects.
+- A single mid-ratio singleton run is justified before stopping, because it directly tests whether the useful operating point lies between those two failure modes.
+
+Pre-registered next run:
+
+- Data variant: singleton SFT with `indexed_conservative` prompts and `--singleton-negative-ratio 0.25`.
+- Held-out aspect: `Company brand: Competitor`.
+- Evaluation scope: all validation rows.
+- Training budget: `913` optimiser steps, matching the earlier primary run and singleton neg1 run.
+- Primary metric: validation pair micro F1.
+- Supporting diagnostics: precision, recall, FP rows / 100, FN rows / 100, predicted labels / example, valid/schema rates.
+- Test rule: run test only if validation materially improves over the same-fold Qwen zero-shot (`0.2397`) or provides a clearly better precision/recall trade-off than the local DistilBERT all-row validation baseline.
+
+Planned data command:
+
+```powershell
+python .\scripts\prepare_qwen_heldout_aspect_sft_data.py --strategy example_filtered --prompt-variant indexed_conservative --heldout-aspect "Company brand: Competitor" --eval-row-scope all --train-candidate-mode singleton --singleton-negative-ratio 0.25 --seed 13 --output-dir .\outputs\qwen_lora_loao_sft_20260702\02_company_brand_competitor_allrow_singleton_neg025_indexed_conservative
+```
+
+Planned validation command:
+
+```powershell
+python .\scripts\run_qwen_lora_heldout_aspect.py --sft-data-dir .\outputs\qwen_lora_loao_sft_20260702\02_company_brand_competitor_allrow_singleton_neg025_indexed_conservative --strategy example_filtered --output-dir .\outputs\llm\qwen_lora_loao_single_fold_company_brand_competitor_singleton_neg025_r8_lr1e-5_steps913_allrow_20260702 --eval-split validation --epochs 1 --max-train-steps 913 --batch-size 1 --grad-accumulation-steps 8 --learning-rate 1e-5 --weight-decay 0.0 --warmup-ratio 0.05 --max-length 512 --max-input-tokens 1024 --max-new-tokens 192 --lora-r 8 --lora-alpha 16 --lora-dropout 0.05 --load-in-4bit --no-gradient-checkpointing --save-adapter --resume-predictions --skip-existing-predictions --save-epoch-adapters
+```
+
+Stopping rule:
+
+- If neg0.25 still does not beat same-fold Qwen zero-shot validation pair micro F1 or still has an unusable FP/FN trade-off, stop the single-fold optimisation.
+- Do not run test for a failed validation branch.
+- Do not start full 12-fold Qwen LoRA LOAO from these results.

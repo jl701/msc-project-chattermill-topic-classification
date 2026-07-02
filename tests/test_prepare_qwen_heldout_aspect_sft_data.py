@@ -13,7 +13,7 @@ import pandas as pd
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
 
-from prepare_qwen_heldout_aspect_sft_data import write_strategy_data
+from prepare_qwen_heldout_aspect_sft_data import build_singleton_train_rows, write_strategy_data
 
 
 def tiny_frame() -> pd.DataFrame:
@@ -90,6 +90,33 @@ class PrepareQwenHeldoutAspectSftDataTests(unittest.TestCase):
         self.assertEqual(sum(1 for row in train_rows if row["pair_labels"]), 2)
         self.assertEqual(sum(1 for row in train_rows if not row["pair_labels"]), 2)
         self.assertTrue(all(len(row["candidate_aspects"]) == 1 for row in train_rows))
+
+    def test_singleton_train_mode_accepts_fractional_negative_ratio(self) -> None:
+        frame = pd.DataFrame(
+            [
+                {
+                    "id": "tr1",
+                    "row_uid": "train:tr1",
+                    "original_split": "train",
+                    "text": "two positive aspects",
+                    "supervision_pair_labels": ["A | positive", "B | negative"],
+                }
+            ]
+        )
+
+        rows = build_singleton_train_rows(
+            frame,
+            ["A", "B", "C"],
+            "indexed_conservative",
+            None,
+            0.5,
+            13,
+        )
+
+        self.assertEqual(len(rows), 3)
+        self.assertEqual(sum(1 for row in rows if row["pair_labels"]), 2)
+        self.assertEqual(sum(1 for row in rows if not row["pair_labels"]), 1)
+        self.assertTrue(all(len(row["candidate_aspects"]) == 1 for row in rows))
 
 
 if __name__ == "__main__":
