@@ -3375,6 +3375,105 @@ Stopping rule:
 - Do not run more singleton ratio sweeps in this session unless a validation result crosses the baseline threshold.
 - Do not start full 12-fold Qwen LoRA LOAO from these single-fold results if neg0.10 remains below baseline.
 
+## 2026-07-02 - Planned Local-to-Qwen LOAO Offline Cascade Diagnostic
+
+Question:
+
+- Test whether the stronger thesis direction is not Qwen replacing DistilBERT, but Qwen complementing DistilBERT under LOAO taxonomy shift.
+- Reuse existing full all-row LOAO predictions:
+  - local DistilBERT candidate-aspect selector plus DistilBERT aspect-conditioned sentiment;
+  - Qwen3-4B indexed zero-shot.
+- Do not call Qwen again and do not retrain DistilBERT for this first diagnostic.
+
+Motivation:
+
+- Gemini fixed-split evidence already showed that a local-to-LLM cascade can outperform an LLM-only deployment because each model handles different parts of the distribution.
+- Qwen zero-shot has strong positive-gold recognition but weak absence calibration.
+- DistilBERT is more conservative and cheaper, but weaker under some unseen-aspect semantic shifts.
+- A local-to-Qwen cascade may therefore be more thesis-relevant than direct Qwen JSON SFT.
+
+Inputs:
+
+- Local LOAO predictions:
+  `outputs/baselines/loao_cross_encoder_transformer_sentiment_example_filtered_micro_selection_20260630/`
+- Qwen validation predictions:
+  `outputs/llm/qwen_loao_heldout_aspect_all_rows_validation_20260701/`
+- Qwen test predictions:
+  `outputs/llm/qwen_loao_heldout_aspect_all_rows_test_20260701/`
+
+Planned command:
+
+```powershell
+python .\scripts\analyse_local_qwen_loao_cascade.py --output-dir .\outputs\analysis\local_qwen_loao_cascade_20260702
+```
+
+Policies:
+
+- `local_only`;
+- `qwen_only`;
+- `local_nonempty_else_qwen`;
+- `qwen_nonempty_else_local`;
+- `pair_agreement`;
+- `aspect_agreement_local_sentiment`;
+- `aspect_agreement_qwen_sentiment`;
+- `union_pairs`.
+
+Selection:
+
+- Primary diagnostic metric: validation mean pair micro F1 across the 12 LOAO folds.
+- Also report pair precision/recall, false-positive rows / 100, false-negative rows / 100, and estimated Qwen call rate.
+- Compare:
+  - fixed single policies;
+  - one global validation-selected policy applied to test;
+  - an optimistic per-aspect validation-selected policy applied to test.
+
+Important limitation:
+
+- Existing DistilBERT LOAO prediction files do not contain row-level score/margin features.
+- This run is therefore an offline prediction-combination diagnostic, not the final confidence-based uncertainty gate.
+- If the result shows useful signal, the next method step is to rerun/export local LOAO score and margin features for true uncertainty routing.
+
+Observed command:
+
+```powershell
+python .\scripts\analyse_local_qwen_loao_cascade.py --output-dir .\outputs\analysis\local_qwen_loao_cascade_20260702
+```
+
+Observed results:
+
+| Policy / Selection | Split | Pair Micro F1 Mean | Precision Mean | Recall Mean | FP Rows / 100 Mean | FN Rows / 100 Mean | Qwen Call Rate Mean |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Local DistilBERT only | test | 0.3128 | 0.3345 | 0.4315 | 12.7022 | 8.6746 | 0.0000 |
+| Qwen only | test | 0.3378 | 0.2379 | 0.8182 | 34.4150 | 2.9235 | 1.0000 |
+| Global validation-selected: `aspect_agreement_qwen_sentiment` | test | 0.3470 | 0.4116 | 0.4147 | 8.8112 | 9.0265 | 0.1868 |
+| Optimistic per-aspect validation-selected mixed policy | test | 0.4131 | 0.3461 | 0.5779 | 16.1101 | 3.8332 | 0.3645 |
+
+Interpretation:
+
+- The global validation-selected policy improves mean test pair micro F1 over both local-only and Qwen-only while reducing Qwen calls to about `18.7%` of rows.
+- The selected global policy is a confirmation gate: keep the prediction only when local predicts the aspect and Qwen also predicts the aspect, using Qwen's sentiment label.
+- This sharply improves precision and false-positive control relative to Qwen-only, but gives up Qwen's high recall.
+- The optimistic per-aspect validation-selected policy is much stronger (`0.4131` mean pair micro F1) and beats the documented lexical all-row LOAO lower bound (`0.3780`), but it has more selection freedom and a higher Qwen call rate.
+- The result supports the model-division hypothesis:
+  - Qwen is useful as a semantic complement;
+  - DistilBERT remains valuable as a cheap stabilising gate;
+  - the most promising next step is a true score/margin uncertainty gate, not direct Qwen JSON SFT.
+
+Limitations:
+
+- This is an offline combination of existing predictions, not a fresh deployment run.
+- The old local LOAO predictions do not contain row-level score/margin features, so the current gate uses prediction presence/agreement rather than calibrated local uncertainty.
+- Per-aspect validation selection is an optimistic diagnostic and should not be presented as a final deployed policy unless the selection rule is frozen before test in a future run.
+
+Next step:
+
+- Rerun or export local LOAO score features for the same predictions if feasible.
+- Implement a true local-score/margin-to-Qwen uncertainty gate and compare it against:
+  - local-only;
+  - Qwen-only;
+  - simple agreement confirmation;
+  - per-aspect validation-selected diagnostic.
+
 ### Absence-Aware Singleton Neg0.10 Result and Stop Decision
 
 Observed singleton neg0.10 validation result:
