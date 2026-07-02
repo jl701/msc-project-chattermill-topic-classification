@@ -3120,3 +3120,62 @@ python .\scripts\run_qwen_lora_heldout_aspect.py --sft-data-dir .\outputs\qwen_l
 
 - Commit only code, tests, tracked docs, and aggregate metrics.
 - Do not commit `outputs/`, raw predictions, raw review text, adapters, checkpoints, model weights, credentials, or private endpoints.
+
+### Primary Validation Run: Early Stop
+
+Observed training result:
+
+- Training rows: `7,314` original, `7,302` used after skipping `12` fully truncated-answer rows.
+- Optimiser steps completed: `913 / 913`.
+- Final train loss: `0.1178`.
+- Training runtime: `7,483.0` seconds.
+- Adapter was saved under the ignored output directory.
+
+The validation generation was stopped early after `107 / 1,057` rows because the partial diagnostic showed severe over-prediction:
+
+| Metric | Partial Value |
+| --- | ---: |
+| examples | 107 |
+| positive-gold rows | 12 |
+| pair samples F1 | 0.0935 |
+| pair micro F1 | 0.1681 |
+| pair precision | 0.0935 |
+| pair recall | 0.8333 |
+| FP rows / 100 | 88.7850 |
+| predicted labels / example | 1.0000 |
+| gold labels / example | 0.1121 |
+| valid JSON rate | 1.0000 |
+| schema-valid rate | 1.0000 |
+
+Interpretation:
+
+- The standard indexed prompt/data setup trained successfully but produced a label for every validation row in the all-row setting.
+- This is far worse than the zero-shot all-row baseline's validation FP rows / 100 (`17.7862`) and does not test the intended improvement.
+- The run is a negative partial diagnostic, not a completed validation result.
+
+### Prompt-Only Optimisation Branch
+
+Before retraining, run a cheaper prompt-only optimisation:
+
+- Reuse the saved adapter from the stopped standard-indexed run.
+- Regenerate the same fold's validation prompts with `indexed_conservative`.
+- Use `--skip-training-if-adapter-exists` from a new output directory containing a copied local adapter.
+- Run full all-row validation only.
+
+Rationale:
+
+- The stopped run used the older `indexed` prompt text from `src/msc_project/llm/qwen_format.py`, which does not explicitly say to return `[]` when no candidate aspect is relevant.
+- `indexed_conservative` adds explicit absence guidance and is the lowest-cost check for whether the over-prediction failure is prompt-sensitive.
+- If this still over-predicts badly, the next useful optimisation is not another prompt-only rerun; it is a separately pre-registered absence-aware one-candidate SFT data construction.
+
+Planned conservative data command:
+
+```powershell
+python .\scripts\prepare_qwen_heldout_aspect_sft_data.py --strategy example_filtered --prompt-variant indexed_conservative --heldout-aspect "Company brand: Competitor" --eval-row-scope all --output-dir .\outputs\qwen_lora_loao_sft_20260702\02_company_brand_competitor_allrow_indexed_conservative
+```
+
+Planned conservative validation command:
+
+```powershell
+python .\scripts\run_qwen_lora_heldout_aspect.py --sft-data-dir .\outputs\qwen_lora_loao_sft_20260702\02_company_brand_competitor_allrow_indexed_conservative --strategy example_filtered --output-dir .\outputs\llm\qwen_lora_loao_single_fold_company_brand_competitor_r8_lr1e-5_ep1_allrow_conservative_eval_20260702 --eval-split validation --epochs 1 --batch-size 1 --grad-accumulation-steps 8 --learning-rate 1e-5 --weight-decay 0.0 --warmup-ratio 0.05 --max-length 512 --max-input-tokens 1024 --max-new-tokens 192 --lora-r 8 --lora-alpha 16 --lora-dropout 0.05 --load-in-4bit --no-gradient-checkpointing --save-adapter --skip-training-if-adapter-exists --no-resume-predictions --no-skip-existing-predictions
+```

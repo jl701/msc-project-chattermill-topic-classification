@@ -567,3 +567,26 @@ Expected contribution:
 
 - Positive result: justifies expanding Qwen LoRA LOAO beyond one fold.
 - Negative result: protects the dissertation from wasting time on a likely weak full fine-tuning sweep and motivates absence-aware SFT or calibration as future work.
+
+Primary run early-stop note:
+
+- Training completed successfully:
+  - used rows: `7,302 / 7,314`;
+  - optimiser steps: `913`;
+  - train loss: `0.1178`;
+  - training runtime: `7,483.0` seconds.
+- Validation was stopped after `107 / 1,057` rows because the partial result showed severe over-prediction:
+  - pair micro F1: `0.1681`;
+  - precision: `0.0935`;
+  - recall: `0.8333`;
+  - FP rows / 100: `88.7850`;
+  - predicted labels per example: `1.0000`;
+  - valid JSON/schema-valid: `1.0000 / 1.0000`.
+- This is not a completed validation result; it is a negative early diagnostic.
+- Interpretation: the standard indexed prompt/data setup trained, but it was not calibrated for all-row absence. It predicted the single candidate aspect for every prefix row.
+
+Next optimisation before retraining:
+
+- Reuse the saved adapter and rerun validation with `indexed_conservative` prompts.
+- This checks whether explicit `[]` absence guidance can reduce over-prediction without spending another full training run.
+- If conservative prompting still fails, the next worthwhile optimisation is a separately pre-registered absence-aware one-candidate SFT data format, not another ordinary full-fold rerun.
