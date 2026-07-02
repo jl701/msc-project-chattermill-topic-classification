@@ -87,7 +87,7 @@ Use the checklist below as the operational source of truth before starting the f
 - [x] Add or confirm resume/skip-existing behaviour for Qwen LoRA training checkpoints, adapter outputs, and validation/test predictions.
 - [x] Add focused tests for the final Qwen LoRA runner's data loading, manifest writing, resume/skip logic, and prediction normalisation.
 - [x] Run a tiny local Qwen LoRA held-out-aspect smoke test on a few training/evaluation rows to verify model loading, loss masking, adapter saving, JSON parsing, and metrics.
-- [ ] Run one fixed held-out-aspect Qwen LoRA configuration before full LOAO if local/remote GPU time allows; use validation selection before test evaluation.
+- [x] Run one fixed held-out-aspect Qwen LoRA configuration before full LOAO if local/remote GPU time allows; use validation selection before test evaluation.
 - [x] Define the final full 12-fold Qwen LoRA LOAO command templates, output directory pattern, checkpoint naming, and recovery plan.
 - [ ] Confirm the target GPU environment, storage budget, package versions, and data-transfer rules before launching any long full-LOAO run.
 - [ ] Run the standard validation and safety checks immediately before the full Qwen LoRA LOAO launch.
@@ -214,14 +214,14 @@ Work that should be completed before the full LOAO run:
   - output directory.
 - Support resume/skip-existing checkpoints and predictions.
 - Run tiny local smoke training and evaluation.
-- If local schedule allows, run one fixed held-out-aspect QLoRA configuration before full LOAO:
+- Completed one fixed held-out-aspect QLoRA configuration before full LOAO:
   - `example_filtered`;
-  - LoRA rank `8`;
-  - learning rates `1e-4` and/or `2e-4`;
-  - 3 epochs;
-  - fixed held-out validation selection;
-  - fixed held-out test evaluation;
-  - optional fixed all-row diagnostic.
+  - LoRA rank `8`, alpha `16`, dropout `0.05`;
+  - learning rate `1e-5`;
+  - 1 epoch;
+  - fixed held-out validation evaluation before test;
+  - test pair samples F1 `0.5528`, pair micro F1 `0.5552`, pair macro F1 `0.4393`;
+  - valid JSON rate `1.0000`, schema-valid rate `0.9964`.
 - Record the expected cloud/local command templates for full 12-fold LOAO.
 
 Boundary:

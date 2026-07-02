@@ -88,6 +88,17 @@ PROTOCOL_LADDER = [
         "aspect_samples_f1": 0.6340,
         "notes": "Open-weight zero-shot fixed split; not fine-tuned.",
     },
+    {
+        "section": "fixed held-out aspect",
+        "system": "Qwen3-4B QLoRA indexed SFT",
+        "protocol": "fixed three held-out aspects, example-filtered",
+        "split": "test",
+        "pair_samples_f1": 0.5528,
+        "pair_micro_f1": 0.5552,
+        "pair_macro_f1": 0.4393,
+        "aspect_samples_f1": 0.6192,
+        "notes": "One-epoch fixed-split QLoRA; modest adaptation gain over Qwen zero-shot, below the strongest local baseline.",
+    },
 ]
 
 
@@ -308,6 +319,12 @@ EVIDENCE_MAP = [
         "protocol": "Qwen all-row LOAO plus positive-gold diagnostic",
         "evidence_source": "docs/qwen_feasibility.md; docs/qwen_loao_experiment_analysis.md",
         "table": "qwen_positive_diagnostic",
+    },
+    {
+        "claim": "Fixed-split Qwen LoRA gives modest adaptation evidence, but does not replace full LOAO.",
+        "protocol": "fixed three held-out aspects",
+        "evidence_source": "docs/qwen_feasibility.md; docs/experiment_log.md",
+        "table": "protocol_ladder",
     },
     {
         "claim": "Gemini and local-to-Gemini cascades are fixed-split deployment evidence, not LOAO robustness evidence.",

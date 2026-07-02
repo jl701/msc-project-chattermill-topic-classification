@@ -12,15 +12,18 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
 
 from run_qwen_lora_heldout_aspect import (
+    ChatSftDataset,
     apply_existing_adapter_resume,
     build_manifest,
     complete_existing_predictions,
     encode_sft_example,
     existing_predictions_are_usable,
+    load_existing_summary_state,
     load_sft_split,
     normalise_prediction_output,
     prediction_path,
     resolve_sft_data_dir,
+    run_manifest_path_for,
     should_skip_training,
     write_json,
     write_jsonl,
@@ -84,6 +87,7 @@ def manifest_args(**overrides):
         "weight_decay": 0.0,
         "warmup_ratio": 0.0,
         "max_grad_norm": 1.0,
+        "log_every_steps": 50,
         "prompt_variant": "indexed",
         "strategy": "example_filtered",
         "train_limit": 4,
@@ -124,6 +128,12 @@ class QwenLoraHeldoutRunnerTests(unittest.TestCase):
         self.assertTrue(all(label == -100 for label in encoded["labels"][:first_unmasked]))
         self.assertTrue(any(label != -100 for label in encoded["labels"]))
         self.assertEqual(len(encoded["input_ids"]), len(encoded["labels"]))
+
+    def test_chat_sft_dataset_skips_rows_with_fully_truncated_answer(self) -> None:
+        dataset = ChatSftDataset([sft_row()], FakeTokenizer(), max_length=2)
+
+        self.assertEqual(len(dataset), 0)
+        self.assertEqual(dataset.skipped_no_label_count, 1)
 
     def test_prediction_resume_requires_prefix_row_ids(self) -> None:
         eval_rows = [sft_row("r1"), sft_row("r2")]
@@ -197,6 +207,31 @@ class QwenLoraHeldoutRunnerTests(unittest.TestCase):
             apply_existing_adapter_resume(output_dir, args)
 
             self.assertEqual(args.resume_from_adapter, adapter_dir)
+
+    def test_existing_summary_state_replaces_only_requested_eval_splits(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            output_dir = Path(tmp)
+            write_json(
+                {
+                    "train_history": [{"epoch": 1, "loss": 0.5}],
+                    "eval_results": [
+                        {"split": "validation", "pair_micro_f1": 0.4},
+                        {"split": "test", "pair_micro_f1": 0.3},
+                    ],
+                },
+                output_dir / "summary.json",
+            )
+
+            train_history, eval_results = load_existing_summary_state(output_dir, ["test"])
+
+        self.assertEqual(train_history, [{"epoch": 1, "loss": 0.5}])
+        self.assertEqual(eval_results, [{"split": "validation", "pair_micro_f1": 0.4}])
+
+    def test_run_manifest_path_is_windows_safe_and_split_specific(self) -> None:
+        path = run_manifest_path_for(Path("outputs") / "run", "2026-07-02T05:11:32", ["validation", "test"])
+
+        self.assertEqual(path.name, "20260702_051132_validation_test_manifest.json")
+        self.assertNotIn(":", str(path))
 
 
 if __name__ == "__main__":

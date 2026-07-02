@@ -2,7 +2,7 @@
 
 Last updated: 2026-07-02
 
-This note defines the launch plan for the optional fixed held-out-aspect Qwen LoRA run and the later full 12-fold Qwen LoRA leave-one-aspect-out (LOAO) run. It is a plan only: no full fixed held-out-aspect Qwen LoRA run and no full 12-fold Qwen LoRA LOAO run have been started.
+This note records the completed fixed held-out-aspect Qwen LoRA run and defines the launch plan for the later full 12-fold Qwen LoRA leave-one-aspect-out (LOAO) run. The fixed run is complete; the full 12-fold Qwen LoRA LOAO run has not been started.
 
 ## Current Readiness
 
@@ -20,34 +20,49 @@ Completed prerequisites:
   - adapter saved under ignored `outputs/`;
   - validation/test JSON and schema validity: `1.0000`;
   - metrics and manifest written.
+- One fixed held-out-aspect QLoRA configuration completed on the RTX 5050 Laptop GPU:
+  - train rows used: `6,485` after skipping `10` fully truncated-answer rows;
+  - validation rows: `212`;
+  - test rows: `281`;
+  - test pair samples F1: `0.5528`;
+  - test pair micro F1: `0.5552`;
+  - test valid JSON/schema-valid rates: `1.0000 / 0.9964`.
 
-## Optional Fixed Held-Out-Aspect Configuration
+## Completed Fixed Held-Out-Aspect Configuration
 
-The fixed held-out-aspect Qwen LoRA run is not required before writing the full LOAO plan, but it is useful adaptation evidence if GPU time allows. On the local 8 GB laptop GPU it is expected to take more than two hours once full validation/test generation is included, so it should not be started without explicit confirmation.
+The fixed held-out-aspect Qwen LoRA run was completed after explicit approval for a long local GPU run. It is useful adaptation evidence, but it is still fixed-split evidence and must not be treated as full LOAO robustness evidence.
 
-Prepare the fixed three-aspect SFT data:
+Input data:
 
 ```powershell
 python .\scripts\prepare_qwen_heldout_aspect_sft_data.py --strategy example_filtered --prompt-variant indexed --output-dir .\outputs\qwen_heldout_aspect_sft_indexed
 ```
 
-Recommended validation command:
+Successful validation command:
 
 ```powershell
-python .\scripts\run_qwen_lora_heldout_aspect.py --sft-data-dir .\outputs\qwen_heldout_aspect_sft_indexed --strategy example_filtered --output-dir .\outputs\llm\qwen_lora_fixed_example_filtered_r8_lr1e-5_ep1_YYYYMMDD --eval-split validation --epochs 1 --batch-size 1 --grad-accumulation-steps 8 --learning-rate 1e-5 --weight-decay 0.0 --warmup-ratio 0.05 --max-length 512 --max-input-tokens 1024 --max-new-tokens 192 --lora-r 8 --lora-alpha 16 --lora-dropout 0.05 --load-in-4bit --gradient-checkpointing --save-adapter --resume-predictions --skip-existing-predictions --save-epoch-adapters
+python .\scripts\run_qwen_lora_heldout_aspect.py --sft-data-dir .\outputs\qwen_heldout_aspect_sft_indexed --strategy example_filtered --output-dir .\outputs\llm\qwen_lora_fixed_example_filtered_r8_lr1e-5_ep1_skipfix_20260702 --eval-split validation --epochs 1 --batch-size 1 --grad-accumulation-steps 8 --learning-rate 1e-5 --weight-decay 0.0 --warmup-ratio 0.05 --max-length 512 --max-input-tokens 1024 --max-new-tokens 192 --lora-r 8 --lora-alpha 16 --lora-dropout 0.05 --load-in-4bit --no-gradient-checkpointing --save-adapter --resume-predictions --skip-existing-predictions --save-epoch-adapters
 ```
 
-Recommended test command after validation review:
+Successful test command after validation review:
 
 ```powershell
-python .\scripts\run_qwen_lora_heldout_aspect.py --sft-data-dir .\outputs\qwen_heldout_aspect_sft_indexed --strategy example_filtered --output-dir .\outputs\llm\qwen_lora_fixed_example_filtered_r8_lr1e-5_ep1_YYYYMMDD --eval-split test --epochs 1 --batch-size 1 --grad-accumulation-steps 8 --learning-rate 1e-5 --weight-decay 0.0 --warmup-ratio 0.05 --max-length 512 --max-input-tokens 1024 --max-new-tokens 192 --lora-r 8 --lora-alpha 16 --lora-dropout 0.05 --load-in-4bit --gradient-checkpointing --save-adapter --skip-training-if-adapter-exists --resume-predictions --skip-existing-predictions
+python .\scripts\run_qwen_lora_heldout_aspect.py --sft-data-dir .\outputs\qwen_heldout_aspect_sft_indexed --strategy example_filtered --output-dir .\outputs\llm\qwen_lora_fixed_example_filtered_r8_lr1e-5_ep1_skipfix_20260702 --eval-split test --epochs 1 --batch-size 1 --grad-accumulation-steps 8 --learning-rate 1e-5 --weight-decay 0.0 --warmup-ratio 0.05 --max-length 512 --max-input-tokens 1024 --max-new-tokens 192 --lora-r 8 --lora-alpha 16 --lora-dropout 0.05 --load-in-4bit --no-gradient-checkpointing --save-adapter --skip-training-if-adapter-exists --resume-predictions --skip-existing-predictions
 ```
 
-Fixed-run stopping rule:
+Observed fixed-run result:
 
-- If validation JSON/schema validity drops materially below the zero-shot fixed result, inspect raw local predictions before running test.
-- If validation over-predicts badly on empty-gold rows, do not treat the fixed run as sufficient evidence for LOAO readiness.
-- Do not choose test-facing hyperparameters after inspecting test labels.
+| Split | Pair Samples F1 | Pair Micro F1 | Pair Macro F1 | Aspect Samples F1 | Valid JSON | Schema Valid |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| validation | 0.5991 | 0.5977 | 0.4335 | 0.6635 | 1.0000 | 1.0000 |
+| test | 0.5528 | 0.5552 | 0.4393 | 0.6192 | 1.0000 | 0.9964 |
+
+Fixed-run limitations:
+
+- The fixed run used only the fixed three held-out aspects, not all-row LOAO folds.
+- It does not evaluate empty-gold absence calibration.
+- It was a single one-epoch local configuration, not a full Qwen hyperparameter sweep.
+- The full LOAO templates below remain necessary before claiming fine-tuned Qwen robustness across aspect rotations.
 
 ## Full 12-Fold LOAO Fold List
 
@@ -109,6 +124,7 @@ Prediction recovery:
 - Re-run the same command with `--resume-predictions --skip-existing-predictions`.
 - Existing prediction JSONL files are accepted only when their row-index/id prefix matches the requested split.
 - Complete prediction files are skipped and metrics are recomputed from the stored rows.
+- Each runner invocation writes both latest `manifest.json` and a run-specific manifest under `<output_dir>/manifests/`, so validation and test commands can be audited separately even when they share an adapter directory.
 
 Adapter recovery:
 

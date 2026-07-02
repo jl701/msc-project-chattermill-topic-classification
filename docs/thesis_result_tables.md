@@ -13,6 +13,7 @@ This document freezes thesis-ready aggregate tables before the full fine-tuned Q
 | The strongest local fixed held-out-aspect result is candidate-aspect DistilBERT plus DistilBERT sentiment. | fixed three held-out aspects | docs/generalisation_baselines.md; docs/non_llm_open_topic_baseline.md | protocol_ladder |
 | Full all-row LOAO is substantially harder than the fixed held-out-aspect split. | 12-fold all-row LOAO | docs/loao_heldout_aspect.md; docs/qwen_loao_experiment_analysis.md | loao_robustness and fixed_vs_loao_drop |
 | Qwen zero-shot recognises present aspects but over-predicts on empty-gold rows. | Qwen all-row LOAO plus positive-gold diagnostic | docs/qwen_feasibility.md; docs/qwen_loao_experiment_analysis.md | qwen_positive_diagnostic |
+| Fixed-split Qwen LoRA gives modest adaptation evidence, but does not replace full LOAO. | fixed three held-out aspects | docs/qwen_feasibility.md; docs/experiment_log.md | protocol_ladder |
 | Gemini and local-to-Gemini cascades are fixed-split deployment evidence, not LOAO robustness evidence. | fixed held-out-aspect hosted and cascade evaluation | docs/local_gemini_cascade.md; docs/gemini_candidate_label_baseline.md | cascade_tradeoff |
 
 ## Protocol Ladder
@@ -26,6 +27,7 @@ This document freezes thesis-ready aggregate tables before the full fine-tuned Q
 | fixed held-out aspect | Candidate-label lexical TF-IDF + global sentiment | fixed three held-out aspects, example-filtered | test | 0.4626 | 0.4596 | 0.3703 | 0.5231 | Lexical lower bound for controlled unseen-aspect split. |
 | fixed held-out aspect | Candidate-aspect DistilBERT + DistilBERT sentiment | fixed three held-out aspects, example-filtered | test | 0.6071 | 0.5917 | 0.4890 | 0.6651 | Strongest local fixed held-out-aspect baseline. |
 | fixed held-out aspect | Qwen3-4B indexed zero-shot | fixed three held-out aspects | test | 0.5374 | 0.5300 | 0.4374 | 0.6340 | Open-weight zero-shot fixed split; not fine-tuned. |
+| fixed held-out aspect | Qwen3-4B QLoRA indexed SFT | fixed three held-out aspects, example-filtered | test | 0.5528 | 0.5552 | 0.4393 | 0.6192 | One-epoch fixed-split QLoRA; modest adaptation gain over Qwen zero-shot, below the strongest local baseline. |
 
 ## All-Row LOAO Robustness
 

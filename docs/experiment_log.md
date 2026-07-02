@@ -2790,3 +2790,228 @@ python -m compileall -q .\scripts\run_qwen_lora_heldout_aspect.py .\tests\test_q
 ### Next Step
 
 - Update overview/handoff docs, run the final repository validation and safety checks, then commit only safe tracked code/docs/tests.
+
+## 2026-07-02: Planned Fixed Held-Out-Aspect Qwen LoRA Run
+
+### Purpose
+
+- Run the optional fixed held-out-aspect Qwen LoRA configuration now that a long local GPU run has been approved.
+- Test whether task-specific QLoRA adaptation improves the fixed three-aspect candidate-label setting before any full 12-fold LOAO launch.
+- Keep this separate from full LOAO robustness evidence.
+
+### Pre-Flight State
+
+- Git state before planning: clean worktree, `main...origin/main [ahead 2]`.
+- Remote fetched with `git fetch --prune`.
+- Current commit before planning: `0e2cd3f llm: prepare qwen lora heldout runner`.
+- Local CUDA available: NVIDIA GeForce RTX 5050 Laptop GPU, about 8 GB VRAM.
+- PyTorch: `2.10.0+cu128`.
+
+### Input Scope
+
+- SFT data directory: `outputs/qwen_heldout_aspect_sft_indexed/example_filtered/`.
+- Split protocol: fixed held-out-aspect, `example_filtered`, held-out labels only.
+- Held-out aspects:
+  - `Account management: Account access`;
+  - `Company brand: Competitor`;
+  - `Value: Discounts promotions`.
+- Row counts:
+  - train: `6,495`;
+  - validation: `212`;
+  - test: `281`.
+
+### Planned Configuration
+
+- Model: `Qwen/Qwen3-4B-Instruct-2507`.
+- Loading: 4-bit bitsandbytes NF4 double quantisation.
+- LoRA: rank `8`, alpha `16`, dropout `0.05`.
+- Epochs: `1`.
+- Batch size: `1`.
+- Gradient accumulation: `8`.
+- Learning rate: `1e-5`.
+- Weight decay: `0.0`.
+- Warmup ratio: `0.05`.
+- Training max length: `512`.
+- Evaluation max input tokens: `1024`.
+- Evaluation max new tokens: `192`.
+- Seed: default runner seed `13`.
+- Training progress log interval: `50` optimiser updates.
+- Gradient checkpointing: disabled for this first long local run because the successful tiny smoke used the no-checkpointing path and produced valid JSON/schema output. If this OOMs, retry with `--gradient-checkpointing` and record the failure.
+
+### Planned Commands
+
+Validation-first training/evaluation:
+
+```powershell
+python .\scripts\run_qwen_lora_heldout_aspect.py --sft-data-dir .\outputs\qwen_heldout_aspect_sft_indexed --strategy example_filtered --output-dir .\outputs\llm\qwen_lora_fixed_example_filtered_r8_lr1e-5_ep1_20260702 --eval-split validation --epochs 1 --batch-size 1 --grad-accumulation-steps 8 --learning-rate 1e-5 --weight-decay 0.0 --warmup-ratio 0.05 --max-length 512 --max-input-tokens 1024 --max-new-tokens 192 --lora-r 8 --lora-alpha 16 --lora-dropout 0.05 --load-in-4bit --no-gradient-checkpointing --save-adapter --resume-predictions --skip-existing-predictions --save-epoch-adapters
+```
+
+Test evaluation only if validation succeeds and JSON/schema diagnostics are acceptable:
+
+```powershell
+python .\scripts\run_qwen_lora_heldout_aspect.py --sft-data-dir .\outputs\qwen_heldout_aspect_sft_indexed --strategy example_filtered --output-dir .\outputs\llm\qwen_lora_fixed_example_filtered_r8_lr1e-5_ep1_20260702 --eval-split test --epochs 1 --batch-size 1 --grad-accumulation-steps 8 --learning-rate 1e-5 --weight-decay 0.0 --warmup-ratio 0.05 --max-length 512 --max-input-tokens 1024 --max-new-tokens 192 --lora-r 8 --lora-alpha 16 --lora-dropout 0.05 --load-in-4bit --no-gradient-checkpointing --save-adapter --skip-training-if-adapter-exists --resume-predictions --skip-existing-predictions
+```
+
+### Output Scope
+
+- Local ignored output directory:
+  - `outputs/llm/qwen_lora_fixed_example_filtered_r8_lr1e-5_ep1_20260702/`
+- Local ignored logs:
+  - `outputs/logs/qwen_lora_fixed_example_filtered_r8_lr1e-5_ep1_20260702_validation.*.log`
+  - `outputs/logs/qwen_lora_fixed_example_filtered_r8_lr1e-5_ep1_20260702_test.*.log`
+- Only aggregate metrics and documentation updates will be committed.
+- Adapter/checkpoint files and raw prediction JSONL remain ignored under `outputs/`.
+
+### Validation And Test Rule
+
+- Use validation to decide whether the run is sane enough for test evaluation.
+- Do not tune hyperparameters using test labels.
+- Stop before test if validation JSON/schema validity collapses, if the run OOMs without a stable fallback, or if the adapter/prediction files are incomplete.
+
+### Runtime And Risk
+
+- This is expected to exceed two hours on the local RTX 5050 Laptop GPU.
+- Main risks: local 8 GB VRAM pressure, long generation time, degenerate JSON after fine-tuning, or an interrupted long run.
+- Resume plan: rerun the same command with `--resume-predictions --skip-existing-predictions`; for test, reuse `adapter_final` through `--skip-training-if-adapter-exists`.
+
+### First Validation Attempt Result
+
+The planned `1e-5` run was started and stopped before validation generation because training loss became non-finite:
+
+| Step | Mean Loss So Far |
+| ---: | ---: |
+| 1 | 1.0447 |
+| 50 | 0.6422 |
+| 100 | 0.4185 |
+| 150 | 0.3105 |
+| 200 | NaN |
+| 250 | NaN |
+
+Decision:
+
+- Stop the process rather than produce a likely invalid adapter.
+- Initial interpretation was potential LR instability, but a tokenizer audit found the concrete cause: with `max_length=512`, `10` of `6,495` training rows had the assistant answer fully truncated, leaving no supervised labels and causing NaN loss.
+- Add fail-fast protection to `scripts/run_qwen_lora_heldout_aspect.py` so future non-finite training losses raise an error immediately.
+- Update `ChatSftDataset` to skip rows with fully truncated assistant answers and log the skipped count.
+
+Tokenizer audit:
+
+| Max Length | Used Rows | Skipped Fully Truncated Answer Rows |
+| ---: | ---: | ---: |
+| 512 | 6,485 | 10 |
+| 768 | 6,493 | 2 |
+| 1024 | 6,495 | 0 |
+
+Because only `10` rows are skipped at `max_length=512`, keep the original memory-safe `512` training length and rerun the planned `lr=1e-5` configuration with the skip fix.
+
+Skip-fix validation command:
+
+```powershell
+python .\scripts\run_qwen_lora_heldout_aspect.py --sft-data-dir .\outputs\qwen_heldout_aspect_sft_indexed --strategy example_filtered --output-dir .\outputs\llm\qwen_lora_fixed_example_filtered_r8_lr1e-5_ep1_skipfix_20260702 --eval-split validation --epochs 1 --batch-size 1 --grad-accumulation-steps 8 --learning-rate 1e-5 --weight-decay 0.0 --warmup-ratio 0.05 --max-length 512 --max-input-tokens 1024 --max-new-tokens 192 --lora-r 8 --lora-alpha 16 --lora-dropout 0.05 --load-in-4bit --no-gradient-checkpointing --save-adapter --resume-predictions --skip-existing-predictions --save-epoch-adapters
+```
+
+### Skip-Fix Validation Result
+
+- Output directory: `outputs/llm/qwen_lora_fixed_example_filtered_r8_lr1e-5_ep1_skipfix_20260702/` (ignored).
+- Log files:
+  - `outputs/logs/qwen_lora_fixed_example_filtered_r8_lr1e-5_ep1_skipfix_20260702_validation.out.log`
+  - `outputs/logs/qwen_lora_fixed_example_filtered_r8_lr1e-5_ep1_skipfix_20260702_validation.err.log`
+- Training rows:
+  - original: `6,495`;
+  - skipped because assistant answer was fully truncated at `max_length=512`: `10`;
+  - used: `6,485`.
+- Optimiser steps: `811`.
+- Final train loss: `0.1147`.
+- Training runtime: `5,590.9` seconds.
+- Full validation runtime including generation: `6,321.4` seconds.
+- Validation generated rows: `212 / 212`.
+
+Validation metrics recomputed from `validation_predictions.jsonl`:
+
+| Metric | Value |
+| --- | ---: |
+| pair samples F1 | 0.5991 |
+| pair micro F1 | 0.5977 |
+| pair precision | 0.5991 |
+| pair recall | 0.5963 |
+| pair macro F1 | 0.4335 |
+| pair exact match | 0.5802 |
+| aspect samples F1 | 0.6635 |
+| aspect micro F1 | 0.6621 |
+| sentiment accuracy when gold aspect predicted | 0.9028 |
+| valid JSON rate | 1.0000 |
+| schema-valid rate | 1.0000 |
+| seconds per example | 3.3370 |
+
+Decision:
+
+- Validation was stable enough to run the held-out test split.
+- No hyperparameter was selected from the test set; the test command reused the validation-approved adapter and configuration.
+
+### Fixed Held-Out-Aspect Test Result
+
+Test command:
+
+```powershell
+python .\scripts\run_qwen_lora_heldout_aspect.py --sft-data-dir .\outputs\qwen_heldout_aspect_sft_indexed --strategy example_filtered --output-dir .\outputs\llm\qwen_lora_fixed_example_filtered_r8_lr1e-5_ep1_skipfix_20260702 --eval-split test --epochs 1 --batch-size 1 --grad-accumulation-steps 8 --learning-rate 1e-5 --weight-decay 0.0 --warmup-ratio 0.05 --max-length 512 --max-input-tokens 1024 --max-new-tokens 192 --lora-r 8 --lora-alpha 16 --lora-dropout 0.05 --load-in-4bit --no-gradient-checkpointing --save-adapter --skip-training-if-adapter-exists --resume-predictions --skip-existing-predictions
+```
+
+Observed behaviour:
+
+- The runner loaded `adapter_final` and skipped training.
+- Test generated rows: `281 / 281`.
+- Test runtime: `811.5` seconds overall, with `794.5` seconds spent in generation/evaluation.
+- Test log files:
+  - `outputs/logs/qwen_lora_fixed_example_filtered_r8_lr1e-5_ep1_skipfix_20260702_test.out.log`
+  - `outputs/logs/qwen_lora_fixed_example_filtered_r8_lr1e-5_ep1_skipfix_20260702_test.err.log`
+
+Test metrics recomputed from `test_predictions.jsonl`:
+
+| Metric | Value |
+| --- | ---: |
+| pair samples F1 | 0.5528 |
+| pair micro F1 | 0.5552 |
+| pair precision | 0.5533 |
+| pair recall | 0.5571 |
+| pair macro F1 | 0.4393 |
+| pair exact match | 0.5196 |
+| aspect samples F1 | 0.6192 |
+| aspect micro F1 | 0.6218 |
+| sentiment accuracy when gold aspect predicted | 0.8944 |
+| valid JSON rate | 1.0000 |
+| schema-valid rate | 0.9964 |
+| schema invalid count | 1 |
+| conflicting sentiment count | 1 |
+| seconds per example | 2.8275 |
+
+### Interpretation
+
+- This is a completed fixed held-out-aspect Qwen LoRA result, not a full LOAO result.
+- QLoRA improves over Qwen indexed zero-shot on the fixed split:
+  - pair samples F1: `0.5374` to `0.5528`;
+  - pair micro F1: `0.5300` to `0.5552`;
+  - pair macro F1: `0.4374` to `0.4393`.
+- The gain is modest and does not exceed the strongest local non-LLM fixed held-out-aspect baseline (`0.6071` pair samples F1, `0.5917` pair micro F1) or the stronger Gemini/cascade fixed-split results.
+- The main thesis value is therefore not a new headline score. It is evidence that:
+  - the final indexed held-out-aspect QLoRA runner can train beyond smoke scale on the local GPU;
+  - adapter saving/reuse works for validation-first then test evaluation;
+  - structured JSON output remains reliable after fine-tuning;
+  - fixed-split Qwen adaptation helps a little but still needs LOAO evaluation before any robustness claim.
+- Runner reproducibility was tightened after the run:
+  - rows with fully truncated assistant answers are skipped before training;
+  - non-finite training loss now raises immediately;
+  - progress logging records optimiser-step loss trends;
+  - repeated validation/test invocations preserve existing summary split results instead of overwriting unrelated splits;
+  - each invocation writes a run-specific manifest under `<output_dir>/manifests/` as well as the latest `manifest.json`.
+
+### Limitations
+
+- This was one fixed three-aspect configuration, not a hyperparameter sweep.
+- Evaluation rows contain held-out labels only, so the result does not test all-row absence calibration.
+- Full 12-fold Qwen LoRA LOAO remains unrun by design.
+- The first failed attempt exposed a runner/data edge case. The final result uses the corrected dataset skip rule for fully truncated assistant answers.
+
+### Next Step
+
+- Update thesis tables, reproducibility register, roadmap, and handoff docs with this fixed-split adaptation result.
+- Keep full Qwen LoRA LOAO gated behind target GPU/storage confirmation and the pre-launch validation checks.

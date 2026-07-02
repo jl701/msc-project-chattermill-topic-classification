@@ -268,7 +268,39 @@ Smoke result:
 - Candidate IDs were parsed back to canonical aspect labels.
 - Metrics and manifest were written.
 
-This is a pipeline smoke test only, not a model-quality result. The optional fixed held-out-aspect Qwen LoRA run and the full 12-fold fine-tuned Qwen LoRA LOAO run remain unrun. Command templates, fold naming, recovery plan, runtime/storage assumptions, and launch gates are recorded in `docs/qwen_lora_loao_launch_plan.md`.
+This is a pipeline smoke test only, not a model-quality result.
+
+## Fixed Held-Out-Aspect Qwen LoRA Result
+
+After explicit approval for a long local run, one fixed held-out-aspect QLoRA configuration was completed on 2026-07-02. This is fixed-split adaptation evidence only; it is not the full 12-fold all-row LOAO run.
+
+Configuration:
+
+- Model: `Qwen/Qwen3-4B-Instruct-2507`.
+- Loading: 4-bit QLoRA.
+- LoRA: rank `8`, alpha `16`, dropout `0.05`.
+- Strategy: `example_filtered`.
+- Prompt variant: indexed candidate IDs.
+- Epochs: `1`.
+- Batch size / gradient accumulation: `1 / 8`.
+- Learning rate: `1e-5`.
+- Training max length: `512`.
+- Evaluation max input tokens / new tokens: `1024 / 192`.
+- Gradient checkpointing: disabled for the successful local run.
+- Output directory: `outputs/llm/qwen_lora_fixed_example_filtered_r8_lr1e-5_ep1_skipfix_20260702/` (ignored).
+
+The first long validation attempt produced non-finite loss after the mean loss reached NaN by step 200. A tokenizer audit found that `10` of `6,495` training rows had the assistant answer fully truncated at `max_length=512`, leaving no supervised labels. The runner now skips fully truncated-answer rows and fails fast on non-finite training loss.
+
+Successful validation and test results:
+
+| Split | Rows | Pair Samples F1 | Pair Micro F1 | Pair Macro F1 | Aspect Samples F1 | Valid JSON | Schema Valid |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| validation | 212 | 0.5991 | 0.5977 | 0.4335 | 0.6635 | 1.0000 | 1.0000 |
+| test | 281 | 0.5528 | 0.5552 | 0.4393 | 0.6192 | 1.0000 | 0.9964 |
+
+Compared with the fixed held-out-aspect Qwen indexed zero-shot baseline, QLoRA improves test pair samples F1 from `0.5374` to `0.5528` and pair micro F1 from `0.5300` to `0.5552`. The improvement is positive but modest, and the result remains below the strongest local fixed held-out-aspect baseline and the stronger Gemini/cascade fixed-split results.
+
+The full 12-fold fine-tuned Qwen LoRA LOAO run remains unrun. Command templates, fold naming, recovery plan, runtime/storage assumptions, and launch gates are recorded in `docs/qwen_lora_loao_launch_plan.md`.
 
 ## Gemini Comparison Result
 

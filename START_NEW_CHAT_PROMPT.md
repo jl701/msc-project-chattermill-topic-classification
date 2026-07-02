@@ -67,7 +67,7 @@ Before implementing anything, perform a strict audit of the current progress and
 2. Verify whether the metrics are being used and interpreted correctly, especially pair samples F1, pair micro F1, pair macro F1, empty-gold rows in all-row LOAO, and positive-row LOAO as a sentiment-only diagnostic.
 3. Verify whether the current reported results are comparable or not comparable across fixed three-aspect held-out evaluation, all-row LOAO, positive-row LOAO, closed-topic, and held-out organisation.
 4. Check whether the latest conclusion is logically sound: DistilBERT aspect-conditioned sentiment improves the controlled lexical sentiment ablation and the example-filtered strong fixed held-out-aspect baseline, but not label-masked training.
-5. Challenge the next proposed direction after the completed Gemini/Qwen zero-shot phase. The current decision is to make full fine-tuned Qwen LoRA LOAO the only major pending modelling experiment. Thesis-ready tables, cascade score/margin uncertainty, Qwen SFT runner readiness, tiny Qwen LoRA smoke testing, and the full LOAO launch plan are now complete. The optional fixed Qwen LoRA run and the target full-LOAO GPU launch gate remain open.
+5. Challenge the next proposed direction after the completed Gemini/Qwen zero-shot phase. The current decision is to make full fine-tuned Qwen LoRA LOAO the only major pending modelling experiment. Thesis-ready tables, cascade score/margin uncertainty, Qwen SFT runner readiness, tiny Qwen LoRA smoke testing, the fixed held-out-aspect Qwen LoRA validation/test run, and the full LOAO launch plan are now complete. The target full-LOAO GPU launch gate remains open.
 6. Only after this audit, propose a concrete next plan. If the plan still looks sound, proceed with implementation.
 
 Current confirmed project context:
@@ -91,8 +91,8 @@ Aji's confirmed direction:
 - Open-topic should use candidate labels at inference.
 - The model should select from canonical labels and should not freely invent topic names.
 - Qwen zero-shot full all-row LOAO has now been completed locally.
-- The final held-out-aspect Qwen LoRA runner, manifest logging, resume/skip behaviour, focused tests, tiny local QLoRA smoke test, and full 12-fold launch plan are complete.
-- Full Qwen fine-tuning still waits for a confirmed stronger GPU/storage window or explicit approval to run a long local job.
+- The final held-out-aspect Qwen LoRA runner, manifest logging, resume/skip behaviour, focused tests, tiny local QLoRA smoke test, fixed held-out-aspect QLoRA validation/test run, and full 12-fold launch plan are complete.
+- Full 12-fold Qwen LoRA LOAO still waits for a confirmed stronger GPU/storage window.
 - The current completion roadmap is `docs/thesis_completion_roadmap.md`. It explicitly separates work that can be completed before GPU access from the full fine-tuned Qwen LoRA LOAO run.
 
 Latest Aji update from 2026-06-21:
@@ -101,7 +101,7 @@ Latest Aji update from 2026-06-21:
 - Before heavy Qwen fine-tuning, rotate held-out aspects. This has now been done for zero-shot Qwen across the 12 FABSA aspects; use it as the open-weight LLM LOAO robustness baseline before fine-tuning.
 - Treat label-masked vs example-filtered as an ablation about incomplete-label noise. Label-masked can keep text containing a held-out aspect while removing that aspect from supervision, creating false-negative or censored-label noise. Example-filtered removes these rows, giving cleaner but smaller training data.
 - The earlier lexical and candidate-aspect cross-encoder baselines used global sentiment: one document-level polarity was applied to all selected aspects. This is a limitation for FABSA because sentiment is per-aspect. A lightweight aspect-conditioned sentiment pipeline was cleaner methodologically but slightly weaker than the global sentiment baseline. A stronger DistilBERT aspect-conditioned sentiment pipeline has now been implemented and evaluated; it improves the controlled lexical sentiment ablation and the example-filtered strong fixed held-out-aspect baseline, but not label-masked training.
-- Full Qwen fine-tuning remains parked until stronger GPU access is clearer.
+- Full 12-fold Qwen LoRA LOAO remains parked until stronger GPU access is clearer.
 - Aji provided access to Chattermill's Gemini Vertex AI endpoint through an OpenAI-compatible API. Do not store the key in the repo. Use it for hosted LLM baselines after the LOAO robustness work is started.
 - The GitHub branch issue has been fixed: remote `main` now points to the full setup commit, and local `main` tracks `origin/main`.
 
@@ -282,8 +282,17 @@ Qwen feasibility:
   - 4 train rows, 1 validation row, 1 test row, one train step
   - validation/test valid JSON and schema-valid rates: 1.0000
   - adapter saved under ignored `adapter_final/`
+- Fixed held-out-aspect QLoRA validation/test run completed:
+  - output: `outputs/llm/qwen_lora_fixed_example_filtered_r8_lr1e-5_ep1_skipfix_20260702/` (ignored)
+  - strategy: `example_filtered`
+  - LoRA: rank 8, alpha 16, dropout 0.05
+  - LR: `1e-5`, 1 epoch, 4-bit QLoRA
+  - test pair samples F1: 0.5528
+  - test pair micro F1: 0.5552
+  - test pair macro F1: 0.4393
+  - test valid JSON/schema-valid rates: 1.0000 / 0.9964
+  - interpretation: modest fixed-split adaptation gain over Qwen zero-shot, still below the strongest local fixed baseline, and not LOAO robustness evidence
 - Full 12-fold Qwen LoRA LOAO launch templates are in `docs/qwen_lora_loao_launch_plan.md`.
-- The optional full fixed held-out-aspect Qwen LoRA run has not been launched because it is expected to exceed two hours locally and needs explicit confirmation.
 
 Gemini / Vertex AI access:
 - Aji provided an OpenAI-compatible endpoint:
@@ -397,9 +406,9 @@ Gemini / Vertex AI access:
     - thesis-ready result tables and figure data
     - cascade score/margin uncertainty using existing Gemini predictions
     - Qwen LoRA SFT runner readiness and smoke test
+    - fixed held-out-aspect Qwen LoRA validation/test run
     - full Qwen LoRA all-row LOAO launch plan
   - remaining launch-gate work:
-    - optional fixed held-out-aspect Qwen LoRA validation/test run if time/GPU allows
     - target GPU, storage, package versions, and data-transfer rules confirmation
     - full Qwen LoRA all-row LOAO once stronger GPU access is available
   - full Gemini LOAO is not the default because estimated all-row LOAO cost/latency is high relative to the expected dissertation value and the current robustness spine already uses local DistilBERT LOAO plus Qwen zero-shot LOAO
@@ -528,7 +537,7 @@ Recommended next steps:
 8. Treat Gemini Flash as the completed hosted fixed held-out-aspect baseline, but do not run full Gemini LOAO unless the cost/benefit is explicitly justified.
 9. The local-to-Gemini cascade is complete; follow `docs/llm_next_experiment_directions.md` with the new Qwen LOAO result in mind.
 10. Gemini-generated aspect descriptions are complete; do not rerun the same Task 4 API work unless a new variant or thesis question is explicitly requested.
-11. Use `docs/thesis_completion_roadmap.md` as the current task order. Thesis-ready tables/figure data, cascade score/margin uncertainty, Qwen LoRA runner readiness, tiny smoke testing, and the full Qwen LoRA LOAO launch plan are complete. Remaining Qwen work is optional fixed held-out-aspect Qwen LoRA if time/GPU allows, target GPU/storage confirmation, and then full Qwen LoRA LOAO after the launch gate is satisfied. The Gemini-assisted qualitative error taxonomy is already complete.
+11. Use `docs/thesis_completion_roadmap.md` as the current task order. Thesis-ready tables/figure data, cascade score/margin uncertainty, Qwen LoRA runner readiness, tiny smoke testing, the fixed held-out-aspect Qwen LoRA validation/test run, and the full Qwen LoRA LOAO launch plan are complete. Remaining Qwen work is target GPU/storage confirmation and then full Qwen LoRA LOAO after the launch gate is satisfied. The Gemini-assisted qualitative error taxonomy is already complete.
 12. Treat sampled Gemini LOAO as optional fallback or supervisor-requested work, not the default next experiment.
 13. If I ask to publish changes, commit/push only clean code and documentation, without committing outputs, data, credentials, checkpoints, or generated artifacts.
 

@@ -159,7 +159,14 @@ def encode_sft_example(tokenizer: Any, row: dict[str, Any], max_length: int) -> 
 
 class ChatSftDataset:
     def __init__(self, rows: list[dict[str, Any]], tokenizer: Any, max_length: int) -> None:
-        self.items = [encode_sft_example(tokenizer, row, max_length=max_length) for row in rows]
+        self.items: list[dict[str, list[int]]] = []
+        self.skipped_no_label_count = 0
+        for row in rows:
+            item = encode_sft_example(tokenizer, row, max_length=max_length)
+            if not any(label != -100 for label in item["labels"]):
+                self.skipped_no_label_count += 1
+                continue
+            self.items.append(item)
 
     def __len__(self) -> int:
         return len(self.items)
@@ -403,6 +410,20 @@ def train_model(
     from transformers import get_linear_schedule_with_warmup
 
     dataset = ChatSftDataset(train_rows, tokenizer, max_length=args.max_length)
+    if dataset.skipped_no_label_count:
+        print(
+            json.dumps(
+                {
+                    "event": "train_rows_skipped",
+                    "reason": "assistant answer fully truncated by max_length",
+                    "skipped_rows": int(dataset.skipped_no_label_count),
+                    "used_rows": int(len(dataset)),
+                    "original_rows": int(len(train_rows)),
+                    "max_length": int(args.max_length),
+                }
+            ),
+            flush=True,
+        )
     loader = DataLoader(
         dataset,
         batch_size=args.batch_size,
@@ -435,6 +456,8 @@ def train_model(
         for batch_step, batch in enumerate(loader, start=1):
             batch = {key: value.to(device) for key, value in batch.items()}
             outputs = model(**batch)
+            if not torch.isfinite(outputs.loss.detach()).item():
+                raise RuntimeError(f"Non-finite training loss at epoch {epoch}, batch {batch_step}.")
             loss = outputs.loss / args.grad_accumulation_steps
             loss.backward()
             epoch_loss += float(loss.detach().cpu()) * args.grad_accumulation_steps
@@ -447,6 +470,20 @@ def train_model(
                 scheduler.step()
                 optimizer.zero_grad(set_to_none=True)
                 global_step += 1
+                if global_step == 1 or global_step % args.log_every_steps == 0:
+                    print(
+                        json.dumps(
+                            {
+                                "event": "train_progress",
+                                "epoch": int(epoch),
+                                "global_step": int(global_step),
+                                "planned_steps": int(planned_steps),
+                                "batches_seen": int(batches),
+                                "mean_loss_so_far": float(epoch_loss / max(1, batches)),
+                            }
+                        ),
+                        flush=True,
+                    )
                 if args.max_train_steps is not None and global_step >= args.max_train_steps:
                     stop_training = True
                     break
@@ -665,6 +702,7 @@ def build_manifest(
             "weight_decay": float(args.weight_decay),
             "warmup_ratio": float(args.warmup_ratio),
             "max_grad_norm": float(args.max_grad_norm),
+            "log_every_steps": int(args.log_every_steps),
         },
         "prompt_variant": metadata.get("prompt_variant", args.prompt_variant),
         "split_protocol": {
@@ -725,6 +763,7 @@ def build_summary(
     train_history: list[dict[str, Any]],
     eval_results: list[dict[str, Any]],
     manifest_path: Path,
+    run_manifest_path: Path | None,
     adapter_dir: Path | None,
     runtime_seconds: float,
 ) -> dict[str, Any]:
@@ -737,10 +776,35 @@ def build_summary(
         "row_counts_after_limits": row_counts,
         "adapter_dir": str(adapter_dir) if adapter_dir else None,
         "manifest_path": str(manifest_path),
+        "run_manifest_path": str(run_manifest_path) if run_manifest_path else None,
         "runtime_seconds": float(runtime_seconds),
         "train_history": train_history,
         "eval_results": eval_results,
     }
+
+
+def load_existing_summary_state(
+    output_dir: Path,
+    eval_splits_to_replace: list[str],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    summary_path = output_dir / "summary.json"
+    if not summary_path.exists():
+        return [], []
+
+    summary = read_json(summary_path)
+    train_history = summary.get("train_history", [])
+    if not isinstance(train_history, list):
+        train_history = []
+
+    replace_splits = set(eval_splits_to_replace)
+    existing_eval_results: list[dict[str, Any]] = []
+    for result in summary.get("eval_results", []):
+        if not isinstance(result, dict):
+            continue
+        if str(result.get("split", "")) in replace_splits:
+            continue
+        existing_eval_results.append(result)
+    return train_history, existing_eval_results
 
 
 def adapter_dir_for_args(output_dir: Path, args: argparse.Namespace) -> Path:
@@ -756,6 +820,12 @@ def apply_existing_adapter_resume(output_dir: Path, args: argparse.Namespace) ->
     adapter_dir = adapter_dir_for_args(output_dir, args)
     if args.skip_training_if_adapter_exists and adapter_dir.exists() and args.resume_from_adapter is None:
         args.resume_from_adapter = adapter_dir
+
+
+def run_manifest_path_for(output_dir: Path, started_at: str, eval_splits: list[str]) -> Path:
+    run_id = started_at.replace("-", "").replace(":", "").replace("T", "_")
+    eval_tag = "_".join(eval_splits)
+    return output_dir / "manifests" / f"{run_id}_{eval_tag}_manifest.json"
 
 
 def main() -> None:
@@ -783,6 +853,7 @@ def main() -> None:
     parser.add_argument("--weight-decay", type=float, default=0.0)
     parser.add_argument("--warmup-ratio", type=float, default=0.05)
     parser.add_argument("--max-grad-norm", type=float, default=1.0)
+    parser.add_argument("--log-every-steps", type=int, default=50)
     parser.add_argument("--max-length", type=int, default=1024)
     parser.add_argument("--max-input-tokens", type=int, default=1024)
     parser.add_argument("--max-new-tokens", type=int, default=192)
@@ -827,8 +898,10 @@ def main() -> None:
     row_counts = {split_name: int(len(rows)) for split_name, rows in split_rows.items()}
     eval_splits = args.eval_split or ["validation", "test"]
     args.eval_split = eval_splits
+    previous_train_history, eval_results = load_existing_summary_state(output_dir, eval_splits)
 
     manifest_path = output_dir / "manifest.json"
+    run_manifest_path = run_manifest_path_for(output_dir, started_at, eval_splits)
     manifest = build_manifest(
         args=args,
         data_dir=data_dir,
@@ -838,6 +911,7 @@ def main() -> None:
         started_at=started_at,
     )
     write_json(manifest, manifest_path)
+    write_json(manifest, run_manifest_path)
 
     if args.dry_run:
         summary = build_summary(
@@ -849,6 +923,7 @@ def main() -> None:
             train_history=[],
             eval_results=[],
             manifest_path=manifest_path,
+            run_manifest_path=run_manifest_path,
             adapter_dir=None,
             runtime_seconds=time.time() - wall_start,
         )
@@ -861,13 +936,13 @@ def main() -> None:
     adapter_dir = adapter_dir_for_args(output_dir, args)
     if should_skip_training(output_dir, args):
         print(f"Skipping training because adapter directory already exists: {adapter_dir}", flush=True)
+        train_history = previous_train_history
     else:
         train_history = train_model(model, tokenizer, split_rows["train"], args, output_dir)
         if args.save_adapter:
             model.save_pretrained(adapter_dir)
             tokenizer.save_pretrained(adapter_dir)
 
-    eval_results: list[dict[str, Any]] = []
     for split_name in eval_splits:
         result = run_prediction_split(
             tokenizer=tokenizer,
@@ -888,6 +963,7 @@ def main() -> None:
             train_history=train_history,
             eval_results=eval_results,
             manifest_path=manifest_path,
+            run_manifest_path=run_manifest_path,
             adapter_dir=adapter_dir if args.save_adapter else None,
             runtime_seconds=time.time() - wall_start,
         )
@@ -906,6 +982,7 @@ def main() -> None:
         runtime_seconds=runtime_seconds,
     )
     write_json(final_manifest, manifest_path)
+    write_json(final_manifest, run_manifest_path)
     summary = build_summary(
         args=args,
         output_dir=output_dir,
@@ -915,6 +992,7 @@ def main() -> None:
         train_history=train_history,
         eval_results=eval_results,
         manifest_path=manifest_path,
+        run_manifest_path=run_manifest_path,
         adapter_dir=adapter_dir if args.save_adapter else None,
         runtime_seconds=runtime_seconds,
     )
