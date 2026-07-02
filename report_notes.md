@@ -650,3 +650,38 @@ Planned mid-ratio validation command:
 ```powershell
 python .\scripts\run_qwen_lora_heldout_aspect.py --sft-data-dir .\outputs\qwen_lora_loao_sft_20260702\02_company_brand_competitor_allrow_singleton_neg025_indexed_conservative --strategy example_filtered --output-dir .\outputs\llm\qwen_lora_loao_single_fold_company_brand_competitor_singleton_neg025_r8_lr1e-5_steps913_allrow_20260702 --eval-split validation --epochs 1 --max-train-steps 913 --batch-size 1 --grad-accumulation-steps 8 --learning-rate 1e-5 --weight-decay 0.0 --warmup-ratio 0.05 --max-length 512 --max-input-tokens 1024 --max-new-tokens 192 --lora-r 8 --lora-alpha 16 --lora-dropout 0.05 --load-in-4bit --no-gradient-checkpointing --save-adapter --resume-predictions --skip-existing-predictions --save-epoch-adapters
 ```
+
+Singleton neg0.25 completed validation result:
+
+- Validation rows: `1,057`.
+- Positive-gold rows: `86`.
+- Pair samples F1: `0.0104`.
+- Pair micro F1: `0.1803`.
+- Pair precision: `0.3056`.
+- Pair recall: `0.1279`.
+- Pair label TP / FP / FN: `11 / 25 / 75`.
+- Predicted labels: `36`.
+- FP rows / 100: `1.6083`.
+- FN rows / 100: `6.3387`.
+- Valid JSON/schema-valid: `1.0000 / 1.0000`.
+- Training runtime: `5,871.9` seconds; validation runtime: `510.8` seconds.
+
+Interpretation:
+
+- This is the best Qwen LoRA all-row single-fold branch so far, but still below same-fold Qwen zero-shot (`0.2397`) and local DistilBERT (`0.2490`) validation pair micro F1.
+- It proves that absence-aware SFT can reduce false positives, but the current recipe still misses too many positives.
+- Do not run neg0.25 test.
+- Run one final recall-shift branch with `--singleton-negative-ratio 0.10`, using the same fold, prompt, seed, and `913` optimiser-step budget.
+- If neg0.10 remains below the same-fold baselines, stop this single-fold optimisation and frame the result as evidence that full Qwen LoRA LOAO is not justified under the current SFT/calibration recipe.
+
+Planned final recall-shift data command:
+
+```powershell
+python .\scripts\prepare_qwen_heldout_aspect_sft_data.py --strategy example_filtered --prompt-variant indexed_conservative --heldout-aspect "Company brand: Competitor" --eval-row-scope all --train-candidate-mode singleton --singleton-negative-ratio 0.10 --seed 13 --output-dir .\outputs\qwen_lora_loao_sft_20260702\02_company_brand_competitor_allrow_singleton_neg010_indexed_conservative
+```
+
+Planned final recall-shift validation command:
+
+```powershell
+python .\scripts\run_qwen_lora_heldout_aspect.py --sft-data-dir .\outputs\qwen_lora_loao_sft_20260702\02_company_brand_competitor_allrow_singleton_neg010_indexed_conservative --strategy example_filtered --output-dir .\outputs\llm\qwen_lora_loao_single_fold_company_brand_competitor_singleton_neg010_r8_lr1e-5_steps913_allrow_20260702 --eval-split validation --epochs 1 --max-train-steps 913 --batch-size 1 --grad-accumulation-steps 8 --learning-rate 1e-5 --weight-decay 0.0 --warmup-ratio 0.05 --max-length 512 --max-input-tokens 1024 --max-new-tokens 192 --lora-r 8 --lora-alpha 16 --lora-dropout 0.05 --load-in-4bit --no-gradient-checkpointing --save-adapter --resume-predictions --skip-existing-predictions --save-epoch-adapters
+```
