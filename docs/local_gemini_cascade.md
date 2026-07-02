@@ -185,6 +185,54 @@ The table below reports test metrics for the best validation policy at selected 
 
 The 80% Pro diagnostic has the highest observed test pair samples F1 (`0.8149`), but it is reported as a budget row rather than the headline result. The headline result remains the validation-selected best policy, which does not inspect test labels.
 
+## Score/Margin Uncertainty Check
+
+Completed on 2026-07-02 as a pre-Qwen-LoRA-full-LOAO methodological check.
+
+The original strongest local prediction files did not store candidate-aspect probabilities or margins, and the local output directory did not contain a saved candidate-aspect selector checkpoint. To make a fair score/margin check possible without new Gemini calls, the local fixed held-out-aspect baseline was rerun with the same documented configuration and the prediction writer was extended to export aggregate score features:
+
+- per-candidate aspect score;
+- selected threshold;
+- top score;
+- second score;
+- top-minus-second score margin;
+- distance to threshold;
+- count above threshold;
+- selected-score minimum and mean.
+
+The rerun reproduced the documented strongest local fixed held-out-aspect result:
+
+| Metric | Value |
+| --- | ---: |
+| Validation pair samples F1 | 0.6226 |
+| Validation pair micro F1 | 0.6049 |
+| Validation-selected threshold | 0.37 |
+| Test pair samples F1 | 0.6071 |
+| Test pair micro F1 | 0.5917 |
+| Test pair macro F1 | 0.4890 |
+
+The cascade sweep was then rerun against the existing cached Gemini prediction files. No Gemini API calls were made. The expanded feature set increased the candidate policy count from `10,578` to `20,598`, but validation selection did not choose a score/margin policy as the headline.
+
+| Escalator | Selected Policy | Test Pair Samples F1 | Test Pair Micro F1 | Call Rate | Test Cost |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Flash-Lite | weighted pair+sentiment reliability, 51%, Gemini non-empty else local | 0.6679 | 0.6579 | 0.5089 | $0.0052 |
+| Flash | low minimum pair precision, 90%, Gemini non-empty else local | 0.7459 | 0.7348 | 0.9004 | $0.2789 |
+| Pro | low minimum pair precision, 90%, Gemini non-empty else local | 0.8102 | 0.7955 | 0.9004 | $1.5421 |
+
+This is a negative methodological result rather than a new headline improvement. The model-score features are now available for future local/cascade runs, but on the current fixed held-out-aspect data they do not improve validation-selected F1 or reduce the high Flash/Pro call rate compared with the validation-reliability proxy.
+
+Commands:
+
+```powershell
+python .\scripts\run_aspect_label_aware_baseline.py --strategy example_filtered --sentiment-mode transformer_aspect_conditioned --sentiment-epochs 3 --sentiment-learning-rate 2e-5 --sentiment-batch-size 16 --sentiment-eval-batch-size 64 --sentiment-class-weight balanced --sentiment-selection-metric accuracy --epochs 3 --batch-size 32 --eval-batch-size 96 --learning-rate 3e-5 --negatives-per-positive 3 --output-dir .\outputs\baselines\aspect_label_aware_transformer_sentiment_lr3e-5_ep3_neg3_example_filtered_score_export_20260702
+
+python .\scripts\run_local_gemini_cascade.py --local-dir .\outputs\baselines\aspect_label_aware_transformer_sentiment_lr3e-5_ep3_neg3_example_filtered_score_export_20260702\example_filtered --gemini-dir .\outputs\llm\gemini_candidate_label_20260701_034545_flash_lite_fixed_full --input-cost-per-1m 0.10 --output-cost-per-1m 0.40 --output-dir .\outputs\analysis\local_gemini_cascade_flash_lite_score_margin_20260702 --rank-rate-step 1
+
+python .\scripts\run_local_gemini_cascade.py --local-dir .\outputs\baselines\aspect_label_aware_transformer_sentiment_lr3e-5_ep3_neg3_example_filtered_score_export_20260702\example_filtered --gemini-dir .\outputs\llm\gemini_candidate_label_20260701_0145_fixed_full --input-cost-per-1m 0.30 --output-cost-per-1m 2.50 --output-dir .\outputs\analysis\local_gemini_cascade_flash_score_margin_20260702 --rank-rate-step 1
+
+python .\scripts\run_local_gemini_cascade.py --local-dir .\outputs\baselines\aspect_label_aware_transformer_sentiment_lr3e-5_ep3_neg3_example_filtered_score_export_20260702\example_filtered --gemini-dir .\outputs\llm\gemini_candidate_label_20260701_031040_pro_fixed_full --input-cost-per-1m 1.25 --output-cost-per-1m 10.00 --output-dir .\outputs\analysis\local_gemini_cascade_pro_score_margin_20260702 --rank-rate-step 1
+```
+
 ## Interpretation
 
 The cascade is the strongest fixed held-out-aspect system result so far and is valuable for the dissertation because it links model quality to deployment constraints:
@@ -194,7 +242,7 @@ The cascade is the strongest fixed held-out-aspect system result so far and is v
 - Pro is the upper hosted-quality escalator: it gives the best fixed-split F1, but its latency and cost make it more suitable for high-value or highly uncertain rows.
 - The common winning pattern is `gemini_nonempty_else_local`, meaning Gemini is trusted when it produces a non-empty structured answer, while the local prediction protects against hosted abstentions.
 
-This result should still be framed carefully. It is a fixed three-aspect held-out result, not LOAO robustness evidence. The uncertainty signal is also a validation-reliability proxy rather than a calibrated probability margin, because the archived local prediction files did not store aspect scores. A future local rerun could export aspect probabilities and add score-margin uncertainty features, but the current experiment is already a valid selective-deployment result because policy selection is based only on validation behaviour and then evaluated on held-out test rows.
+This result should still be framed carefully. It is a fixed three-aspect held-out result, not LOAO robustness evidence. The score/margin check above confirms that the original validation-reliability proxy remains the defensible headline uncertainty signal for the current cascade because adding local selector score features did not improve validation-selected cascade performance.
 
 ## Current Recommendation
 

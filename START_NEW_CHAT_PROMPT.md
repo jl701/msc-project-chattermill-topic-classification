@@ -56,6 +56,8 @@ Before doing new work, please inspect these files. If a `D:\Msc_Project` path is
 23. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\experiment_reproducibility_register.md
 24. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\thesis_completion_roadmap.md
 25. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\qualitative_error_taxonomy.md
+26. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\thesis_result_tables.md
+27. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\qwen_lora_loao_launch_plan.md
 
 Immediate instruction for the new chat:
 
@@ -65,7 +67,7 @@ Before implementing anything, perform a strict audit of the current progress and
 2. Verify whether the metrics are being used and interpreted correctly, especially pair samples F1, pair micro F1, pair macro F1, empty-gold rows in all-row LOAO, and positive-row LOAO as a sentiment-only diagnostic.
 3. Verify whether the current reported results are comparable or not comparable across fixed three-aspect held-out evaluation, all-row LOAO, positive-row LOAO, closed-topic, and held-out organisation.
 4. Check whether the latest conclusion is logically sound: DistilBERT aspect-conditioned sentiment improves the controlled lexical sentiment ablation and the example-filtered strong fixed held-out-aspect baseline, but not label-masked training.
-5. Challenge the next proposed direction after the completed Gemini/Qwen zero-shot phase. The current decision is to make full fine-tuned Qwen LoRA LOAO the only major pending modelling experiment, while finishing thesis-ready tables, cascade score/margin uncertainty, and Qwen SFT runner readiness first. The Gemini-assisted qualitative error taxonomy is already complete.
+5. Challenge the next proposed direction after the completed Gemini/Qwen zero-shot phase. The current decision is to make full fine-tuned Qwen LoRA LOAO the only major pending modelling experiment. Thesis-ready tables, cascade score/margin uncertainty, Qwen SFT runner readiness, tiny Qwen LoRA smoke testing, and the full LOAO launch plan are now complete. The optional fixed Qwen LoRA run and the target full-LOAO GPU launch gate remain open.
 6. Only after this audit, propose a concrete next plan. If the plan still looks sound, proceed with implementation.
 
 Current confirmed project context:
@@ -88,7 +90,9 @@ Aji's confirmed direction:
 - New splits have been built for held-out organisation and held-out aspect evaluation.
 - Open-topic should use candidate labels at inference.
 - The model should select from canonical labels and should not freely invent topic names.
-- Qwen zero-shot full all-row LOAO has now been completed locally; full Qwen fine-tuning still waits for stronger GPU access.
+- Qwen zero-shot full all-row LOAO has now been completed locally.
+- The final held-out-aspect Qwen LoRA runner, manifest logging, resume/skip behaviour, focused tests, tiny local QLoRA smoke test, and full 12-fold launch plan are complete.
+- Full Qwen fine-tuning still waits for a confirmed stronger GPU/storage window or explicit approval to run a long local job.
 - The current completion roadmap is `docs/thesis_completion_roadmap.md`. It explicitly separates work that can be completed before GPU access from the full fine-tuned Qwen LoRA LOAO run.
 
 Latest Aji update from 2026-06-21:
@@ -271,6 +275,15 @@ Qwen feasibility:
 - Zero-shot first-100 validation pair micro F1: 0.541
 - Best local LoRA pilot first-100 validation pair micro F1: 0.762
 - Local zero-shot full all-row Qwen LOAO is now complete; use local Qwen for prompt/zero-shot baselines and smoke tests, but still use stronger GPU access for full fine-tuning.
+- Final held-out-aspect Qwen LoRA runner is implemented as `scripts/run_qwen_lora_heldout_aspect.py`.
+- The runner consumes indexed held-out-aspect SFT JSONL, supports 4-bit QLoRA, configurable LoRA parameters, train/validation/test splits, manifest logging, adapter resume, prediction resume/skip, canonical `aspect_id` parsing, and existing evaluation metrics.
+- Tiny local held-out-aspect QLoRA smoke test completed:
+  - command output: `outputs/qwen_lora_heldout_aspect_tiny_smoke_evalmode_20260702/` (ignored)
+  - 4 train rows, 1 validation row, 1 test row, one train step
+  - validation/test valid JSON and schema-valid rates: 1.0000
+  - adapter saved under ignored `adapter_final/`
+- Full 12-fold Qwen LoRA LOAO launch templates are in `docs/qwen_lora_loao_launch_plan.md`.
+- The optional full fixed held-out-aspect Qwen LoRA run has not been launched because it is expected to exceed two hours locally and needs explicit confirmation.
 
 Gemini / Vertex AI access:
 - Aji provided an OpenAI-compatible endpoint:
@@ -380,10 +393,14 @@ Gemini / Vertex AI access:
   - the active completion roadmap is recorded in `docs/thesis_completion_roadmap.md`
   - Gemini-assisted qualitative error taxonomy is complete in `docs/qualitative_error_taxonomy.md`
   - the taxonomy used a small Gemini Pro draft only as an assistant; final categories are manually consolidated, and raw snippets/prompts/drafts remain ignored under `outputs/`
-  - recommended order:
+  - completed pre-Qwen-LoRA-full-LOAO work:
     - thesis-ready result tables and figure data
     - cascade score/margin uncertainty using existing Gemini predictions
     - Qwen LoRA SFT runner readiness and smoke test
+    - full Qwen LoRA all-row LOAO launch plan
+  - remaining launch-gate work:
+    - optional fixed held-out-aspect Qwen LoRA validation/test run if time/GPU allows
+    - target GPU, storage, package versions, and data-transfer rules confirmation
     - full Qwen LoRA all-row LOAO once stronger GPU access is available
   - full Gemini LOAO is not the default because estimated all-row LOAO cost/latency is high relative to the expected dissertation value and the current robustness spine already uses local DistilBERT LOAO plus Qwen zero-shot LOAO
 - Important Gemini finding: `max_tokens=512` caused truncated JSON because Gemini spent most completion tokens thinking first. Use `max_tokens=2048` for this prompt unless a later sweep proves a cheaper reliable setting.
@@ -511,7 +528,7 @@ Recommended next steps:
 8. Treat Gemini Flash as the completed hosted fixed held-out-aspect baseline, but do not run full Gemini LOAO unless the cost/benefit is explicitly justified.
 9. The local-to-Gemini cascade is complete; follow `docs/llm_next_experiment_directions.md` with the new Qwen LOAO result in mind.
 10. Gemini-generated aspect descriptions are complete; do not rerun the same Task 4 API work unless a new variant or thesis question is explicitly requested.
-11. Use `docs/thesis_completion_roadmap.md` as the current task order: thesis-ready tables/figure data, cascade score/margin uncertainty, Qwen LoRA runner readiness, and then full Qwen LoRA LOAO after GPU access is confirmed. The Gemini-assisted qualitative error taxonomy is already complete.
+11. Use `docs/thesis_completion_roadmap.md` as the current task order. Thesis-ready tables/figure data, cascade score/margin uncertainty, Qwen LoRA runner readiness, tiny smoke testing, and the full Qwen LoRA LOAO launch plan are complete. Remaining Qwen work is optional fixed held-out-aspect Qwen LoRA if time/GPU allows, target GPU/storage confirmation, and then full Qwen LoRA LOAO after the launch gate is satisfied. The Gemini-assisted qualitative error taxonomy is already complete.
 12. Treat sampled Gemini LOAO as optional fallback or supervisor-requested work, not the default next experiment.
 13. If I ask to publish changes, commit/push only clean code and documentation, without committing outputs, data, credentials, checkpoints, or generated artifacts.
 

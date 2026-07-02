@@ -700,7 +700,7 @@ Held-out aspect, local-to-Gemini selective cascade:
 
 See `docs/generalisation_baselines.md` for details.
 
-The strongest current local non-LLM open-topic baseline is documented separately in `docs/non_llm_open_topic_baseline.md`. The detailed Qwen zero-shot LOAO analysis and thesis-use framing are recorded in `docs/qwen_loao_experiment_analysis.md`. The paused next-stage modelling plan and literature-review framing are recorded in `docs/next_stage_and_literature_review_plan.md`, with the first local-paper scoping pass in `docs/literature_review_scoping_2026_06_29.md`, the current internal dissertation spec in `docs/dissertation_internal_spec.md`, the literature matrix in `docs/literature_review_matrix.md`, the latest Aji guidance in `docs/aji_updates_2026_06_29.md`, the Gemini hosted baseline implementation status in `docs/gemini_candidate_label_baseline.md`, the consolidated experiment reproducibility audit in `docs/experiment_reproducibility_register.md`, and the current thesis completion plan in `docs/thesis_completion_roadmap.md`.
+The strongest current local non-LLM open-topic baseline is documented separately in `docs/non_llm_open_topic_baseline.md`. The detailed Qwen zero-shot LOAO analysis and thesis-use framing are recorded in `docs/qwen_loao_experiment_analysis.md`. The paused next-stage modelling plan and literature-review framing are recorded in `docs/next_stage_and_literature_review_plan.md`, with the first local-paper scoping pass in `docs/literature_review_scoping_2026_06_29.md`, the current internal dissertation spec in `docs/dissertation_internal_spec.md`, the literature matrix in `docs/literature_review_matrix.md`, the latest Aji guidance in `docs/aji_updates_2026_06_29.md`, the Gemini hosted baseline implementation status in `docs/gemini_candidate_label_baseline.md`, the consolidated experiment reproducibility audit in `docs/experiment_reproducibility_register.md`, the current thesis completion plan in `docs/thesis_completion_roadmap.md`, and the Qwen LoRA launch templates in `docs/qwen_lora_loao_launch_plan.md`.
 
 Qwen held-out-aspect status:
 
@@ -711,16 +711,19 @@ Completed:
   zero-shot 12-aspect all-row LOAO validation/test evaluation
   row-level error analysis
   GPU-ready SFT/evaluation JSONL preparation script
+  final held-out-aspect Qwen LoRA runner with manifest logging
+  tiny local held-out-aspect Qwen LoRA smoke test
+  full 12-fold Qwen LoRA LOAO command/launch plan
   strongest current non-LLM fixed held-out-aspect baseline:
     candidate-aspect DistilBERT selector + DistilBERT aspect-conditioned sentiment
 
 Not yet completed:
-  full Qwen held-out-aspect fine-tuning
-  full Qwen validation/test fine-tuned evaluation
+  optional full fixed held-out-aspect Qwen LoRA validation/test run
+  target full-LOAO GPU environment/storage confirmation
   full Qwen LoRA all-row LOAO robustness evaluation
 ```
 
-The current Qwen held-out-aspect and LOAO results are therefore zero-shot prompt baselines, not fine-tuned Qwen results. The full all-row LOAO test mean is `0.1212` pair samples F1 and `0.3378` pair micro F1. Positive-gold rows are much stronger (`0.8194` pair samples F1 mean and `0.8659` pair micro F1 mean), so the main Qwen zero-shot weakness is empty-gold absence calibration. The full analysis shows a 6/6 per-aspect split against the preferred DistilBERT LOAO row: Qwen gains on broader semantic aspects such as app/website, general satisfaction, speed, and staff attitude, while DistilBERT remains better on narrower support-channel, account, and value aspects. Full Qwen candidate-label fine-tuning should run later on stronger GPU access using the indexed SFT/evaluation data generation workflow, and it should be evaluated with the same all-row LOAO protocol.
+The current Qwen held-out-aspect and LOAO performance results are still zero-shot prompt baselines, not fine-tuned Qwen result claims. The full all-row LOAO test mean is `0.1212` pair samples F1 and `0.3378` pair micro F1. Positive-gold rows are much stronger (`0.8194` pair samples F1 mean and `0.8659` pair micro F1 mean), so the main Qwen zero-shot weakness is empty-gold absence calibration. The final LoRA runner and tiny smoke test now show that local QLoRA loading, one training step, adapter saving, indexed JSON generation, candidate-ID mapping, metrics, and manifest logging work on the RTX 5050 Laptop GPU. The optional fixed held-out-aspect Qwen LoRA run and full 12-fold fine-tuned LOAO remain unrun until a GPU/time window is explicitly confirmed.
 
 Gemini hosted candidate-label status:
 
@@ -762,7 +765,7 @@ Task 4, Gemini-generated aspect descriptions, is now complete and documented in 
 
 The current Tier 1 literature-review foundation is recorded in `docs/tier1_core_literature_review_matrix.md`. It covers customer review mining, ABSA, FABSA, multi-label evaluation, domain generalisation, candidate-label taxonomy shift, and structured-output LLM evaluation, while leaving detailed Qwen/Gemini fine-tuning and deployment-governance work as later optional branches.
 
-The active completion roadmap is now `docs/thesis_completion_roadmap.md`. It treats full fine-tuned Qwen LoRA LOAO as the only remaining major compute-bound experiment. While GPU access is being negotiated, the project should complete thesis-ready tables, cascade score/margin uncertainty, Qwen LoRA runner readiness, and LaTeX skeleton alignment.
+The active completion roadmap is now `docs/thesis_completion_roadmap.md`. Thesis-ready result tables, the cascade score/margin uncertainty check, Qwen LoRA runner readiness, the tiny Qwen LoRA smoke test, and the full LOAO launch plan are complete. Full fine-tuned Qwen LoRA LOAO remains the only major compute-bound modelling experiment, pending a confirmed GPU/storage window. The optional fixed held-out-aspect Qwen LoRA run is prepared but not started because it is expected to exceed two hours locally.
 
 The Gemini-assisted qualitative error taxonomy is now complete and documented in `docs/qualitative_error_taxonomy.md`. It reuses existing outputs, keeps review-text packets and Gemini drafts under ignored `outputs/`, and manually consolidates seven thesis-facing categories: semantic boundary ambiguity, competitor-positive recall bottleneck, generative over-prediction, cautious abstention, neutral sentiment under-recall, prompt-induced precision-recall shift, and cascade complementarity. A small Gemini Pro draft pass was used only as an assistant for category wording and cross-checking, with reasoning tokens counted in the recorded usage. These categories define the main Qwen fine-tuning targets: abstention calibration, hard-negative aspect boundaries, competitor-positive recall, neutral sentiment coverage, stable label semantics, and cascade-ready uncertainty signals.
 
@@ -807,7 +810,7 @@ Future dissertation-writing work should edit the LaTeX source directly. Markdown
    - The local-to-Gemini cascade is complete and is the strongest fixed-split system result, but it remains fixed three-aspect evidence rather than LOAO robustness evidence.
    - The Pro cascade beats pure Pro through error complementarity: Pro handles most uncertain rows, while the local fallback protects against Pro abstentions and some local-reliable rows.
    - The strongest next dissertation-oriented work is not more DistilBERT LOAO, more Gemini prompt sweeps, or full Gemini LOAO by default. The roadmap is recorded in `docs/thesis_completion_roadmap.md`.
-   - Candidate-aspect descriptions and the Gemini-assisted qualitative error taxonomy are now complete. Recommended order after this point: thesis-ready result tables, cascade uncertainty improvement using local score/margin export, Qwen LoRA runner readiness, and full Qwen LoRA LOAO only after GPU access is confirmed.
+   - Candidate-aspect descriptions, the Gemini-assisted qualitative error taxonomy, thesis-ready tables, cascade score/margin uncertainty, Qwen LoRA runner readiness, tiny Qwen LoRA smoke testing, and the Qwen LoRA full LOAO launch plan are now complete. Recommended order after this point: confirm the target GPU/storage environment, optionally run the fixed held-out-aspect Qwen LoRA validation/test configuration if time allows, and run full Qwen LoRA LOAO only after that launch gate is satisfied.
 
 ## 16. Immediate Next Steps
 
@@ -833,15 +836,15 @@ Future dissertation-writing work should edit the LaTeX source directly. Markdown
 
 11. Treat the Gemini-assisted qualitative error taxonomy as complete and keep raw review text, Gemini prompts, and Gemini drafts under ignored `outputs/`.
 
-12. Prepare thesis-ready evidence tables and figure inputs that keep fixed-split, all-row LOAO, and positive-gold diagnostic results conceptually separate.
+12. Treat thesis-ready evidence tables and figure inputs as complete; they are recorded in `docs/thesis_result_tables.md` and `docs/thesis_figure_data/`.
 
-13. Try the cascade score/margin uncertainty improvement without new Gemini calls if the local score export can be recovered or regenerated cleanly.
+13. Treat the cascade score/margin uncertainty check as complete. It is a negative methodological check: score/margin features are exportable but did not improve the validation-selected cascade over the reliability proxy.
 
-14. Prepare and smoke-test the final Qwen LoRA SFT/evaluation runner before any long GPU run.
+14. Treat the final Qwen LoRA SFT/evaluation runner and tiny local smoke test as complete. Use `docs/qwen_lora_loao_launch_plan.md` before any long GPU run.
 
 15. Do not run full Gemini Pro LOAO unless the dissertation value justifies the added cost and latency.
 
-16. Treat full fine-tuned Qwen LoRA LOAO as the major pending compute-bound experiment, not as a prerequisite for finishing the rest of the dissertation evidence package.
+16. Treat full fine-tuned Qwen LoRA LOAO as the major pending compute-bound experiment, not as a prerequisite for finishing the rest of the dissertation evidence package. Do not launch it until the target GPU environment, storage budget, package versions, and data-transfer rules are confirmed.
 
 ## 17. Notes For Repository Hygiene
 

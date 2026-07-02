@@ -1,0 +1,3 @@
+system,scope,split,pair_samples_f1_mean,pair_micro_f1_mean,precision_mean,recall_mean,pair_macro_f1_mean,sentiment_accuracy_when_gold_aspect_predicted
+Qwen3-4B indexed zero-shot,positive-gold rows from the all-row LOAO predictions,validation,0.8129,0.8692,0.9481,0.8115,0.6024,0.9451
+Qwen3-4B indexed zero-shot,positive-gold rows from the all-row LOAO predictions,test,0.8194,0.8659,0.9338,0.8182,0.6184,0.9314

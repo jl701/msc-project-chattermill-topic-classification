@@ -1,0 +1,8 @@
+section,system,protocol,split,pair_samples_f1,pair_micro_f1,pair_macro_f1,aspect_samples_f1,notes
+closed-topic,Word+char TF-IDF + Linear SVM,provided FABSA split,test,0.709,0.7042,0.4207,0.7736,Fixed taxonomy reference point.
+closed-topic,DistilBERT,provided FABSA split,test,0.7803,0.7738,0.5377,0.8185,Strongest closed-topic encoder baseline.
+held-out organisation,Word+char TF-IDF + Linear SVM,held-out organisation,test,0.7026,0.692,0.3626,0.7629,Domain-shift baseline; taxonomy is not held out.
+held-out organisation,DistilBERT,held-out organisation,test,0.7575,0.76,0.4035,0.7986,Validation-selected held-out-organisation encoder.
+fixed held-out aspect,Candidate-label lexical TF-IDF + global sentiment,"fixed three held-out aspects, example-filtered",test,0.4626,0.4596,0.3703,0.5231,Lexical lower bound for controlled unseen-aspect split.
+fixed held-out aspect,Candidate-aspect DistilBERT + DistilBERT sentiment,"fixed three held-out aspects, example-filtered",test,0.6071,0.5917,0.489,0.6651,Strongest local fixed held-out-aspect baseline.
+fixed held-out aspect,Qwen3-4B indexed zero-shot,fixed three held-out aspects,test,0.5374,0.53,0.4374,0.634,Open-weight zero-shot fixed split; not fine-tuned.

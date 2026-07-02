@@ -1,0 +1,4 @@
+system,scope,split,pair_samples_f1_mean,pair_micro_f1_mean,pair_macro_f1_mean,precision_mean,recall_mean,fp_rows_per_100_mean,notes
+Lexical TF-IDF + global sentiment,"all-row LOAO, micro-F1 threshold selection, example-filtered",test,0.0903,0.378,,0.3778,0.4895,17.4753,Best documented lexical all-row LOAO detection diagnostic.
+Candidate-aspect DistilBERT + DistilBERT sentiment,"all-row LOAO, pair-micro-F1 threshold selection, example-filtered",test,0.055,0.3128,0.2285,0.3345,0.4315,12.7022,Strong fixed local model does not transfer uniformly to all-row LOAO.
+Qwen3-4B indexed zero-shot,"all-row LOAO, one held-out aspect per fold",test,0.1212,0.3378,0.2412,0.2379,0.8182,34.415,High recall but weak empty-gold absence calibration.

@@ -80,15 +80,15 @@ Use the checklist below as the operational source of truth before starting the f
 
 #### Still Required Before Starting Full Qwen LoRA LOAO
 
-- [ ] Build thesis-ready result tables and figure data that keep closed-topic, held-out organisation, fixed held-out aspect, all-row LOAO, and positive-gold diagnostics conceptually separate.
-- [ ] Run or document the cascade score/margin uncertainty improvement using existing Gemini predictions and local score exports where feasible.
-- [ ] Confirm or implement the final Qwen held-out-aspect LoRA SFT runner for indexed candidate-label JSONL, rather than relying on the closed-topic pilot runner.
-- [ ] Add run-manifest logging to the Qwen LoRA runner, including exact command, git commit, model name, quantisation, LoRA parameters, split/protocol, row scope, runtime, hardware, and output directory.
-- [ ] Add or confirm resume/skip-existing behaviour for Qwen LoRA training checkpoints, adapter outputs, and validation/test predictions.
-- [ ] Add focused tests for the final Qwen LoRA runner's data loading, manifest writing, resume/skip logic, and prediction normalisation.
-- [ ] Run a tiny local Qwen LoRA held-out-aspect smoke test on a few training/evaluation rows to verify model loading, loss masking, adapter saving, JSON parsing, and metrics.
+- [x] Build thesis-ready result tables and figure data that keep closed-topic, held-out organisation, fixed held-out aspect, all-row LOAO, and positive-gold diagnostics conceptually separate.
+- [x] Run or document the cascade score/margin uncertainty improvement using existing Gemini predictions and local score exports where feasible.
+- [x] Confirm or implement the final Qwen held-out-aspect LoRA SFT runner for indexed candidate-label JSONL, rather than relying on the closed-topic pilot runner.
+- [x] Add run-manifest logging to the Qwen LoRA runner, including exact command, git commit, model name, quantisation, LoRA parameters, split/protocol, row scope, runtime, hardware, and output directory.
+- [x] Add or confirm resume/skip-existing behaviour for Qwen LoRA training checkpoints, adapter outputs, and validation/test predictions.
+- [x] Add focused tests for the final Qwen LoRA runner's data loading, manifest writing, resume/skip logic, and prediction normalisation.
+- [x] Run a tiny local Qwen LoRA held-out-aspect smoke test on a few training/evaluation rows to verify model loading, loss masking, adapter saving, JSON parsing, and metrics.
 - [ ] Run one fixed held-out-aspect Qwen LoRA configuration before full LOAO if local/remote GPU time allows; use validation selection before test evaluation.
-- [ ] Define the final full 12-fold Qwen LoRA LOAO command templates, output directory pattern, checkpoint naming, and recovery plan.
+- [x] Define the final full 12-fold Qwen LoRA LOAO command templates, output directory pattern, checkpoint naming, and recovery plan.
 - [ ] Confirm the target GPU environment, storage budget, package versions, and data-transfer rules before launching any long full-LOAO run.
 - [ ] Run the standard validation and safety checks immediately before the full Qwen LoRA LOAO launch.
 

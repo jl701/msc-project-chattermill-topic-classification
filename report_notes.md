@@ -182,3 +182,208 @@ Remaining next work before full Qwen LoRA LOAO:
 5. Tiny local Qwen LoRA held-out-aspect smoke test.
 6. Optional fixed held-out-aspect Qwen LoRA configuration before full LOAO.
 7. Full 12-fold LOAO command templates and GPU environment confirmation.
+
+## 2026-07-02 - Thesis-Ready Result Tables And Figure Data
+
+Command:
+
+```powershell
+python .\scripts\build_thesis_result_tables.py
+```
+
+Inputs:
+
+- Existing tracked documentation and already documented aggregate metrics.
+- No raw prediction files, review text, model checkpoints, API credentials, or private outputs were committed.
+
+Outputs:
+
+- `docs/thesis_result_tables.md`
+- `docs/thesis_figure_data/protocol_ladder.csv`
+- `docs/thesis_figure_data/loao_robustness.csv`
+- `docs/thesis_figure_data/qwen_positive_diagnostic.csv`
+- `docs/thesis_figure_data/cascade_tradeoff.csv`
+- `docs/thesis_figure_data/fixed_vs_loao_drop.csv`
+
+Interpretation:
+
+- The result table pack keeps fixed-split evidence, all-row LOAO robustness, Qwen positive-gold diagnostics, and Gemini/cascade deployment evidence separate.
+- This closes the first pre-Qwen-LoRA-full-LOAO checklist item.
+
+Limitations:
+
+- The tables freeze the currently documented headline metrics; they should be regenerated after any future Qwen LoRA fixed-split or LOAO result.
+
+Next step:
+
+- Try cascade score/margin uncertainty without rerunning Gemini.
+
+## 2026-07-02 - Planned Cascade Score/Margin Check
+
+Objective:
+
+- Test whether local DistilBERT selector score/margin features improve local-to-Gemini cascade selection without rerunning Gemini.
+
+Pre-run audit:
+
+- Existing strongest local prediction files do not contain candidate aspect scores or margins.
+- The strongest local output directory contains prediction JSONL, per-label CSV, summary JSON, and a sentiment summary, but no saved candidate-aspect selector checkpoint.
+- CUDA is available locally: PyTorch `2.10.0+cu128`, NVIDIA GeForce RTX 5050 Laptop GPU.
+
+Planned command:
+
+```powershell
+python .\scripts\run_aspect_label_aware_baseline.py --strategy example_filtered --sentiment-mode transformer_aspect_conditioned --sentiment-epochs 3 --sentiment-learning-rate 2e-5 --sentiment-batch-size 16 --sentiment-eval-batch-size 64 --sentiment-class-weight balanced --sentiment-selection-metric accuracy --epochs 3 --batch-size 32 --eval-batch-size 96 --learning-rate 3e-5 --negatives-per-positive 3 --output-dir .\outputs\baselines\aspect_label_aware_transformer_sentiment_lr3e-5_ep3_neg3_example_filtered_score_export_20260702
+```
+
+Expected output:
+
+- Local ignored prediction JSONL with aggregate `score_features` for validation and test rows.
+- Local ignored summary for checking whether the rerun reproduces the documented fixed held-out-aspect baseline closely enough for cascade analysis.
+
+Risk and stopping rule:
+
+- If the local rerun fails or materially diverges from the documented baseline, do not treat score/margin cascade results as a replacement headline.
+- Existing Gemini predictions will be reused; no Gemini API calls are planned.
+
+Observed result:
+
+- Local score-export rerun completed and reproduced the documented strongest local fixed held-out-aspect result:
+  - validation pair samples F1 `0.6226`;
+  - validation pair micro F1 `0.6049`;
+  - selected threshold `0.37`;
+  - test pair samples F1 `0.6071`;
+  - test pair micro F1 `0.5917`.
+- Score/margin-aware cascade sweeps reused existing Gemini predictions only.
+- Candidate policies increased from `10,578` to `20,598`.
+- Validation-selected results did not improve over the existing reliability-proxy cascade:
+  - Flash-Lite: test pair samples F1 `0.6679`, call rate `0.5089`;
+  - Flash: test pair samples F1 `0.7459`, call rate `0.9004`;
+  - Pro: test pair samples F1 `0.8102`, call rate `0.9004`.
+
+Interpretation:
+
+- This is a negative methodological check: local score/margin features are now exportable and included in the policy search, but they did not replace or improve the validation-reliability proxy for the current fixed-split cascade.
+
+Next step:
+
+- Build the final Qwen held-out-aspect LoRA SFT runner with manifest and resume/skip behaviour.
+
+## 2026-07-02 - Final Qwen Held-Out-Aspect LoRA Runner Readiness
+
+Commands:
+
+```powershell
+python .\scripts\prepare_qwen_heldout_aspect_sft_data.py --strategy example_filtered --prompt-variant indexed --limit 24 --output-dir .\outputs\qwen_heldout_aspect_sft_tiny_20260702
+
+python .\scripts\run_qwen_lora_heldout_aspect.py --sft-data-dir .\outputs\qwen_heldout_aspect_sft_tiny_20260702 --strategy example_filtered --output-dir .\outputs\qwen_lora_heldout_aspect_dry_run_20260702 --train-limit 8 --validation-limit 4 --test-limit 4 --epochs 1 --max-train-steps 1 --batch-size 1 --grad-accumulation-steps 1 --learning-rate 1e-4 --max-length 512 --max-input-tokens 512 --max-new-tokens 64 --dry-run
+
+python .\scripts\prepare_qwen_heldout_aspect_sft_data.py --strategy example_filtered --prompt-variant indexed --heldout-aspect "Staff support: Email" --limit 3 --output-dir .\outputs\qwen_loao_sft_single_fold_check_20260702
+
+python -m unittest tests.test_qwen_lora_heldout_runner tests.test_qwen_loao_runner tests.test_qwen_format
+```
+
+Inputs:
+
+- Indexed held-out-aspect SFT JSONL generated from tracked split/preparation code.
+- No raw outputs or model artifacts were moved into Git.
+
+Outputs:
+
+- `scripts/run_qwen_lora_heldout_aspect.py`
+- `scripts/prepare_qwen_heldout_aspect_sft_data.py`
+- `tests/test_qwen_lora_heldout_runner.py`
+- Local ignored dry-run/JSONL outputs under `outputs/`.
+
+Observed result:
+
+- Runner dry-run completed and wrote `manifest.json` and `summary.json`.
+- Manifest records command, cwd, git commit, Qwen model name, 4-bit loading, LoRA parameters, split protocol, row scope, seed, hardware, output directory, and package versions.
+- Tests passed for JSONL loading, prompt-answer loss masking, manifest fields, prediction resume/skip logic, adapter skip decision logic, and indexed prediction normalisation.
+- One single-aspect SFT generation check succeeded, so later LOAO fold directories can be prepared with `--heldout-aspect`.
+
+Interpretation:
+
+- The runner/manifest/resume/test readiness checklist items are complete.
+- The actual tiny Qwen load/train/generate smoke test is still pending and should not be described as complete until it runs.
+
+Limitations:
+
+- Training resume reloads adapter weights only; optimiser and scheduler state are not restored.
+- Dry-run does not verify bitsandbytes model loading, adapter saving, generation, JSON parsing from generated text, or metrics from actual Qwen predictions.
+
+Next step:
+
+- Run the tiny local held-out-aspect Qwen LoRA smoke test.
+
+## 2026-07-02 - Tiny Local Qwen LoRA Held-Out-Aspect Smoke Test
+
+Command:
+
+```powershell
+python .\scripts\run_qwen_lora_heldout_aspect.py --sft-data-dir .\outputs\qwen_heldout_aspect_sft_tiny_20260702 --strategy example_filtered --output-dir .\outputs\qwen_lora_heldout_aspect_tiny_smoke_evalmode_20260702 --train-limit 4 --validation-limit 1 --test-limit 1 --epochs 1 --max-train-steps 1 --batch-size 1 --grad-accumulation-steps 1 --learning-rate 1e-6 --max-length 512 --max-input-tokens 512 --max-new-tokens 96 --lora-r 8 --lora-alpha 16 --lora-dropout 0.05 --no-gradient-checkpointing --save-adapter --resume-predictions --skip-existing-predictions
+```
+
+Inputs:
+
+- `outputs/qwen_heldout_aspect_sft_tiny_20260702/example_filtered/`
+- 4 train rows, 1 validation row, 1 test row.
+
+Outputs:
+
+- Ignored local output: `outputs/qwen_lora_heldout_aspect_tiny_smoke_evalmode_20260702/`
+- Adapter saved under `adapter_final/`.
+- Validation/test prediction JSONL, manifest, and summary written.
+
+Observed result:
+
+- Model loading passed for `Qwen/Qwen3-4B-Instruct-2507` with 4-bit QLoRA.
+- One LoRA training step completed: `global_step=1`, train loss `1.2265`.
+- Adapter saving passed.
+- Validation/test generation passed.
+- Validation/test valid JSON rate: `1.0000`.
+- Validation/test schema valid rate: `1.0000`.
+- Candidate ID mapping passed; the validation raw output used `A1` and was normalised to `Account management: Account access | neutral`.
+- Metrics were written to `summary.json`.
+
+Interpretation:
+
+- The final Qwen LoRA held-out-aspect runner passes a real local smoke test.
+- These metrics are not thesis performance evidence because the evaluation has only one row per split.
+
+Limitations:
+
+- The canonical smoke used `--no-gradient-checkpointing` and a very low LR (`1e-6`) for local stability.
+- Earlier tiny attempts exposed invalid repeated-token generation when inference stayed in the training/checkpointing path; the runner now explicitly prepares the model for inference before generation.
+
+Next step:
+
+- Do not run a long fixed Qwen LoRA configuration without a resource/time decision. Prepare the fixed-split command and full LOAO launch plan first.
+
+## 2026-07-02 - Qwen LoRA Full LOAO Launch Plan
+
+Output:
+
+- `docs/qwen_lora_loao_launch_plan.md`
+
+Observed result:
+
+- Optional fixed held-out-aspect Qwen LoRA validation/test command templates are documented.
+- The fixed run was not launched because it is expected to exceed two hours on the local 8 GB laptop GPU once full validation/test generation is included.
+- Full 12-fold Qwen LoRA LOAO command templates are documented for all 12 aspect folds.
+- The plan defines fold IDs, SFT data-preparation directories, output directory pattern, validation-before-test order, adapter naming, prediction recovery, adapter recovery, resource/storage assumptions, data-transfer rules, and pre-launch validation checks.
+- Runner recovery semantics were tightened so `--skip-training-if-adapter-exists` auto-loads `adapter_final`.
+
+Interpretation:
+
+- The launch plan checklist item is complete.
+- The optional fixed full run, target GPU confirmation, and launch-immediate validation gate remain open.
+
+Limitations:
+
+- Runtime/storage estimates are based on smoke-test and previous zero-shot generation timings, not a completed full fine-tuned fold.
+- Full 12-fold Qwen LoRA LOAO has not been run.
+
+Next step:
+
+- Run final repo validation and safety checks, then commit safe tracked changes only.

@@ -245,6 +245,31 @@ Next step:
 - For Qwen fine-tuning, keep the indexed candidate-label format and explicitly evaluate all-row LOAO after any fixed-split improvement.
 - Consider calibration or an absence-aware prompt/objective, because empty-gold false positives are the main all-row bottleneck.
 
+## Qwen LoRA Runner Readiness
+
+Updated on 2026-07-02.
+
+The final held-out-aspect Qwen LoRA runner is now implemented in `scripts/run_qwen_lora_heldout_aspect.py`. It consumes indexed candidate-label SFT JSONL, supports `Qwen/Qwen3-4B-Instruct-2507`, 4-bit QLoRA, configurable LoRA parameters, train/validation/test split evaluation, canonical `aspect_id` parsing, existing pair/aspect metrics, manifest logging, adapter resume, and validation/test prediction resume.
+
+A tiny local smoke test completed on the RTX 5050 Laptop GPU:
+
+```powershell
+python .\scripts\run_qwen_lora_heldout_aspect.py --sft-data-dir .\outputs\qwen_heldout_aspect_sft_tiny_20260702 --strategy example_filtered --output-dir .\outputs\qwen_lora_heldout_aspect_tiny_smoke_evalmode_20260702 --train-limit 4 --validation-limit 1 --test-limit 1 --epochs 1 --max-train-steps 1 --batch-size 1 --grad-accumulation-steps 1 --learning-rate 1e-6 --max-length 512 --max-input-tokens 512 --max-new-tokens 96 --lora-r 8 --lora-alpha 16 --lora-dropout 0.05 --no-gradient-checkpointing --save-adapter --resume-predictions --skip-existing-predictions
+```
+
+Smoke result:
+
+- Qwen loaded locally with 4-bit QLoRA.
+- One LoRA training step completed.
+- Adapter saved under ignored `outputs/`.
+- Validation/test generation ran.
+- Validation/test valid JSON rate: `1.0000`.
+- Validation/test schema-valid rate: `1.0000`.
+- Candidate IDs were parsed back to canonical aspect labels.
+- Metrics and manifest were written.
+
+This is a pipeline smoke test only, not a model-quality result. The optional fixed held-out-aspect Qwen LoRA run and the full 12-fold fine-tuned Qwen LoRA LOAO run remain unrun. Command templates, fold naming, recovery plan, runtime/storage assumptions, and launch gates are recorded in `docs/qwen_lora_loao_launch_plan.md`.
+
 ## Gemini Comparison Result
 
 A Gemini hosted candidate-label runner was added and evaluated on 2026-07-01 to provide a closed hosted-LLM comparison under the same indexed held-out-aspect protocol:

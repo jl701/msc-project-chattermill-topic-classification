@@ -132,7 +132,7 @@ def prediction_features(
     sentiment_precision = [sentiment_stats[label].precision for label in predicted_sentiments if label in sentiment_stats]
     sentiment_f1 = [sentiment_stats[label].f1 for label in predicted_sentiments if label in sentiment_stats]
 
-    return {
+    features = {
         "pred_count": float(len(predicted_pairs)),
         "aspect_count": float(len(predicted_aspects)),
         "sentiment_count": float(len(predicted_sentiments)),
@@ -153,6 +153,50 @@ def prediction_features(
         "low_min_sentiment_f1": 1.0 - min(sentiment_f1, default=0.0),
         "low_mean_sentiment_f1": 1.0 - safe_mean(sentiment_f1),
     }
+    features.update(score_margin_features(row.get("score_features")))
+    return features
+
+
+def clamp_unit(value: float) -> float:
+    return max(0.0, min(1.0, value))
+
+
+def score_margin_features(score_features: Any) -> dict[str, float]:
+    if not isinstance(score_features, dict):
+        return {}
+
+    output: dict[str, float] = {}
+    numeric_map = {
+        "top_score": "aspect_top_score",
+        "second_score": "aspect_second_score",
+        "score_margin": "aspect_score_margin",
+        "min_abs_distance_to_threshold": "aspect_min_abs_distance_to_threshold",
+        "top_distance_to_threshold": "aspect_top_distance_to_threshold",
+        "above_threshold_count": "aspect_above_threshold_count",
+        "selected_count": "aspect_selected_count",
+        "selected_score_min": "aspect_selected_score_min",
+        "selected_score_mean": "aspect_selected_score_mean",
+    }
+    for source, target in numeric_map.items():
+        value = score_features.get(source)
+        if value is None:
+            continue
+        try:
+            output[target] = float(value)
+        except (TypeError, ValueError):
+            continue
+
+    if "aspect_top_score" in output:
+        output["low_aspect_top_score"] = 1.0 - clamp_unit(output["aspect_top_score"])
+    if "aspect_score_margin" in output:
+        output["low_aspect_score_margin"] = 1.0 - clamp_unit(abs(output["aspect_score_margin"]))
+    if "aspect_min_abs_distance_to_threshold" in output:
+        output["score_near_threshold"] = 1.0 - clamp_unit(abs(output["aspect_min_abs_distance_to_threshold"]))
+    if "aspect_selected_score_min" in output:
+        output["low_aspect_selected_score_min"] = 1.0 - clamp_unit(output["aspect_selected_score_min"])
+    if "aspect_selected_score_mean" in output:
+        output["low_aspect_selected_score_mean"] = 1.0 - clamp_unit(output["aspect_selected_score_mean"])
+    return output
 
 
 def combine_predictions(local_labels: list[str], gemini_labels: list[str], mode: str) -> list[str]:

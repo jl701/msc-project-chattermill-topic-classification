@@ -10,7 +10,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from msc_project.data.fabsa import default_data_dir
-from msc_project.data.splits import DEFAULT_HELDOUT_ASPECTS, build_heldout_aspect_split, load_all_fabsa
+from msc_project.data.splits import DEFAULT_HELDOUT_ASPECTS, all_aspects, build_heldout_aspect_split, load_all_fabsa
 from msc_project.llm.qwen_format import build_candidate_messages
 
 
@@ -56,10 +56,20 @@ def build_rows(frame, candidate_aspects: list[str], prompt_variant: str, limit: 
     return rows
 
 
-def write_strategy_data(frame, strategy: str, args) -> None:
+def selected_heldout_aspects(frame, requested_aspects: list[str]) -> list[str]:
+    if not requested_aspects:
+        return list(DEFAULT_HELDOUT_ASPECTS)
+    known_aspects = set(all_aspects(frame))
+    unknown = sorted(set(requested_aspects) - known_aspects)
+    if unknown:
+        raise ValueError(f"Unknown held-out aspects: {unknown}")
+    return requested_aspects
+
+
+def write_strategy_data(frame, strategy: str, heldout_aspects: list[str], args) -> None:
     splits = build_heldout_aspect_split(
         frame,
-        DEFAULT_HELDOUT_ASPECTS,
+        heldout_aspects,
         strategy=strategy,
         eval_label_scope="heldout",
     )
@@ -72,10 +82,10 @@ def write_strategy_data(frame, strategy: str, args) -> None:
         "strategy": strategy,
         "eval_label_scope": "heldout",
         "prompt_variant": args.prompt_variant,
-        "heldout_aspects": DEFAULT_HELDOUT_ASPECTS,
+        "heldout_aspects": heldout_aspects,
         "train_candidate_aspects": train_aspects,
-        "validation_candidate_aspects": DEFAULT_HELDOUT_ASPECTS,
-        "test_candidate_aspects": DEFAULT_HELDOUT_ASPECTS,
+        "validation_candidate_aspects": heldout_aspects,
+        "test_candidate_aspects": heldout_aspects,
         "notes": [
             "Training rows use seen-aspect supervision only.",
             "Validation and test rows use held-out aspect labels only.",
@@ -86,8 +96,8 @@ def write_strategy_data(frame, strategy: str, args) -> None:
 
     split_candidates = {
         "train": train_aspects,
-        "validation": DEFAULT_HELDOUT_ASPECTS,
-        "test": DEFAULT_HELDOUT_ASPECTS,
+        "validation": heldout_aspects,
+        "test": heldout_aspects,
     }
     for split_name, split_frame in splits.items():
         rows = build_rows(split_frame, split_candidates[split_name], args.prompt_variant, args.limit)
@@ -103,15 +113,16 @@ def main() -> None:
     parser.add_argument("--output-dir", type=Path, default=PROJECT_ROOT / "outputs" / "qwen_heldout_aspect_sft")
     parser.add_argument("--strategy", choices=["label_masked", "example_filtered", "both"], default="both")
     parser.add_argument("--prompt-variant", default="indexed")
+    parser.add_argument("--heldout-aspect", action="append", default=[])
     parser.add_argument("--limit", type=int, default=None)
     args = parser.parse_args()
 
     frame = load_all_fabsa(args.data_dir)
+    heldout_aspects = selected_heldout_aspects(frame, args.heldout_aspect)
     strategies = ["label_masked", "example_filtered"] if args.strategy == "both" else [args.strategy]
     for strategy in strategies:
-        write_strategy_data(frame, strategy, args)
+        write_strategy_data(frame, strategy, heldout_aspects, args)
 
 
 if __name__ == "__main__":
     main()
-

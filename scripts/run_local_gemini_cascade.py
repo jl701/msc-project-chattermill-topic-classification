@@ -368,6 +368,12 @@ def build_policy_candidates(validation_rows: list[dict[str, Any]], rank_rate_ste
         "low_min_aspect_precision",
         "low_min_sentiment_precision",
         "low_min_sentiment_f1",
+        "low_aspect_top_score",
+        "low_aspect_score_margin",
+        "score_near_threshold",
+        "low_aspect_selected_score_min",
+        "low_aspect_selected_score_mean",
+        "aspect_above_threshold_count",
     ]
     weighted_feature_sets = [
         {"pred_count": 1.0, "low_min_pair_precision": 2.0},
@@ -606,6 +612,13 @@ def main() -> None:
             "aspect": {label: stats.to_dict() for label, stats in aspect_stats.items()},
             "sentiment": {label: stats.to_dict() for label, stats in sentiment_stats.items()},
         },
+        "feature_names": sorted(
+            {
+                feature
+                for row in validation_feature_rows
+                for feature in row["features"]
+            }
+        ),
         "selected_by_validation": {
             "policy": selected_policy.to_dict(),
             "validation_metrics": selected["metrics"],

@@ -68,7 +68,47 @@ def selection_keys(primary_metric: str) -> tuple[str, ...]:
     return tuple([primary_metric] + [key for key in SELECTION_KEYS if key != primary_metric])
 
 
-def write_prediction_rows(frame: pd.DataFrame, predictions: list[list[str]], path: Path) -> None:
+def row_score_features(
+    row_scores,
+    candidate_aspects: list[str],
+    selected_aspects: list[str],
+    threshold: float,
+) -> dict[str, object]:
+    ranked_indices = sorted(range(len(candidate_aspects)), key=lambda index: float(row_scores[index]), reverse=True)
+    top_index = ranked_indices[0]
+    second_index = ranked_indices[1] if len(ranked_indices) > 1 else ranked_indices[0]
+    selected_indices = [candidate_aspects.index(aspect) for aspect in selected_aspects if aspect in candidate_aspects]
+    selected_scores = [float(row_scores[index]) for index in selected_indices]
+    distances = [abs(float(score) - threshold) for score in row_scores]
+
+    return {
+        "candidate_aspect_scores": {
+            aspect: float(row_scores[index])
+            for index, aspect in enumerate(candidate_aspects)
+        },
+        "threshold": float(threshold),
+        "top_aspect": candidate_aspects[top_index],
+        "top_score": float(row_scores[top_index]),
+        "second_score": float(row_scores[second_index]),
+        "score_margin": float(row_scores[top_index] - row_scores[second_index]),
+        "min_abs_distance_to_threshold": float(min(distances) if distances else 0.0),
+        "top_distance_to_threshold": float(row_scores[top_index] - threshold),
+        "above_threshold_count": int(sum(float(score) >= threshold for score in row_scores)),
+        "selected_count": int(len(selected_indices)),
+        "selected_score_min": float(min(selected_scores)) if selected_scores else None,
+        "selected_score_mean": float(sum(selected_scores) / len(selected_scores)) if selected_scores else None,
+    }
+
+
+def write_prediction_rows(
+    frame: pd.DataFrame,
+    predictions: list[list[str]],
+    path: Path,
+    aspect_scores=None,
+    candidate_aspects: list[str] | None = None,
+    selected_aspects: list[list[str]] | None = None,
+    threshold: float | None = None,
+) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as handle:
         for row_index, (_, row) in enumerate(frame.iterrows()):
@@ -82,6 +122,13 @@ def write_prediction_rows(frame: pd.DataFrame, predictions: list[list[str]], pat
                 "gold_pair_labels": row["supervision_pair_labels"],
                 "pred_pair_labels": predictions[row_index],
             }
+            if aspect_scores is not None and candidate_aspects is not None and selected_aspects is not None and threshold is not None:
+                payload["score_features"] = row_score_features(
+                    aspect_scores[row_index],
+                    candidate_aspects,
+                    selected_aspects[row_index],
+                    float(threshold),
+                )
             handle.write(json.dumps(payload, ensure_ascii=False) + "\n")
 
 
@@ -255,7 +302,15 @@ def run_strategy(
         max_predictions_per_row=args.max_predictions_per_row,
     )
     validation_predictions = pair_predictions_from_aspects(validation_aspects, validation_sentiment_lookup)
-    write_prediction_rows(validation_df, validation_predictions, output_dir / "best_validation_predictions.jsonl")
+    write_prediction_rows(
+        validation_df,
+        validation_predictions,
+        output_dir / "best_validation_predictions.jsonl",
+        aspect_scores=validation_scores,
+        candidate_aspects=heldout_aspects,
+        selected_aspects=validation_aspects,
+        threshold=float(best_epoch["threshold"]),
+    )
 
     test_scores = score_aspect_grid(model, tokenizer, test_df, heldout_aspects, config, device)
     test_aspects = aspect_predictions_from_scores(
@@ -266,7 +321,15 @@ def run_strategy(
         max_predictions_per_row=args.max_predictions_per_row,
     )
     test_predictions = pair_predictions_from_aspects(test_aspects, test_sentiment_lookup)
-    write_prediction_rows(test_df, test_predictions, output_dir / "best_test_predictions.jsonl")
+    write_prediction_rows(
+        test_df,
+        test_predictions,
+        output_dir / "best_test_predictions.jsonl",
+        aspect_scores=test_scores,
+        candidate_aspects=heldout_aspects,
+        selected_aspects=test_aspects,
+        threshold=float(best_epoch["threshold"]),
+    )
     test_metrics = evaluate_pair_and_aspect(test_df["supervision_pair_labels"].tolist(), test_predictions, eval_candidate_pairs)
 
     _, y_true = binarize_labels(test_df["supervision_pair_labels"].tolist(), eval_candidate_pairs)

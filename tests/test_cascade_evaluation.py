@@ -12,6 +12,7 @@ from msc_project.evaluation.cascade import (
     combine_predictions,
     label_reliability,
     prediction_features,
+    score_margin_features,
     validate_aligned_rows,
 )
 
@@ -59,6 +60,36 @@ class CascadeEvaluationTests(unittest.TestCase):
         self.assertEqual(features["pred_count"], 2.0)
         self.assertEqual(features["has_multi_prediction"], 1.0)
         self.assertGreater(features["low_min_pair_precision"], features["low_mean_pair_precision"])
+
+    def test_prediction_features_include_score_margin_uncertainty_when_available(self) -> None:
+        row = {
+            "gold_pair_labels": ["A | positive"],
+            "pred_pair_labels": ["A | positive"],
+            "score_features": {
+                "top_score": 0.55,
+                "second_score": 0.49,
+                "score_margin": 0.06,
+                "min_abs_distance_to_threshold": 0.02,
+                "selected_score_min": 0.55,
+                "selected_score_mean": 0.55,
+                "above_threshold_count": 1,
+            },
+        }
+        pair_stats = label_reliability([row], ["A | positive"], "pair")
+        aspect_stats = label_reliability([row], ["A"], "aspect")
+        sentiment_stats = label_reliability([row], ["positive"], "sentiment")
+
+        features = prediction_features(row, pair_stats, aspect_stats, sentiment_stats)
+
+        self.assertAlmostEqual(features["aspect_score_margin"], 0.06)
+        self.assertAlmostEqual(features["low_aspect_score_margin"], 0.94)
+        self.assertAlmostEqual(features["score_near_threshold"], 0.98)
+        self.assertEqual(features["aspect_above_threshold_count"], 1.0)
+
+    def test_score_margin_features_ignores_missing_or_non_numeric_values(self) -> None:
+        features = score_margin_features({"top_score": "bad", "score_margin": None})
+
+        self.assertEqual(features, {})
 
     def test_validate_aligned_rows_checks_gold_mismatch(self) -> None:
         local = [{"row_uid": "validation:1", "gold_pair_labels": ["A | positive"]}]
