@@ -2398,3 +2398,42 @@ The thesis narrative should keep LOAO as the open-topic robustness spine. Fixed 
 ### Next Step
 
 Task 5 is now complete. Move next to thesis-ready result tables/figure data, cascade score or margin uncertainty, and Qwen LoRA runner readiness before any full Qwen LoRA LOAO run.
+
+## 2026-07-02: Pre-Qwen LoRA Full LOAO Checklist Audit
+
+### Purpose
+
+- Re-check the current completed evidence and Qwen LoRA readiness state.
+- Convert the remaining pre-full-LOAO work into a tickable checklist that can be updated as each item is completed.
+- Make the next action unambiguous before starting new implementation work.
+
+### Code Or Protocol Changes
+
+- Updated `docs/thesis_completion_roadmap.md` with a `Pre-Qwen LoRA Full LOAO Checklist` section using Markdown task-list syntax.
+- Updated `report_notes.md` with the audit summary.
+- No model code, data split, metric definition, or experiment output changed.
+
+### Current Completed Work
+
+- Closed-topic FABSA baselines: complete.
+- Held-out organisation baselines: complete.
+- Strongest local fixed held-out-aspect baseline: complete.
+- Lexical and DistilBERT full all-row LOAO baselines: complete.
+- Qwen indexed zero-shot fixed and full all-row LOAO: complete.
+- Gemini fixed Pareto, local-to-Gemini cascade, Gemini aspect descriptions: complete.
+- Gemini-assisted qualitative error taxonomy with manual consolidation: complete.
+- LaTeX thesis skeleton refresh: complete.
+
+### Remaining Checklist Before Full Qwen LoRA LOAO
+
+- Thesis-ready result tables and figure data.
+- Cascade score/margin uncertainty improvement.
+- Final Qwen held-out-aspect LoRA SFT runner with manifest logging.
+- Resume/skip behaviour and focused runner tests.
+- Tiny local Qwen LoRA held-out-aspect smoke test.
+- Optional fixed held-out-aspect Qwen LoRA configuration before full LOAO.
+- Full 12-fold LOAO command templates, output naming, recovery plan, and GPU environment confirmation.
+
+### Next Step
+
+Start with thesis-ready result tables and figure data. This is the highest-value non-GPU task and should be finished before implementing the final Qwen LoRA runner.

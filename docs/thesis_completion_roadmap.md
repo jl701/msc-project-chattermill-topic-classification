@@ -58,6 +58,46 @@ Candidate-label modelling is necessary but not sufficient for evolving customer-
 
 ## Work To Finish Before Full Qwen LoRA LOAO
 
+Use the checklist below as the operational source of truth before starting the full fine-tuned Qwen LoRA LOAO run. When a task is completed, update this file by changing `[ ]` to `[x]`, then record the command/result in `docs/experiment_log.md` and `report_notes.md` where relevant.
+
+### Pre-Qwen LoRA Full LOAO Checklist
+
+#### Completed Foundation
+
+- [x] Freeze the dissertation spine as structured candidate-label aspect-sentiment classification under taxonomy shift.
+- [x] Complete closed-topic FABSA baselines and record the fixed-taxonomy reference point.
+- [x] Complete held-out organisation baselines and keep them separate from taxonomy-shift claims.
+- [x] Complete the strongest local fixed held-out-aspect baseline: candidate-aspect DistilBERT selector plus DistilBERT aspect-conditioned sentiment.
+- [x] Complete lexical and DistilBERT full all-row LOAO robustness baselines.
+- [x] Complete Qwen indexed zero-shot fixed held-out-aspect validation/test evaluation.
+- [x] Complete Qwen indexed zero-shot full all-row LOAO validation/test evaluation and positive-gold diagnostic.
+- [x] Complete Gemini Flash-Lite, Flash, and Pro fixed held-out-aspect Pareto runs.
+- [x] Complete local-to-Gemini cascade and Pro cascade deep-dive.
+- [x] Complete Gemini aspect-description ablation.
+- [x] Complete qualitative error taxonomy with Gemini-assisted drafting and manual consolidation.
+- [x] Refresh the LaTeX thesis skeleton so it reflects completed Qwen/Gemini/LOAO evidence and the pending Qwen LoRA full LOAO experiment.
+- [x] Keep `outputs/`, raw predictions, review-text packets, credentials, checkpoints, and model weights out of Git.
+
+#### Still Required Before Starting Full Qwen LoRA LOAO
+
+- [ ] Build thesis-ready result tables and figure data that keep closed-topic, held-out organisation, fixed held-out aspect, all-row LOAO, and positive-gold diagnostics conceptually separate.
+- [ ] Run or document the cascade score/margin uncertainty improvement using existing Gemini predictions and local score exports where feasible.
+- [ ] Confirm or implement the final Qwen held-out-aspect LoRA SFT runner for indexed candidate-label JSONL, rather than relying on the closed-topic pilot runner.
+- [ ] Add run-manifest logging to the Qwen LoRA runner, including exact command, git commit, model name, quantisation, LoRA parameters, split/protocol, row scope, runtime, hardware, and output directory.
+- [ ] Add or confirm resume/skip-existing behaviour for Qwen LoRA training checkpoints, adapter outputs, and validation/test predictions.
+- [ ] Add focused tests for the final Qwen LoRA runner's data loading, manifest writing, resume/skip logic, and prediction normalisation.
+- [ ] Run a tiny local Qwen LoRA held-out-aspect smoke test on a few training/evaluation rows to verify model loading, loss masking, adapter saving, JSON parsing, and metrics.
+- [ ] Run one fixed held-out-aspect Qwen LoRA configuration before full LOAO if local/remote GPU time allows; use validation selection before test evaluation.
+- [ ] Define the final full 12-fold Qwen LoRA LOAO command templates, output directory pattern, checkpoint naming, and recovery plan.
+- [ ] Confirm the target GPU environment, storage budget, package versions, and data-transfer rules before launching any long full-LOAO run.
+- [ ] Run the standard validation and safety checks immediately before the full Qwen LoRA LOAO launch.
+
+#### Optional Or Deferred
+
+- [ ] Run sampled Gemini LOAO only if a supervisor specifically asks for hosted-LLM LOAO evidence or if Qwen LoRA full LOAO becomes infeasible.
+- [ ] Run full Gemini LOAO only with an explicit dissertation-value and cost/latency justification.
+- [ ] Add a new joint pair-scoring model only if the Qwen path becomes blocked and the thesis needs another local modelling contribution.
+
 ### 1. Thesis Evidence Map And Result Tables
 
 Purpose:

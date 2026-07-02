@@ -1,6 +1,6 @@
 # Report Notes
 
-Last updated: 2026-07-01
+Last updated: 2026-07-02
 
 This file is a compact evidence ledger for dissertation/report drafting. Detailed experiment records remain in `docs/`.
 
@@ -158,3 +158,27 @@ Interpretation:
 
 - Qualitative evidence supports the quantitative story: local and Qwen over-predict, hosted Gemini is more conservative and can abstain, descriptions move precision/recall, and the Pro cascade works by recovering hosted abstentions.
 - The final taxonomy remains manually consolidated: semantic boundary bleed, competitor-positive recall bottleneck, generative over-prediction, cautious abstention, sentiment polarity under-recall, prompt-induced precision-recall shift, and cascade complementarity.
+
+## 2026-07-02 - Pre-Qwen LoRA Full LOAO Checklist Audit
+
+Task:
+
+- Re-check completed work and record the remaining work before full fine-tuned Qwen LoRA LOAO as a tickable checklist.
+
+Tracked checklist:
+
+- `docs/thesis_completion_roadmap.md`, section `Pre-Qwen LoRA Full LOAO Checklist`.
+
+Completed before the checklist:
+
+- Closed-topic, held-out organisation, fixed held-out-aspect, lexical/DistilBERT LOAO, Qwen zero-shot LOAO, Gemini Pareto, local-to-Gemini cascade, Gemini descriptions, qualitative taxonomy, and thesis skeleton refresh.
+
+Remaining next work before full Qwen LoRA LOAO:
+
+1. Thesis-ready result tables and figure data.
+2. Cascade score/margin uncertainty improvement.
+3. Final Qwen held-out-aspect LoRA SFT runner with manifest logging.
+4. Resume/skip behaviour and focused tests for the runner.
+5. Tiny local Qwen LoRA held-out-aspect smoke test.
+6. Optional fixed held-out-aspect Qwen LoRA configuration before full LOAO.
+7. Full 12-fold LOAO command templates and GPU environment confirmation.
