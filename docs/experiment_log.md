@@ -3179,3 +3179,66 @@ Planned conservative validation command:
 ```powershell
 python .\scripts\run_qwen_lora_heldout_aspect.py --sft-data-dir .\outputs\qwen_lora_loao_sft_20260702\02_company_brand_competitor_allrow_indexed_conservative --strategy example_filtered --output-dir .\outputs\llm\qwen_lora_loao_single_fold_company_brand_competitor_r8_lr1e-5_ep1_allrow_conservative_eval_20260702 --eval-split validation --epochs 1 --batch-size 1 --grad-accumulation-steps 8 --learning-rate 1e-5 --weight-decay 0.0 --warmup-ratio 0.05 --max-length 512 --max-input-tokens 1024 --max-new-tokens 192 --lora-r 8 --lora-alpha 16 --lora-dropout 0.05 --load-in-4bit --no-gradient-checkpointing --save-adapter --skip-training-if-adapter-exists --no-resume-predictions --no-skip-existing-predictions
 ```
+
+### Conservative Prompt-Only Branch: Early Stop
+
+The conservative prompt-only evaluation was also stopped early. It reduced over-prediction compared with the standard prompt, but not enough to be competitive:
+
+| Metric | Partial Value |
+| --- | ---: |
+| examples | 88 |
+| positive-gold rows | 8 |
+| pair samples F1 | 0.0795 |
+| pair micro F1 | 0.1707 |
+| pair precision | 0.0946 |
+| pair recall | 0.8750 |
+| FP rows / 100 | 75.0000 |
+| predicted labels / example | 0.8409 |
+| gold labels / example | 0.0909 |
+| valid JSON rate | 1.0000 |
+| schema-valid rate | 1.0000 |
+
+Interpretation:
+
+- Explicit conservative prompt wording helps compared with the standard prompt, but the model still over-predicts badly.
+- Prompt-only optimisation is therefore not enough.
+
+### Absence-Aware Singleton SFT Branch
+
+Next optimisation:
+
+- Build an absence-aware singleton training set from seen aspects.
+- Each training row uses exactly one seen candidate aspect.
+- Positive singleton rows contain the aspect's sentiment label.
+- Sampled negative singleton rows use `[]`.
+- Keep the same all-row validation/test scope for the held-out aspect.
+
+Data command:
+
+```powershell
+python .\scripts\prepare_qwen_heldout_aspect_sft_data.py --strategy example_filtered --prompt-variant indexed_conservative --heldout-aspect "Company brand: Competitor" --eval-row-scope all --train-candidate-mode singleton --singleton-negative-ratio 1 --seed 13 --output-dir .\outputs\qwen_lora_loao_sft_20260702\02_company_brand_competitor_allrow_singleton_neg1_indexed_conservative
+```
+
+Observed generated row counts:
+
+| Split | Rows | Non-Empty Gold Rows | Empty Gold Rows |
+| --- | ---: | ---: | ---: |
+| train | 24,368 | 12,185 | 12,183 |
+| validation | 1,057 | 86 | 971 |
+| test | 1,587 | 121 | 1,466 |
+
+Training budget:
+
+- Use `--max-train-steps 913` so the singleton branch has the same optimiser-step budget as the primary standard-indexed run.
+- This prevents the optimisation from becoming an uncontrolled extra-compute comparison.
+
+Planned singleton validation command:
+
+```powershell
+python .\scripts\run_qwen_lora_heldout_aspect.py --sft-data-dir .\outputs\qwen_lora_loao_sft_20260702\02_company_brand_competitor_allrow_singleton_neg1_indexed_conservative --strategy example_filtered --output-dir .\outputs\llm\qwen_lora_loao_single_fold_company_brand_competitor_singleton_neg1_r8_lr1e-5_steps913_allrow_20260702 --eval-split validation --epochs 1 --max-train-steps 913 --batch-size 1 --grad-accumulation-steps 8 --learning-rate 1e-5 --weight-decay 0.0 --warmup-ratio 0.05 --max-length 512 --max-input-tokens 1024 --max-new-tokens 192 --lora-r 8 --lora-alpha 16 --lora-dropout 0.05 --load-in-4bit --no-gradient-checkpointing --save-adapter --resume-predictions --skip-existing-predictions --save-epoch-adapters
+```
+
+Stopping rule:
+
+- If singleton validation still fails to beat Qwen zero-shot validation pair micro F1 (`0.2397`) or does not reduce false positives materially, stop the single-fold optimisation and record that ordinary SFT plus prompt/data alignment was insufficient.
+- If it improves materially, run the same fold's test with the saved adapter before considering any additional folds.

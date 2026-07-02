@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import random
 import sys
 from pathlib import Path
 
@@ -34,25 +35,81 @@ def flatten(rows):
     return values
 
 
+def sft_row(row, candidate_aspects: list[str], prompt_variant: str, pair_labels: list[str], id_suffix: str = "") -> dict[str, object]:
+    return {
+        "id": f"{row['id']}{id_suffix}",
+        "row_uid": f"{row.get('row_uid', '')}{id_suffix}",
+        "original_split": str(row.get("original_split", "")),
+        "candidate_aspects": candidate_aspects,
+        "messages": build_candidate_messages(
+            text=row["text"],
+            aspects=candidate_aspects,
+            prompt_variant=prompt_variant,
+            gold_pair_labels=pair_labels,
+        ),
+        "pair_labels": pair_labels,
+    }
+
+
 def build_rows(frame, candidate_aspects: list[str], prompt_variant: str, limit: int | None) -> list[dict[str, object]]:
     rows = []
     frame = limit_rows(frame, limit)
     for _, row in frame.iterrows():
-        rows.append(
-            {
-                "id": str(row["id"]),
-                "row_uid": str(row.get("row_uid", "")),
-                "original_split": str(row.get("original_split", "")),
-                "candidate_aspects": candidate_aspects,
-                "messages": build_candidate_messages(
-                    text=row["text"],
-                    aspects=candidate_aspects,
-                    prompt_variant=prompt_variant,
-                    gold_pair_labels=row["supervision_pair_labels"],
-                ),
-                "pair_labels": row["supervision_pair_labels"],
-            }
-        )
+        rows.append(sft_row(row, candidate_aspects, prompt_variant, list(row["supervision_pair_labels"])))
+    return rows
+
+
+def aspect_from_pair_label(pair_label: str) -> str:
+    return pair_label.rsplit(" | ", maxsplit=1)[0]
+
+
+def slug(value: str) -> str:
+    return "".join(character.lower() if character.isalnum() else "_" for character in value).strip("_")
+
+
+def build_singleton_train_rows(
+    frame,
+    candidate_aspects: list[str],
+    prompt_variant: str,
+    limit: int | None,
+    negative_ratio: int,
+    seed: int,
+) -> list[dict[str, object]]:
+    rows = []
+    rng = random.Random(seed)
+    frame = limit_rows(frame, limit)
+    for _, row in frame.iterrows():
+        pair_labels = list(row["supervision_pair_labels"])
+        labels_by_aspect = {
+            aspect: [label for label in pair_labels if aspect_from_pair_label(label) == aspect]
+            for aspect in candidate_aspects
+        }
+        positive_aspects = [aspect for aspect, labels in labels_by_aspect.items() if labels]
+        for aspect in positive_aspects:
+            rows.append(
+                sft_row(
+                    row,
+                    [aspect],
+                    prompt_variant,
+                    labels_by_aspect[aspect],
+                    id_suffix=f"::pos::{slug(aspect)}",
+                )
+            )
+
+        negative_pool = [aspect for aspect in candidate_aspects if aspect not in set(positive_aspects)]
+        negative_count = min(len(negative_pool), max(1, len(positive_aspects)) * negative_ratio)
+        for aspect in rng.sample(negative_pool, negative_count):
+            rows.append(
+                sft_row(
+                    row,
+                    [aspect],
+                    prompt_variant,
+                    [],
+                    id_suffix=f"::neg::{slug(aspect)}",
+                )
+            )
+
+    rng.shuffle(rows)
     return rows
 
 
@@ -83,6 +140,9 @@ def write_strategy_data(frame, strategy: str, heldout_aspects: list[str], args) 
         "strategy": strategy,
         "eval_label_scope": "heldout",
         "eval_row_scope": args.eval_row_scope,
+        "train_candidate_mode": args.train_candidate_mode,
+        "singleton_negative_ratio": args.singleton_negative_ratio,
+        "seed": args.seed,
         "prompt_variant": args.prompt_variant,
         "heldout_aspects": heldout_aspects,
         "train_candidate_aspects": train_aspects,
@@ -97,13 +157,19 @@ def write_strategy_data(frame, strategy: str, heldout_aspects: list[str], args) 
     }
     (output_dir / "metadata.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
 
-    split_candidates = {
-        "train": train_aspects,
-        "validation": heldout_aspects,
-        "test": heldout_aspects,
-    }
     for split_name, split_frame in splits.items():
-        rows = build_rows(split_frame, split_candidates[split_name], args.prompt_variant, args.limit)
+        if split_name == "train" and args.train_candidate_mode == "singleton":
+            rows = build_singleton_train_rows(
+                split_frame,
+                train_aspects,
+                args.prompt_variant,
+                args.limit,
+                args.singleton_negative_ratio,
+                args.seed,
+            )
+        else:
+            split_candidates = train_aspects if split_name == "train" else heldout_aspects
+            rows = build_rows(split_frame, split_candidates, args.prompt_variant, args.limit)
         write_jsonl(rows, output_dir / f"{split_name}.jsonl")
         print(f"[{strategy}] wrote {len(rows)} rows to {output_dir / f'{split_name}.jsonl'}")
 
@@ -118,8 +184,14 @@ def main() -> None:
     parser.add_argument("--prompt-variant", default="indexed")
     parser.add_argument("--heldout-aspect", action="append", default=[])
     parser.add_argument("--eval-row-scope", choices=["containing_heldout", "all"], default="containing_heldout")
+    parser.add_argument("--train-candidate-mode", choices=["grouped", "singleton"], default="grouped")
+    parser.add_argument("--singleton-negative-ratio", type=int, default=1)
+    parser.add_argument("--seed", type=int, default=13)
     parser.add_argument("--limit", type=int, default=None)
     args = parser.parse_args()
+
+    if args.singleton_negative_ratio < 0:
+        raise ValueError("--singleton-negative-ratio must be non-negative.")
 
     frame = load_all_fabsa(args.data_dir)
     heldout_aspects = selected_heldout_aspects(frame, args.heldout_aspect)

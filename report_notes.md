@@ -590,3 +590,27 @@ Next optimisation before retraining:
 - Reuse the saved adapter and rerun validation with `indexed_conservative` prompts.
 - This checks whether explicit `[]` absence guidance can reduce over-prediction without spending another full training run.
 - If conservative prompting still fails, the next worthwhile optimisation is a separately pre-registered absence-aware one-candidate SFT data format, not another ordinary full-fold rerun.
+
+Conservative prompt-only early-stop note:
+
+- Reusing the adapter with `indexed_conservative` prompts reduced but did not solve over-prediction.
+- Partial validation after `88 / 1,057` rows:
+  - pair micro F1: `0.1707`;
+  - precision: `0.0946`;
+  - recall: `0.8750`;
+  - FP rows / 100: `75.0000`;
+  - predicted labels per example: `0.8409`;
+  - valid JSON/schema-valid: `1.0000 / 1.0000`.
+- This remains worse than Qwen zero-shot validation pair micro F1 `0.2397` and FP rows / 100 `17.7862`.
+
+Next optimisation:
+
+- Use absence-aware singleton SFT.
+- Training data:
+  - one candidate aspect per training example;
+  - positive singleton examples for seen-aspect labels;
+  - sampled negative singleton examples with `[]`;
+  - prompt variant `indexed_conservative`;
+  - train rows `24,368`, split almost 1:1 between non-empty and empty outputs.
+- Training budget is capped at `913` optimiser steps to match the standard-indexed primary run.
+- If this does not materially improve all-row validation, stop this single-fold optimisation and record that ordinary Qwen LoRA/SFT is insufficient without a more specialised calibration objective.
