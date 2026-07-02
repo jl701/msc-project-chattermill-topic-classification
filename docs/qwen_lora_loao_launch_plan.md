@@ -2,7 +2,7 @@
 
 Last updated: 2026-07-02
 
-This note records the completed fixed held-out-aspect Qwen LoRA run and defines the launch plan for the later full 12-fold Qwen LoRA leave-one-aspect-out (LOAO) run. The fixed run is complete; the full 12-fold Qwen LoRA LOAO run has not been started.
+This note records the completed fixed held-out-aspect Qwen LoRA run, the later single-fold all-row validation-gated pilot, and the launch plan for a possible full 12-fold Qwen LoRA leave-one-aspect-out (LOAO) run. The fixed run and single-fold pilot are complete; the full 12-fold Qwen LoRA LOAO run has not been started.
 
 ## Current Readiness
 
@@ -27,6 +27,13 @@ Completed prerequisites:
   - test pair samples F1: `0.5528`;
   - test pair micro F1: `0.5552`;
   - test valid JSON/schema-valid rates: `1.0000 / 0.9964`.
+- One single-fold all-row Qwen LoRA validation-gated pilot completed on `Company brand: Competitor`:
+  - tested grouped SFT, conservative prompting, singleton neg1, singleton neg0.25, and singleton neg0.10;
+  - best validation branch: singleton neg0.10;
+  - validation pair micro F1: `0.1900`;
+  - validation precision/recall: `0.1667 / 0.2209`;
+  - valid JSON/schema-valid rates: `1.0000 / 1.0000`;
+  - did not beat same-fold Qwen zero-shot `0.2397` or local DistilBERT `0.2490`.
 
 ## Completed Fixed Held-Out-Aspect Configuration
 
@@ -63,6 +70,30 @@ Fixed-run limitations:
 - It does not evaluate empty-gold absence calibration.
 - It was a single one-epoch local configuration, not a full Qwen hyperparameter sweep.
 - The full LOAO templates below remain necessary before claiming fine-tuned Qwen robustness across aspect rotations.
+
+## Single-Fold All-Row Validation Gate
+
+The first full all-row Qwen LoRA fold was run on `Company brand: Competitor` before launching a 12-fold sweep.
+
+Outcome:
+
+| Variant | Validation Pair Micro F1 | Precision | Recall | FP Rows / 100 | Decision |
+| --- | ---: | ---: | ---: | ---: | --- |
+| grouped indexed SFT | 0.1681 partial | 0.0935 | 0.8333 | 88.7850 | Early-stopped for over-prediction |
+| conservative prompt-only reuse | 0.1707 partial | 0.0946 | 0.8750 | 75.0000 | Early-stopped for over-prediction |
+| singleton neg1 | 0.0625 | 0.3000 | 0.0349 | 0.1892 | Too conservative |
+| singleton neg0.25 | 0.1803 | 0.3056 | 0.1279 | 1.6083 | Below baseline |
+| singleton neg0.10 | 0.1900 | 0.1667 | 0.2209 | 7.2848 | Best branch, still below baseline |
+
+Same-fold validation baselines:
+
+- Qwen zero-shot: pair micro F1 `0.2397`;
+- local DistilBERT: pair micro F1 `0.2490`.
+
+Launch implication:
+
+- Do not launch the full 12-fold Qwen LoRA LOAO with the current grouped or singleton SFT recipe.
+- The templates below remain useful, but only after a revised absence-calibration objective passes a single-fold validation gate.
 
 ## Full 12-Fold LOAO Fold List
 
@@ -183,5 +214,5 @@ git status --short --branch
 
 Launch gate:
 
-- Full 12-fold Qwen LoRA LOAO can start only after the target GPU environment, available storage, package versions, and data-transfer rules are confirmed for the actual machine that will run it.
-- This confirmation is still open; the current document records assumptions and command templates, not a completed full-LOAO launch.
+- Full 12-fold Qwen LoRA LOAO can start only after a revised absence-calibration objective passes a single-fold validation gate and the target GPU environment, available storage, package versions, and data-transfer rules are confirmed for the actual machine that will run it.
+- The current grouped/singleton SFT recipe failed the validation gate; the current document records assumptions and command templates, not a completed or currently approved full-LOAO launch.

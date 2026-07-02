@@ -271,7 +271,7 @@ The recommended order after Tasks 1-3 is:
 2. Sampled Gemini LOAO diagnostic, not full Gemini LOAO.
 3. Cascade uncertainty improvement using local score/margin export and existing Gemini predictions.
 4. Qualitative error taxonomy with manual review.
-5. Qwen fine-tuning/evaluation once stronger GPU access is available.
+5. Revised Qwen absence-calibration work before any full fine-tuned Qwen LOAO; a later single-fold Qwen LoRA pilot did not justify launching all 12 folds with the current SFT recipe.
 
 This order is chosen because it maximises dissertation value per unit cost. Candidate descriptions test the label-semantics hypothesis directly. A sampled LOAO diagnostic provides a small robustness signal without committing to full hosted LOAO. Score/margin uncertainty improves the cascade method without more API calls. Qualitative taxonomy strengthens the discussion chapter. Qwen fine-tuning remains the next major open/local LLM stage once compute is available.
 

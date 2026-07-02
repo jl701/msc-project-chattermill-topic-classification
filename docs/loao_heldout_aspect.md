@@ -321,4 +321,4 @@ The strongest local non-LLM fixed-split baseline and the strongest DistilBERT LO
 - test candidate-aspect descriptions as label-representation support
 - write a qualitative error taxonomy for the fixed held-out-aspect and LOAO failures
 - use the hosted Gemini indexed candidate-label and local-to-Gemini cascade results as the next LLM-centred evidence block
-- run Qwen fine-tuning/evaluation once stronger GPU access is available
+- revise Qwen absence calibration before any full fine-tuned Qwen LOAO; the later single-fold Qwen LoRA pilot did not justify launching all 12 folds with the current SFT recipe

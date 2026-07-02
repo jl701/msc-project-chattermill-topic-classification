@@ -685,3 +685,25 @@ Planned final recall-shift validation command:
 ```powershell
 python .\scripts\run_qwen_lora_heldout_aspect.py --sft-data-dir .\outputs\qwen_lora_loao_sft_20260702\02_company_brand_competitor_allrow_singleton_neg010_indexed_conservative --strategy example_filtered --output-dir .\outputs\llm\qwen_lora_loao_single_fold_company_brand_competitor_singleton_neg010_r8_lr1e-5_steps913_allrow_20260702 --eval-split validation --epochs 1 --max-train-steps 913 --batch-size 1 --grad-accumulation-steps 8 --learning-rate 1e-5 --weight-decay 0.0 --warmup-ratio 0.05 --max-length 512 --max-input-tokens 1024 --max-new-tokens 192 --lora-r 8 --lora-alpha 16 --lora-dropout 0.05 --load-in-4bit --no-gradient-checkpointing --save-adapter --resume-predictions --skip-existing-predictions --save-epoch-adapters
 ```
+
+Singleton neg0.10 completed validation result:
+
+- Validation rows: `1,057`.
+- Positive-gold rows: `86`.
+- Pair samples F1: `0.0180`.
+- Pair micro F1: `0.1900`.
+- Pair precision: `0.1667`.
+- Pair recall: `0.2209`.
+- Pair label TP / FP / FN: `19 / 95 / 67`.
+- Predicted labels: `114`.
+- FP rows / 100: `7.2848`.
+- FN rows / 100: `4.6358`.
+- Valid JSON/schema-valid: `1.0000 / 1.0000`.
+- Training runtime: `6,407.7` seconds; validation runtime: `736.8` seconds.
+
+Final decision:
+
+- Neg0.10 is the best singleton-ratio Qwen LoRA all-row single-fold branch, but it remains below same-fold Qwen zero-shot (`0.2397`) and local DistilBERT (`0.2490`) validation pair micro F1.
+- Do not run test for this branch.
+- Do not launch full 12-fold Qwen LoRA LOAO with this SFT recipe.
+- The thesis contribution is a validation-gated negative result: the runner and local QLoRA path work, but simple absence-aware singleton SFT does not yet justify a full fine-tuned LOAO sweep on the selected hard fold.

@@ -302,6 +302,35 @@ Compared with the fixed held-out-aspect Qwen indexed zero-shot baseline, QLoRA i
 
 The full 12-fold fine-tuned Qwen LoRA LOAO run remains unrun. Command templates, fold naming, recovery plan, runtime/storage assumptions, and launch gates are recorded in `docs/qwen_lora_loao_launch_plan.md`.
 
+## Single-Fold All-Row Qwen LoRA Pilot
+
+After the fixed-split run, a validation-gated single-fold all-row pilot was run on `Company brand: Competitor` before spending GPU time on all 12 LOAO folds.
+
+Tested branches:
+
+- grouped indexed SFT: early-stopped after validation showed severe over-prediction;
+- conservative prompt-only reuse: early-stopped after validation still over-predicted;
+- singleton neg1 absence-aware SFT: completed validation but under-predicted severely;
+- singleton neg0.25: completed validation, improved the trade-off but remained below baseline;
+- singleton neg0.10: completed validation and was the best singleton branch.
+
+Best validation branch:
+
+| Variant | Pair Micro F1 | Precision | Recall | FP Rows / 100 | Valid JSON | Schema Valid |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| singleton neg0.10 | 0.1900 | 0.1667 | 0.2209 | 7.2848 | 1.0000 | 1.0000 |
+
+Same-fold validation baselines:
+
+- Qwen zero-shot: pair micro F1 `0.2397`;
+- local DistilBERT: pair micro F1 `0.2490`.
+
+Decision:
+
+- The single-fold pilot confirms that the QLoRA runner works on real all-row LOAO data.
+- The current grouped/singleton SFT recipe does not beat the same-fold validation baselines.
+- Do not launch full 12-fold Qwen LoRA LOAO with this recipe; revise the absence-calibration objective first.
+
 ## Gemini Comparison Result
 
 A Gemini hosted candidate-label runner was added and evaluated on 2026-07-01 to provide a closed hosted-LLM comparison under the same indexed held-out-aspect protocol:

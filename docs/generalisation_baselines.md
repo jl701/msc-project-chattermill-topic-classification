@@ -234,7 +234,7 @@ Prompt comparison on 50 sampled validation rows selected the plain `indexed` pro
 | validation | 0.5753 | 0.5762 | 0.4514 | 0.6382 | 1.0000 | 1.77 |
 | test | 0.5374 | 0.5300 | 0.4374 | 0.6340 | 1.0000 | 1.74 |
 
-This is a zero-shot prompt baseline, not a fine-tuned Qwen result. It is competitive enough to justify full Qwen fine-tuning once stronger GPU resources are available.
+This is a zero-shot prompt baseline, not a fine-tuned Qwen result. It was competitive enough to motivate Qwen fine-tuning work, but a later single-fold all-row Qwen LoRA pilot on `Company brand: Competitor` did not beat same-fold zero-shot or local DistilBERT validation baselines. Full 12-fold Qwen LoRA LOAO should therefore wait for a revised absence-calibration objective, not GPU resources alone.
 
 ## Gemini Hosted Candidate-Label Baseline
 

@@ -2,7 +2,7 @@
 
 Last updated: 2026-07-02
 
-This note freezes the remaining dissertation-oriented work before the full Qwen LoRA LOAO experiment. The aim is to keep the project moving while GPU access is being negotiated, and to ensure that the only major unfinished modelling block is the fine-tuned Qwen full leave-one-aspect-out robustness run.
+This note freezes the remaining dissertation-oriented work around the Qwen LoRA LOAO boundary. The original aim was to keep the project moving while GPU access was being negotiated. A later single-fold all-row Qwen LoRA pilot showed that the current SFT recipe does not pass the validation gate, so the full 12-fold run should now wait for a revised absence-calibration objective rather than GPU access alone.
 
 ## Current Thesis Spine
 
@@ -35,7 +35,8 @@ The dissertation currently has enough evidence for a coherent taxonomy-shift sto
 | Local-to-Gemini cascade | Selective-deployment evidence from local/hosted error complementarity | Complete |
 | Gemini aspect descriptions | Label-semantics ablation for hosted LLM prompting | Complete |
 | Qualitative error taxonomy | Thesis-facing explanation of why systems fail differently | Gemini-assisted packet and tracked taxonomy complete |
-| Qwen LoRA fine-tuned full LOAO | Final open-weight LLM adaptation robustness check | Pending GPU access |
+| Qwen LoRA single-fold all-row pilot | Validation-gated check before spending 12-fold GPU time | Complete negative validation result |
+| Qwen LoRA fine-tuned full LOAO | Final open-weight LLM adaptation robustness check | Deferred until revised absence calibration passes validation |
 
 ## Main Dissertation Narrative
 
@@ -48,12 +49,12 @@ The results chapter should be organised as a ladder of increasing difficulty rat
 5. Qwen zero-shot full LOAO provides the open-weight LLM baseline. It has stable JSON and strong positive-gold recognition, but it over-predicts on empty-gold rows.
 6. Gemini fixed-split and cascade results answer a different question: how hosted structured-output LLMs and local models can be combined under cost, latency, and governance constraints. They must not be over-claimed as full LOAO robustness evidence.
 7. Qwen LoRA fine-tuning is motivated by the diagnosed zero-shot failure mode: the model needs task-specific calibration for when a supplied candidate aspect is absent.
-8. Full Qwen LoRA LOAO, if GPU resources allow it, closes the open-weight LLM adaptation loop. If it cannot be completed, the limitation is explicit: Qwen fine-tuning is not fully validated under LOAO taxonomy shift.
+8. A single-fold all-row Qwen LoRA pilot on `Company brand: Competitor` showed that simple singleton negative sampling changes calibration but does not beat same-fold zero-shot or local baselines. Full Qwen LoRA LOAO should therefore wait for a revised absence-aware objective before spending 12-fold GPU time.
 
 The short thesis argument is:
 
 ```text
-Candidate-label modelling is necessary but not sufficient for evolving customer-feedback taxonomies. Local supervised models can be strong on fixed held-out aspects, but LOAO exposes weak robustness across aspect rotations. Qwen zero-shot understands present aspects but lacks absence calibration. Hosted Gemini and local-hosted cascades improve fixed-split performance, but their strongest evidence is selective deployment rather than LOAO robustness. This motivates absence-aware Qwen LoRA fine-tuning as the final open-weight robustness experiment.
+Candidate-label modelling is necessary but not sufficient for evolving customer-feedback taxonomies. Local supervised models can be strong on fixed held-out aspects, but LOAO exposes weak robustness across aspect rotations. Qwen zero-shot understands present aspects but lacks absence calibration. Hosted Gemini and local-hosted cascades improve fixed-split performance, but their strongest evidence is selective deployment rather than LOAO robustness. This motivates absence-aware Qwen LoRA fine-tuning as a future open-weight robustness experiment, but the current SFT recipe has not yet passed the validation gate needed to justify a full 12-fold run.
 ```
 
 ## Work To Finish Before Full Qwen LoRA LOAO
@@ -89,7 +90,9 @@ Use the checklist below as the operational source of truth before starting the f
 - [x] Run a tiny local Qwen LoRA held-out-aspect smoke test on a few training/evaluation rows to verify model loading, loss masking, adapter saving, JSON parsing, and metrics.
 - [x] Run one fixed held-out-aspect Qwen LoRA configuration before full LOAO if local/remote GPU time allows; use validation selection before test evaluation.
 - [x] Define the final full 12-fold Qwen LoRA LOAO command templates, output directory pattern, checkpoint naming, and recovery plan.
-- [ ] Confirm the target GPU environment, storage budget, package versions, and data-transfer rules before launching any long full-LOAO run.
+- [x] Run a single-fold all-row Qwen LoRA validation-gated pilot before launching the full 12-fold run.
+- [ ] Revise the Qwen absence-calibration/training objective after the single-fold pilot failed to beat same-fold baselines.
+- [ ] Confirm the target GPU environment, storage budget, package versions, and data-transfer rules before launching any long full-LOAO run with a revised recipe.
 - [ ] Run the standard validation and safety checks immediately before the full Qwen LoRA LOAO launch.
 
 #### Optional Or Deferred
@@ -195,7 +198,7 @@ Stopping rule:
 
 Purpose:
 
-- Make the final full Qwen LoRA LOAO experiment executable as soon as stronger GPU access is available.
+- Keep the final full Qwen LoRA LOAO experiment executable, but launch it only after a revised absence-calibration recipe passes validation and stronger GPU access is available.
 - Avoid discovering runner, manifest, parser, or resume problems only after GPU time starts.
 
 Work that should be completed before the full LOAO run:
@@ -226,7 +229,9 @@ Work that should be completed before the full LOAO run:
 
 Boundary:
 
-- The full 12-fold fine-tuned Qwen LOAO is deliberately excluded from this pre-GPU completion list. It is the major pending experiment.
+- The full 12-fold fine-tuned Qwen LOAO is deliberately excluded from this pre-GPU completion list.
+- The current singleton SFT recipe failed a single-fold validation gate: best validation pair micro F1 `0.1900` on `Company brand: Competitor`, below same-fold Qwen zero-shot `0.2397` and local DistilBERT `0.2490`.
+- Do not launch the full 12-fold run with this recipe; revise the absence-calibration objective first.
 
 ### 5. Thesis Skeleton Refresh
 
@@ -283,23 +288,22 @@ The following work should not be started by default while Qwen full LOAO GPU acc
 - More fixed-split Gemini prompt sweeps.
 - More small DistilBERT LOAO hyperparameter tuning.
 - New model families such as joint pair scoring unless the Qwen path becomes blocked.
-- Full 12-fold Qwen LoRA LOAO without a confirmed GPU window and resume plan.
+- Full 12-fold Qwen LoRA LOAO without a revised validation-passing recipe, confirmed GPU window, and resume plan.
 
 ## Decision Logic For Qwen LoRA Full LOAO
 
-If GPU access is granted:
+If a revised Qwen absence-calibration recipe passes validation and GPU access is granted:
 
-- Run full 12-fold Qwen LoRA LOAO after the fixed SFT runner and smoke checks pass.
+- Run full 12-fold Qwen LoRA LOAO after the fixed SFT runner, smoke checks, and single-fold validation gate pass.
 - Prefer one validated configuration over a wide sweep.
 - Evaluate validation first, then test.
 - Report all-row metrics, positive-gold diagnostics, valid JSON/schema rates, runtime, and per-aspect spread.
 
-If GPU access is not granted:
+If the revised recipe does not pass validation or GPU access is not granted:
 
-- Complete fixed Qwen SFT if feasible locally.
-- Report it as a resource-constrained adaptation study, not full LOAO robustness evidence.
+- Report the fixed Qwen SFT and single-fold all-row pilot as resource- and validation-gated adaptation evidence, not full LOAO robustness evidence.
 - Keep Qwen zero-shot full LOAO as the open-weight robustness baseline.
-- State the limitation explicitly: fine-tuned Qwen was not fully evaluated under LOAO taxonomy shift because of compute constraints.
+- State the limitation explicitly: fine-tuned Qwen was not fully evaluated under LOAO taxonomy shift because the current SFT recipe failed the validation gate and a full 12-fold run was not justified.
 
 ## Next Immediate Order
 
@@ -307,4 +311,4 @@ If GPU access is not granted:
 2. Try the cascade score/margin uncertainty improvement without new Gemini calls.
 3. Prepare and smoke-test the final Qwen LoRA SFT runner.
 4. Refresh the LaTeX thesis skeleton and then begin results/methods prose from the frozen tables.
-5. Run full Qwen LoRA LOAO only after GPU access and command templates are ready.
+5. Revise the Qwen absence-calibration objective before reconsidering full Qwen LoRA LOAO; use the existing command templates only after a revised recipe passes validation and GPU/storage conditions are confirmed.

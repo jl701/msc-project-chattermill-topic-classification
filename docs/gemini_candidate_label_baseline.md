@@ -345,6 +345,6 @@ The next LLM-centred roadmap is recorded in `docs/llm_next_experiment_directions
 1. Run a sampled Gemini LOAO diagnostic rather than full Gemini LOAO, if a small robustness signal is still needed.
 2. Export local DistilBERT selector scores and rerun cascade selection with score/margin uncertainty features, reusing existing Gemini predictions.
 3. Use Gemini Pro as a qualitative error-taxonomy aid with manual review, not as an automatic evaluator.
-4. Move to Qwen fine-tuning/evaluation once stronger GPU access is available.
+4. Move to revised Qwen absence-calibration work before any full fine-tuned Qwen LOAO; a later single-fold Qwen LoRA pilot did not beat same-fold zero-shot/local validation baselines with the current SFT recipe.
 
 This sequence supports a stronger industrial MSc story: local models, cheap hosted models, and stronger hosted models can be compared not only on F1, but also on cost, latency, governance, and selective deployment strategy.

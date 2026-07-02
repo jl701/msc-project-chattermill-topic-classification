@@ -176,8 +176,8 @@ Key questions:
 Purpose:
 
 - Test whether an open/local LLM can close part of the gap to hosted Gemini while preserving privacy/control advantages.
-- Move beyond zero-shot Qwen once stronger GPU access is available.
-- Ensure the final full Qwen LoRA LOAO experiment is runnable as soon as stronger GPU access is available.
+- Move beyond zero-shot Qwen only when the fine-tuning objective passes a validation gate, not merely when stronger GPU access is available.
+- Keep the final full Qwen LoRA LOAO experiment runnable, but do not launch it with the current singleton SFT recipe.
 
 Recommended design:
 
@@ -185,7 +185,8 @@ Recommended design:
 - Confirm or implement the final SFT runner and manifest logging.
 - Start with a tiny local QLoRA/SFT smoke test.
 - Evaluate on the fixed held-out-aspect split first if local time allows.
-- Run full 12-fold fine-tuned all-row LOAO only after the fixed pipeline and resume path are stable.
+- A later single-fold all-row validation pilot on `Company brand: Competitor` found that the best singleton branch, neg0.10, reached validation pair micro F1 `0.1900`, below same-fold Qwen zero-shot `0.2397` and local DistilBERT `0.2490`.
+- Run full 12-fold fine-tuned all-row LOAO only after a revised absence-calibration objective beats the single-fold validation gate and the fixed pipeline/resume path remain stable.
 - Compare against:
   - Qwen zero-shot
   - local DistilBERT baseline
@@ -205,7 +206,7 @@ Key questions:
 1. Thesis-ready result tables and figure data, coordinated through `docs/thesis_completion_roadmap.md`.
 2. Cascade uncertainty improvement using local score/margin export and no new Gemini calls.
 3. Qwen LoRA SFT runner readiness and tiny smoke test.
-4. Full fine-tuned Qwen LoRA LOAO only after GPU access, resume behaviour, and command templates are ready.
+4. Revise the Qwen absence-calibration objective before reconsidering full fine-tuned Qwen LoRA LOAO.
 5. Sampled Gemini LOAO only if specifically needed as a fallback or supervisor-requested robustness signal.
 
-This order maximises dissertation value per unit cost while preserving the current strategic boundary: the only major unfinished modelling experiment should be full Qwen LoRA LOAO. Everything else should either convert existing evidence into thesis-ready analysis or prepare the Qwen run so GPU time is not wasted on setup problems.
+This order maximises dissertation value per unit cost while preserving the current strategic boundary: full Qwen LoRA LOAO is deferred until the fine-tuning recipe passes a single-fold validation gate. Everything else should either convert existing evidence into thesis-ready analysis or prepare a revised Qwen calibration objective so GPU time is not wasted on a recipe already shown to underperform.

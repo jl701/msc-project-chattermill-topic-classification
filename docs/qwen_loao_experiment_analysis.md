@@ -209,3 +209,19 @@ Recommended priorities:
 3. Preserve all-row LOAO as the final robustness check; use positive-gold rows only as a diagnostic.
 4. Consider candidate-aspect descriptions only if they directly target absence calibration or rare/narrow aspect disambiguation.
 5. Do not run full Gemini LOAO by default; if needed, use a sampled LOAO diagnostic with clear cost and scope boundaries.
+
+## Update: Single-Fold Qwen LoRA Validation Gate
+
+After the zero-shot LOAO analysis, a local QLoRA single-fold all-row pilot was run on the hard `Company brand: Competitor` fold before launching any full 12-fold fine-tuned LOAO.
+
+Best validation result among the tested SFT variants:
+
+- recipe: singleton one-candidate training, `indexed_conservative` prompt, `--singleton-negative-ratio 0.10`;
+- optimiser budget: `913` steps, matching the earlier local fold pilots;
+- validation pair micro F1: `0.1900`;
+- pair precision: `0.1667`;
+- pair recall: `0.2209`;
+- FP rows / 100: `7.2848`;
+- valid JSON/schema-valid rates: `1.0000 / 1.0000`.
+
+This did not beat the same-fold Qwen zero-shot validation pair micro F1 (`0.2397`) or the same-fold local DistilBERT validation pair micro F1 (`0.2490`). The result confirms that the runner and local QLoRA path are operational, but simple singleton negative sampling is not a sufficient absence-calibration objective. The full 12-fold Qwen LoRA LOAO should therefore not be launched with this recipe.

@@ -2,7 +2,7 @@
 
 Last updated: 2026-07-02
 
-This document freezes thesis-ready aggregate tables before the full fine-tuned Qwen LoRA LOAO run. It deliberately keeps fixed-split, all-row LOAO, positive-gold diagnostic, and cascade/deployment evidence separate. The tables contain only aggregate metrics and source pointers; no raw review text or row-level predictions are included.
+This document freezes thesis-ready aggregate tables while the full fine-tuned Qwen LoRA LOAO run is deferred behind a revised validation gate. It deliberately keeps fixed-split, all-row LOAO, positive-gold diagnostic, and cascade/deployment evidence separate. The tables contain only aggregate metrics and source pointers; no raw review text or row-level predictions are included.
 
 ## Evidence Map
 
@@ -14,6 +14,7 @@ This document freezes thesis-ready aggregate tables before the full fine-tuned Q
 | Full all-row LOAO is substantially harder than the fixed held-out-aspect split. | 12-fold all-row LOAO | docs/loao_heldout_aspect.md; docs/qwen_loao_experiment_analysis.md | loao_robustness and fixed_vs_loao_drop |
 | Qwen zero-shot recognises present aspects but over-predicts on empty-gold rows. | Qwen all-row LOAO plus positive-gold diagnostic | docs/qwen_feasibility.md; docs/qwen_loao_experiment_analysis.md | qwen_positive_diagnostic |
 | Fixed-split Qwen LoRA gives modest adaptation evidence, but does not replace full LOAO. | fixed three held-out aspects | docs/qwen_feasibility.md; docs/experiment_log.md | protocol_ladder |
+| Single-fold all-row Qwen LoRA did not pass the launch validation gate. | one LOAO fold, validation only | docs/qwen_feasibility.md; docs/qwen_lora_loao_launch_plan.md; docs/experiment_log.md | not included in leaderboard; reported as a validation-gated negative result |
 | Gemini and local-to-Gemini cascades are fixed-split deployment evidence, not LOAO robustness evidence. | fixed held-out-aspect hosted and cascade evaluation | docs/local_gemini_cascade.md; docs/gemini_candidate_label_baseline.md | cascade_tradeoff |
 
 ## Protocol Ladder

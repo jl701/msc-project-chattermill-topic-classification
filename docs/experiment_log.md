@@ -3374,3 +3374,57 @@ Stopping rule:
 - If neg0.10 still does not beat the same-fold baselines, stop this single-fold optimisation.
 - Do not run more singleton ratio sweeps in this session unless a validation result crosses the baseline threshold.
 - Do not start full 12-fold Qwen LoRA LOAO from these single-fold results if neg0.10 remains below baseline.
+
+### Absence-Aware Singleton Neg0.10 Result and Stop Decision
+
+Observed singleton neg0.10 validation result:
+
+| Metric | Value |
+| --- | ---: |
+| examples | 1,057 |
+| positive-gold rows | 86 |
+| pair samples F1 | 0.0180 |
+| pair micro F1 | 0.1900 |
+| pair precision | 0.1667 |
+| pair recall | 0.2209 |
+| pair label TP / FP / FN | 19 / 95 / 67 |
+| predicted labels | 114 |
+| gold labels | 86 |
+| FP rows / 100 | 7.2848 |
+| FN rows / 100 | 4.6358 |
+| predicted labels / example | 0.1079 |
+| valid JSON rate | 1.0000 |
+| schema-valid rate | 1.0000 |
+
+Runtime evidence:
+
+- Training rows: `13,420` original, `13,394` used after skipping `26` fully truncated-answer rows.
+- Optimiser steps completed: `913 / 913`.
+- Final train loss: `0.0546`.
+- Training runtime: `6,407.7` seconds.
+- Validation runtime: `736.8` seconds.
+- Adapter and predictions are local-only ignored outputs.
+
+Interpretation:
+
+- Neg0.10 improves recall over neg0.25 and is the best singleton-ratio validation F1 in this local single-fold pilot, but it still fails the pre-registered threshold:
+  - Qwen zero-shot same-fold validation pair micro F1: `0.2397`;
+  - local DistilBERT same-fold validation pair micro F1: `0.2490`;
+  - best Qwen LoRA singleton branch: `0.1900`.
+- Lowering the negative ratio moved the model in the expected direction:
+  - neg1: very low false positives, very low recall;
+  - neg0.25: improved recall, still conservative;
+  - neg0.10: higher recall but substantially more false positives.
+- The trade-off remains below the zero-shot and local baselines. This suggests that the current singleton SFT recipe changes calibration but does not solve held-out aspect generalisation for this hard fold.
+
+Stop decision:
+
+- Do not run test for neg0.10.
+- Do not run further singleton-ratio sweeps in this session.
+- Do not launch the full 12-fold Qwen LoRA LOAO using this SFT recipe.
+- Full Qwen LoRA LOAO would need a revised calibration/training objective before it is worth the 12-fold GPU cost.
+
+Thesis contribution:
+
+- This single-fold pilot is a negative but useful adaptation result. It shows that local QLoRA can train and evaluate real all-row LOAO data, but ordinary held-out-aspect SFT plus simple absence-aware negative sampling does not outperform the existing zero-shot/open-weight or local DistilBERT baselines on the selected hard fold.
+- The dissertation should use it to justify a compute-aware limitation: full fine-tuned Qwen LOAO was not launched because the validation gate failed on a representative hard fold, not because the runner was unready.
