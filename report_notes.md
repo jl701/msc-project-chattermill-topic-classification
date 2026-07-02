@@ -516,3 +516,54 @@ Limitations:
 - This is not all-row LOAO and does not evaluate empty-gold absence calibration.
 - It is a single one-epoch local configuration, not a tuned Qwen sweep.
 - Full 12-fold fine-tuned Qwen LoRA LOAO remains the major pending compute-bound experiment.
+
+## 2026-07-02 - Planned Single-Fold All-Row Qwen LoRA LOAO Pilot
+
+Question:
+
+- Before spending time on all 12 Qwen LoRA LOAO folds, test one real all-row fold.
+- The key issue is absence calibration, not fixed-split positive-row recognition.
+
+Chosen fold:
+
+- `Company brand: Competitor`
+
+Why this fold:
+
+- It is a known difficult semantic boundary for Qwen.
+- It has enough positive rows to interpret:
+  - validation positives: `86`;
+  - test positives: `121`.
+- It also has many empty-gold rows, so it can test over-prediction:
+  - validation empty-gold rows: `971`;
+  - test empty-gold rows: `1,466`.
+
+Existing all-row validation baselines for this fold:
+
+| System | Pair Samples F1 | Pair Micro F1 | Precision | Recall | FP Rows / 100 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Qwen zero-shot | 0.0360 | 0.2397 | 0.1645 | 0.4419 | 17.7862 |
+| DistilBERT local | 0.0293 | 0.2490 | 0.1902 | 0.3605 | 12.2990 |
+
+Planned data command:
+
+```powershell
+python .\scripts\prepare_qwen_heldout_aspect_sft_data.py --strategy example_filtered --prompt-variant indexed --heldout-aspect "Company brand: Competitor" --eval-row-scope all --output-dir .\outputs\qwen_lora_loao_sft_20260702\02_company_brand_competitor_allrow
+```
+
+Planned validation-only training/evaluation command:
+
+```powershell
+python .\scripts\run_qwen_lora_heldout_aspect.py --sft-data-dir .\outputs\qwen_lora_loao_sft_20260702\02_company_brand_competitor_allrow --strategy example_filtered --output-dir .\outputs\llm\qwen_lora_loao_single_fold_company_brand_competitor_r8_lr1e-5_ep1_allrow_20260702 --eval-split validation --epochs 1 --batch-size 1 --grad-accumulation-steps 8 --learning-rate 1e-5 --weight-decay 0.0 --warmup-ratio 0.05 --max-length 512 --max-input-tokens 1024 --max-new-tokens 192 --lora-r 8 --lora-alpha 16 --lora-dropout 0.05 --load-in-4bit --no-gradient-checkpointing --save-adapter --resume-predictions --skip-existing-predictions --save-epoch-adapters
+```
+
+Decision rule:
+
+- Run validation first only.
+- Run test only if validation pair micro F1 improves materially over Qwen zero-shot or shows a clear precision/false-positive improvement without recall collapse.
+- If validation does not improve, do not spend more GPU time on test. Record the negative result and consider a separately pre-registered absence-aware one-candidate SFT format.
+
+Expected contribution:
+
+- Positive result: justifies expanding Qwen LoRA LOAO beyond one fold.
+- Negative result: protects the dissertation from wasting time on a likely weak full fine-tuning sweep and motivates absence-aware SFT or calibration as future work.

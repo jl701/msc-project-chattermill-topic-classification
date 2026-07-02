@@ -3015,3 +3015,108 @@ Test metrics recomputed from `test_predictions.jsonl`:
 
 - Update thesis tables, reproducibility register, roadmap, and handoff docs with this fixed-split adaptation result.
 - Keep full Qwen LoRA LOAO gated behind target GPU/storage confirmation and the pre-launch validation checks.
+
+## 2026-07-02: Pre-Registered Single-Fold All-Row Qwen LoRA LOAO Pilot
+
+### Purpose
+
+- Run a single-fold Qwen LoRA LOAO pilot before considering the full 12-fold fine-tuned LOAO.
+- Test whether QLoRA improves all-row absence calibration for one held-out aspect, rather than only improving positive-row/fixed-split evaluation.
+- Treat this as a go/no-go diagnostic. It is not a replacement for full 12-fold LOAO.
+
+### Pre-Flight State
+
+- Remote fetched with `git fetch --prune`.
+- Current branch: `main`.
+- Git state before code changes: clean and synced after pushing prior commits to `origin/main`.
+- Latest pushed commit before this pilot: `97e7550 llm: run fixed qwen lora heldout experiment`.
+
+### Fold And Baselines
+
+- Held-out aspect: `Company brand: Competitor`.
+- Rationale:
+  - Qwen zero-shot has known competitor-boundary weaknesses.
+  - The qualitative taxonomy identifies competitor-positive recall and semantic boundary ambiguity as important failure modes.
+  - The fold is hard enough to be diagnostic but has enough positive validation/test rows to interpret.
+- Existing all-row zero-shot Qwen validation baseline for this fold:
+  - pair samples F1: `0.0360`;
+  - pair micro F1: `0.2397`;
+  - precision: `0.1645`;
+  - recall: `0.4419`;
+  - FP rows / 100: `17.7862`;
+  - valid JSON/schema-valid: `1.0000 / 1.0000`.
+- Existing all-row DistilBERT validation baseline for this fold:
+  - pair samples F1: `0.0293`;
+  - pair micro F1: `0.2490`;
+  - precision: `0.1902`;
+  - recall: `0.3605`;
+  - FP rows / 100: `12.2990`.
+
+### Input Scope
+
+- SFT data preparation command:
+
+```powershell
+python .\scripts\prepare_qwen_heldout_aspect_sft_data.py --strategy example_filtered --prompt-variant indexed --heldout-aspect "Company brand: Competitor" --eval-row-scope all --output-dir .\outputs\qwen_lora_loao_sft_20260702\02_company_brand_competitor_allrow
+```
+
+- Expected row counts from the split helper:
+  - train: `7,314`;
+  - validation: `1,057`, including `86` positive held-out rows and `971` empty-gold rows;
+  - test: `1,587`, including `121` positive held-out rows and `1,466` empty-gold rows.
+
+### Planned Primary Configuration
+
+- Model: `Qwen/Qwen3-4B-Instruct-2507`.
+- Loading: 4-bit bitsandbytes QLoRA.
+- LoRA: rank `8`, alpha `16`, dropout `0.05`.
+- Strategy: `example_filtered`.
+- Prompt variant: indexed candidate IDs.
+- Eval row scope: all official validation/test rows.
+- Epochs: `1`.
+- Batch size: `1`.
+- Gradient accumulation: `8`.
+- Learning rate: `1e-5`.
+- Weight decay: `0.0`.
+- Warmup ratio: `0.05`.
+- Max train length: `512`.
+- Max input tokens: `1024`.
+- Max new tokens: `192`.
+- Seed: `13`.
+- Gradient checkpointing: disabled for the first run, matching the successful fixed-split long run. If this OOMs, retry with gradient checkpointing and record the fallback.
+- Output directory: `outputs/llm/qwen_lora_loao_single_fold_company_brand_competitor_r8_lr1e-5_ep1_allrow_20260702/` (ignored).
+- Log files under `outputs/logs/` (ignored).
+
+Validation-only command:
+
+```powershell
+python .\scripts\run_qwen_lora_heldout_aspect.py --sft-data-dir .\outputs\qwen_lora_loao_sft_20260702\02_company_brand_competitor_allrow --strategy example_filtered --output-dir .\outputs\llm\qwen_lora_loao_single_fold_company_brand_competitor_r8_lr1e-5_ep1_allrow_20260702 --eval-split validation --epochs 1 --batch-size 1 --grad-accumulation-steps 8 --learning-rate 1e-5 --weight-decay 0.0 --warmup-ratio 0.05 --max-length 512 --max-input-tokens 1024 --max-new-tokens 192 --lora-r 8 --lora-alpha 16 --lora-dropout 0.05 --load-in-4bit --no-gradient-checkpointing --save-adapter --resume-predictions --skip-existing-predictions --save-epoch-adapters
+```
+
+### Validation Decision Rule
+
+- Primary selection metric: validation pair micro F1, because this is an all-row one-aspect LOAO detection problem with many empty-gold rows.
+- Supporting diagnostics:
+  - pair precision/recall;
+  - FP rows / 100;
+  - predicted labels per example;
+  - valid JSON/schema-valid rates;
+  - positive-gold recall and sentiment accuracy where available.
+- Continue to test only if validation is interpretable and materially useful:
+  - valid JSON remains `>= 0.99`;
+  - schema-valid remains close to previous Qwen all-row behaviour;
+  - pair micro F1 improves over Qwen zero-shot by about `0.02` absolute or gives a clear precision/FP reduction without collapsing recall.
+- If validation is worse or only trivially changed, do not run test immediately. Record it as a negative pilot and consider whether an absence-aware SFT data format is needed before spending more GPU time.
+
+### Optimisation / Stopping Rule
+
+- First run the primary `1e-5`, 1-epoch configuration because it was stable in the fixed held-out-aspect long run.
+- If it fails due to OOM, retry the same configuration with gradient checkpointing before changing modelling assumptions.
+- If it fails due to non-finite loss, inspect skipped-label counts and logs before lowering LR.
+- If validation improves clearly, run the same fold's test using `--skip-training-if-adapter-exists`.
+- If validation does not improve, stop this pilot unless there is an obvious one-run fix. The next likely improvement would be a new absence-aware one-candidate SFT data construction, which should be pre-registered separately rather than hidden inside this run.
+
+### Commit Scope
+
+- Commit only code, tests, tracked docs, and aggregate metrics.
+- Do not commit `outputs/`, raw predictions, raw review text, adapters, checkpoints, model weights, credentials, or private endpoints.

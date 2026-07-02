@@ -72,6 +72,7 @@ def write_strategy_data(frame, strategy: str, heldout_aspects: list[str], args) 
         heldout_aspects,
         strategy=strategy,
         eval_label_scope="heldout",
+        eval_row_scope=args.eval_row_scope,
     )
     train_aspects = sorted(set(flatten(splits["train"]["supervision_aspect_labels"])))
     output_dir = args.output_dir / strategy
@@ -81,6 +82,7 @@ def write_strategy_data(frame, strategy: str, heldout_aspects: list[str], args) 
         "task": "FABSA held-out-aspect candidate-label SFT",
         "strategy": strategy,
         "eval_label_scope": "heldout",
+        "eval_row_scope": args.eval_row_scope,
         "prompt_variant": args.prompt_variant,
         "heldout_aspects": heldout_aspects,
         "train_candidate_aspects": train_aspects,
@@ -89,6 +91,7 @@ def write_strategy_data(frame, strategy: str, heldout_aspects: list[str], args) 
         "notes": [
             "Training rows use seen-aspect supervision only.",
             "Validation and test rows use held-out aspect labels only.",
+            "Validation and test row scope is controlled by eval_row_scope.",
             "Candidate labels are provided in the prompt and outputs should use canonical IDs/labels.",
         ],
     }
@@ -114,6 +117,7 @@ def main() -> None:
     parser.add_argument("--strategy", choices=["label_masked", "example_filtered", "both"], default="both")
     parser.add_argument("--prompt-variant", default="indexed")
     parser.add_argument("--heldout-aspect", action="append", default=[])
+    parser.add_argument("--eval-row-scope", choices=["containing_heldout", "all"], default="containing_heldout")
     parser.add_argument("--limit", type=int, default=None)
     args = parser.parse_args()
 

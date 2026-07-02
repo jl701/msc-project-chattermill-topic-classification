@@ -85,10 +85,10 @@ Use deterministic fold IDs:
 
 ## Full LOAO Data Preparation Template
 
-Prepare one fold directory per aspect. Example for fold 09:
+Prepare one fold directory per aspect. Use `--eval-row-scope all` for the frozen all-row LOAO protocol. Example for fold 09:
 
 ```powershell
-python .\scripts\prepare_qwen_heldout_aspect_sft_data.py --strategy example_filtered --prompt-variant indexed --heldout-aspect "Staff support: Email" --output-dir .\outputs\qwen_lora_loao_sft_YYYYMMDD\09_staff_support_email
+python .\scripts\prepare_qwen_heldout_aspect_sft_data.py --strategy example_filtered --prompt-variant indexed --heldout-aspect "Staff support: Email" --eval-row-scope all --output-dir .\outputs\qwen_lora_loao_sft_YYYYMMDD\09_staff_support_email
 ```
 
 Output pattern:
