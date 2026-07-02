@@ -3,6 +3,7 @@ from __future__ import annotations
 import sys
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 
 import pandas as pd
 import torch
@@ -12,6 +13,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from msc_project.baselines.transformer_sentiment import (
+    TransformerAspectSentimentConfig,
+    TransformerAspectSentimentModel,
     aspect_sentiment_prompt,
     build_aspect_sentiment_examples,
     class_weights,
@@ -62,6 +65,50 @@ class TransformerSentimentTest(unittest.TestCase):
     def test_unknown_selected_key_raises(self) -> None:
         with self.assertRaises(ValueError):
             selected_keys("loss")
+
+    def test_predict_pairs_with_scores_returns_probabilities_and_labels(self) -> None:
+        class FakeTokenizer:
+            def __call__(self, texts, prompts, **kwargs):
+                rows = len(texts)
+                return {
+                    "input_ids": torch.zeros((rows, 4), dtype=torch.long),
+                    "attention_mask": torch.ones((rows, 4), dtype=torch.long),
+                }
+
+        class FakeModel:
+            def eval(self):
+                return None
+
+            def __call__(self, **batch):
+                rows = int(batch["input_ids"].shape[0])
+                logits = torch.tensor(
+                    [
+                        [0.0, 0.0, 3.0],
+                        [3.0, 0.0, 0.0],
+                    ][:rows],
+                    dtype=torch.float32,
+                )
+                return SimpleNamespace(logits=logits)
+
+        model = TransformerAspectSentimentModel(
+            tokenizer=FakeTokenizer(),
+            model=FakeModel(),
+            config=TransformerAspectSentimentConfig(eval_batch_size=2),
+            device=torch.device("cpu"),
+        )
+
+        features = model.predict_pairs_with_scores(
+            ["Good email.", "Bad delivery."],
+            ["Staff support: Email", "Operations: Delivery"],
+        )
+
+        self.assertEqual([row["predicted_sentiment"] for row in features], ["positive", "negative"])
+        self.assertGreater(features[0]["sentiment_margin"], 0.0)
+        self.assertAlmostEqual(sum(features[0]["sentiment_probabilities"].values()), 1.0)
+        self.assertEqual(
+            model.predict_pairs(["Good email.", "Bad delivery."], ["Staff support: Email", "Operations: Delivery"]),
+            ["positive", "negative"],
+        )
 
 
 if __name__ == "__main__":

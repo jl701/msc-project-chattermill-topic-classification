@@ -58,6 +58,7 @@ Before doing new work, please inspect these files. If a `D:\Msc_Project` path is
 25. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\qualitative_error_taxonomy.md
 26. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\thesis_result_tables.md
 27. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\qwen_lora_loao_launch_plan.md
+28. D:\Msc_Project\msc-project-chattermill-topic-classification\docs\qwen_local_hybrid_direction.md
 
 Immediate instruction for the new chat:
 
@@ -68,7 +69,8 @@ Before implementing anything, perform a strict audit of the current progress and
 3. Verify whether the current reported results are comparable or not comparable across fixed three-aspect held-out evaluation, all-row LOAO, positive-row LOAO, closed-topic, and held-out organisation.
 4. Check whether the latest conclusion is logically sound: DistilBERT aspect-conditioned sentiment improves the controlled lexical sentiment ablation and the example-filtered strong fixed held-out-aspect baseline, but not label-masked training.
 5. Challenge the next proposed direction after the completed Gemini/Qwen zero-shot and Qwen LoRA pilot phase. Thesis-ready tables, cascade score/margin uncertainty, Qwen SFT runner readiness, tiny Qwen LoRA smoke testing, the fixed held-out-aspect Qwen LoRA validation/test run, the full LOAO launch plan, and a single-fold all-row Qwen LoRA validation-gated pilot are now complete. The single-fold pilot did not beat the same-fold zero-shot/local validation baselines, so full 12-fold Qwen LoRA LOAO should not be launched with the current SFT recipe.
-6. Only after this audit, propose a concrete next plan. If the plan still looks sound, proceed with implementation.
+6. Read `docs/qwen_local_hybrid_direction.md` before proposing new Qwen work. The current pivot is local-to-Qwen hybrid routing: DistilBERT is the cheap calibrated gate and Qwen is the semantic judge for uncertain or unfamiliar unseen-aspect cases. Do not drift back to full Qwen JSON-SFT LOAO unless a revised objective passes a validation gate.
+7. Only after this audit, propose a concrete next plan. If the plan still looks sound, proceed with implementation.
 
 Current confirmed project context:
 
@@ -94,6 +96,7 @@ Aji's confirmed direction:
 - The final held-out-aspect Qwen LoRA runner, manifest logging, resume/skip behaviour, focused tests, tiny local QLoRA smoke test, fixed held-out-aspect QLoRA validation/test run, full 12-fold launch plan, and a single-fold all-row Qwen LoRA validation-gated pilot are complete.
 - The single-fold pilot used `Company brand: Competitor`; the best singleton branch was neg0.10 with validation pair micro F1 `0.1900`, below same-fold Qwen zero-shot `0.2397` and local DistilBERT `0.2490`.
 - Full 12-fold Qwen LoRA LOAO should wait for a revised absence-calibration objective, not merely a stronger GPU/storage window.
+- The immediate Qwen direction is local-to-Qwen score/margin routing, documented in `docs/qwen_local_hybrid_direction.md`.
 - The current completion roadmap is `docs/thesis_completion_roadmap.md`. It explicitly separates work that can be completed before GPU access from the full fine-tuned Qwen LoRA LOAO run.
 
 Latest Aji update from 2026-06-21:
@@ -540,7 +543,7 @@ Recommended next steps:
 8. Treat Gemini Flash as the completed hosted fixed held-out-aspect baseline, but do not run full Gemini LOAO unless the cost/benefit is explicitly justified.
 9. The local-to-Gemini cascade is complete; follow `docs/llm_next_experiment_directions.md` with the new Qwen LOAO result in mind.
 10. Gemini-generated aspect descriptions are complete; do not rerun the same Task 4 API work unless a new variant or thesis question is explicitly requested.
-11. Use `docs/thesis_completion_roadmap.md` as the current task order. Thesis-ready tables/figure data, cascade score/margin uncertainty, Qwen LoRA runner readiness, tiny smoke testing, the fixed held-out-aspect Qwen LoRA validation/test run, the full Qwen LoRA LOAO launch plan, and the single-fold all-row Qwen LoRA validation-gated pilot are complete. Remaining Qwen work is a revised absence-calibration objective before reconsidering full Qwen LoRA LOAO. The Gemini-assisted qualitative error taxonomy is already complete.
+11. Use `docs/thesis_completion_roadmap.md` and `docs/qwen_local_hybrid_direction.md` as the current task order. Thesis-ready tables/figure data, cascade score/margin uncertainty, Qwen LoRA runner readiness, tiny smoke testing, the fixed held-out-aspect Qwen LoRA validation/test run, the full Qwen LoRA LOAO launch plan, and the single-fold all-row Qwen LoRA validation-gated pilot are complete. Remaining Qwen work should start with local-to-Qwen score/margin routing, then only move to a revised candidate-wise/absence-calibrated Qwen objective if that no-new-Qwen-call diagnostic is insufficient.
 12. Treat sampled Gemini LOAO as optional fallback or supervisor-requested work, not the default next experiment.
 13. If I ask to publish changes, commit/push only clean code and documentation, without committing outputs, data, credentials, checkpoints, or generated artifacts.
 

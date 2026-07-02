@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 
 import numpy as np
 import pandas as pd
@@ -45,6 +46,20 @@ class AspectConditionedSentimentModel:
             for text, aspect in zip(texts, aspects)
         ]
         return [str(value) for value in self.estimator.predict(inputs).tolist()]
+
+    def predict_pairs_with_scores(self, texts: list[str], aspects: list[str]) -> list[dict[str, object]]:
+        if len(texts) != len(aspects):
+            raise ValueError("texts and aspects must have the same length.")
+        if self.constant_sentiment is not None:
+            return [sentiment_probability_features({self.constant_sentiment: 1.0}) for _ in texts]
+        if self.estimator is None:
+            raise RuntimeError("Aspect-conditioned sentiment model has not been fitted.")
+
+        inputs = [
+            aspect_conditioned_sentiment_text(text, aspect)
+            for text, aspect in zip(texts, aspects)
+        ]
+        return predict_sentiment_features(self.estimator, inputs)
 
 
 @dataclass
@@ -197,6 +212,61 @@ def train_aspect_conditioned_sentiment_model(train_df: pd.DataFrame) -> AspectCo
     return AspectConditionedSentimentModel(estimator=model)
 
 
+def estimator_classes(estimator: object) -> list[str]:
+    classes = getattr(estimator, "classes_", None)
+    if classes is None and hasattr(estimator, "named_steps"):
+        classifier = estimator.named_steps.get("classifier")
+        classes = getattr(classifier, "classes_", None)
+    if classes is None:
+        return []
+    return [str(value) for value in list(classes)]
+
+
+def sentiment_probability_features(
+    probabilities: dict[str, float],
+    predicted_sentiment: str | None = None,
+) -> dict[str, object]:
+    complete = {sentiment: float(probabilities.get(sentiment, 0.0)) for sentiment in SENTIMENTS}
+    total = sum(max(value, 0.0) for value in complete.values())
+    if total > 0:
+        complete = {sentiment: max(value, 0.0) / total for sentiment, value in complete.items()}
+    else:
+        complete = {sentiment: 1.0 / len(SENTIMENTS) for sentiment in SENTIMENTS}
+
+    ranked = sorted(complete.items(), key=lambda item: item[1], reverse=True)
+    top_sentiment, top_probability = ranked[0]
+    second_probability = ranked[1][1] if len(ranked) > 1 else 0.0
+    predicted = predicted_sentiment or top_sentiment
+    entropy = -sum(value * math.log(value) for value in complete.values() if value > 0.0)
+
+    return {
+        "predicted_sentiment": str(predicted),
+        "sentiment_probabilities": complete,
+        "top_sentiment": str(top_sentiment),
+        "top_probability": float(top_probability),
+        "second_probability": float(second_probability),
+        "sentiment_margin": float(top_probability - second_probability),
+        "sentiment_entropy": float(entropy),
+    }
+
+
+def predict_sentiment_features(estimator: object, inputs: list[str]) -> list[dict[str, object]]:
+    predicted = [str(value) for value in estimator.predict(inputs).tolist()]
+    if hasattr(estimator, "predict_proba"):
+        classes = estimator_classes(estimator)
+        probabilities = estimator.predict_proba(inputs)
+        rows = []
+        for label, row in zip(predicted, probabilities):
+            rows.append(
+                sentiment_probability_features(
+                    {sentiment: float(probability) for sentiment, probability in zip(classes, row)},
+                    predicted_sentiment=label,
+                )
+            )
+        return rows
+    return [sentiment_probability_features({label: 1.0}, predicted_sentiment=label) for label in predicted]
+
+
 def build_sentiment_lookup(
     sentiment_model: object,
     texts: list[str],
@@ -225,6 +295,56 @@ def build_sentiment_lookup(
     for (row_index, aspect), sentiment in zip(pair_positions, predicted):
         lookup[row_index][aspect] = str(sentiment)
     return lookup
+
+
+def build_sentiment_feature_lookup(
+    sentiment_model: object,
+    texts: list[str],
+    candidate_aspects: list[str],
+    sentiment_mode: str,
+) -> list[dict[str, dict[str, object]]]:
+    validate_sentiment_mode(sentiment_mode)
+    if sentiment_mode == "global":
+        row_features = predict_sentiment_features(sentiment_model, texts)
+        return [
+            {aspect: dict(features) for aspect in candidate_aspects}
+            for features in row_features
+        ]
+
+    pair_texts: list[str] = []
+    pair_aspects: list[str] = []
+    pair_positions: list[tuple[int, str]] = []
+    for row_index, text in enumerate(texts):
+        for aspect in candidate_aspects:
+            pair_texts.append(str(text))
+            pair_aspects.append(aspect)
+            pair_positions.append((row_index, aspect))
+
+    if hasattr(sentiment_model, "predict_pairs_with_scores"):
+        predicted_features = sentiment_model.predict_pairs_with_scores(pair_texts, pair_aspects)
+    else:
+        predicted = sentiment_model.predict_pairs(pair_texts, pair_aspects)
+        predicted_features = [
+            sentiment_probability_features({str(sentiment): 1.0}, predicted_sentiment=str(sentiment))
+            for sentiment in predicted
+        ]
+
+    lookup: list[dict[str, dict[str, object]]] = [dict() for _ in texts]
+    for (row_index, aspect), features in zip(pair_positions, predicted_features):
+        lookup[row_index][aspect] = dict(features)
+    return lookup
+
+
+def sentiment_lookup_from_features(
+    feature_lookup: list[dict[str, dict[str, object]]],
+) -> list[dict[str, str]]:
+    return [
+        {
+            aspect: str(features["predicted_sentiment"])
+            for aspect, features in row_features.items()
+        }
+        for row_features in feature_lookup
+    ]
 
 
 def pair_predictions_from_aspects(

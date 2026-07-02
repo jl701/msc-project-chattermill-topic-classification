@@ -13,6 +13,8 @@ from sklearn.metrics import accuracy_score, f1_score
 from torch.utils.data import DataLoader, Dataset
 from transformers import AutoModelForSequenceClassification, AutoTokenizer, get_linear_schedule_with_warmup
 
+from msc_project.baselines.candidate_label import sentiment_probability_features
+
 
 SENTIMENTS = ("negative", "neutral", "positive")
 SENTIMENT_TO_ID = {sentiment: index for index, sentiment in enumerate(SENTIMENTS)}
@@ -102,6 +104,12 @@ class TransformerAspectSentimentModel:
     device: torch.device
 
     def predict_pairs(self, texts: list[str], aspects: list[str]) -> list[str]:
+        return [
+            str(features["predicted_sentiment"])
+            for features in self.predict_pairs_with_scores(texts, aspects)
+        ]
+
+    def predict_pairs_with_scores(self, texts: list[str], aspects: list[str]) -> list[dict[str, object]]:
         if len(texts) != len(aspects):
             raise ValueError("texts and aspects must have the same length.")
         if not texts:
@@ -110,15 +118,23 @@ class TransformerAspectSentimentModel:
         examples = pd.DataFrame({"text": texts, "aspect": aspects})
         dataset = AspectSentimentDataset(examples, self.tokenizer, self.config.max_length, include_labels=False)
         loader = DataLoader(dataset, batch_size=self.config.eval_batch_size, shuffle=False)
-        predictions: list[str] = []
+        predictions: list[dict[str, object]] = []
         self.model.eval()
 
         with torch.no_grad():
             for batch in loader:
                 batch = {key: value.to(self.device) for key, value in batch.items()}
                 logits = self.model(**batch).logits
-                predicted_ids = torch.argmax(logits, dim=-1).detach().cpu().tolist()
-                predictions.extend(ID_TO_SENTIMENT[int(index)] for index in predicted_ids)
+                probabilities = torch.softmax(logits, dim=-1).detach().cpu().numpy()
+                for row in probabilities:
+                    predictions.append(
+                        sentiment_probability_features(
+                            {
+                                ID_TO_SENTIMENT[index]: float(probability)
+                                for index, probability in enumerate(row)
+                            }
+                        )
+                    )
 
         return predictions
 

@@ -15,9 +15,10 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from msc_project.baselines.candidate_label import (
     SENTIMENT_MODES,
-    build_sentiment_lookup,
+    build_sentiment_feature_lookup,
     candidate_pair_labels,
     pair_predictions_from_aspects,
+    sentiment_lookup_from_features,
     train_candidate_sentiment_model,
 )
 from msc_project.baselines.label_aware import (
@@ -108,6 +109,7 @@ def write_prediction_rows(
     candidate_aspects: list[str] | None = None,
     selected_aspects: list[list[str]] | None = None,
     threshold: float | None = None,
+    sentiment_features: list[dict[str, dict[str, object]]] | None = None,
 ) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as handle:
@@ -129,6 +131,8 @@ def write_prediction_rows(
                     selected_aspects[row_index],
                     float(threshold),
                 )
+            if sentiment_features is not None:
+                payload["sentiment_features"] = sentiment_features[row_index]
             handle.write(json.dumps(payload, ensure_ascii=False) + "\n")
 
 
@@ -224,18 +228,20 @@ def run_strategy(
         )
     else:
         sentiment_model = train_candidate_sentiment_model(train_df, args.sentiment_mode)
-    validation_sentiment_lookup = build_sentiment_lookup(
+    validation_sentiment_features = build_sentiment_feature_lookup(
         sentiment_model,
         validation_df["text"].tolist(),
         heldout_aspects,
         args.sentiment_mode,
     )
-    test_sentiment_lookup = build_sentiment_lookup(
+    validation_sentiment_lookup = sentiment_lookup_from_features(validation_sentiment_features)
+    test_sentiment_features = build_sentiment_feature_lookup(
         sentiment_model,
         test_df["text"].tolist(),
         heldout_aspects,
         args.sentiment_mode,
     )
+    test_sentiment_lookup = sentiment_lookup_from_features(test_sentiment_features)
     if args.sentiment_mode == "transformer_aspect_conditioned":
         del sentiment_model
         if device.type == "cuda":
@@ -310,6 +316,7 @@ def run_strategy(
         candidate_aspects=heldout_aspects,
         selected_aspects=validation_aspects,
         threshold=float(best_epoch["threshold"]),
+        sentiment_features=validation_sentiment_features,
     )
 
     test_scores = score_aspect_grid(model, tokenizer, test_df, heldout_aspects, config, device)
@@ -329,6 +336,7 @@ def run_strategy(
         candidate_aspects=heldout_aspects,
         selected_aspects=test_aspects,
         threshold=float(best_epoch["threshold"]),
+        sentiment_features=test_sentiment_features,
     )
     test_metrics = evaluate_pair_and_aspect(test_df["supervision_pair_labels"].tolist(), test_predictions, eval_candidate_pairs)
 

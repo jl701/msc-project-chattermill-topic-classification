@@ -13,8 +13,11 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from msc_project.baselines.candidate_label import (
     aspect_conditioned_sentiment_text,
+    build_sentiment_feature_lookup,
     build_sentiment_lookup,
     pair_predictions_from_aspects,
+    sentiment_lookup_from_features,
+    sentiment_probability_features,
     train_aspect_conditioned_sentiment_model,
     validate_sentiment_mode,
 )
@@ -54,6 +57,40 @@ class CandidateLabelSentimentTest(unittest.TestCase):
         self.assertEqual(
             lookup,
             [{"Staff support: Email": "negative", "Operations: Delivery": "negative"}],
+        )
+
+    def test_probability_features_include_margin_and_entropy(self) -> None:
+        features = sentiment_probability_features({"negative": 0.1, "neutral": 0.2, "positive": 0.7})
+
+        self.assertEqual(features["predicted_sentiment"], "positive")
+        self.assertAlmostEqual(features["top_probability"], 0.7)
+        self.assertAlmostEqual(features["second_probability"], 0.2)
+        self.assertAlmostEqual(features["sentiment_margin"], 0.5)
+        self.assertGreater(features["sentiment_entropy"], 0.0)
+
+    def test_global_feature_lookup_reuses_document_sentiment_scores_per_aspect(self) -> None:
+        class FakeGlobalSentiment:
+            classes_ = np.array(["negative", "neutral", "positive"])
+
+            def predict(self, texts):
+                return np.array(["positive" for _ in texts])
+
+            def predict_proba(self, texts):
+                return np.array([[0.1, 0.2, 0.7] for _ in texts])
+
+        features = build_sentiment_feature_lookup(
+            FakeGlobalSentiment(),
+            ["The delivery was great."],
+            ["Staff support: Email", "Operations: Delivery"],
+            "global",
+        )
+
+        self.assertEqual(features[0]["Staff support: Email"]["predicted_sentiment"], "positive")
+        self.assertEqual(features[0]["Operations: Delivery"]["predicted_sentiment"], "positive")
+        self.assertAlmostEqual(features[0]["Staff support: Email"]["sentiment_margin"], 0.5)
+        self.assertEqual(
+            sentiment_lookup_from_features(features),
+            [{"Staff support: Email": "positive", "Operations: Delivery": "positive"}],
         )
 
     def test_aspect_conditioned_lookup_can_return_different_sentiments_for_same_review(self) -> None:
@@ -105,6 +142,11 @@ class CandidateLabelSentimentTest(unittest.TestCase):
         model = train_aspect_conditioned_sentiment_model(frame)
 
         self.assertEqual(model.predict_pairs(["Anything"], ["Any aspect"]), ["positive"])
+
+        features = model.predict_pairs_with_scores(["Anything"], ["Any aspect"])
+        self.assertEqual(features[0]["predicted_sentiment"], "positive")
+        self.assertEqual(features[0]["top_probability"], 1.0)
+        self.assertEqual(features[0]["sentiment_margin"], 1.0)
 
     def test_unknown_sentiment_mode_raises(self) -> None:
         with self.assertRaises(ValueError):

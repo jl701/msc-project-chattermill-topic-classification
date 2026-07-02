@@ -4,6 +4,8 @@ Last updated: 2026-07-02
 
 This note records the recommended next LLM-centred experiments after the completed local DistilBERT LOAO robustness run, Qwen zero-shot LOAO run, fixed-split Gemini Pareto/cascade experiments, and Gemini aspect-description ablation. The current completion-level roadmap is `docs/thesis_completion_roadmap.md`; this file remains the LLM-specific companion note.
 
+The current direction has now pivoted after the Qwen LoRA validation-gated pilot and the first local-to-Qwen LOAO cascade diagnostic. The next modelling work should start from `docs/qwen_local_hybrid_direction.md`: treat DistilBERT as the cheap calibrated gate and Qwen as the semantic judge for uncertain or unfamiliar unseen-aspect cases. Do not default back to launching full 12-fold Qwen JSON-SFT LOAO with the current recipe.
+
 ## Current Evidence Position
 
 The project now has six complementary evidence blocks:
@@ -21,6 +23,30 @@ The dissertation story should therefore not be "run every model on every expensi
 - use Qwen zero-shot LOAO to diagnose the open-weight LLM failure mode before fine-tuning;
 - use Gemini fixed-split and cascade experiments to study semantic candidate-label reasoning under cost, latency, and governance constraints;
 - avoid adding new hosted LOAO work unless a new dissertation-value argument appears.
+
+## Current Modelling Pivot
+
+The current strongest opportunity is a local-to-Qwen hybrid, not direct Qwen replacement of the local model.
+
+Reason:
+
+- fixed held-out-aspect Qwen LoRA improves over Qwen zero-shot only modestly and remains below the strongest local fixed baseline;
+- the single-fold all-row Qwen LoRA pilot did not beat same-fold Qwen zero-shot or local DistilBERT validation baselines;
+- Qwen zero-shot LOAO is strong on positive-gold rows but weak at empty-gold absence calibration;
+- the first local-to-Qwen offline cascade improved mean LOAO pair micro F1 over both local-only and Qwen-only with a modest Qwen call rate.
+
+Immediate priority:
+
+1. Rerun/export local DistilBERT LOAO predictions with candidate-aspect score, threshold distance, and sentiment confidence features.
+2. Reuse existing Qwen zero-shot LOAO predictions and run validation-selected score/margin routing policies.
+3. If score/margin routing improves over the previous global agreement gate, promote the hybrid method as the main Qwen follow-up.
+4. If score/margin routing does not improve, move to the candidate-wise Qwen semantic judge formulation:
+
+```text
+review + one candidate aspect + optional aspect description -> absent / positive / negative / neutral
+```
+
+The full details and guardrails are recorded in `docs/qwen_local_hybrid_direction.md`.
 
 ## Why Full Gemini LOAO Is Not The Next Default
 
@@ -239,6 +265,11 @@ Recommended next design:
   - top score;
   - score margin;
   - selected score statistics.
+- Also export sentiment confidence features where available:
+  - predicted sentiment;
+  - class probabilities;
+  - probability margin;
+  - entropy.
 - Use validation to route only uncertain rows to Qwen.
 - Compare against:
   - local-only;

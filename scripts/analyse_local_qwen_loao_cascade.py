@@ -28,6 +28,8 @@ POLICIES = (
     "union_pairs",
 )
 
+SCORE_DISTANCE_BANDS = (0.01, 0.02, 0.03, 0.05, 0.08, 0.10, 0.15, 0.20, 0.30)
+SENTIMENT_MARGIN_BANDS = (0.05, 0.10, 0.15, 0.20, 0.30, 0.40, 0.50)
 PRIMARY_METRIC = "pair_micro_f1"
 
 
@@ -89,7 +91,86 @@ def as_set(labels: list[str]) -> set[str]:
     return set(labels or [])
 
 
-def choose_predictions(local_labels: list[str], qwen_labels: list[str], policy: str) -> list[str]:
+def policy_threshold(policy: str) -> float:
+    return float(policy.rsplit("_", maxsplit=1)[-1])
+
+
+def local_score_state(local_row: dict[str, Any] | None, aspect: str | None) -> tuple[float, float, float, float]:
+    if local_row is None or aspect is None:
+        raise ValueError("Score-aware policies require local row features and a held-out aspect.")
+    score_features = local_row.get("score_features") or {}
+    scores = score_features.get("candidate_aspect_scores") or {}
+    score = float(scores.get(aspect, score_features.get("top_score", 0.0)))
+    threshold = float(score_features.get("threshold", 0.5))
+    signed_distance = score - threshold
+    return score, threshold, signed_distance, abs(signed_distance)
+
+
+def local_sentiment_margin(local_row: dict[str, Any] | None, aspect: str | None) -> float:
+    if local_row is None or aspect is None:
+        raise ValueError("Sentiment-margin policies require local row features and a held-out aspect.")
+    row_features = local_row.get("sentiment_features") or {}
+    aspect_features = row_features.get(aspect) or {}
+    return float(aspect_features.get("sentiment_margin", 1.0))
+
+
+def choose_score_policy(
+    local_labels: list[str],
+    qwen_labels: list[str],
+    policy: str,
+    local_row: dict[str, Any] | None,
+    aspect: str | None,
+) -> set[str]:
+    local = as_set(local_labels)
+    qwen = as_set(qwen_labels)
+    _, _, signed_distance, abs_distance = local_score_state(local_row, aspect)
+
+    if policy.startswith("score_abs_replace_le_"):
+        return qwen if abs_distance <= policy_threshold(policy) else local
+    if policy.startswith("score_abs_qwen_nonempty_else_local_le_"):
+        return qwen if abs_distance <= policy_threshold(policy) and qwen else local
+    if policy.startswith("score_abs_agreement_qwen_sentiment_le_"):
+        if abs_distance <= policy_threshold(policy) and local:
+            return qwen if qwen else set()
+        return local
+    if policy.startswith("score_below_rescue_le_"):
+        band = policy_threshold(policy)
+        return qwen if not local and -band <= signed_distance < 0 else local
+    if policy.startswith("score_above_confirm_le_"):
+        band = policy_threshold(policy)
+        if local and 0 <= signed_distance <= band:
+            return qwen if qwen else set()
+        return local
+    raise ValueError(f"Unknown score-aware policy: {policy}")
+
+
+def choose_sentiment_margin_policy(
+    local_labels: list[str],
+    qwen_labels: list[str],
+    policy: str,
+    local_row: dict[str, Any] | None,
+    aspect: str | None,
+) -> set[str]:
+    local = as_set(local_labels)
+    qwen = as_set(qwen_labels)
+    margin = local_sentiment_margin(local_row, aspect)
+    if policy.startswith("sentiment_margin_replace_le_"):
+        return qwen if local and margin <= policy_threshold(policy) and qwen else local
+    if policy.startswith("sentiment_margin_confirm_le_"):
+        if local and margin <= policy_threshold(policy):
+            return qwen if qwen else set()
+        return local
+    raise ValueError(f"Unknown sentiment-margin policy: {policy}")
+
+
+def choose_predictions(
+    local_labels: list[str],
+    qwen_labels: list[str],
+    policy: str,
+    local_row: dict[str, Any] | None = None,
+    qwen_row: dict[str, Any] | None = None,
+    aspect: str | None = None,
+) -> list[str]:
     local = as_set(local_labels)
     qwen = as_set(qwen_labels)
     if policy == "local_only":
@@ -108,12 +189,21 @@ def choose_predictions(local_labels: list[str], qwen_labels: list[str], policy: 
         output = qwen if local and qwen else set()
     elif policy == "union_pairs":
         output = local | qwen
+    elif policy.startswith("score_"):
+        output = choose_score_policy(local_labels, qwen_labels, policy, local_row, aspect)
+    elif policy.startswith("sentiment_margin_"):
+        output = choose_sentiment_margin_policy(local_labels, qwen_labels, policy, local_row, aspect)
     else:
         raise ValueError(f"Unknown policy: {policy}")
     return sorted(output)
 
 
-def qwen_call_count(local_labels: list[str], policy: str) -> int:
+def qwen_call_count(
+    local_labels: list[str],
+    policy: str,
+    local_row: dict[str, Any] | None = None,
+    aspect: str | None = None,
+) -> int:
     local_nonempty = bool(local_labels)
     if policy in {"local_only"}:
         return 0
@@ -123,6 +213,23 @@ def qwen_call_count(local_labels: list[str], policy: str) -> int:
         return 0 if local_nonempty else 1
     if policy in {"pair_agreement", "aspect_agreement_local_sentiment", "aspect_agreement_qwen_sentiment"}:
         return 1 if local_nonempty else 0
+    if policy.startswith("score_abs_replace_le_") or policy.startswith("score_abs_qwen_nonempty_else_local_le_"):
+        _, _, _, abs_distance = local_score_state(local_row, aspect)
+        return 1 if abs_distance <= policy_threshold(policy) else 0
+    if policy.startswith("score_abs_agreement_qwen_sentiment_le_"):
+        _, _, _, abs_distance = local_score_state(local_row, aspect)
+        return 1 if local_nonempty and abs_distance <= policy_threshold(policy) else 0
+    if policy.startswith("score_below_rescue_le_"):
+        _, _, signed_distance, _ = local_score_state(local_row, aspect)
+        band = policy_threshold(policy)
+        return 1 if not local_nonempty and -band <= signed_distance < 0 else 0
+    if policy.startswith("score_above_confirm_le_"):
+        _, _, signed_distance, _ = local_score_state(local_row, aspect)
+        band = policy_threshold(policy)
+        return 1 if local_nonempty and 0 <= signed_distance <= band else 0
+    if policy.startswith("sentiment_margin_replace_le_") or policy.startswith("sentiment_margin_confirm_le_"):
+        margin = local_sentiment_margin(local_row, aspect)
+        return 1 if local_nonempty and margin <= policy_threshold(policy) else 0
     raise ValueError(f"Unknown policy: {policy}")
 
 
@@ -152,11 +259,21 @@ def evaluate_policy(
     aligned = aligned_rows(local_rows, qwen_rows)
     gold = [local_row["gold_pair_labels"] for local_row, _ in aligned]
     pred = [
-        choose_predictions(local_row["pred_pair_labels"], qwen_row["pred_pair_labels"], policy)
+        choose_predictions(
+            local_row["pred_pair_labels"],
+            qwen_row["pred_pair_labels"],
+            policy,
+            local_row=local_row,
+            qwen_row=qwen_row,
+            aspect=aspect,
+        )
         for local_row, qwen_row in aligned
     ]
     metrics = evaluate_pair_and_aspect(gold, pred, candidate_pair_labels([aspect]))
-    qwen_calls = sum(qwen_call_count(local_row["pred_pair_labels"], policy) for local_row, _ in aligned)
+    qwen_calls = sum(
+        qwen_call_count(local_row["pred_pair_labels"], policy, local_row=local_row, aspect=aspect)
+        for local_row, _ in aligned
+    )
     row_count = len(aligned)
     metrics.update(
         {
@@ -225,8 +342,8 @@ def validation_selected_rows(rows: list[dict[str, Any]], aspects: list[str], spl
     return selected
 
 
-def global_validation_policy(rows: list[dict[str, Any]]) -> str:
-    aggregate_rows = [aggregate(rows, "validation", policy) for policy in POLICIES]
+def global_validation_policy(rows: list[dict[str, Any]], policies: list[str]) -> str:
+    aggregate_rows = [aggregate(rows, "validation", policy) for policy in policies]
     return max(
         aggregate_rows,
         key=lambda row: (
@@ -238,26 +355,66 @@ def global_validation_policy(rows: list[dict[str, Any]]) -> str:
     )["policy"]
 
 
+def feature_status(local_loao_dir: Path, aspects: list[str]) -> dict[str, bool]:
+    has_scores = True
+    has_sentiment = True
+    for aspect in aspects:
+        rows = read_jsonl(local_path(local_loao_dir, "validation", aspect))
+        if not rows:
+            return {"score_features": False, "sentiment_features": False}
+        has_scores = has_scores and all("score_features" in row for row in rows[:10])
+        has_sentiment = has_sentiment and all("sentiment_features" in row for row in rows[:10])
+    return {"score_features": has_scores, "sentiment_features": has_sentiment}
+
+
+def policy_grid(status: dict[str, bool]) -> list[str]:
+    policies = list(POLICIES)
+    if status["score_features"]:
+        for band in SCORE_DISTANCE_BANDS:
+            suffix = f"{band:.2f}"
+            policies.extend(
+                [
+                    f"score_abs_replace_le_{suffix}",
+                    f"score_abs_qwen_nonempty_else_local_le_{suffix}",
+                    f"score_abs_agreement_qwen_sentiment_le_{suffix}",
+                    f"score_below_rescue_le_{suffix}",
+                    f"score_above_confirm_le_{suffix}",
+                ]
+            )
+    if status["sentiment_features"]:
+        for band in SENTIMENT_MARGIN_BANDS:
+            suffix = f"{band:.2f}"
+            policies.extend(
+                [
+                    f"sentiment_margin_replace_le_{suffix}",
+                    f"sentiment_margin_confirm_le_{suffix}",
+                ]
+            )
+    return policies
+
+
 def analyse(args: argparse.Namespace) -> dict[str, Any]:
     aspects = [
         str(row["heldout_aspect"])
         for row in read_json(args.qwen_validation_dir / "summary.json")["results"]
         if not row.get("dry_run")
     ]
+    status = feature_status(args.local_loao_dir, aspects)
+    policies = policy_grid(status)
     per_aspect_rows = []
     for aspect in aspects:
         for split, qwen_dir in [("validation", args.qwen_validation_dir), ("test", args.qwen_test_dir)]:
             local_rows = read_jsonl(local_path(args.local_loao_dir, split, aspect))
             qwen_rows = read_jsonl(split_path(qwen_dir, split, aspect))
-            for policy in POLICIES:
+            for policy in policies:
                 per_aspect_rows.append(evaluate_policy(local_rows, qwen_rows, aspect, split, policy))
 
     aggregate_rows = [
         aggregate(per_aspect_rows, split, policy)
         for split in ["validation", "test"]
-        for policy in POLICIES
+        for policy in policies
     ]
-    global_policy = global_validation_policy(per_aspect_rows)
+    global_policy = global_validation_policy(per_aspect_rows, policies)
     global_selected = [
         row
         for row in per_aspect_rows
@@ -294,12 +451,13 @@ def analyse(args: argparse.Namespace) -> dict[str, Any]:
         "local_loao_dir": str(args.local_loao_dir),
         "qwen_validation_dir": str(args.qwen_validation_dir),
         "qwen_test_dir": str(args.qwen_test_dir),
-        "policies": list(POLICIES),
+        "local_feature_status": status,
+        "policies": policies,
         "primary_metric": PRIMARY_METRIC,
         "limitation": (
-            "This is an offline prediction-combination diagnostic. Existing LOAO local predictions do not "
-            "include row-level score/margin features, so it does not yet implement a true confidence-based "
-            "uncertainty gate."
+            "This is an offline prediction-combination diagnostic. When the selected local LOAO directory "
+            "contains score_features or sentiment_features, the policy grid includes validation-selected "
+            "score/margin routing. It still reuses existing Qwen predictions rather than making new model calls."
         ),
         "global_validation_selected_policy": global_policy,
         "aggregate": aggregate_rows,

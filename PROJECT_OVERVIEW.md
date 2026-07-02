@@ -769,6 +769,8 @@ The current Tier 1 literature-review foundation is recorded in `docs/tier1_core_
 
 The active completion roadmap is now `docs/thesis_completion_roadmap.md`. Thesis-ready result tables, the cascade score/margin uncertainty check, Qwen LoRA runner readiness, the tiny Qwen LoRA smoke test, the fixed held-out-aspect Qwen LoRA validation/test run, the full LOAO launch plan, and the single-fold all-row Qwen LoRA validation-gated pilot are complete. Full fine-tuned Qwen LoRA LOAO remains unrun, but the current SFT recipe failed the single-fold validation gate; the next modelling work should revise the absence-calibration objective before spending 12-fold GPU time.
 
+The current modelling direction has now pivoted from direct Qwen JSON-SFT replacement to local-to-Qwen hybrid routing. The source-of-truth note is `docs/qwen_local_hybrid_direction.md`. The practical rule is: DistilBERT should be treated as the cheap calibrated gate, while Qwen should be used selectively as a semantic judge for uncertain or unfamiliar unseen-aspect cases. Do not launch full 12-fold Qwen LoRA LOAO with the current grouped/singleton JSON-SFT recipe merely because a larger GPU is available.
+
 The Gemini-assisted qualitative error taxonomy is now complete and documented in `docs/qualitative_error_taxonomy.md`. It reuses existing outputs, keeps review-text packets and Gemini drafts under ignored `outputs/`, and manually consolidates seven thesis-facing categories: semantic boundary ambiguity, competitor-positive recall bottleneck, generative over-prediction, cautious abstention, neutral sentiment under-recall, prompt-induced precision-recall shift, and cascade complementarity. A small Gemini Pro draft pass was used only as an assistant for category wording and cross-checking, with reasoning tokens counted in the recorded usage. These categories define the main Qwen fine-tuning targets: abstention calibration, hard-negative aspect boundaries, competitor-positive recall, neutral sentiment coverage, stable label semantics, and cascade-ready uncertainty signals.
 
 ## 14. Thesis LaTeX Source And Writing Rule
@@ -845,9 +847,11 @@ Future dissertation-writing work should edit the LaTeX source directly. Markdown
 
 14. Treat the final Qwen LoRA SFT/evaluation runner, tiny local smoke test, fixed held-out-aspect Qwen LoRA validation/test run, and single-fold all-row Qwen LoRA validation-gated pilot as complete. Use `docs/qwen_lora_loao_launch_plan.md` before any long GPU run, but do not launch full LOAO with the current singleton SFT recipe.
 
-15. Do not run full Gemini Pro LOAO unless the dissertation value justifies the added cost and latency.
+15. Treat the local-to-Qwen hybrid direction as the immediate modelling priority. First rerun/export the strongest local DistilBERT LOAO predictions with score, threshold-distance, and sentiment-confidence features; then reuse existing Qwen zero-shot LOAO predictions for validation-selected score/margin routing.
 
-16. Treat full fine-tuned Qwen LoRA LOAO as a deferred compute-bound experiment, not as a prerequisite for finishing the rest of the dissertation evidence package. Do not launch it until a revised absence-calibration objective passes a validation gate and the target GPU environment, storage budget, package versions, and data-transfer rules are confirmed.
+16. Do not run full Gemini Pro LOAO unless the dissertation value justifies the added cost and latency.
+
+17. Treat full fine-tuned Qwen LoRA LOAO as a deferred compute-bound experiment, not as a prerequisite for finishing the rest of the dissertation evidence package. Do not launch it until a revised absence-calibration objective passes a validation gate and the target GPU environment, storage budget, package versions, and data-transfer rules are confirmed.
 
 ## 17. Notes For Repository Hygiene
 

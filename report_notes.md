@@ -121,6 +121,39 @@ Tracked roadmap:
 
 - `docs/thesis_completion_roadmap.md`
 
+## 2026-07-02 - Qwen-Local Hybrid Direction Pivot
+
+Decision:
+
+- The project should not continue by default with full 12-fold Qwen JSON-SFT LOAO under the current recipe.
+- The fixed held-out-aspect Qwen LoRA result was only a modest improvement over Qwen zero-shot and stayed below the strongest local DistilBERT fixed baseline.
+- The single-fold all-row Qwen LoRA pilot failed its validation gate on `Company brand: Competitor`.
+- The first local-to-Qwen LOAO cascade diagnostic gave positive signal, so the next modelling direction is:
+
+```text
+DistilBERT = cheap calibrated gate
+Qwen = semantic judge for uncertain or unfamiliar unseen-aspect cases
+```
+
+Evidence:
+
+| System | Test Mean Pair Micro F1 | Qwen Call Rate |
+| --- | ---: | ---: |
+| Local DistilBERT only | 0.3128 | 0.0000 |
+| Qwen zero-shot only | 0.3378 | 1.0000 |
+| Local-to-Qwen global agreement gate | 0.3470 | 0.1868 |
+| Optimistic per-aspect validation-selected mixed policy | 0.4131 | 0.3645 |
+
+Immediate registered follow-up:
+
+- Rerun/export the strongest local DistilBERT LOAO branch with candidate score, threshold-distance, and sentiment-confidence features.
+- Reuse existing Qwen zero-shot LOAO predictions; do not call Qwen again for the first score/margin routing diagnostic.
+- Compare score/margin routing against local-only, Qwen-only, the simple agreement gate, and the optimistic per-aspect diagnostic.
+
+Tracked source-of-truth note:
+
+- `docs/qwen_local_hybrid_direction.md`
+
 ## 2026-07-02 - Gemini-Assisted Qualitative Error Taxonomy
 
 Command:

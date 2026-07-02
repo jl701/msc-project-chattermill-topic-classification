@@ -3527,3 +3527,79 @@ Thesis contribution:
 
 - This single-fold pilot is a negative but useful adaptation result. It shows that local QLoRA can train and evaluate real all-row LOAO data, but ordinary held-out-aspect SFT plus simple absence-aware negative sampling does not outperform the existing zero-shot/open-weight or local DistilBERT baselines on the selected hard fold.
 - The dissertation should use it to justify a compute-aware limitation: full fine-tuned Qwen LOAO was not launched because the validation gate failed on a representative hard fold, not because the runner was unready.
+
+## 2026-07-02 - Local-to-Qwen Hybrid Direction Pivot and Score Export Pre-Registration
+
+### Purpose
+
+- Record the modelling pivot after the Qwen LoRA validation gate failed and the first local-to-Qwen LOAO cascade diagnostic showed positive signal.
+- Prevent future sessions from drifting back to full 12-fold Qwen JSON-SFT LOAO under the current recipe.
+- Prepare the next experiment: rerun/export the local DistilBERT LOAO branch with score, threshold-distance, and sentiment-confidence features, then reuse existing Qwen zero-shot LOAO predictions for score/margin routing.
+
+### Code Or Protocol Changes
+
+- Added `docs/qwen_local_hybrid_direction.md` as the source-of-truth note for the new direction.
+- Updated the project roadmap and handoff documents to state that full Qwen LoRA LOAO is deferred until a revised objective passes validation.
+- Extended local sentiment helpers so feature exports can include:
+  - predicted sentiment;
+  - sentiment class probabilities;
+  - top probability;
+  - second probability;
+  - probability margin;
+  - entropy.
+- Extended `scripts/run_aspect_label_aware_baseline.py` so prediction JSONL can contain both `score_features` and `sentiment_features`.
+- Extended `scripts/analyse_local_qwen_loao_cascade.py` so it automatically adds score-distance and sentiment-margin policies when the selected local LOAO directory contains those features.
+
+### Setup
+
+- Dataset: public FABSA export.
+- Protocol: full all-row LOAO over all 12 FABSA aspects.
+- Local model to rerun/export:
+  - candidate-aspect DistilBERT cross-encoder;
+  - `example_filtered` training strategy;
+  - all validation/test rows;
+  - validation pair micro F1 threshold selection;
+  - DistilBERT aspect-conditioned sentiment.
+- Qwen predictions to reuse:
+  - existing indexed Qwen zero-shot all-row LOAO validation/test predictions.
+- No new Qwen calls are planned for the first score/margin diagnostic.
+
+### Commands
+
+Planned local score/sentiment-confidence export:
+
+```powershell
+python .\scripts\run_loao_heldout_aspect.py --baseline cross_encoder --strategy example_filtered --eval-row-scope all --selection-metric pair_micro_f1 --sentiment-mode transformer_aspect_conditioned --sentiment-epochs 3 --sentiment-learning-rate 2e-5 --sentiment-batch-size 16 --sentiment-eval-batch-size 64 --sentiment-class-weight balanced --sentiment-selection-metric accuracy --epochs 3 --batch-size 32 --eval-batch-size 96 --learning-rate 3e-5 --negatives-per-positive 3 --output-dir .\outputs\baselines\loao_cross_encoder_transformer_sentiment_example_filtered_micro_selection_score_export_20260702
+```
+
+Planned hybrid analysis:
+
+```powershell
+python .\scripts\analyse_local_qwen_loao_cascade.py --local-loao-dir .\outputs\baselines\loao_cross_encoder_transformer_sentiment_example_filtered_micro_selection_score_export_20260702 --qwen-validation-dir .\outputs\llm\qwen_loao_heldout_aspect_all_rows_validation_20260701 --qwen-test-dir .\outputs\llm\qwen_loao_heldout_aspect_all_rows_test_20260701 --output-dir .\outputs\analysis\local_qwen_loao_score_margin_cascade_20260702
+```
+
+### Outputs
+
+- Planned local ignored outputs:
+  - `outputs/baselines/loao_cross_encoder_transformer_sentiment_example_filtered_micro_selection_score_export_20260702/`
+  - `outputs/analysis/local_qwen_loao_score_margin_cascade_20260702/`
+- Tracked documentation:
+  - `docs/qwen_local_hybrid_direction.md`
+  - this log entry
+  - updated roadmap/handoff notes.
+
+### Results
+
+- Not yet run at pre-registration time.
+- Expected outputs must not be described as completed until the commands finish and metrics are read from generated summaries.
+
+### Interpretation
+
+- The current best hypothesis is that Qwen should be used as a selective semantic judge, not as a direct replacement for the local calibrated DistilBERT candidate-aspect pipeline.
+- The score/margin export is designed to test whether validation-selected uncertainty routing can improve over the previous global agreement gate (`0.3470` mean test pair micro F1, `18.7%` Qwen call rate).
+
+### Next Step
+
+- Run the local LOAO score/sentiment-confidence export.
+- Run the local-to-Qwen score/margin routing analysis.
+- Document whether the result improves, matches, or fails to improve over the existing agreement-gate diagnostic.
