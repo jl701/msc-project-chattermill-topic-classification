@@ -322,7 +322,8 @@ If the revised recipe does not pass validation or GPU access is not granted:
 2. Treat the local DistilBERT LOAO score/sentiment-confidence export as complete and reusable for future router diagnostics.
 3. Run the user-confirmed local-to-Qwen item 1: asymmetric score-distance routing, with separate below-threshold rescue and above-threshold confirmation/veto policies.
 4. Run the user-confirmed local-to-Qwen item 2: cost-quality / F1-call-rate Pareto reporting for the policy grid.
-5. Keep item 3, lightweight defer routing, as promising but lower priority because it may overfit and may not beat the simple score-distance rule.
-6. Keep item 4, fair per-aspect routing, as interesting but methodologically heavier than the global router.
-7. Keep items 5 and 6, candidate-wise Qwen semantic judging and aspect-description/boundary-example prompting, as later Qwen-inference experiments.
-8. Use the existing full 12-fold Qwen LoRA command templates only after a revised recipe passes validation and GPU/storage conditions are confirmed.
+5. Treat items 1 and 2 as sufficient for the thesis-facing local-to-Qwen contribution if they produce a clean unified global-router result.
+6. Keep item 3, lightweight defer routing, as promising but lower priority because it may overfit and may not beat the simple score-distance rule.
+7. Keep item 4, per-aspect routing, as an upper-bound diagnostic only; do not make it the main method because real new topics will not usually have their own validation fold.
+8. Defer items 5 and 6, candidate-wise Qwen semantic judging and aspect-description/boundary-example prompting, because they are a separate Qwen-inference route rather than a continuation of the current score-distance router.
+9. Use the existing full 12-fold Qwen LoRA command templates only after a revised recipe passes validation and GPU/storage conditions are confirmed.

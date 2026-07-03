@@ -58,6 +58,13 @@ Therefore the next experiments should use Qwen where semantic judgement matters 
 
 The numbered queue below is the current source of truth for future local-to-Qwen work. The numbers are intentionally stable so they can be referenced in later discussions.
 
+Current decision:
+
+- Items 1 and 2 are sufficient for the thesis-facing local-to-Qwen contribution if completed cleanly.
+- The main deployable method should be one unified global router shared across all held-out aspects.
+- Per-aspect policy selection should remain an upper-bound diagnostic, not the main method, because a real new topic will not usually have enough topic-specific validation data to choose its own policy.
+- Items 5 and 6 are a separate Qwen-inference route, not a continuation of the current score-distance router. They are deferred unless items 1 and 2 unexpectedly fail to provide enough thesis evidence.
+
 ### 1. Asymmetric Score-Distance Router
 
 Priority: immediate.
@@ -118,27 +125,26 @@ Risk:
 
 ### 4. Fair Per-Aspect Routing
 
-Priority: interesting but lower because it needs careful methodology.
+Priority: diagnostic only for now.
 
 Purpose:
 
-- Turn the current per-aspect validation-selected diagnostic (`0.4186` test mean pair micro F1) into a more defensible method.
-- Avoid presenting unconstrained per-aspect policy selection as a final deployed result.
+- Keep the current per-aspect validation-selected diagnostic (`0.4186` test mean pair micro F1) as evidence of model complementarity.
+- Do not promote unconstrained per-aspect policy selection as the final deployed method.
 
-Candidate approaches:
+Rationale:
 
-- Group aspects into broad semantic aspects versus narrow channel/value aspects.
-- Freeze a rule based on validation error profile rather than test performance.
-- Report this separately from the global thesis-safe router.
+- In real deployment, a newly introduced topic will not necessarily have a held-out validation fold with enough labels to choose a topic-specific router.
+- A single global validation-selected router is more defensible and closer to the company scenario.
 
 Risk:
 
 - It is easy to overfit by selecting a separate policy for each aspect.
-- It needs more careful explanation than items 1 and 2.
+- It needs more careful explanation than items 1 and 2 and should not be the next implementation target.
 
 ### 5. Candidate-Wise Qwen Semantic Judge
 
-Priority: useful later if more Qwen modelling evidence is needed.
+Priority: deferred.
 
 Purpose:
 
@@ -156,11 +162,12 @@ Why it may help:
 Cost:
 
 - It requires new Qwen inference.
-- It should be attempted after the no-new-Qwen-call router work is fully exploited.
+- It is a separate route from items 1 and 2, not a direct continuation of the score-distance router.
+- Do not run it unless items 1 and 2 fail to provide enough thesis evidence or a supervisor specifically asks for a new Qwen inference method.
 
 ### 6. Aspect Descriptions And Boundary Examples For Candidate-Wise Qwen
 
-Priority: optional extension to item 5.
+Priority: deferred with item 5.
 
 Purpose:
 

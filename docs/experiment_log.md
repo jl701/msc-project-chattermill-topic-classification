@@ -3695,16 +3695,25 @@ python .\scripts\analyse_local_qwen_loao_cascade.py --local-loao-dir .\outputs\b
    - Keep any learned router simple and regularised.
 
 4. Fair per-aspect routing.
-   - Interesting but lower priority because the engineering and methodology are heavier.
-   - The current per-aspect diagnostic is strong but should remain an upper bound until a frozen rule is defined.
+   - Diagnostic only for now.
+   - The current per-aspect diagnostic is strong but should remain an upper bound.
+   - Do not make it the main method because a real new topic will not usually have enough topic-specific validation data to choose its own policy.
 
 5. Candidate-wise Qwen semantic judge.
-   - Worth testing later if additional Qwen inference evidence is needed.
+   - Deferred.
    - Formulation: `review + one candidate aspect -> absent / positive / negative / neutral`.
+   - This is a separate Qwen-inference route, not a continuation of items 1 and 2.
 
 6. Aspect descriptions and boundary examples.
-   - Optional later extension to item 5.
+   - Deferred with item 5.
    - Should be a small controlled ablation.
+
+### Thesis Decision
+
+- Items 1 and 2 are considered sufficient for the main thesis-facing local-to-Qwen method if completed cleanly.
+- The headline should be a unified global router shared across held-out aspects.
+- Per-aspect routing remains a diagnostic upper bound.
+- Items 5 and 6 should not be run unless items 1 and 2 unexpectedly fail to provide enough evidence or a supervisor specifically requests another Qwen inference method.
 
 ### Deferred
 
@@ -3716,4 +3725,4 @@ python .\scripts\analyse_local_qwen_loao_cascade.py --local-loao-dir .\outputs\b
 ### Next Step
 
 - Implement item 1 and item 2 first.
-- Do not start items 3-6 until the systematic no-new-Qwen-call routing analysis has been completed and documented.
+- Do not start items 3-6 unless the systematic no-new-Qwen-call global routing analysis leaves a clear thesis gap.

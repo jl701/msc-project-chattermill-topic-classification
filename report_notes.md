@@ -856,16 +856,25 @@ The next local-to-Qwen work should use this stable numbering:
    - Train only a small, regularised router over non-text features; high overfitting risk.
 
 4. Fair per-aspect routing.
-   - Interesting but lower priority because it needs careful methodology.
-   - The current per-aspect result is strong but optimistic; any thesis-facing version needs a frozen rule.
+   - Diagnostic only for now.
+   - The current per-aspect result is strong but optimistic.
+   - Do not make it the main method because a real new topic will not usually have enough topic-specific validation data to choose its own policy.
 
 5. Candidate-wise Qwen semantic judge.
-   - Useful later if another Qwen inference experiment is needed.
+   - Deferred.
    - Formulation: `review + one candidate aspect -> absent / positive / negative / neutral`.
+   - This is a separate Qwen-inference route, not a continuation of items 1 and 2.
 
 6. Aspect descriptions and boundary examples.
-   - Optional extension to item 5.
+   - Deferred with item 5.
    - Test only as a small controlled ablation, not another broad prompt sweep.
+
+Current thesis decision:
+
+- Items 1 and 2 are enough for the main thesis-facing method if completed cleanly.
+- The headline method should be one unified global router shared across all held-out aspects.
+- Per-aspect routing remains an upper-bound diagnostic.
+- Items 5 and 6 should not be run unless items 1 and 2 unexpectedly fail to provide enough evidence or a supervisor specifically requests another Qwen inference method.
 
 Deferred beyond the current queue:
 
