@@ -320,7 +320,9 @@ If the revised recipe does not pass validation or GPU access is not granted:
 
 1. Keep `docs/qwen_local_hybrid_direction.md` as the source of truth for the current modelling pivot.
 2. Treat the local DistilBERT LOAO score/sentiment-confidence export as complete and reusable for future router diagnostics.
-3. Promote validation-selected local-to-Qwen score-distance routing as the main Qwen follow-up method: global score-distance gate test mean pair micro F1 `0.3800`, Qwen call rate `22.4%`; per-aspect validation-selected diagnostic `0.4186`, Qwen call rate `34.8%`.
-4. Treat sentiment-margin-only routing as a weak/negative sub-result: it does not explain the improvement and should not be the next standalone route.
-5. If more Qwen modelling evidence is needed, move to candidate-wise Qwen semantic judgement or a revised absence-calibration objective; do not return to grouped/singleton JSON-SFT full LOAO without a new validation-passing objective.
-6. Use the existing full 12-fold Qwen LoRA command templates only after a revised recipe passes validation and GPU/storage conditions are confirmed.
+3. Run the user-confirmed local-to-Qwen item 1: asymmetric score-distance routing, with separate below-threshold rescue and above-threshold confirmation/veto policies.
+4. Run the user-confirmed local-to-Qwen item 2: cost-quality / F1-call-rate Pareto reporting for the policy grid.
+5. Keep item 3, lightweight defer routing, as promising but lower priority because it may overfit and may not beat the simple score-distance rule.
+6. Keep item 4, fair per-aspect routing, as interesting but methodologically heavier than the global router.
+7. Keep items 5 and 6, candidate-wise Qwen semantic judging and aspect-description/boundary-example prompting, as later Qwen-inference experiments.
+8. Use the existing full 12-fold Qwen LoRA command templates only after a revised recipe passes validation and GPU/storage conditions are confirmed.

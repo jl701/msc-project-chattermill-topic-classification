@@ -54,6 +54,133 @@ Qwen's observed advantage is different:
 
 Therefore the next experiments should use Qwen where semantic judgement matters most, while letting DistilBERT handle cheap calibrated gating and obvious negatives.
 
+## User-Confirmed Next Optimisation Queue
+
+The numbered queue below is the current source of truth for future local-to-Qwen work. The numbers are intentionally stable so they can be referenced in later discussions.
+
+### 1. Asymmetric Score-Distance Router
+
+Priority: immediate.
+
+Purpose:
+
+- Systematically improve the current global `score_abs_replace_le_0.05` gate.
+- Split the threshold neighbourhood into below-threshold rescue and above-threshold confirmation/veto regions.
+- Select policy parameters on validation, then apply once to test.
+
+Candidate rule family:
+
+```text
+if local_score is just below threshold:
+    let Qwen rescue possible local false negatives
+elif local_score is just above threshold:
+    require Qwen confirmation or allow Qwen veto
+else:
+    keep local DistilBERT
+```
+
+Why it is first:
+
+- It directly extends the positive score-distance result.
+- It reuses existing local and Qwen LOAO predictions.
+- It is low engineering risk and should produce thesis-friendly precision/recall trade-off evidence even if the best F1 does not improve.
+
+### 2. Cost-Quality / F1-Call-Rate Pareto Curve
+
+Priority: immediate and paired with item 1.
+
+Purpose:
+
+- Plot or tabulate how LOAO performance changes as the Qwen call rate increases.
+- Show that selective Qwen use is better than both always-local and always-Qwen.
+- Report pair micro F1, pair samples F1 if available, precision, recall, false-positive rows / 100, false-negative rows / 100, and Qwen call rate.
+
+Why it is second:
+
+- It is the clearest way to turn the current hybrid result into a thesis method claim.
+- It answers the deployment question: how much Qwen usage is worth paying for?
+- It can be done without new Qwen calls.
+
+### 3. Lightweight Defer Router
+
+Priority: promising but after items 1 and 2.
+
+Purpose:
+
+- Train a small validation-only router over non-text features to decide whether local or Qwen should answer.
+- Candidate features include local score, threshold distance, above/below threshold flag, selected-count features, sentiment margin, aspect ID, Qwen non-empty flag, and local/Qwen agreement.
+
+Risk:
+
+- The validation data is small, especially per aspect.
+- A learned router may overfit and may not improve over the simple score-distance rule.
+- Keep the model simple: logistic regression, shallow tree, or another strongly regularised model.
+
+### 4. Fair Per-Aspect Routing
+
+Priority: interesting but lower because it needs careful methodology.
+
+Purpose:
+
+- Turn the current per-aspect validation-selected diagnostic (`0.4186` test mean pair micro F1) into a more defensible method.
+- Avoid presenting unconstrained per-aspect policy selection as a final deployed result.
+
+Candidate approaches:
+
+- Group aspects into broad semantic aspects versus narrow channel/value aspects.
+- Freeze a rule based on validation error profile rather than test performance.
+- Report this separately from the global thesis-safe router.
+
+Risk:
+
+- It is easy to overfit by selecting a separate policy for each aspect.
+- It needs more careful explanation than items 1 and 2.
+
+### 5. Candidate-Wise Qwen Semantic Judge
+
+Priority: useful later if more Qwen modelling evidence is needed.
+
+Purpose:
+
+- Replace full JSON list generation with one-candidate judgement:
+
+```text
+review + one candidate aspect -> absent / positive / negative / neutral
+```
+
+Why it may help:
+
+- It directly targets Qwen's observed weakness: absent/present calibration.
+- It better matches Qwen's semantic strength than asking it to output a whole multi-label JSON list.
+
+Cost:
+
+- It requires new Qwen inference.
+- It should be attempted after the no-new-Qwen-call router work is fully exploited.
+
+### 6. Aspect Descriptions And Boundary Examples For Candidate-Wise Qwen
+
+Priority: optional extension to item 5.
+
+Purpose:
+
+- Add concise aspect definitions, include/exclude notes, or boundary examples to the candidate-wise judge.
+- Focus on broad or ambiguous aspects such as `Company brand: General satisfaction`, `Online experience: App website`, and `Purchase booking experience: Ease of use`.
+
+Risk:
+
+- Description prompting can shift precision/recall unpredictably.
+- It should be tested as a small controlled ablation, not as another broad prompt sweep.
+
+### Deferred Ideas Beyond The Current Queue
+
+The following are not current priorities:
+
+- Qwen logits or absent-threshold calibration;
+- DistilBERT shortlist plus Qwen judging for large candidate sets;
+- Gatekeeper-style confidence tuning of the local model;
+- any renewed full Qwen JSON-SFT LOAO run without a revised validation-passing objective.
+
 ## Candidate Hybrid Sub-Directions
 
 ### 1. Score/Margin Uncertainty Routing

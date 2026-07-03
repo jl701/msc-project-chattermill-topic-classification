@@ -38,14 +38,17 @@ Reason:
 
 Immediate priority:
 
-1. Treat the completed score-distance local-to-Qwen gate as the main Qwen follow-up method.
-2. Use the global validation-selected result (`0.3800` test mean pair micro F1, `22.4%` Qwen call rate) as the thesis-safe hybrid result.
-3. Use the per-aspect validation-selected result (`0.4186`, `34.8%` Qwen call rate) as an upper-bound diagnostic of aspect-specific model complementarity.
-4. If another Qwen experiment is needed, move to the candidate-wise Qwen semantic judge formulation:
+1. Run a systematic asymmetric score-distance router analysis: separate below-threshold rescue from above-threshold confirmation/veto, select on validation, and apply once to test.
+2. Produce the local-to-Qwen cost-quality / F1-call-rate Pareto curve from the same policy grid.
+3. Keep a lightweight defer router as a promising but lower-priority follow-up after items 1 and 2.
+4. Keep fair per-aspect routing as an interesting but methodologically heavier follow-up.
+5. If another Qwen inference experiment is needed, move to the candidate-wise Qwen semantic judge formulation:
 
 ```text
 review + one candidate aspect + optional aspect description -> absent / positive / negative / neutral
 ```
+
+6. Treat aspect descriptions and boundary examples as an optional extension to the candidate-wise judge, not as the next default experiment.
 
 The full details and guardrails are recorded in `docs/qwen_local_hybrid_direction.md`.
 
@@ -292,11 +295,12 @@ Interpretation:
 
 ## Recommended Order
 
-1. Thesis-ready result tables and figure data, coordinated through `docs/thesis_completion_roadmap.md`.
-2. Cascade uncertainty improvement using local score/margin export and no new Gemini calls.
-3. Qwen LoRA SFT runner readiness and tiny smoke test.
-4. Use the completed local-to-Qwen score-distance gate as the main Qwen follow-up method in the thesis narrative.
-5. If another Qwen experiment is needed, use candidate-wise Qwen semantic judgement or a revised absence-calibration objective; do not return to grouped/singleton JSON-SFT full LOAO without a new validation-passing objective.
-6. Sampled Gemini LOAO only if specifically needed as a fallback or supervisor-requested robustness signal.
+1. Asymmetric score-distance router.
+2. Cost-quality / F1-call-rate Pareto curve for the local-to-Qwen policy grid.
+3. Lightweight defer router over non-text local/Qwen features, only after items 1 and 2.
+4. Fair per-aspect routing, treated as methodologically heavier than the global router.
+5. Candidate-wise Qwen semantic judge if more Qwen inference evidence is needed.
+6. Aspect descriptions and boundary examples as a small candidate-wise ablation.
+7. Sampled Gemini LOAO only if specifically needed as a fallback or supervisor-requested robustness signal.
 
-This order maximises dissertation value per unit cost while preserving the current strategic boundary: full Qwen LoRA LOAO is deferred until the fine-tuning recipe passes a single-fold validation gate. Everything else should either convert existing evidence into thesis-ready analysis or prepare a revised Qwen calibration objective so GPU time is not wasted on a recipe already shown to underperform.
+This order maximises dissertation value per unit cost while preserving the current strategic boundary: full Qwen LoRA LOAO is deferred until a revised fine-tuning recipe passes a single-fold validation gate. The next default work is router optimisation and Pareto reporting, not renewed grouped/singleton JSON-SFT.

@@ -837,3 +837,39 @@ Thesis interpretation:
 - The gain comes from aspect-selector score-distance uncertainty, not sentiment-margin uncertainty.
 - The global score-distance gate is the thesis-safe selected result; the per-aspect policy is a useful upper-bound diagnostic.
 - Full 12-fold Qwen JSON-SFT LOAO remains deferred because the current fine-tuning recipe failed its validation gate. Stronger GPU access alone is not enough to restart that path.
+
+## 2026-07-03 - User-Prioritised Local-to-Qwen Next Queue
+
+The next local-to-Qwen work should use this stable numbering:
+
+1. Asymmetric score-distance router.
+   - Immediate priority.
+   - Split the threshold neighbourhood into below-threshold rescue and above-threshold confirmation/veto.
+   - Reuse existing local/Qwen LOAO predictions.
+
+2. Cost-quality / F1-call-rate Pareto curve.
+   - Immediate priority and should be paired with item 1.
+   - Report F1, precision, recall, false-positive rows, false-negative rows, and Qwen call rate across the policy grid.
+
+3. Lightweight defer router.
+   - Promising but lower priority.
+   - Train only a small, regularised router over non-text features; high overfitting risk.
+
+4. Fair per-aspect routing.
+   - Interesting but lower priority because it needs careful methodology.
+   - The current per-aspect result is strong but optimistic; any thesis-facing version needs a frozen rule.
+
+5. Candidate-wise Qwen semantic judge.
+   - Useful later if another Qwen inference experiment is needed.
+   - Formulation: `review + one candidate aspect -> absent / positive / negative / neutral`.
+
+6. Aspect descriptions and boundary examples.
+   - Optional extension to item 5.
+   - Test only as a small controlled ablation, not another broad prompt sweep.
+
+Deferred beyond the current queue:
+
+- Qwen logits or absent-threshold calibration.
+- DistilBERT shortlist plus Qwen judging for large candidate sets.
+- Gatekeeper-style confidence tuning.
+- Full Qwen JSON-SFT LOAO under the current grouped/singleton recipe.

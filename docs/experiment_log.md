@@ -3671,3 +3671,49 @@ python .\scripts\analyse_local_qwen_loao_cascade.py --local-loao-dir .\outputs\b
 - Promote score-distance local-to-Qwen routing as the main Qwen follow-up method in thesis planning.
 - Do not return to full 12-fold Qwen JSON-SFT LOAO with the current grouped/singleton recipe.
 - If another Qwen experiment is needed, test candidate-wise Qwen semantic judgement or a revised absence-calibration objective with a validation gate first.
+
+## 2026-07-03 - User-Prioritised Local-to-Qwen Optimisation Queue
+
+### Purpose
+
+- Record the user's prioritisation of possible follow-up experiments after the positive local-to-Qwen score-distance routing result.
+- Keep future sessions aligned on the numbering and order of proposed methods.
+
+### Prioritised Queue
+
+1. Asymmetric score-distance router.
+   - Immediate priority.
+   - Systematically separate below-threshold rescue from above-threshold confirmation/veto.
+   - Reuse existing local and Qwen LOAO outputs.
+
+2. Cost-quality / F1-call-rate Pareto curve.
+   - Immediate priority.
+   - Should be run with item 1 so the thesis can report the quality/deployment trade-off rather than only one selected policy.
+
+3. Lightweight defer router.
+   - Potentially valuable but lower priority because it may not improve over the simple score-distance rule.
+   - Keep any learned router simple and regularised.
+
+4. Fair per-aspect routing.
+   - Interesting but lower priority because the engineering and methodology are heavier.
+   - The current per-aspect diagnostic is strong but should remain an upper bound until a frozen rule is defined.
+
+5. Candidate-wise Qwen semantic judge.
+   - Worth testing later if additional Qwen inference evidence is needed.
+   - Formulation: `review + one candidate aspect -> absent / positive / negative / neutral`.
+
+6. Aspect descriptions and boundary examples.
+   - Optional later extension to item 5.
+   - Should be a small controlled ablation.
+
+### Deferred
+
+- Qwen logits or absent-threshold calibration.
+- DistilBERT shortlist plus Qwen judging for large candidate sets.
+- Gatekeeper-style confidence tuning.
+- Full Qwen JSON-SFT LOAO under the current grouped/singleton recipe.
+
+### Next Step
+
+- Implement item 1 and item 2 first.
+- Do not start items 3-6 until the systematic no-new-Qwen-call routing analysis has been completed and documented.
