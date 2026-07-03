@@ -2,7 +2,7 @@
 
 Last updated: 2026-07-03
 
-This note records the current modelling pivot after the fixed held-out-aspect Qwen LoRA run, the single-fold all-row Qwen LoRA validation pilot, the first offline local-to-Qwen LOAO cascade diagnostic, and the completed local score/margin routing analysis.
+This note records the current modelling pivot after the fixed held-out-aspect Qwen LoRA run, the single-fold all-row Qwen LoRA validation pilot, the offline local-to-Qwen LOAO cascade diagnostics, the completed local score/margin routing analysis, and the completed asymmetric score-distance/Pareto analysis.
 
 ## Decision
 
@@ -37,9 +37,10 @@ The completed score-distance routing diagnostic strengthens this direction. It r
 | Local DistilBERT rerun only | 0.3158 | 0.3449 | 0.3965 | 10.4442 | 8.9582 | 0.0000 |
 | Qwen zero-shot only | 0.3378 | 0.2379 | 0.8182 | 34.4150 | 1.9114 | 1.0000 |
 | Global validation-selected score-distance gate | 0.3800 | 0.3323 | 0.5426 | 16.6667 | 4.0485 | 0.2239 |
-| Per-aspect validation-selected mixed policy | 0.4186 | 0.3567 | 0.5549 | 14.9811 | 4.1168 | 0.3480 |
+| Global validation-selected asymmetric score-distance router | 0.3900 | 0.3530 | 0.5300 | 15.2752 | 4.2166 | 0.2905 |
+| Expanded-grid per-aspect validation-selected mixed diagnostic | 0.4178 | 0.3511 | 0.5650 | 15.4012 | 4.0538 | 0.3442 |
 
-The global score-distance gate is the thesis-safe selected result because the policy was chosen on validation. The per-aspect mixed policy is a useful upper-bound diagnostic because it selects a policy separately for each held-out aspect from validation.
+The asymmetric router is now the thesis-safe selected local-to-Qwen result because one global policy was chosen on validation and applied once to test. The selected rule is `score_asym_rescue_le_0.05_confirm_le_0.30`: use Qwen to rescue local scores up to `0.05` below the threshold, use Qwen confirmation/veto for local weak positives up to `0.30` above the threshold, and keep local DistilBERT elsewhere. The per-aspect mixed policy remains a useful upper-bound diagnostic because it selects a policy separately for each held-out aspect from validation.
 
 ## Why This Pivot Is Needed
 
@@ -63,11 +64,11 @@ Current decision:
 - Items 1 and 2 are sufficient for the thesis-facing local-to-Qwen contribution if completed cleanly.
 - The main deployable method should be one unified global router shared across all held-out aspects.
 - Per-aspect policy selection should remain an upper-bound diagnostic, not the main method, because a real new topic will not usually have enough topic-specific validation data to choose its own policy.
-- Items 5 and 6 are a separate Qwen-inference route, not a continuation of the current score-distance router. They are deferred unless items 1 and 2 unexpectedly fail to provide enough thesis evidence.
+- Items 5 and 6 are a separate Qwen-inference route, not a continuation of the current score-distance router. They remain deferred unless a supervisor specifically requests additional Qwen inference evidence.
 
 ### 1. Asymmetric Score-Distance Router
 
-Priority: immediate.
+Status: completed on 2026-07-03.
 
 Purpose:
 
@@ -92,9 +93,20 @@ Why it is first:
 - It reuses existing local and Qwen LOAO predictions.
 - It is low engineering risk and should produce thesis-friendly precision/recall trade-off evidence even if the best F1 does not improve.
 
+Observed result:
+
+- Global validation-selected policy: `score_asym_rescue_le_0.05_confirm_le_0.30`.
+- Test mean pair micro F1: `0.3900`.
+- Test mean pair samples F1: `0.0988`.
+- Test mean precision / recall: `0.3530` / `0.5300`.
+- Test false-positive rows / 100: `15.2752`.
+- Test false-negative rows / 100: `4.2166`.
+- Test Qwen call rate: `0.2905`.
+- It improves over the previous global `score_abs_replace_le_0.05` score-distance gate (`0.3800`) and keeps Qwen far below the always-Qwen call rate.
+
 ### 2. Cost-Quality / F1-Call-Rate Pareto Curve
 
-Priority: immediate and paired with item 1.
+Status: completed on 2026-07-03 and paired with item 1.
 
 Purpose:
 
@@ -107,6 +119,14 @@ Why it is second:
 - It is the clearest way to turn the current hybrid result into a thesis method claim.
 - It answers the deployment question: how much Qwen usage is worth paying for?
 - It can be done without new Qwen calls.
+
+Observed output:
+
+- Local ignored analysis: `outputs/analysis/local_qwen_loao_asymmetric_score_router_20260703/`.
+- Public aggregate CSV: `docs/thesis_figure_data/qwen_local_qwen_loao_pareto.csv`.
+- Public selected-result CSV: `docs/thesis_figure_data/qwen_local_qwen_loao_selected.csv`.
+- The validation Pareto frontier shows a smooth trade-off: modest Qwen call rates recover much of Qwen's recall advantage, while always-Qwen is dominated because it costs a `1.0000` call rate and has lower pair micro F1 than selective score-routing policies.
+- The test comparison rows keep local-only, Qwen-only, the agreement gate, `score_abs_replace_le_0.05`, and the single validation-selected asymmetric rule separate from the broader validation-only policy grid.
 
 ### 3. Lightweight Defer Router
 
@@ -129,7 +149,7 @@ Priority: diagnostic only for now.
 
 Purpose:
 
-- Keep the current per-aspect validation-selected diagnostic (`0.4186` test mean pair micro F1) as evidence of model complementarity.
+- Keep the current expanded-grid per-aspect validation-selected diagnostic (`0.4178` test mean pair micro F1) as evidence of model complementarity.
 - Do not promote unconstrained per-aspect policy selection as the final deployed method.
 
 Rationale:
@@ -201,7 +221,7 @@ Candidate policies:
 - let Qwen confirm or veto local near-threshold positives just above threshold;
 - keep local predictions when the score is far from threshold.
 
-This is now the strongest no-new-Qwen-call method. The validation-selected global policy was `score_abs_replace_le_0.05`: when the local selector score is within `0.05` of the validation-selected threshold, replace the local prediction with Qwen; otherwise keep local. It improved test mean pair micro F1 from the local rerun's `0.3158` and Qwen-only `0.3378` to `0.3800`, with Qwen used on `22.4%` of rows.
+This is now the strongest no-new-Qwen-call method. The earlier validation-selected global policy was `score_abs_replace_le_0.05`: when the local selector score is within `0.05` of the validation-selected threshold, replace the local prediction with Qwen; otherwise keep local. It improved test mean pair micro F1 from the local rerun's `0.3158` and Qwen-only `0.3378` to `0.3800`, with Qwen used on `22.4%` of rows. The later asymmetric follow-up improved the global validation-selected result to `0.3900` by using Qwen for below-threshold rescue and above-threshold confirmation/veto, while keeping far-from-threshold local predictions.
 
 ### 2. Sentiment-Margin Routing
 
@@ -217,7 +237,7 @@ This remains useful as a diagnostic, but the completed policy grid shows that se
 
 ### 3. Per-Aspect Validation Routing
 
-Some held-out aspects are better handled by Qwen-led policies, while others need local/Qwen agreement. The completed per-aspect validation-selected policy reached `0.4186` test mean pair micro F1 with a `34.8%` Qwen call rate. This is strong evidence of model complementarity, but it has more selection freedom than the global gate and should be presented as an upper-bound diagnostic unless the per-aspect routing rule is frozen before deployment.
+Some held-out aspects are better handled by Qwen-led policies, while others need local/Qwen agreement. The expanded-grid per-aspect validation-selected diagnostic reached `0.4178` test mean pair micro F1 with a `34.4%` Qwen call rate. This is strong evidence of model complementarity, but it has more selection freedom than the global gate and should be presented as an upper-bound diagnostic unless the per-aspect routing rule is frozen before deployment.
 
 Candidate policies:
 

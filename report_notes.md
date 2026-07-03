@@ -835,21 +835,22 @@ Thesis interpretation:
 
 - This is now the strongest evidence for the revised Qwen role: DistilBERT should act as the cheap calibrated gate and Qwen should judge locally uncertain unseen-aspect cases.
 - The gain comes from aspect-selector score-distance uncertainty, not sentiment-margin uncertainty.
-- The global score-distance gate is the thesis-safe selected result; the per-aspect policy is a useful upper-bound diagnostic.
+- This global score-distance gate was the thesis-safe selected result at this stage, and is now superseded by the later asymmetric global router; the per-aspect policy remains a useful upper-bound diagnostic.
 - Full 12-fold Qwen JSON-SFT LOAO remains deferred because the current fine-tuning recipe failed its validation gate. Stronger GPU access alone is not enough to restart that path.
 
-## 2026-07-03 - User-Prioritised Local-to-Qwen Next Queue
+## 2026-07-03 - User-Prioritised Local-to-Qwen Queue Status
 
-The next local-to-Qwen work should use this stable numbering:
+The local-to-Qwen work should keep this stable numbering:
 
 1. Asymmetric score-distance router.
-   - Immediate priority.
-   - Split the threshold neighbourhood into below-threshold rescue and above-threshold confirmation/veto.
-   - Reuse existing local/Qwen LOAO predictions.
+   - Completed on 2026-07-03.
+   - Selected global policy: `score_asym_rescue_le_0.05_confirm_le_0.30`.
+   - Reused existing local/Qwen LOAO predictions only.
 
 2. Cost-quality / F1-call-rate Pareto curve.
-   - Immediate priority and should be paired with item 1.
-   - Report F1, precision, recall, false-positive rows, false-negative rows, and Qwen call rate across the policy grid.
+   - Completed on 2026-07-03 and paired with item 1.
+   - Public aggregate CSV: `docs/thesis_figure_data/qwen_local_qwen_loao_pareto.csv`.
+   - Reports F1, precision, recall, false-positive rows, false-negative rows, and Qwen call rate across the validation policy grid and selected test comparisons.
 
 3. Lightweight defer router.
    - Promising but lower priority.
@@ -874,7 +875,7 @@ Current thesis decision:
 - Items 1 and 2 are enough for the main thesis-facing method if completed cleanly.
 - The headline method should be one unified global router shared across all held-out aspects.
 - Per-aspect routing remains an upper-bound diagnostic.
-- Items 5 and 6 should not be run unless items 1 and 2 unexpectedly fail to provide enough evidence or a supervisor specifically requests another Qwen inference method.
+- Items 5 and 6 should not be run unless a supervisor specifically requests another Qwen inference method.
 
 Deferred beyond the current queue:
 
@@ -882,3 +883,51 @@ Deferred beyond the current queue:
 - DistilBERT shortlist plus Qwen judging for large candidate sets.
 - Gatekeeper-style confidence tuning.
 - Full Qwen JSON-SFT LOAO under the current grouped/singleton recipe.
+
+## 2026-07-03 - Local-to-Qwen Asymmetric Router And Pareto Result
+
+Command:
+
+```powershell
+python .\scripts\analyse_local_qwen_loao_cascade.py --local-loao-dir .\outputs\baselines\loao_cross_encoder_transformer_sentiment_example_filtered_micro_selection_score_export_20260702 --qwen-validation-dir .\outputs\llm\qwen_loao_heldout_aspect_all_rows_validation_20260701 --qwen-test-dir .\outputs\llm\qwen_loao_heldout_aspect_all_rows_test_20260701 --output-dir .\outputs\analysis\local_qwen_loao_asymmetric_score_router_20260703 --public-pareto-csv .\docs\thesis_figure_data\qwen_local_qwen_loao_pareto.csv --public-selected-csv .\docs\thesis_figure_data\qwen_local_qwen_loao_selected.csv
+```
+
+Inputs:
+
+- Existing local DistilBERT LOAO score export.
+- Existing Qwen zero-shot LOAO validation/test predictions.
+- No new Qwen calls.
+- No DistilBERT retraining.
+
+Observed result:
+
+| System | Test Mean Pair Micro F1 | Pair Samples F1 | Precision | Recall | FP Rows / 100 | FN Rows / 100 | Qwen Call Rate |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Local-only rerun | 0.3158 | 0.0527 | 0.3449 | 0.3965 | 10.4442 | 8.9582 | 0.0000 |
+| Qwen-only | 0.3378 | 0.1212 | 0.2379 | 0.8182 | 34.4150 | 1.9114 | 1.0000 |
+| Agreement gate on score-export rerun | 0.3467 | 0.0513 | 0.4200 | 0.3815 | 7.1519 | 9.3153 | 0.1614 |
+| `score_abs_replace_le_0.05` | 0.3800 | 0.0998 | 0.3323 | 0.5426 | 16.6667 | 4.0485 | 0.2239 |
+| `score_asym_rescue_le_0.05_confirm_le_0.30` | 0.3900 | 0.0988 | 0.3530 | 0.5300 | 15.2752 | 4.2166 | 0.2905 |
+
+Per-aspect diagnostic:
+
+- Expanded-grid per-aspect validation-selected mixed policy:
+  - pair micro F1 `0.4178`;
+  - pair samples F1 `0.1015`;
+  - precision `0.3511`;
+  - recall `0.5650`;
+  - Qwen call rate `0.3442`.
+
+Interpretation:
+
+- Items 1 and 2 are complete.
+- The main method is the unified global router `score_asym_rescue_le_0.05_confirm_le_0.30`.
+- It beats the previous global score-distance gate on the primary LOAO detection metric (`0.3900` versus `0.3800` pair micro F1).
+- The Pareto table shows that validation-selected selective Qwen use dominates always-Qwen for pair micro F1 at much lower call rates.
+- Qwen-only still has higher pair samples F1, but its precision and false-positive rows are much worse; this should be framed as a precision/recall/cost trade-off, not as a universal metric win.
+- Per-aspect routing remains an upper-bound diagnostic, not the deployable method.
+
+Tracked public outputs:
+
+- `docs/thesis_figure_data/qwen_local_qwen_loao_pareto.csv`
+- `docs/thesis_figure_data/qwen_local_qwen_loao_selected.csv`

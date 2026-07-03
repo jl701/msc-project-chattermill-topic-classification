@@ -36,7 +36,7 @@ The dissertation currently has enough evidence for a coherent taxonomy-shift sto
 | Gemini aspect descriptions | Label-semantics ablation for hosted LLM prompting | Complete |
 | Qualitative error taxonomy | Thesis-facing explanation of why systems fail differently | Gemini-assisted packet and tracked taxonomy complete |
 | Qwen LoRA single-fold all-row pilot | Validation-gated check before spending 12-fold GPU time | Complete negative validation result |
-| Local-to-Qwen hybrid diagnostic | Evidence that Qwen is more useful as a semantic complement than a direct replacement | Score-distance routing complete and positive; sentiment-margin-only routing weak |
+| Local-to-Qwen hybrid diagnostic | Evidence that Qwen is more useful as a semantic complement than a direct replacement | Asymmetric global score-distance routing and Pareto analysis complete; sentiment-margin-only routing weak |
 | Qwen LoRA fine-tuned full LOAO | Final open-weight LLM adaptation robustness check | Deferred until revised absence calibration passes validation |
 
 ## Main Dissertation Narrative
@@ -51,7 +51,7 @@ The results chapter should be organised as a ladder of increasing difficulty rat
 6. Gemini fixed-split and cascade results answer a different question: how hosted structured-output LLMs and local models can be combined under cost, latency, and governance constraints. They must not be over-claimed as full LOAO robustness evidence.
 7. Qwen LoRA fine-tuning is motivated by the diagnosed zero-shot failure mode: the model needs task-specific calibration for when a supplied candidate aspect is absent.
 8. A single-fold all-row Qwen LoRA pilot on `Company brand: Competitor` showed that simple singleton negative sampling changes calibration but does not beat same-fold zero-shot or local baselines. Full Qwen LoRA LOAO should therefore wait for a revised absence-aware objective before spending 12-fold GPU time.
-9. The local-to-Qwen LOAO diagnostics now support a more promising model-division route: use DistilBERT for calibrated local gating and Qwen for selective semantic judgement. The completed score-distance gate raises test mean pair micro F1 to `0.3800` with Qwen called on `22.4%` of rows, compared with the local rerun's `0.3158` and Qwen-only `0.3378`. This direction is documented in `docs/qwen_local_hybrid_direction.md`.
+9. The local-to-Qwen LOAO diagnostics now support a more promising model-division route: use DistilBERT for calibrated local gating and Qwen for selective semantic judgement. The completed asymmetric global score-distance router raises test mean pair micro F1 to `0.3900` with Qwen called on `29.1%` of rows, compared with the local rerun's `0.3158`, Qwen-only `0.3378`, and the previous symmetric score-distance gate's `0.3800`. This direction is documented in `docs/qwen_local_hybrid_direction.md`.
 
 The short thesis argument is:
 
@@ -100,6 +100,8 @@ Use the checklist below as the operational source of truth before starting the f
 - [x] Define the final full 12-fold Qwen LoRA LOAO command templates, output directory pattern, checkpoint naming, and recovery plan.
 - [x] Run a single-fold all-row Qwen LoRA validation-gated pilot before launching the full 12-fold run.
 - [x] Develop and evaluate the local-to-Qwen score/margin LOAO routing diagnostic before returning to full Qwen JSON-SFT LOAO.
+- [x] Complete the local-to-Qwen asymmetric global score-distance router.
+- [x] Complete the local-to-Qwen F1/call-rate Pareto reporting from the same validation policy grid.
 - [ ] Revise the Qwen absence-calibration/training objective after the single-fold pilot failed to beat same-fold baselines.
 - [ ] Confirm the target GPU environment, storage budget, package versions, and data-transfer rules before launching any long full-LOAO run with a revised recipe.
 - [ ] Run the standard validation and safety checks immediately before the full Qwen LoRA LOAO launch.
@@ -320,10 +322,8 @@ If the revised recipe does not pass validation or GPU access is not granted:
 
 1. Keep `docs/qwen_local_hybrid_direction.md` as the source of truth for the current modelling pivot.
 2. Treat the local DistilBERT LOAO score/sentiment-confidence export as complete and reusable for future router diagnostics.
-3. Run the user-confirmed local-to-Qwen item 1: asymmetric score-distance routing, with separate below-threshold rescue and above-threshold confirmation/veto policies.
-4. Run the user-confirmed local-to-Qwen item 2: cost-quality / F1-call-rate Pareto reporting for the policy grid.
-5. Treat items 1 and 2 as sufficient for the thesis-facing local-to-Qwen contribution if they produce a clean unified global-router result.
-6. Keep item 3, lightweight defer routing, as promising but lower priority because it may overfit and may not beat the simple score-distance rule.
-7. Keep item 4, per-aspect routing, as an upper-bound diagnostic only; do not make it the main method because real new topics will not usually have their own validation fold.
-8. Defer items 5 and 6, candidate-wise Qwen semantic judging and aspect-description/boundary-example prompting, because they are a separate Qwen-inference route rather than a continuation of the current score-distance router.
-9. Use the existing full 12-fold Qwen LoRA command templates only after a revised recipe passes validation and GPU/storage conditions are confirmed.
+3. Treat the completed user-confirmed local-to-Qwen item 1 and item 2 as sufficient for the thesis-facing local-to-Qwen contribution: the global selected rule is `score_asym_rescue_le_0.05_confirm_le_0.30`, and the public Pareto CSV is `docs/thesis_figure_data/qwen_local_qwen_loao_pareto.csv`.
+4. Keep lightweight defer routing as a non-default follow-up because it may overfit and may not beat the simple score-distance rule.
+5. Keep per-aspect routing as an upper-bound diagnostic only; do not make it the main method because real new topics will not usually have their own validation fold.
+6. Defer candidate-wise Qwen semantic judging and aspect-description/boundary-example prompting because they are a separate Qwen-inference route rather than a continuation of the completed score-distance router.
+7. Use the existing full 12-fold Qwen LoRA command templates only after a revised recipe passes validation and GPU/storage conditions are confirmed.

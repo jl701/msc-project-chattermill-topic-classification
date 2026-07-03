@@ -34,15 +34,16 @@ Reason:
 - the single-fold all-row Qwen LoRA pilot did not beat same-fold Qwen zero-shot or local DistilBERT validation baselines;
 - Qwen zero-shot LOAO is strong on positive-gold rows but weak at empty-gold absence calibration;
 - the first local-to-Qwen offline cascade improved mean LOAO pair micro F1 over both local-only and Qwen-only with a modest Qwen call rate;
-- the completed score-distance gate improves the global validation-selected result further to `0.3800` test mean pair micro F1 with Qwen called on `22.4%` of rows.
+- the completed score-distance gate improved the global validation-selected result to `0.3800` test mean pair micro F1 with Qwen called on `22.4%` of rows;
+- the completed asymmetric score-distance router improves the global validation-selected result again to `0.3900` test mean pair micro F1 with Qwen called on `29.1%` of rows.
 
-Immediate priority:
+Completed immediate priority:
 
-1. Run a systematic asymmetric score-distance router analysis: separate below-threshold rescue from above-threshold confirmation/veto, select on validation, and apply once to test.
-2. Produce the local-to-Qwen cost-quality / F1-call-rate Pareto curve from the same policy grid.
-3. Keep a lightweight defer router as a promising but lower-priority follow-up after items 1 and 2.
+1. The systematic asymmetric score-distance router analysis is complete. The selected unified global rule is `score_asym_rescue_le_0.05_confirm_le_0.30`.
+2. The local-to-Qwen cost-quality / F1-call-rate Pareto curve is complete in `docs/thesis_figure_data/qwen_local_qwen_loao_pareto.csv`.
+3. Keep a lightweight defer router as a lower-priority follow-up only if a supervisor asks for another router comparison.
 4. Keep per-aspect routing as an upper-bound diagnostic rather than a main method; the deployable method should be a single global router shared across held-out aspects.
-5. Defer the candidate-wise Qwen semantic judge unless items 1 and 2 unexpectedly fail to provide enough thesis evidence or a supervisor specifically asks for another Qwen inference method:
+5. Defer the candidate-wise Qwen semantic judge unless the thesis needs more Qwen evidence or a supervisor specifically asks for another Qwen inference method:
 
 ```text
 review + one candidate aspect + optional aspect description -> absent / positive / negative / neutral
@@ -286,6 +287,15 @@ Key result:
 - Per-aspect validation-selected mixed diagnostic: `0.4186` test mean pair micro F1, Qwen call rate `34.8%`.
 - Best sentiment-margin-only diagnostic: `0.3204` test mean pair micro F1, Qwen call rate `1.1%`.
 
+Completed asymmetric router and Pareto follow-up:
+
+- The expanded policy grid separates below-threshold rescue from above-threshold confirmation/veto.
+- Validation selected one global policy for all 12 aspects: `score_asym_rescue_le_0.05_confirm_le_0.30`.
+- Test mean pair micro F1 is `0.3900`, with precision `0.3530`, recall `0.5300`, false-positive rows / 100 `15.2752`, false-negative rows / 100 `4.2166`, and Qwen call rate `29.1%`.
+- The public aggregate Pareto CSV is `docs/thesis_figure_data/qwen_local_qwen_loao_pareto.csv`.
+- The public selected-result CSV is `docs/thesis_figure_data/qwen_local_qwen_loao_selected.csv`.
+- The expanded-grid per-aspect validation-selected diagnostic reaches `0.4178` mean test pair micro F1 at `34.4%` Qwen call rate, but remains diagnostic only.
+
 Interpretation:
 
 - Score-distance routing should be promoted as the main Qwen follow-up method.
@@ -295,12 +305,10 @@ Interpretation:
 
 ## Recommended Order
 
-1. Asymmetric score-distance router.
-2. Cost-quality / F1-call-rate Pareto curve for the local-to-Qwen policy grid.
-3. Stop here for the main thesis method if items 1 and 2 produce a clean unified global-router result.
-4. Lightweight defer router over non-text local/Qwen features only if items 1 and 2 leave a clear gap.
-5. Per-aspect routing only as an upper-bound diagnostic, not a deployable headline method.
-6. Candidate-wise Qwen semantic judge and aspect descriptions only if more Qwen inference evidence is needed.
-7. Sampled Gemini LOAO only if specifically needed as a fallback or supervisor-requested robustness signal.
+1. Stop here for the main thesis-facing local-to-Qwen method unless a supervisor requests more evidence.
+2. Lightweight defer router over non-text local/Qwen features only if a clear new question appears; it is no longer the default next task.
+3. Per-aspect routing only as an upper-bound diagnostic, not a deployable headline method.
+4. Candidate-wise Qwen semantic judge and aspect descriptions only if more Qwen inference evidence is needed.
+5. Sampled Gemini LOAO only if specifically needed as a fallback or supervisor-requested robustness signal.
 
-This order maximises dissertation value per unit cost while preserving the current strategic boundary: full Qwen LoRA LOAO is deferred until a revised fine-tuning recipe passes a single-fold validation gate. The next default work is router optimisation and Pareto reporting, not renewed grouped/singleton JSON-SFT.
+This order maximises dissertation value per unit cost while preserving the current strategic boundary: full Qwen LoRA LOAO is deferred until a revised fine-tuning recipe passes a single-fold validation gate. The current default position is that the local-to-Qwen global-router contribution is complete; the next work should be thesis writing or supervisor-driven follow-up, not renewed grouped/singleton JSON-SFT.

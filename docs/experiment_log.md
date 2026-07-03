@@ -3726,3 +3726,141 @@ python .\scripts\analyse_local_qwen_loao_cascade.py --local-loao-dir .\outputs\b
 
 - Implement item 1 and item 2 first.
 - Do not start items 3-6 unless the systematic no-new-Qwen-call global routing analysis leaves a clear thesis gap.
+
+## 2026-07-03 - Planned Local-to-Qwen Asymmetric Score Router And Pareto Analysis
+
+### Purpose
+
+- Complete user-confirmed local-to-Qwen item 1 and item 2.
+- Test whether one unified global asymmetric score-distance router can improve on the previous global `score_abs_replace_le_0.05` gate by separating:
+  - below-threshold Qwen rescue for local false negatives;
+  - above-threshold Qwen confirmation/veto for weak local positives;
+  - far-from-threshold local retention.
+- Produce aggregate, plot-ready F1/call-rate data for the same validation-selected policy grid.
+
+### Planned Setup
+
+- Dataset and protocol: FABSA full all-row LOAO over all 12 held-out aspects.
+- Local input: existing DistilBERT LOAO score export at `outputs/baselines/loao_cross_encoder_transformer_sentiment_example_filtered_micro_selection_score_export_20260702/`.
+- Qwen inputs: existing zero-shot LOAO predictions at `outputs/llm/qwen_loao_heldout_aspect_all_rows_validation_20260701/` and `outputs/llm/qwen_loao_heldout_aspect_all_rows_test_20260701/`.
+- No new Qwen calls will be made.
+- No DistilBERT retraining will be run unless the existing score export proves unusable.
+- Main method: one unified global validation-selected policy shared across all held-out aspects.
+- Test protocol: select the global rule on validation aggregate mean pair micro F1, then evaluate that selected rule once on test.
+- Per-aspect policy selection, if reported, remains an upper-bound diagnostic only.
+
+### Planned Command
+
+```powershell
+python .\scripts\analyse_local_qwen_loao_cascade.py --local-loao-dir .\outputs\baselines\loao_cross_encoder_transformer_sentiment_example_filtered_micro_selection_score_export_20260702 --qwen-validation-dir .\outputs\llm\qwen_loao_heldout_aspect_all_rows_validation_20260701 --qwen-test-dir .\outputs\llm\qwen_loao_heldout_aspect_all_rows_test_20260701 --output-dir .\outputs\analysis\local_qwen_loao_asymmetric_score_router_20260703 --public-pareto-csv .\docs\thesis_figure_data\qwen_local_qwen_loao_pareto.csv --public-selected-csv .\docs\thesis_figure_data\qwen_local_qwen_loao_selected.csv
+```
+
+### Planned Outputs
+
+- Local ignored analysis directory:
+  `outputs/analysis/local_qwen_loao_asymmetric_score_router_20260703/`
+- Tracked aggregate CSVs:
+  - `docs/thesis_figure_data/qwen_local_qwen_loao_pareto.csv`
+  - `docs/thesis_figure_data/qwen_local_qwen_loao_selected.csv`
+- Tracked documentation updates after results are observed.
+
+### Planned Comparisons
+
+- Local-only.
+- Qwen-only.
+- Previous global agreement gate.
+- Existing global `score_abs_replace_le_0.05`.
+- New asymmetric rescue/confirm/veto policy family.
+- Per-aspect policy selection only as an upper-bound diagnostic if the same grid already produces it.
+
+### Planned Metrics
+
+- Mean pair micro F1.
+- Mean pair samples F1.
+- Mean precision.
+- Mean recall.
+- Mean false-positive rows / 100.
+- Mean false-negative rows / 100.
+- Mean Qwen call rate.
+
+### Caveats
+
+- This remains an offline policy analysis over existing local and Qwen predictions.
+- Qwen call rate is an estimated row-level invocation rate implied by the policy, not a newly observed serving trace.
+- Raw predictions and review text remain local-only under ignored `outputs/`.
+
+### Code Or Protocol Changes
+
+- Updated `scripts/analyse_local_qwen_loao_cascade.py`:
+  - added combined asymmetric score-distance policies:
+    - `score_asym_rescue_le_<below>_confirm_le_<above>`;
+    - `score_asym_rescue_le_<below>_veto_le_<above>`;
+  - kept far-from-threshold predictions local;
+  - evaluated the full policy grid on validation, then limited test evaluation to fixed comparisons, the single global validation-selected policy, and the policies needed for the per-aspect diagnostic;
+  - added aggregate Pareto CSV output with policy family, Pareto-frontier flag, selected-rule flag, and public plot-ready metric columns.
+- Updated `tests/test_analyse_local_qwen_loao_cascade.py` with focused asymmetric routing and Pareto-table tests.
+
+### Observed Command
+
+```powershell
+python .\scripts\analyse_local_qwen_loao_cascade.py --local-loao-dir .\outputs\baselines\loao_cross_encoder_transformer_sentiment_example_filtered_micro_selection_score_export_20260702 --qwen-validation-dir .\outputs\llm\qwen_loao_heldout_aspect_all_rows_validation_20260701 --qwen-test-dir .\outputs\llm\qwen_loao_heldout_aspect_all_rows_test_20260701 --output-dir .\outputs\analysis\local_qwen_loao_asymmetric_score_router_20260703 --public-pareto-csv .\docs\thesis_figure_data\qwen_local_qwen_loao_pareto.csv --public-selected-csv .\docs\thesis_figure_data\qwen_local_qwen_loao_selected.csv
+```
+
+### Observed Outputs
+
+- Local ignored output directory:
+  `outputs/analysis/local_qwen_loao_asymmetric_score_router_20260703/`
+- Local ignored files:
+  - `aggregate_policy_results.csv`
+  - `pareto_policy_results.csv`
+  - `per_aspect_policy_results.csv`
+  - `selected_policy_results.csv`
+  - `summary.json`
+- Tracked aggregate-only CSVs:
+  - `docs/thesis_figure_data/qwen_local_qwen_loao_pareto.csv`
+  - `docs/thesis_figure_data/qwen_local_qwen_loao_selected.csv`
+- The public Pareto CSV contains `234` aggregate rows: `229` validation policy-grid rows plus `5` test comparison/selected rows.
+
+### Observed Results
+
+Test aggregate comparison on the same score-export/Qwen inputs:
+
+| Policy / Selection | Split | Pair Micro F1 Mean | Pair Samples F1 Mean | Precision Mean | Recall Mean | FP Rows / 100 Mean | FN Rows / 100 Mean | Qwen Call Rate Mean |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Local DistilBERT rerun only | test | 0.3158 | 0.0527 | 0.3449 | 0.3965 | 10.4442 | 8.9582 | 0.0000 |
+| Qwen zero-shot only | test | 0.3378 | 0.1212 | 0.2379 | 0.8182 | 34.4150 | 1.9114 | 1.0000 |
+| Agreement gate on score-export rerun, `aspect_agreement_qwen_sentiment` | test | 0.3467 | 0.0513 | 0.4200 | 0.3815 | 7.1519 | 9.3153 | 0.1614 |
+| Existing score-distance gate, `score_abs_replace_le_0.05` | test | 0.3800 | 0.0998 | 0.3323 | 0.5426 | 16.6667 | 4.0485 | 0.2239 |
+| Global validation-selected asymmetric router, `score_asym_rescue_le_0.05_confirm_le_0.30` | test | 0.3900 | 0.0988 | 0.3530 | 0.5300 | 15.2752 | 4.2166 | 0.2905 |
+| Expanded-grid per-aspect validation-selected diagnostic | test | 0.4178 | 0.1015 | 0.3511 | 0.5650 | 15.4012 | 4.0538 | 0.3442 |
+
+Validation selection evidence:
+
+- Global selected policy: `score_asym_rescue_le_0.05_confirm_le_0.30`.
+- Validation mean pair micro F1: `0.4224`.
+- Validation Qwen call rate: `0.2863`.
+- The validation Pareto frontier contains a range of low-to-moderate call-rate policies; always-Qwen is dominated because it uses Qwen on every row while reaching lower validation pair micro F1 than selective score-distance policies.
+
+### Interpretation
+
+- Item 1 is complete. The best unified global router is the asymmetric rescue/confirm rule `score_asym_rescue_le_0.05_confirm_le_0.30`.
+- It improves over the existing global `score_abs_replace_le_0.05` result (`0.3900` versus `0.3800` mean test pair micro F1).
+- The improvement comes from allowing Qwen to rescue near-threshold local false negatives while using Qwen confirmation/veto on a broader above-threshold weak-positive band.
+- The selected router also improves precision and false-positive rows relative to `score_abs_replace_le_0.05`, but has slightly lower recall and a higher Qwen call rate.
+- Qwen-only still has the highest pair samples F1 in this comparison (`0.1212`), but it has much lower pair precision and far more false-positive rows. The router is selected on pair micro F1 and is primarily a cost/precision/recall trade-off result, not a pair-samples-F1 win.
+- Item 2 is complete. The Pareto CSV shows that selective Qwen use is more reasonable than always-Qwen for the primary LOAO detection metric: moderate call-rate score-routing policies dominate the 100% Qwen point on validation pair micro F1.
+- The per-aspect result remains diagnostic only. It uses separate validation-selected policies by held-out aspect and should not be promoted as the deployable main method.
+
+### Limitations
+
+- This is still an offline analysis over existing predictions, not a live router that actually invokes Qwen row by row.
+- Test policy evaluation is deliberately limited to fixed comparisons and validation-selected rules; the full broad policy search is validation-only.
+- Qwen call rate is estimated from the policy conditions and row counts.
+- Aggregate CSVs are public-safe, but local output CSVs under `outputs/` remain ignored because they may include row-level prediction material.
+
+### Next Step
+
+- Promote the asymmetric global router as the main local-to-Qwen thesis method.
+- Use `docs/thesis_figure_data/qwen_local_qwen_loao_pareto.csv` for the F1/call-rate curve.
+- Keep per-aspect routing as an upper-bound diagnostic only.
+- Do not start lightweight learned routers, candidate-wise Qwen judging, aspect descriptions, or full Qwen LoRA LOAO unless a supervisor requests more evidence beyond this completed global-router contribution.

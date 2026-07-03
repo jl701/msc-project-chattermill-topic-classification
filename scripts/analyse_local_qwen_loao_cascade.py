@@ -28,6 +28,13 @@ POLICIES = (
     "union_pairs",
 )
 
+TEST_COMPARISON_POLICIES = (
+    "local_only",
+    "qwen_only",
+    "aspect_agreement_qwen_sentiment",
+    "score_abs_replace_le_0.05",
+)
+
 SCORE_DISTANCE_BANDS = (0.01, 0.02, 0.03, 0.05, 0.08, 0.10, 0.15, 0.20, 0.30)
 SENTIMENT_MARGIN_BANDS = (0.05, 0.10, 0.15, 0.20, 0.30, 0.40, 0.50)
 PRIMARY_METRIC = "pair_micro_f1"
@@ -95,6 +102,16 @@ def policy_threshold(policy: str) -> float:
     return float(policy.rsplit("_", maxsplit=1)[-1])
 
 
+def asymmetric_score_policy_parts(policy: str) -> tuple[float, str, float] | None:
+    match = re.fullmatch(
+        r"score_asym_rescue_le_([0-9.]+)_(confirm|veto)_le_([0-9.]+)",
+        policy,
+    )
+    if not match:
+        return None
+    return float(match.group(1)), match.group(2), float(match.group(3))
+
+
 def local_score_state(local_row: dict[str, Any] | None, aspect: str | None) -> tuple[float, float, float, float]:
     if local_row is None or aspect is None:
         raise ValueError("Score-aware policies require local row features and a held-out aspect.")
@@ -140,6 +157,16 @@ def choose_score_policy(
         band = policy_threshold(policy)
         if local and 0 <= signed_distance <= band:
             return qwen if qwen else set()
+        return local
+    asymmetric_parts = asymmetric_score_policy_parts(policy)
+    if asymmetric_parts is not None:
+        rescue_band, above_mode, above_band = asymmetric_parts
+        if -rescue_band <= signed_distance < 0:
+            return qwen if qwen else local
+        if local and 0 <= signed_distance <= above_band:
+            if above_mode == "confirm":
+                return qwen if qwen else set()
+            return local if qwen else set()
         return local
     raise ValueError(f"Unknown score-aware policy: {policy}")
 
@@ -227,6 +254,13 @@ def qwen_call_count(
         _, _, signed_distance, _ = local_score_state(local_row, aspect)
         band = policy_threshold(policy)
         return 1 if local_nonempty and 0 <= signed_distance <= band else 0
+    asymmetric_parts = asymmetric_score_policy_parts(policy)
+    if asymmetric_parts is not None:
+        rescue_band, _, above_band = asymmetric_parts
+        _, _, signed_distance, _ = local_score_state(local_row, aspect)
+        below_rescue = -rescue_band <= signed_distance < 0
+        above_confirm_or_veto = local_nonempty and 0 <= signed_distance <= above_band
+        return 1 if below_rescue or above_confirm_or_veto else 0
     if policy.startswith("sentiment_margin_replace_le_") or policy.startswith("sentiment_margin_confirm_le_"):
         margin = local_sentiment_margin(local_row, aspect)
         return 1 if local_nonempty and margin <= policy_threshold(policy) else 0
@@ -381,6 +415,16 @@ def policy_grid(status: dict[str, bool]) -> list[str]:
                     f"score_above_confirm_le_{suffix}",
                 ]
             )
+        for rescue_band in SCORE_DISTANCE_BANDS:
+            rescue_suffix = f"{rescue_band:.2f}"
+            for above_band in SCORE_DISTANCE_BANDS:
+                above_suffix = f"{above_band:.2f}"
+                policies.extend(
+                    [
+                        f"score_asym_rescue_le_{rescue_suffix}_confirm_le_{above_suffix}",
+                        f"score_asym_rescue_le_{rescue_suffix}_veto_le_{above_suffix}",
+                    ]
+                )
     if status["sentiment_features"]:
         for band in SENTIMENT_MARGIN_BANDS:
             suffix = f"{band:.2f}"
@@ -393,6 +437,94 @@ def policy_grid(status: dict[str, bool]) -> list[str]:
     return policies
 
 
+def policy_family(policy: str) -> str:
+    if policy in {"local_only", "qwen_only"}:
+        return policy
+    if policy in {
+        "local_nonempty_else_qwen",
+        "qwen_nonempty_else_local",
+        "pair_agreement",
+        "aspect_agreement_local_sentiment",
+        "aspect_agreement_qwen_sentiment",
+        "union_pairs",
+    }:
+        return "prediction_combination"
+    if policy.startswith("score_asym_rescue"):
+        parts = asymmetric_score_policy_parts(policy)
+        if parts is not None:
+            return f"asymmetric_rescue_{parts[1]}"
+        return "asymmetric_score"
+    if policy.startswith("score_abs_"):
+        return "symmetric_score_distance"
+    if policy.startswith("score_below_"):
+        return "below_threshold_rescue_only"
+    if policy.startswith("score_above_"):
+        return "above_threshold_confirm_only"
+    if policy.startswith("sentiment_margin_"):
+        return "sentiment_margin"
+    return "other"
+
+
+def is_pareto_efficient(
+    candidate: dict[str, Any],
+    rows: list[dict[str, Any]],
+    quality_field: str = f"{PRIMARY_METRIC}_mean",
+    cost_field: str = "qwen_call_rate_mean",
+) -> bool:
+    candidate_quality = float(candidate[quality_field])
+    candidate_cost = float(candidate[cost_field])
+    for row in rows:
+        if row is candidate:
+            continue
+        quality = float(row[quality_field])
+        cost = float(row[cost_field])
+        if (
+            quality >= candidate_quality
+            and cost <= candidate_cost
+            and (quality > candidate_quality or cost < candidate_cost)
+        ):
+            return False
+    return True
+
+
+def build_pareto_rows(aggregate_rows: list[dict[str, Any]], global_policy: str) -> list[dict[str, Any]]:
+    complete_rows = [row for row in aggregate_rows if int(row.get("aspects", 0)) > 0]
+    by_split: dict[str, list[dict[str, Any]]] = {}
+    for row in complete_rows:
+        by_split.setdefault(str(row["split"]), []).append(row)
+
+    output = []
+    for row in complete_rows:
+        split_rows = by_split[str(row["split"])]
+        output.append(
+            {
+                "split": row["split"],
+                "policy": row["policy"],
+                "policy_family": policy_family(str(row["policy"])),
+                "aspects": row["aspects"],
+                "pair_micro_f1_mean": row.get("pair_micro_f1_mean"),
+                "pair_samples_f1_mean": row.get("pair_samples_f1_mean"),
+                "precision_mean": row.get("pair_micro_precision_mean"),
+                "recall_mean": row.get("pair_micro_recall_mean"),
+                "false_positive_rows_per_100_mean": row.get("pair_false_positive_rows_per_100_mean"),
+                "false_negative_rows_per_100_mean": row.get("pair_false_negative_rows_per_100_mean"),
+                "qwen_call_rate_mean": row.get("qwen_call_rate_mean"),
+                "is_pareto_frontier": int(is_pareto_efficient(row, split_rows)),
+                "is_global_validation_selected": int(row["policy"] == global_policy),
+                "is_test_comparison": int(row["policy"] in TEST_COMPARISON_POLICIES),
+            }
+        )
+    return sorted(
+        output,
+        key=lambda row: (
+            str(row["split"]),
+            float(row["qwen_call_rate_mean"]),
+            -float(row["pair_micro_f1_mean"]),
+            str(row["policy"]),
+        ),
+    )
+
+
 def analyse(args: argparse.Namespace) -> dict[str, Any]:
     aspects = [
         str(row["heldout_aspect"])
@@ -402,35 +534,63 @@ def analyse(args: argparse.Namespace) -> dict[str, Any]:
     status = feature_status(args.local_loao_dir, aspects)
     policies = policy_grid(status)
     per_aspect_rows = []
+
     for aspect in aspects:
-        for split, qwen_dir in [("validation", args.qwen_validation_dir), ("test", args.qwen_test_dir)]:
-            local_rows = read_jsonl(local_path(args.local_loao_dir, split, aspect))
-            qwen_rows = read_jsonl(split_path(qwen_dir, split, aspect))
-            for policy in policies:
-                per_aspect_rows.append(evaluate_policy(local_rows, qwen_rows, aspect, split, policy))
+        local_rows = read_jsonl(local_path(args.local_loao_dir, "validation", aspect))
+        qwen_rows = read_jsonl(split_path(args.qwen_validation_dir, "validation", aspect))
+        for policy in policies:
+            per_aspect_rows.append(evaluate_policy(local_rows, qwen_rows, aspect, "validation", policy))
+
+    global_policy = global_validation_policy(per_aspect_rows, policies)
+    per_aspect_policy = {aspect: best_policy(per_aspect_rows, "validation", aspect) for aspect in aspects}
+    if args.evaluate_all_test_policies:
+        test_policies = list(policies)
+    else:
+        test_policy_set = {policy for policy in TEST_COMPARISON_POLICIES if policy in policies}
+        test_policy_set.add(global_policy)
+        test_policies = [policy for policy in policies if policy in test_policy_set]
+
+    test_rows_by_aspect_policy: dict[tuple[str, str], dict[str, Any]] = {}
+    for aspect in aspects:
+        local_rows = read_jsonl(local_path(args.local_loao_dir, "test", aspect))
+        qwen_rows = read_jsonl(split_path(args.qwen_test_dir, "test", aspect))
+        aspect_test_policies = set(test_policies)
+        aspect_test_policies.add(per_aspect_policy[aspect])
+        for policy in [candidate for candidate in policies if candidate in aspect_test_policies]:
+            row = evaluate_policy(local_rows, qwen_rows, aspect, "test", policy)
+            per_aspect_rows.append(row)
+            test_rows_by_aspect_policy[(aspect, policy)] = row
 
     aggregate_rows = [
-        aggregate(per_aspect_rows, split, policy)
-        for split in ["validation", "test"]
+        aggregate(per_aspect_rows, "validation", policy)
         for policy in policies
     ]
-    global_policy = global_validation_policy(per_aspect_rows, policies)
+    aggregate_rows.extend(aggregate(per_aspect_rows, "test", policy) for policy in test_policies)
     global_selected = [
         row
         for row in per_aspect_rows
         if row["split"] == "test" and row["policy"] == global_policy
     ]
-    per_aspect_selected = validation_selected_rows(per_aspect_rows, aspects, "test")
+    per_aspect_selected = [
+        {
+            **test_rows_by_aspect_policy[(aspect, per_aspect_policy[aspect])],
+            "selection": "per_aspect_validation_selected",
+            "selected_policy": per_aspect_policy[aspect],
+        }
+        for aspect in aspects
+    ]
     selected_rows = []
     for name, rows in [
         ("global_validation_selected", global_selected),
         ("per_aspect_validation_selected", per_aspect_selected),
     ]:
+        selected_policy = global_policy if name == "global_validation_selected" else "mixed"
         selected_rows.append(
             {
                 "selection": name,
                 "split": "test",
-                "selected_policy": global_policy if name == "global_validation_selected" else "mixed",
+                "selected_policy": selected_policy,
+                "selected_policy_family": policy_family(selected_policy) if selected_policy != "mixed" else "mixed",
                 "aspects": len(rows),
                 "pair_micro_f1_mean": mean(float(row["pair_micro_f1"]) for row in rows),
                 "pair_micro_precision_mean": mean(float(row["pair_micro_precision"]) for row in rows),
@@ -445,6 +605,7 @@ def analyse(args: argparse.Namespace) -> dict[str, Any]:
                 "qwen_call_rate_mean": mean(float(row["qwen_call_rate"]) for row in rows),
             }
         )
+    pareto_rows = build_pareto_rows(aggregate_rows, global_policy)
 
     output = {
         "task": "Local DistilBERT to Qwen LOAO offline cascade analysis",
@@ -454,6 +615,9 @@ def analyse(args: argparse.Namespace) -> dict[str, Any]:
         "local_feature_status": status,
         "policies": policies,
         "primary_metric": PRIMARY_METRIC,
+        "test_policy_scope": "all" if args.evaluate_all_test_policies else "selected_comparisons",
+        "test_comparison_policies": test_policies,
+        "per_aspect_validation_selected_policies": per_aspect_policy,
         "limitation": (
             "This is an offline prediction-combination diagnostic. When the selected local LOAO directory "
             "contains score_features or sentiment_features, the policy grid includes validation-selected "
@@ -461,11 +625,17 @@ def analyse(args: argparse.Namespace) -> dict[str, Any]:
         ),
         "global_validation_selected_policy": global_policy,
         "aggregate": aggregate_rows,
+        "pareto": pareto_rows,
         "selected": selected_rows,
     }
     write_csv(args.output_dir / "per_aspect_policy_results.csv", per_aspect_rows)
     write_csv(args.output_dir / "aggregate_policy_results.csv", aggregate_rows)
+    write_csv(args.output_dir / "pareto_policy_results.csv", pareto_rows)
     write_csv(args.output_dir / "selected_policy_results.csv", selected_rows)
+    if args.public_pareto_csv is not None:
+        write_csv(args.public_pareto_csv, pareto_rows)
+    if args.public_selected_csv is not None:
+        write_csv(args.public_selected_csv, selected_rows)
     write_json(output, args.output_dir / "summary.json")
     return output
 
@@ -494,6 +664,23 @@ def main() -> None:
         "--output-dir",
         type=Path,
         default=PROJECT_ROOT / "outputs" / "analysis" / "local_qwen_loao_cascade_20260702",
+    )
+    parser.add_argument(
+        "--public-pareto-csv",
+        type=Path,
+        default=None,
+        help="Optional tracked aggregate CSV for plot-ready F1/call-rate policy data.",
+    )
+    parser.add_argument(
+        "--public-selected-csv",
+        type=Path,
+        default=None,
+        help="Optional tracked aggregate CSV for validation-selected test results.",
+    )
+    parser.add_argument(
+        "--evaluate-all-test-policies",
+        action="store_true",
+        help="Evaluate every policy on test. By default, test evaluation is limited to comparisons and selected rules.",
     )
     args = parser.parse_args()
     summary = analyse(args)
