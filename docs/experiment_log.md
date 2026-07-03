@@ -3591,7 +3591,7 @@ python .\scripts\analyse_local_qwen_loao_cascade.py --local-loao-dir .\outputs\b
 ### Results
 
 - Not yet run at pre-registration time.
-- Expected outputs must not be described as completed until the commands finish and metrics are read from generated summaries.
+- At pre-registration time, expected outputs were not described as completed until the commands finished and metrics were read from generated summaries.
 
 ### Interpretation
 
@@ -3603,3 +3603,71 @@ python .\scripts\analyse_local_qwen_loao_cascade.py --local-loao-dir .\outputs\b
 - Run the local LOAO score/sentiment-confidence export.
 - Run the local-to-Qwen score/margin routing analysis.
 - Document whether the result improves, matches, or fails to improve over the existing agreement-gate diagnostic.
+
+## 2026-07-03 - Local-to-Qwen Score-Distance LOAO Routing Result
+
+### Purpose
+
+- Close the pre-registered local-to-Qwen score/margin routing diagnostic.
+- Test whether local DistilBERT selector uncertainty is a better trigger for Qwen than the previous prediction-agreement-only cascade.
+- Reuse existing Qwen zero-shot LOAO predictions; do not call Qwen again.
+
+### Commands
+
+Local DistilBERT LOAO score/sentiment-confidence export:
+
+```powershell
+python .\scripts\run_loao_heldout_aspect.py --baseline cross_encoder --strategy example_filtered --eval-row-scope all --selection-metric pair_micro_f1 --sentiment-mode transformer_aspect_conditioned --sentiment-epochs 3 --sentiment-learning-rate 2e-5 --sentiment-batch-size 16 --sentiment-eval-batch-size 64 --sentiment-class-weight balanced --sentiment-selection-metric accuracy --epochs 3 --batch-size 32 --eval-batch-size 96 --learning-rate 3e-5 --negatives-per-positive 3 --output-dir .\outputs\baselines\loao_cross_encoder_transformer_sentiment_example_filtered_micro_selection_score_export_20260702
+```
+
+Hybrid analysis:
+
+```powershell
+python .\scripts\analyse_local_qwen_loao_cascade.py --local-loao-dir .\outputs\baselines\loao_cross_encoder_transformer_sentiment_example_filtered_micro_selection_score_export_20260702 --qwen-validation-dir .\outputs\llm\qwen_loao_heldout_aspect_all_rows_validation_20260701 --qwen-test-dir .\outputs\llm\qwen_loao_heldout_aspect_all_rows_test_20260701 --output-dir .\outputs\analysis\local_qwen_loao_score_margin_cascade_20260702
+```
+
+### Inputs And Outputs
+
+- Protocol: full all-row LOAO over all 12 FABSA aspects.
+- Local model: candidate-aspect DistilBERT cross-encoder, `example_filtered`, LR `3e-5`, 3 epochs, validation pair micro F1 threshold selection, DistilBERT aspect-conditioned sentiment.
+- Qwen model: existing indexed Qwen zero-shot LOAO validation/test outputs from `Qwen/Qwen3-4B-Instruct-2507`.
+- Local output directory:
+  `outputs/baselines/loao_cross_encoder_transformer_sentiment_example_filtered_micro_selection_score_export_20260702/`
+- Analysis output directory:
+  `outputs/analysis/local_qwen_loao_score_margin_cascade_20260702/`
+- Local run logs:
+  `outputs/logs/loao_score_export_20260702.out.log`
+  and `outputs/logs/loao_score_export_20260702.err.log`.
+- Feature coverage: all 12 validation prediction files contain both `score_features` and `sentiment_features`.
+- Runtime/hardware evidence: local export log timestamp range 2026-07-02 23:37 to 2026-07-03 03:51; GPU available as NVIDIA GeForce RTX 5050 Laptop GPU, 8,151 MiB VRAM, driver 596.08.
+
+### Results
+
+| Policy / Selection | Split | Pair Micro F1 Mean | Precision Mean | Recall Mean | FP Rows / 100 Mean | FN Rows / 100 Mean | Qwen Call Rate Mean |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Local DistilBERT rerun only | test | 0.3158 | 0.3449 | 0.3965 | 10.4442 | 8.9582 | 0.0000 |
+| Qwen zero-shot only | test | 0.3378 | 0.2379 | 0.8182 | 34.4150 | 1.9114 | 1.0000 |
+| Previous global agreement gate | test | 0.3470 | 0.4116 | 0.4147 | 8.8112 | 9.0265 | 0.1868 |
+| Global validation-selected score-distance gate: `score_abs_replace_le_0.05` | test | 0.3800 | 0.3323 | 0.5426 | 16.6667 | 4.0485 | 0.2239 |
+| Per-aspect validation-selected mixed policy | test | 0.4186 | 0.3567 | 0.5549 | 14.9811 | 4.1168 | 0.3480 |
+| Best sentiment-margin-only diagnostic: `sentiment_margin_confirm_le_0.50` | test | 0.3204 | 0.3518 | 0.3992 | 10.2394 | 8.9845 | 0.0106 |
+
+### Interpretation
+
+- The score-distance gate is a positive result. It improves over the local rerun, Qwen-only, and the previous global agreement gate while calling Qwen on about `22.4%` of rows.
+- The selected global policy replaces local predictions with Qwen only when the local aspect score is close to the validation-selected threshold (`<= 0.05` absolute distance). This is the cleanest evidence that Qwen is useful as a selective semantic judge for locally uncertain unseen-aspect cases.
+- The per-aspect validation-selected mixed policy is stronger (`0.4186`) but should be treated as an optimistic diagnostic because it selects different policies by held-out aspect.
+- Sentiment-margin routing is a weak/negative sub-result. Its best test mean pair micro F1 is only `0.3204`, so the improvement is not coming from routing sentiment uncertainty alone.
+
+### Limitations
+
+- This remains an offline combination of existing Qwen predictions, not a fresh deployment system that makes row-by-row Qwen calls.
+- The local rerun is stochastic and should not be treated as a bit-for-bit reproduction of the earlier local-only LOAO run; it is close enough for routing analysis and includes the missing score/sentiment features.
+- The per-aspect result has higher selection freedom than the global validation-selected policy.
+- Outputs may contain review text and remain local-only under ignored `outputs/`.
+
+### Next Step
+
+- Promote score-distance local-to-Qwen routing as the main Qwen follow-up method in thesis planning.
+- Do not return to full 12-fold Qwen JSON-SFT LOAO with the current grouped/singleton recipe.
+- If another Qwen experiment is needed, test candidate-wise Qwen semantic judgement or a revised absence-calibration objective with a validation gate first.

@@ -1,10 +1,10 @@
 # LLM Next Experiment Directions
 
-Last updated: 2026-07-02
+Last updated: 2026-07-03
 
 This note records the recommended next LLM-centred experiments after the completed local DistilBERT LOAO robustness run, Qwen zero-shot LOAO run, fixed-split Gemini Pareto/cascade experiments, and Gemini aspect-description ablation. The current completion-level roadmap is `docs/thesis_completion_roadmap.md`; this file remains the LLM-specific companion note.
 
-The current direction has now pivoted after the Qwen LoRA validation-gated pilot and the first local-to-Qwen LOAO cascade diagnostic. The next modelling work should start from `docs/qwen_local_hybrid_direction.md`: treat DistilBERT as the cheap calibrated gate and Qwen as the semantic judge for uncertain or unfamiliar unseen-aspect cases. Do not default back to launching full 12-fold Qwen JSON-SFT LOAO with the current recipe.
+The current direction has now pivoted after the Qwen LoRA validation-gated pilot and the local-to-Qwen LOAO cascade diagnostics. The next modelling work should start from `docs/qwen_local_hybrid_direction.md`: treat DistilBERT as the cheap calibrated gate and Qwen as the semantic judge for uncertain or unfamiliar unseen-aspect cases. Do not default back to launching full 12-fold Qwen JSON-SFT LOAO with the current recipe.
 
 ## Current Evidence Position
 
@@ -33,14 +33,15 @@ Reason:
 - fixed held-out-aspect Qwen LoRA improves over Qwen zero-shot only modestly and remains below the strongest local fixed baseline;
 - the single-fold all-row Qwen LoRA pilot did not beat same-fold Qwen zero-shot or local DistilBERT validation baselines;
 - Qwen zero-shot LOAO is strong on positive-gold rows but weak at empty-gold absence calibration;
-- the first local-to-Qwen offline cascade improved mean LOAO pair micro F1 over both local-only and Qwen-only with a modest Qwen call rate.
+- the first local-to-Qwen offline cascade improved mean LOAO pair micro F1 over both local-only and Qwen-only with a modest Qwen call rate;
+- the completed score-distance gate improves the global validation-selected result further to `0.3800` test mean pair micro F1 with Qwen called on `22.4%` of rows.
 
 Immediate priority:
 
-1. Rerun/export local DistilBERT LOAO predictions with candidate-aspect score, threshold distance, and sentiment confidence features.
-2. Reuse existing Qwen zero-shot LOAO predictions and run validation-selected score/margin routing policies.
-3. If score/margin routing improves over the previous global agreement gate, promote the hybrid method as the main Qwen follow-up.
-4. If score/margin routing does not improve, move to the candidate-wise Qwen semantic judge formulation:
+1. Treat the completed score-distance local-to-Qwen gate as the main Qwen follow-up method.
+2. Use the global validation-selected result (`0.3800` test mean pair micro F1, `22.4%` Qwen call rate) as the thesis-safe hybrid result.
+3. Use the per-aspect validation-selected result (`0.4186`, `34.8%` Qwen call rate) as an upper-bound diagnostic of aspect-specific model complementarity.
+4. If another Qwen experiment is needed, move to the candidate-wise Qwen semantic judge formulation:
 
 ```text
 review + one candidate aspect + optional aspect description -> absent / positive / negative / neutral
@@ -256,35 +257,46 @@ Interpretation:
 - The global agreement gate improves precision and false-positive control by using DistilBERT as a cheap stabilising gate and Qwen as a confirmation judge.
 - The per-aspect result shows that some unseen aspects are better handled by Qwen-led policies, while others need agreement/confirmation.
 
-Recommended next design:
+Completed score-distance routing diagnostic:
 
-- Export or rerun local LOAO predictions with score features:
+- The strongest local DistilBERT LOAO branch was rerun to export:
   - candidate-aspect score;
   - selected threshold;
   - distance to threshold;
-  - top score;
-  - score margin;
-  - selected score statistics.
-- Also export sentiment confidence features where available:
-  - predicted sentiment;
-  - class probabilities;
-  - probability margin;
-  - entropy.
-- Use validation to route only uncertain rows to Qwen.
-- Compare against:
-  - local-only;
-  - Qwen-only;
-  - simple agreement confirmation;
-  - per-aspect validation-selected diagnostic.
-- If score/margin routing improves over the global agreement gate while keeping Qwen call rate modest, promote this as the main Qwen follow-up method.
+  - selected-count features;
+  - aspect-conditioned sentiment prediction;
+  - sentiment class probabilities;
+  - sentiment probability margin;
+  - sentiment entropy.
+- Existing Qwen zero-shot LOAO validation/test predictions were reused; no new Qwen generation was performed.
+- Command:
+
+```powershell
+python .\scripts\analyse_local_qwen_loao_cascade.py --local-loao-dir .\outputs\baselines\loao_cross_encoder_transformer_sentiment_example_filtered_micro_selection_score_export_20260702 --qwen-validation-dir .\outputs\llm\qwen_loao_heldout_aspect_all_rows_validation_20260701 --qwen-test-dir .\outputs\llm\qwen_loao_heldout_aspect_all_rows_test_20260701 --output-dir .\outputs\analysis\local_qwen_loao_score_margin_cascade_20260702
+```
+
+Key result:
+
+- Local DistilBERT rerun only: `0.3158` test mean pair micro F1.
+- Qwen-only: `0.3378` test mean pair micro F1.
+- Global validation-selected score-distance gate, `score_abs_replace_le_0.05`: `0.3800` test mean pair micro F1, Qwen call rate `22.4%`.
+- Per-aspect validation-selected mixed diagnostic: `0.4186` test mean pair micro F1, Qwen call rate `34.8%`.
+- Best sentiment-margin-only diagnostic: `0.3204` test mean pair micro F1, Qwen call rate `1.1%`.
+
+Interpretation:
+
+- Score-distance routing should be promoted as the main Qwen follow-up method.
+- The improvement comes from routing local aspect-selector uncertainty to Qwen, not from local sentiment-margin uncertainty.
+- The global gate is the thesis-safe selected result because one policy was selected on validation and applied to test.
+- The per-aspect mixed diagnostic is a stronger upper-bound result and supports the claim that different held-out aspects need different local/Qwen divisions.
 
 ## Recommended Order
 
 1. Thesis-ready result tables and figure data, coordinated through `docs/thesis_completion_roadmap.md`.
 2. Cascade uncertainty improvement using local score/margin export and no new Gemini calls.
 3. Qwen LoRA SFT runner readiness and tiny smoke test.
-4. Develop the local-to-Qwen score/margin uncertainty gate, because the offline agreement diagnostic has positive signal.
-5. Revise the Qwen absence-calibration objective before reconsidering full fine-tuned Qwen LoRA LOAO.
+4. Use the completed local-to-Qwen score-distance gate as the main Qwen follow-up method in the thesis narrative.
+5. If another Qwen experiment is needed, use candidate-wise Qwen semantic judgement or a revised absence-calibration objective; do not return to grouped/singleton JSON-SFT full LOAO without a new validation-passing objective.
 6. Sampled Gemini LOAO only if specifically needed as a fallback or supervisor-requested robustness signal.
 
 This order maximises dissertation value per unit cost while preserving the current strategic boundary: full Qwen LoRA LOAO is deferred until the fine-tuning recipe passes a single-fold validation gate. Everything else should either convert existing evidence into thesis-ready analysis or prepare a revised Qwen calibration objective so GPU time is not wasted on a recipe already shown to underperform.

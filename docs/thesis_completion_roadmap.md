@@ -1,6 +1,6 @@
 # Thesis Completion Roadmap
 
-Last updated: 2026-07-02
+Last updated: 2026-07-03
 
 This note freezes the remaining dissertation-oriented work around the Qwen LoRA LOAO boundary. The original aim was to keep the project moving while GPU access was being negotiated. A later single-fold all-row Qwen LoRA pilot showed that the current SFT recipe does not pass the validation gate, so the full 12-fold run should now wait for a revised absence-calibration objective rather than GPU access alone. The immediate modelling direction has shifted to local-to-Qwen hybrid routing: DistilBERT acts as a cheap calibrated gate, while Qwen is used as a semantic judge for uncertain or unfamiliar unseen-aspect cases.
 
@@ -36,7 +36,7 @@ The dissertation currently has enough evidence for a coherent taxonomy-shift sto
 | Gemini aspect descriptions | Label-semantics ablation for hosted LLM prompting | Complete |
 | Qualitative error taxonomy | Thesis-facing explanation of why systems fail differently | Gemini-assisted packet and tracked taxonomy complete |
 | Qwen LoRA single-fold all-row pilot | Validation-gated check before spending 12-fold GPU time | Complete negative validation result |
-| Local-to-Qwen hybrid diagnostic | Evidence that Qwen is more useful as a semantic complement than a direct replacement | First offline diagnostic complete; score/margin version in progress |
+| Local-to-Qwen hybrid diagnostic | Evidence that Qwen is more useful as a semantic complement than a direct replacement | Score-distance routing complete and positive; sentiment-margin-only routing weak |
 | Qwen LoRA fine-tuned full LOAO | Final open-weight LLM adaptation robustness check | Deferred until revised absence calibration passes validation |
 
 ## Main Dissertation Narrative
@@ -51,12 +51,12 @@ The results chapter should be organised as a ladder of increasing difficulty rat
 6. Gemini fixed-split and cascade results answer a different question: how hosted structured-output LLMs and local models can be combined under cost, latency, and governance constraints. They must not be over-claimed as full LOAO robustness evidence.
 7. Qwen LoRA fine-tuning is motivated by the diagnosed zero-shot failure mode: the model needs task-specific calibration for when a supplied candidate aspect is absent.
 8. A single-fold all-row Qwen LoRA pilot on `Company brand: Competitor` showed that simple singleton negative sampling changes calibration but does not beat same-fold zero-shot or local baselines. Full Qwen LoRA LOAO should therefore wait for a revised absence-aware objective before spending 12-fold GPU time.
-9. The first local-to-Qwen LOAO cascade diagnostic suggests a more promising model-division route: use DistilBERT for calibrated local gating and Qwen for selective semantic judgement. This direction is documented in `docs/qwen_local_hybrid_direction.md`.
+9. The local-to-Qwen LOAO diagnostics now support a more promising model-division route: use DistilBERT for calibrated local gating and Qwen for selective semantic judgement. The completed score-distance gate raises test mean pair micro F1 to `0.3800` with Qwen called on `22.4%` of rows, compared with the local rerun's `0.3158` and Qwen-only `0.3378`. This direction is documented in `docs/qwen_local_hybrid_direction.md`.
 
 The short thesis argument is:
 
 ```text
-Candidate-label modelling is necessary but not sufficient for evolving customer-feedback taxonomies. Local supervised models can be strong on fixed held-out aspects, but LOAO exposes weak robustness across aspect rotations. Qwen zero-shot understands present aspects but lacks absence calibration. Hosted Gemini and local-hosted cascades improve fixed-split performance, but their strongest evidence is selective deployment rather than LOAO robustness. This motivates absence-aware Qwen LoRA fine-tuning as a future open-weight robustness experiment, but the current SFT recipe has not yet passed the validation gate needed to justify a full 12-fold run.
+Candidate-label modelling is necessary but not sufficient for evolving customer-feedback taxonomies. Local supervised models can be strong on fixed held-out aspects, but LOAO exposes weak robustness across aspect rotations. Qwen zero-shot understands present aspects but lacks absence calibration. Hosted Gemini and local-hosted cascades improve fixed-split performance, but their strongest evidence is selective deployment rather than LOAO robustness. The completed local-to-Qwen score-distance diagnostic shows that the strongest near-term Qwen role is selective semantic judgement under local uncertainty. Absence-aware Qwen LoRA fine-tuning remains a future open-weight robustness experiment, but the current SFT recipe has not yet passed the validation gate needed to justify a full 12-fold run.
 ```
 
 After the Qwen LoRA validation gate failed, the main near-term modelling claim should become narrower and stronger:
@@ -99,7 +99,7 @@ Use the checklist below as the operational source of truth before starting the f
 - [x] Run one fixed held-out-aspect Qwen LoRA configuration before full LOAO if local/remote GPU time allows; use validation selection before test evaluation.
 - [x] Define the final full 12-fold Qwen LoRA LOAO command templates, output directory pattern, checkpoint naming, and recovery plan.
 - [x] Run a single-fold all-row Qwen LoRA validation-gated pilot before launching the full 12-fold run.
-- [ ] Develop and evaluate the local-to-Qwen score/margin LOAO routing diagnostic before returning to full Qwen JSON-SFT LOAO.
+- [x] Develop and evaluate the local-to-Qwen score/margin LOAO routing diagnostic before returning to full Qwen JSON-SFT LOAO.
 - [ ] Revise the Qwen absence-calibration/training objective after the single-fold pilot failed to beat same-fold baselines.
 - [ ] Confirm the target GPU environment, storage budget, package versions, and data-transfer rules before launching any long full-LOAO run with a revised recipe.
 - [ ] Run the standard validation and safety checks immediately before the full Qwen LoRA LOAO launch.
@@ -109,7 +109,7 @@ Use the checklist below as the operational source of truth before starting the f
 - [ ] Run sampled Gemini LOAO only if a supervisor specifically asks for hosted-LLM LOAO evidence or if Qwen LoRA full LOAO becomes infeasible.
 - [ ] Run full Gemini LOAO only with an explicit dissertation-value and cost/latency justification.
 - [ ] Add a new joint pair-scoring model only if the Qwen path becomes blocked and the thesis needs another local modelling contribution.
-- [ ] Implement candidate-wise Qwen semantic judgement only after the no-new-Qwen-call score/margin routing diagnostic is complete.
+- [ ] Implement candidate-wise Qwen semantic judgement only if the thesis needs another Qwen experiment beyond the completed score-distance routing result.
 
 ### 1. Thesis Evidence Map And Result Tables
 
@@ -319,8 +319,8 @@ If the revised recipe does not pass validation or GPU access is not granted:
 ## Next Immediate Order
 
 1. Keep `docs/qwen_local_hybrid_direction.md` as the source of truth for the current modelling pivot.
-2. Rerun/export the strongest local DistilBERT LOAO predictions with score, threshold-distance, and sentiment-confidence features.
-3. Reuse existing Qwen zero-shot LOAO predictions to test validation-selected local-to-Qwen score/margin routing.
-4. If the hybrid routing result improves over the previous agreement gate, promote it as the main Qwen follow-up method.
-5. If the hybrid routing result does not improve, move to a candidate-wise Qwen semantic judge or revised absence-calibration objective before reconsidering full Qwen LoRA LOAO.
+2. Treat the local DistilBERT LOAO score/sentiment-confidence export as complete and reusable for future router diagnostics.
+3. Promote validation-selected local-to-Qwen score-distance routing as the main Qwen follow-up method: global score-distance gate test mean pair micro F1 `0.3800`, Qwen call rate `22.4%`; per-aspect validation-selected diagnostic `0.4186`, Qwen call rate `34.8%`.
+4. Treat sentiment-margin-only routing as a weak/negative sub-result: it does not explain the improvement and should not be the next standalone route.
+5. If more Qwen modelling evidence is needed, move to candidate-wise Qwen semantic judgement or a revised absence-calibration objective; do not return to grouped/singleton JSON-SFT full LOAO without a new validation-passing objective.
 6. Use the existing full 12-fold Qwen LoRA command templates only after a revised recipe passes validation and GPU/storage conditions are confirmed.

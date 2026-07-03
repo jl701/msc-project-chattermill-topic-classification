@@ -96,7 +96,7 @@ Aji's confirmed direction:
 - The final held-out-aspect Qwen LoRA runner, manifest logging, resume/skip behaviour, focused tests, tiny local QLoRA smoke test, fixed held-out-aspect QLoRA validation/test run, full 12-fold launch plan, and a single-fold all-row Qwen LoRA validation-gated pilot are complete.
 - The single-fold pilot used `Company brand: Competitor`; the best singleton branch was neg0.10 with validation pair micro F1 `0.1900`, below same-fold Qwen zero-shot `0.2397` and local DistilBERT `0.2490`.
 - Full 12-fold Qwen LoRA LOAO should wait for a revised absence-calibration objective, not merely a stronger GPU/storage window.
-- The immediate Qwen direction is local-to-Qwen score/margin routing, documented in `docs/qwen_local_hybrid_direction.md`.
+- The completed immediate Qwen direction is local-to-Qwen score-distance routing, documented in `docs/qwen_local_hybrid_direction.md`: global validation-selected score-distance gate test mean pair micro F1 `0.3800` with Qwen call rate `22.4%`; per-aspect validation-selected mixed diagnostic `0.4186` with Qwen call rate `34.8%`.
 - The current completion roadmap is `docs/thesis_completion_roadmap.md`. It explicitly separates work that can be completed before GPU access from the full fine-tuned Qwen LoRA LOAO run.
 
 Latest Aji update from 2026-06-21:
@@ -105,7 +105,7 @@ Latest Aji update from 2026-06-21:
 - Before heavy Qwen fine-tuning, rotate held-out aspects. This has now been done for zero-shot Qwen across the 12 FABSA aspects; use it as the open-weight LLM LOAO robustness baseline before fine-tuning.
 - Treat label-masked vs example-filtered as an ablation about incomplete-label noise. Label-masked can keep text containing a held-out aspect while removing that aspect from supervision, creating false-negative or censored-label noise. Example-filtered removes these rows, giving cleaner but smaller training data.
 - The earlier lexical and candidate-aspect cross-encoder baselines used global sentiment: one document-level polarity was applied to all selected aspects. This is a limitation for FABSA because sentiment is per-aspect. A lightweight aspect-conditioned sentiment pipeline was cleaner methodologically but slightly weaker than the global sentiment baseline. A stronger DistilBERT aspect-conditioned sentiment pipeline has now been implemented and evaluated; it improves the controlled lexical sentiment ablation and the example-filtered strong fixed held-out-aspect baseline, but not label-masked training.
-- Full 12-fold Qwen LoRA LOAO remains parked because the current SFT recipe failed the single-fold validation gate; stronger GPU access alone is not a sufficient launch condition.
+- Full 12-fold Qwen LoRA LOAO remains parked because the current SFT recipe failed the single-fold validation gate; stronger GPU access alone is not a sufficient launch condition. The successful Qwen follow-up so far is score-distance hybrid routing, not direct JSON-SFT replacement.
 - Aji provided access to Chattermill's Gemini Vertex AI endpoint through an OpenAI-compatible API. Do not store the key in the repo. Use it for hosted LLM baselines after the LOAO robustness work is started.
 - The GitHub branch issue has been fixed: remote `main` now points to the full setup commit, and local `main` tracks `origin/main`.
 
@@ -543,7 +543,7 @@ Recommended next steps:
 8. Treat Gemini Flash as the completed hosted fixed held-out-aspect baseline, but do not run full Gemini LOAO unless the cost/benefit is explicitly justified.
 9. The local-to-Gemini cascade is complete; follow `docs/llm_next_experiment_directions.md` with the new Qwen LOAO result in mind.
 10. Gemini-generated aspect descriptions are complete; do not rerun the same Task 4 API work unless a new variant or thesis question is explicitly requested.
-11. Use `docs/thesis_completion_roadmap.md` and `docs/qwen_local_hybrid_direction.md` as the current task order. Thesis-ready tables/figure data, cascade score/margin uncertainty, Qwen LoRA runner readiness, tiny smoke testing, the fixed held-out-aspect Qwen LoRA validation/test run, the full Qwen LoRA LOAO launch plan, and the single-fold all-row Qwen LoRA validation-gated pilot are complete. Remaining Qwen work should start with local-to-Qwen score/margin routing, then only move to a revised candidate-wise/absence-calibrated Qwen objective if that no-new-Qwen-call diagnostic is insufficient.
+11. Use `docs/thesis_completion_roadmap.md` and `docs/qwen_local_hybrid_direction.md` as the current task order. Thesis-ready tables/figure data, cascade score/margin uncertainty, Qwen LoRA runner readiness, tiny smoke testing, the fixed held-out-aspect Qwen LoRA validation/test run, the full Qwen LoRA LOAO launch plan, the single-fold all-row Qwen LoRA validation-gated pilot, and local-to-Qwen score-distance routing are complete. Remaining Qwen work should treat score-distance hybrid routing as the main follow-up method, then only move to candidate-wise Qwen semantic judgement or a revised absence-calibrated Qwen objective if another Qwen experiment is needed.
 12. Treat sampled Gemini LOAO as optional fallback or supervisor-requested work, not the default next experiment.
 13. If I ask to publish changes, commit/push only clean code and documentation, without committing outputs, data, credentials, checkpoints, or generated artifacts.
 

@@ -144,11 +144,13 @@ Evidence:
 | Local-to-Qwen global agreement gate | 0.3470 | 0.1868 |
 | Optimistic per-aspect validation-selected mixed policy | 0.4131 | 0.3645 |
 
-Immediate registered follow-up:
+Completed registered follow-up:
 
-- Rerun/export the strongest local DistilBERT LOAO branch with candidate score, threshold-distance, and sentiment-confidence features.
-- Reuse existing Qwen zero-shot LOAO predictions; do not call Qwen again for the first score/margin routing diagnostic.
-- Compare score/margin routing against local-only, Qwen-only, the simple agreement gate, and the optimistic per-aspect diagnostic.
+- The strongest local DistilBERT LOAO branch was rerun with candidate score, threshold-distance, and sentiment-confidence features.
+- Existing Qwen zero-shot LOAO predictions were reused; no new Qwen calls were made.
+- Global validation-selected score-distance routing improved test mean pair micro F1 to `0.3800` with Qwen call rate `22.4%`.
+- The per-aspect validation-selected mixed diagnostic reached `0.4186` with Qwen call rate `34.8%`.
+- Sentiment-margin-only routing was weak (`0.3204` best test mean pair micro F1), so the useful uncertainty signal is the local aspect selector's distance to threshold.
 
 Tracked source-of-truth note:
 
@@ -805,3 +807,33 @@ Final decision:
 - Do not run test for this branch.
 - Do not launch full 12-fold Qwen LoRA LOAO with this SFT recipe.
 - The thesis contribution is a validation-gated negative result: the runner and local QLoRA path work, but simple absence-aware singleton SFT does not yet justify a full fine-tuned LOAO sweep on the selected hard fold.
+
+## 2026-07-03 - Local-to-Qwen Score-Distance Routing Result
+
+Question:
+
+- Can Qwen be used more effectively as a selective semantic judge for local DistilBERT uncertainty than as a full replacement or current JSON-SFT model?
+
+Commands:
+
+```powershell
+python .\scripts\run_loao_heldout_aspect.py --baseline cross_encoder --strategy example_filtered --eval-row-scope all --selection-metric pair_micro_f1 --sentiment-mode transformer_aspect_conditioned --sentiment-epochs 3 --sentiment-learning-rate 2e-5 --sentiment-batch-size 16 --sentiment-eval-batch-size 64 --sentiment-class-weight balanced --sentiment-selection-metric accuracy --epochs 3 --batch-size 32 --eval-batch-size 96 --learning-rate 3e-5 --negatives-per-positive 3 --output-dir .\outputs\baselines\loao_cross_encoder_transformer_sentiment_example_filtered_micro_selection_score_export_20260702
+
+python .\scripts\analyse_local_qwen_loao_cascade.py --local-loao-dir .\outputs\baselines\loao_cross_encoder_transformer_sentiment_example_filtered_micro_selection_score_export_20260702 --qwen-validation-dir .\outputs\llm\qwen_loao_heldout_aspect_all_rows_validation_20260701 --qwen-test-dir .\outputs\llm\qwen_loao_heldout_aspect_all_rows_test_20260701 --output-dir .\outputs\analysis\local_qwen_loao_score_margin_cascade_20260702
+```
+
+Observed outcome:
+
+- Local rerun-only test mean pair micro F1: `0.3158`.
+- Qwen-only test mean pair micro F1: `0.3378`.
+- Previous global agreement gate: `0.3470`, Qwen call rate `18.7%`.
+- Global validation-selected score-distance gate, `score_abs_replace_le_0.05`: `0.3800`, precision `0.3323`, recall `0.5426`, Qwen call rate `22.4%`.
+- Per-aspect validation-selected mixed diagnostic: `0.4186`, precision `0.3567`, recall `0.5549`, Qwen call rate `34.8%`.
+- Best sentiment-margin-only policy: `0.3204`, Qwen call rate `1.1%`.
+
+Thesis interpretation:
+
+- This is now the strongest evidence for the revised Qwen role: DistilBERT should act as the cheap calibrated gate and Qwen should judge locally uncertain unseen-aspect cases.
+- The gain comes from aspect-selector score-distance uncertainty, not sentiment-margin uncertainty.
+- The global score-distance gate is the thesis-safe selected result; the per-aspect policy is a useful upper-bound diagnostic.
+- Full 12-fold Qwen JSON-SFT LOAO remains deferred because the current fine-tuning recipe failed its validation gate. Stronger GPU access alone is not enough to restart that path.
