@@ -1,0 +1,126 @@
+{
+  "experiment_id": "loao_bow_sentence_embedding_v1",
+  "status": "pre_registered",
+  "date": "2026-07-17",
+  "objective": "Add protocol-matched BoW and frozen sentence-embedding baselines to the primary 12-fold all-row LOAO benchmark, with a strict train-only TF-IDF rerun as the lexical reference.",
+  "dataset": "FABSA official train, validation, and test splits",
+  "protocol": {
+    "folds": 12,
+    "heldout_unit": "one canonical aspect per fold",
+    "training_strategy": "example_filtered",
+    "evaluation_rows": "all official rows",
+    "gold_projection": "heldout aspect only",
+    "candidate_text": "raw canonical aspect string",
+    "empty_predictions_allowed": true,
+    "sentiment_component": "shared global word+character TF-IDF balanced LogisticRegression fitted on each permitted training fold",
+    "prediction_representation": "pair set; methods may emit zero or one pair and are evaluated against all gold pairs"
+  },
+  "methods": [
+    {
+      "name": "bow_count_1_2_train_vocab",
+      "family": "bag_of_words",
+      "fit_scope": "per-fold permitted training review text only; candidate text is transform-only",
+      "vectorizer": {
+        "type": "CountVectorizer",
+        "lowercase": true,
+        "analyzer": "word",
+        "ngram_range": [1, 2],
+        "min_df": 1,
+        "max_features": 60000,
+        "binary": false
+      },
+      "pooling": "L2-normalised sparse count vectors",
+      "score": "cosine similarity"
+    },
+    {
+      "name": "tfidf_char_3_5_train_vocab",
+      "family": "strict_tfidf_reference",
+      "fit_scope": "per-fold permitted training review text only; candidate text is transform-only",
+      "vectorizer": {
+        "type": "TfidfVectorizer",
+        "lowercase": true,
+        "analyzer": "char_wb",
+        "ngram_range": [3, 5],
+        "min_df": 1,
+        "sublinear_tf": true
+      },
+      "pooling": "L2-normalised sparse TF-IDF vectors",
+      "score": "cosine similarity",
+      "note": "The historical 0.3780 lexical row fitted candidate text jointly with train reviews and remains legacy evidence rather than the strict reference."
+    },
+    {
+      "name": "minilm_l6_v2",
+      "family": "compact_general_sentence_embedding",
+      "model_id": "sentence-transformers/all-MiniLM-L6-v2",
+      "revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+      "fit_scope": "frozen pretrained encoder; no FABSA fitting",
+      "pooling": "attention-mask mean pooling",
+      "normalisation": "L2",
+      "max_length": 256,
+      "review_prefix": "",
+      "candidate_prefix": "",
+      "score": "cosine similarity"
+    },
+    {
+      "name": "e5_base_v2",
+      "family": "stronger_retrieval_sentence_embedding",
+      "model_id": "intfloat/e5-base-v2",
+      "revision": "f52bf8ec8c7124536f0efb74aca902b2995e5bcd",
+      "fit_scope": "frozen pretrained encoder; no FABSA fitting",
+      "pooling": "attention-mask mean pooling",
+      "normalisation": "L2",
+      "max_length": 256,
+      "review_prefix": "passage: ",
+      "candidate_prefix": "query: ",
+      "score": "cosine similarity"
+    }
+  ],
+  "selection": {
+    "validation_stage_reads_test": false,
+    "threshold_grid": {
+      "minimum": -1.0,
+      "maximum": 1.0,
+      "step": 0.01
+    },
+    "primary": "pair_micro_f1",
+    "tie_breakers": [
+      "pair_samples_f1",
+      "pair_macro_f1",
+      "presence_f1",
+      "presence_precision",
+      "higher_threshold"
+    ],
+    "threshold_scope": "one validation-selected threshold per method and held-out aspect",
+    "encoder_selection": "none; both frozen encoders are fixed a priori and reported independently",
+    "test_rule": "load the frozen validation selection file and evaluate each registered method once"
+  },
+  "metrics": [
+    "presence_precision",
+    "presence_recall",
+    "presence_f1",
+    "presence_average_precision",
+    "presence_false_positive_rows_per_100",
+    "presence_false_negative_rows_per_100",
+    "pair_micro_precision",
+    "pair_micro_recall",
+    "pair_micro_f1",
+    "pair_samples_f1",
+    "pair_macro_f1",
+    "pair_exact_match_rate",
+    "sentiment_accuracy_when_gold_aspect_predicted",
+    "oracle_presence_sentiment_accuracy"
+  ],
+  "aggregation": "unweighted mean, median, population standard deviation, minimum, and maximum across the 12 aspects",
+  "seed": 13,
+  "execution": {
+    "encoder_batch_size": 64,
+    "device": "auto",
+    "validation_output": "outputs/baselines/loao_bow_sentence_embedding_v1/validation",
+    "test_output": "outputs/baselines/loao_bow_sentence_embedding_v1/test",
+    "public_numeric_output": "docs/thesis_figure_data/loao_bow_sentence_embedding_v1_*.csv",
+    "smoke_gate": "one-aspect validation run and focused tests before full validation",
+    "test_gate": "all 12 validation thresholds present and frozen before any test-stage load"
+  },
+  "commit_scope": "Source, runner, tests, config, aggregate/per-aspect numeric CSVs, and experiment report only. Model cache, review-level predictions, raw text, and local outputs remain untracked.",
+  "stopping_rule": "No architecture or test-guided tuning. Stop after the four registered methods complete validation and one frozen test evaluation unless a correctness failure requires rerun."
+}
