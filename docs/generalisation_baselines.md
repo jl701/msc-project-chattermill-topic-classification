@@ -36,6 +36,8 @@ Headline metric: **pair samples F1**. Pair micro F1 and pair macro F1 are report
 
 The detailed Qwen LOAO analysis is recorded in `docs/qwen_loao_experiment_analysis.md`. Its main conclusion is that Qwen zero-shot slightly exceeds the preferred DistilBERT LOAO row on mean pair micro F1 (`0.3378` vs `0.3128`) through much higher recall, but it is substantially less calibrated on empty-gold rows.
 
+Protocol-matched representation baselines were completed on 17 July 2026 under the same twelve-fold all-row, `example_filtered`, raw-candidate, validation-thresholded pair-set contract. Mean test pair micro F1 is Count BoW `0.3225`, strict train-only character TF-IDF `0.3667`, frozen MiniLM `0.3699`, and frozen E5 `0.3791`. The canonical configuration, full presence/pair results, per-aspect evidence, and exploratory paired stability analysis are in `docs/experiments/loao_bow_sentence_embedding_v1.md`; these strict rows supersede neither the historical candidate-in-fit TF-IDF evidence nor its provenance.
+
 ## Held-Out Organisation
 
 Protocol:

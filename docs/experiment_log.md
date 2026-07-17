@@ -3908,3 +3908,20 @@ python .\scripts\run_similarity_loao_baselines.py --stage validation --device cp
 - Mean validation presence average precision: BoW `0.2820`, strict train-only TF-IDF `0.4027`, MiniLM `0.4029`, E5 `0.4327`.
 
 No method, encoder, threshold, or tie-break rule was changed after observing validation. The next permitted action is the single full test-stage run using `outputs/baselines/loao_bow_sentence_embedding_v1/validation/selection_manifest.json`.
+
+### Observed Frozen Test And Close-Out
+
+The single permitted test command was:
+
+```powershell
+python .\scripts\run_similarity_loao_baselines.py --stage test --device cpu --local-files-only --output-dir .\outputs\baselines\loao_bow_sentence_embedding_v1 --public-output-dir .\docs\thesis_figure_data
+```
+
+- The pre-load gate required a protocol-complete validation manifest with the exact four registered methods, twelve unique aspects, matching configuration fingerprint, and all 48 finite thresholds.
+- The threshold mapping used on test matched validation exactly (maximum absolute change `0.0`); no test threshold sweep or encoder selection occurred.
+- Mean test pair micro F1: BoW `0.3225`, strict train-only TF-IDF `0.3667`, MiniLM `0.3699`, E5 `0.3791`.
+- Mean test presence F1: BoW `0.3631`, strict TF-IDF `0.4161`, MiniLM `0.4138`, E5 `0.4272`.
+- Mean test presence average precision: BoW `0.2562`, strict TF-IDF `0.3476`, MiniLM `0.3882`, E5 `0.4177`.
+- Audit: four methods × twelve aspects, 48 result rows, 76,176 review-level test predictions, and no review text in the prediction JSONL records.
+- A post-run exploratory paired-aspect table reports all six method pairs with exact sign-flip tests, Holm correction, and seeded 100,000-resample bootstrap intervals. E5 is numerically highest, but E5/MiniLM/strict-TF-IDF differences are not statistically resolved across the twelve aspects. Strict TF-IDF versus Count BoW is `+0.0442` pair micro F1 with 95% interval `[0.0202, 0.0710]` and Holm-adjusted `p=0.0234` after all six comparisons.
+- Final review found and corrected a diagnostic-only unit mismatch in `sentiment_detection_coverage`: successful present reviews are now divided by gold-present reviews, rather than counting multiple gold sentiment pairs in the numerator. It does not affect threshold selection, presence metrics, pair metrics, or the conclusions above; the affected validation/test artefacts were rerun under the frozen protocol.
