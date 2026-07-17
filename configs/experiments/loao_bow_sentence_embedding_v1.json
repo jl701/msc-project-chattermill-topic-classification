@@ -1,6 +1,6 @@
 {
   "experiment_id": "loao_bow_sentence_embedding_v1",
-  "status": "pre_registered",
+  "status": "validation_complete_test_frozen",
   "date": "2026-07-17",
   "objective": "Add protocol-matched BoW and frozen sentence-embedding baselines to the primary 12-fold all-row LOAO benchmark, with a strict train-only TF-IDF rerun as the lexical reference.",
   "dataset": "FABSA official train, validation, and test splits",
@@ -122,5 +122,19 @@
     "test_gate": "all 12 validation thresholds present and frozen before any test-stage load"
   },
   "commit_scope": "Source, runner, tests, config, aggregate/per-aspect numeric CSVs, and experiment report only. Model cache, review-level predictions, raw text, and local outputs remain untracked.",
-  "stopping_rule": "No architecture or test-guided tuning. Stop after the four registered methods complete validation and one frozen test evaluation unless a correctness failure requires rerun."
+  "stopping_rule": "No architecture or test-guided tuning. Stop after the four registered methods complete validation and one frozen test evaluation unless a correctness failure requires rerun.",
+  "validation_result": {
+    "runtime_seconds": 313.8,
+    "device": "cpu",
+    "git_commit": "63c3e724b336137c49425e1e7b59e257c037a5e4",
+    "test_file_loaded": false,
+    "protocol_complete": true,
+    "selected_thresholds": 48,
+    "pair_micro_f1_mean": {
+      "bow_count_1_2_train_vocab": 0.32688722026263833,
+      "tfidf_char_3_5_train_vocab": 0.3942782869156877,
+      "minilm_l6_v2": 0.36026157782355206,
+      "e5_base_v2": 0.39442618487980896
+    }
+  }
 }

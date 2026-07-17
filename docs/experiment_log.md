@@ -3890,3 +3890,21 @@ Add the missing Bag-of-Words and frozen sentence-embedding rungs to the primary 
 4. Record commands, runtime, results, limitations, and tracked aggregate/per-aspect numeric outputs in `docs/experiments/loao_bow_sentence_embedding_v1.md`.
 
 Raw review-level outputs, model files, and cached embeddings remain local under ignored paths.
+
+### Observed Validation Gate
+
+The clean validation command was:
+
+```powershell
+python .\scripts\run_similarity_loao_baselines.py --stage validation --device cpu --local-files-only --output-dir .\outputs\baselines\loao_bow_sentence_embedding_v1 --public-output-dir .\docs\thesis_figure_data
+```
+
+- Git commit: `63c3e724b336137c49425e1e7b59e257c037a5e4`.
+- Runtime: `313.8` seconds on CPU; the GPU was intentionally left to another process.
+- Isolation: manifest contains SHA-256 fingerprints for `train.csv` and `validation.csv` only; `test.csv` was not loaded.
+- Completeness audit: 4 methods × 12 aspects, 48 finite frozen thresholds, 48 fold-result rows, 50,736 validation prediction rows, no review text in prediction JSONL.
+- Mean validation pair micro F1: BoW `0.3269`, strict train-only TF-IDF `0.3943`, MiniLM `0.3603`, E5 `0.3944`.
+- Mean validation presence F1: BoW `0.3763`, strict train-only TF-IDF `0.4624`, MiniLM `0.4286`, E5 `0.4564`.
+- Mean validation presence average precision: BoW `0.2820`, strict train-only TF-IDF `0.4027`, MiniLM `0.4029`, E5 `0.4327`.
+
+No method, encoder, threshold, or tie-break rule was changed after observing validation. The next permitted action is the single full test-stage run using `outputs/baselines/loao_bow_sentence_embedding_v1/validation/selection_manifest.json`.
