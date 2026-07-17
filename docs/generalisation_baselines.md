@@ -1,5 +1,7 @@
 # FABSA Generalisation Baselines
 
+Metric correction, 2026-07-17: historical one-aspect `aspect_micro_f1` values in the LOAO tables below included true-negative absent rows and are not positive-class candidate-presence F1. Corrected presence metrics are in `docs/experiments/loao_presence_metric_correction_20260717.md`; pair metrics and model selection are unchanged.
+
 This note records the first baseline results for the new FABSA generalisation protocols.
 
 Headline metric: **pair samples F1**. Pair micro F1 and pair macro F1 are reported alongside it.

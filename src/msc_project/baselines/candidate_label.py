@@ -99,14 +99,12 @@ class CandidateLexicalBaseline:
 
         texts = eval_df["text"].tolist()
         scores = self.aspect_scores(texts)
-        predictions: list[list[str]] = []
-        aspect_predictions: list[list[str]] = []
-
-        for row_scores in scores:
-            selected = np.flatnonzero(row_scores >= threshold)
-            if ensure_one and len(selected) == 0:
-                selected = np.array([int(np.argmax(row_scores))])
-            aspect_predictions.append([self.candidate_aspects[index] for index in selected])
+        aspect_predictions = candidate_aspect_predictions_from_scores(
+            scores,
+            self.candidate_aspects,
+            threshold,
+            ensure_one=ensure_one,
+        )
 
         sentiment_lookup = build_sentiment_lookup(
             self.sentiment_model,
@@ -115,6 +113,58 @@ class CandidateLexicalBaseline:
             self.sentiment_mode,
         )
         return pair_predictions_from_aspects(aspect_predictions, sentiment_lookup)
+
+
+def candidate_aspect_predictions_from_scores(
+    scores: np.ndarray,
+    candidate_aspects: list[str],
+    threshold: float,
+    ensure_one: bool = True,
+) -> list[list[str]]:
+    predictions: list[list[str]] = []
+    for row_scores in scores:
+        selected = np.flatnonzero(row_scores >= threshold)
+        if ensure_one and len(selected) == 0:
+            selected = np.array([int(np.argmax(row_scores))])
+        predictions.append([candidate_aspects[index] for index in selected])
+    return predictions
+
+
+def candidate_score_features(
+    row_scores: np.ndarray,
+    candidate_aspects: list[str],
+    selected_aspects: list[str],
+    threshold: float,
+) -> dict[str, object]:
+    if len(row_scores) != len(candidate_aspects):
+        raise ValueError("row scores and candidate aspects must have the same length.")
+    if not candidate_aspects:
+        raise ValueError("candidate aspects must not be empty.")
+
+    ranked_indices = sorted(range(len(candidate_aspects)), key=lambda index: float(row_scores[index]), reverse=True)
+    top_index = ranked_indices[0]
+    second_index = ranked_indices[1] if len(ranked_indices) > 1 else ranked_indices[0]
+    selected_indices = [candidate_aspects.index(aspect) for aspect in selected_aspects if aspect in candidate_aspects]
+    selected_scores = [float(row_scores[index]) for index in selected_indices]
+    distances = [abs(float(score) - threshold) for score in row_scores]
+
+    return {
+        "candidate_aspect_scores": {
+            aspect: float(row_scores[index])
+            for index, aspect in enumerate(candidate_aspects)
+        },
+        "threshold": float(threshold),
+        "top_aspect": candidate_aspects[top_index],
+        "top_score": float(row_scores[top_index]),
+        "second_score": float(row_scores[second_index]),
+        "score_margin": float(row_scores[top_index] - row_scores[second_index]),
+        "min_abs_distance_to_threshold": float(min(distances)),
+        "top_distance_to_threshold": float(row_scores[top_index] - threshold),
+        "above_threshold_count": int(sum(float(score) >= threshold for score in row_scores)),
+        "selected_count": int(len(selected_indices)),
+        "selected_score_min": float(min(selected_scores)) if selected_scores else None,
+        "selected_score_mean": float(sum(selected_scores) / len(selected_scores)) if selected_scores else None,
+    }
 
 
 def validate_sentiment_mode(sentiment_mode: str) -> None:

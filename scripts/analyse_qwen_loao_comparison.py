@@ -23,6 +23,10 @@ COMPARISON_METRICS = [
     "pair_false_negative_rows_per_100",
     "aspect_micro_f1",
     "aspect_samples_f1",
+    "presence_precision",
+    "presence_recall",
+    "presence_f1",
+    "presence_prevalence",
     "sentiment_accuracy_when_gold_aspect_predicted",
     "valid_json_rate",
     "schema_valid_rate",
@@ -38,6 +42,10 @@ PER_ASPECT_METRICS = [
     "pair_false_positive_rows_per_100",
     "pair_false_negative_rows_per_100",
     "aspect_micro_f1",
+    "presence_precision",
+    "presence_recall",
+    "presence_f1",
+    "presence_prevalence",
     "sentiment_accuracy_when_gold_aspect_predicted",
 ]
 

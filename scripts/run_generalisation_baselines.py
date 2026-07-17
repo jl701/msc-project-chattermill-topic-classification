@@ -6,7 +6,6 @@ import sys
 from pathlib import Path
 
 import pandas as pd
-import torch
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -15,11 +14,12 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 from msc_project.baselines.candidate_label import (
     SENTIMENT_MODES,
     CandidateLexicalBaseline,
+    build_sentiment_feature_lookup,
+    candidate_aspect_predictions_from_scores,
     candidate_pair_labels,
-)
-from msc_project.baselines.transformer_sentiment import (
-    TransformerAspectSentimentConfig,
-    train_transformer_aspect_sentiment_model,
+    candidate_score_features,
+    pair_predictions_from_aspects,
+    sentiment_lookup_from_features,
 )
 from msc_project.baselines.classical import (
     ClassicalConfig,
@@ -188,6 +188,55 @@ def score_candidate_predictions(eval_df, pair_classes: list[str], pred_labels: l
     return evaluate_pair_and_aspect(eval_df["supervision_pair_labels"].tolist(), pred_labels, pair_classes)
 
 
+def write_candidate_prediction_rows(
+    frame: pd.DataFrame,
+    predictions: list[list[str]],
+    aspect_scores,
+    candidate_aspects: list[str],
+    selected_aspects: list[list[str]],
+    threshold: float,
+    sentiment_features: list[dict[str, dict[str, object]]],
+    path: Path,
+) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    heldout_aspect = candidate_aspects[0] if len(candidate_aspects) == 1 else None
+    with path.open("w", encoding="utf-8") as handle:
+        for row_index, (_, row) in enumerate(frame.iterrows()):
+            score_features = candidate_score_features(
+                aspect_scores[row_index],
+                candidate_aspects,
+                selected_aspects[row_index],
+                threshold,
+            )
+            lexical_features = {}
+            for aspect in candidate_aspects:
+                score = float(score_features["candidate_aspect_scores"][aspect])
+                aspect_sentiment = sentiment_features[row_index][aspect]
+                lexical_features[aspect] = {
+                    "cosine_similarity": score,
+                    "selected_validation_threshold": float(threshold),
+                    "signed_distance_from_threshold": float(score - threshold),
+                    "absolute_distance_from_threshold": float(abs(score - threshold)),
+                    "local_selected": bool(aspect in selected_aspects[row_index]),
+                    "global_sentiment_prediction": str(aspect_sentiment["predicted_sentiment"]),
+                }
+            payload = {
+                "row_index": row_index,
+                "id": str(row["id"]),
+                "row_uid": str(row.get("row_uid", "")),
+                "original_split": str(row.get("original_split", "")),
+                "org_index": int(row["org_index"]),
+                "heldout_aspect": heldout_aspect,
+                "gold_pair_labels": row["supervision_pair_labels"],
+                "pred_pair_labels": predictions[row_index],
+                "final_local_pair_prediction": predictions[row_index],
+                "score_features": score_features,
+                "lexical_features": lexical_features,
+                "sentiment_features": sentiment_features[row_index],
+            }
+            handle.write(json.dumps(payload, ensure_ascii=False) + "\n")
+
+
 def run_candidate_label_baseline(
     train_df,
     validation_df,
@@ -206,9 +255,25 @@ def run_candidate_label_baseline(
         sentiment_model=sentiment_model,
     ).fit(train_df)
 
+    validation_texts = validation_df["text"].tolist()
+    validation_scores = baseline.aspect_scores(validation_texts)
+    validation_sentiment_features = build_sentiment_feature_lookup(
+        baseline.sentiment_model,
+        validation_texts,
+        heldout_aspects,
+        sentiment_mode,
+    )
+    validation_sentiment_lookup = sentiment_lookup_from_features(validation_sentiment_features)
+
     rows = []
     for threshold in LEXICAL_THRESHOLDS:
-        pred_labels = baseline.predict(validation_df, threshold=threshold, ensure_one=ensure_one)
+        aspect_predictions = candidate_aspect_predictions_from_scores(
+            validation_scores,
+            heldout_aspects,
+            threshold,
+            ensure_one=ensure_one,
+        )
+        pred_labels = pair_predictions_from_aspects(aspect_predictions, validation_sentiment_lookup)
         rows.append(
             {
                 "threshold": threshold,
@@ -221,7 +286,51 @@ def run_candidate_label_baseline(
     validation_results.to_csv(output_dir / "validation_sweep.csv", index=False)
 
     best_validation = validation_results.iloc[0]
-    test_pred = baseline.predict(test_df, threshold=float(best_validation["threshold"]), ensure_one=ensure_one)
+    selected_threshold = float(best_validation["threshold"])
+    validation_aspects = candidate_aspect_predictions_from_scores(
+        validation_scores,
+        heldout_aspects,
+        selected_threshold,
+        ensure_one=ensure_one,
+    )
+    validation_pred = pair_predictions_from_aspects(validation_aspects, validation_sentiment_lookup)
+    write_candidate_prediction_rows(
+        validation_df,
+        validation_pred,
+        validation_scores,
+        heldout_aspects,
+        validation_aspects,
+        selected_threshold,
+        validation_sentiment_features,
+        output_dir / "best_validation_predictions.jsonl",
+    )
+
+    test_texts = test_df["text"].tolist()
+    test_scores = baseline.aspect_scores(test_texts)
+    test_sentiment_features = build_sentiment_feature_lookup(
+        baseline.sentiment_model,
+        test_texts,
+        heldout_aspects,
+        sentiment_mode,
+    )
+    test_sentiment_lookup = sentiment_lookup_from_features(test_sentiment_features)
+    test_aspects = candidate_aspect_predictions_from_scores(
+        test_scores,
+        heldout_aspects,
+        selected_threshold,
+        ensure_one=ensure_one,
+    )
+    test_pred = pair_predictions_from_aspects(test_aspects, test_sentiment_lookup)
+    write_candidate_prediction_rows(
+        test_df,
+        test_pred,
+        test_scores,
+        heldout_aspects,
+        test_aspects,
+        selected_threshold,
+        test_sentiment_features,
+        output_dir / "best_test_predictions.jsonl",
+    )
     test_scores = score_candidate_predictions(test_df, pair_classes, test_pred)
     _, y_true = binarize_labels(test_df["supervision_pair_labels"].tolist(), pair_classes)
     _, y_pred = binarize_labels(test_pred, pair_classes)
@@ -229,7 +338,7 @@ def run_candidate_label_baseline(
 
     best_test = {
         **test_scores,
-        "threshold": float(best_validation["threshold"]),
+        "threshold": selected_threshold,
         "train_examples": int(len(train_df)),
         "eval_examples": int(len(test_df)),
         "pair_labels": int(len(pair_classes)),
@@ -270,6 +379,10 @@ def run_heldout_aspect(
         sentiment_model = None
         sentiment_summary = None
         if sentiment_mode == "transformer_aspect_conditioned":
+            import torch
+
+            from msc_project.baselines.transformer_sentiment import train_transformer_aspect_sentiment_model
+
             sentiment_model, sentiment_summary = train_transformer_aspect_sentiment_model(
                 splits["train"],
                 splits["validation"],
@@ -297,6 +410,10 @@ def run_heldout_aspect(
 
 
 def main() -> None:
+    import torch
+
+    from msc_project.baselines.transformer_sentiment import TransformerAspectSentimentConfig
+
     parser = argparse.ArgumentParser(description="Run first FABSA generalisation baselines.")
     parser.add_argument("--data-dir", type=Path, default=default_data_dir())
     parser.add_argument("--output-dir", type=Path, default=PROJECT_ROOT / "outputs" / "baselines" / "generalisation")

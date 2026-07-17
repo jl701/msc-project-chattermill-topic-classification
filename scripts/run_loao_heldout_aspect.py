@@ -8,7 +8,6 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pandas as pd
-import torch
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -19,9 +18,7 @@ from msc_project.data.fabsa import default_data_dir
 from msc_project.data.splits import all_aspects, build_heldout_aspect_split, load_all_fabsa
 from msc_project.baselines.candidate_label import SENTIMENT_MODES
 
-from run_aspect_label_aware_baseline import run_strategy as run_cross_encoder_strategy
 from run_generalisation_baselines import run_candidate_label_baseline, write_json
-from msc_project.baselines.transformer import set_seed
 
 
 METRIC_COLUMNS = [
@@ -43,6 +40,12 @@ METRIC_COLUMNS = [
     "aspect_false_positive_labels_per_100",
     "aspect_false_negative_rows_per_100",
     "aspect_exact_match_rate",
+    "presence_precision",
+    "presence_recall",
+    "presence_f1",
+    "presence_prevalence",
+    "presence_false_positive_rows_per_100",
+    "presence_false_negative_rows_per_100",
     "sentiment_accuracy_when_gold_aspect_predicted",
 ]
 
@@ -197,6 +200,10 @@ def run_cross_encoder_fold(
     args: argparse.Namespace,
     device: torch.device,
 ) -> tuple[dict[str, object], dict[str, int]]:
+    import torch
+
+    from run_aspect_label_aware_baseline import run_strategy as run_cross_encoder_strategy
+
     splits = build_heldout_aspect_split(
         frame,
         [aspect],
@@ -279,7 +286,6 @@ def main() -> None:
     parser.add_argument("--eval-limit", type=int, default=None)
     args = parser.parse_args()
 
-    set_seed(args.seed)
     baselines = ["lexical", "cross_encoder"] if args.baseline == "both" else [args.baseline]
     if args.sentiment_mode == "transformer_aspect_conditioned" and "lexical" in baselines:
         parser.error(
@@ -291,8 +297,14 @@ def main() -> None:
     aspects = selected_aspects(frame, args.heldout_aspect)
     strategies = ["label_masked", "example_filtered"] if args.strategy == "both" else [args.strategy]
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = None
     if "cross_encoder" in baselines:
+        import torch
+
+        from msc_project.baselines.transformer import set_seed
+
+        set_seed(args.seed)
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print(f"Using device: {device}", flush=True)
         if device.type == "cuda":
             print(f"GPU: {torch.cuda.get_device_name(0)}", flush=True)
@@ -341,6 +353,8 @@ def main() -> None:
                         sentiment_mode=args.sentiment_mode,
                     )
                 else:
+                    if device is None:
+                        raise RuntimeError("Cross-encoder execution requires a configured Torch device.")
                     result, counts = run_cross_encoder_fold(
                         frame,
                         aspect,

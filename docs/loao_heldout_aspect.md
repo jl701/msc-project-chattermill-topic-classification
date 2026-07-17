@@ -4,6 +4,8 @@ Last updated: 2026-07-01
 
 This note records the leave-one-aspect-out (LOAO) held-out-aspect experiment added after Aji's 2026-06-21 feedback.
 
+Metric correction, 2026-07-17: historical `aspect_micro_f1` values in this note were produced from a one-column binary indicator and included true-negative absent rows. They are not candidate-presence F1. Use the corrected positive-class `presence_f1` values in `docs/experiments/loao_presence_metric_correction_20260717.md`; pair metrics and all validation-selected model decisions are unchanged.
+
 The frozen cross-model protocol for future Qwen/Gemini/DistilBERT robustness work is `loao_open_topic_all_row_v1` in `docs/evaluation_protocol.md`. This document records the existing LOAO results and should be read as evidence under that frozen protocol.
 
 ## Motivation
@@ -272,7 +274,7 @@ The `label_masked` and `example_filtered` lexical results are very close. This d
 
 The aspect-conditioned sentiment ablation clarifies the sentiment issue but does not improve the lexical LOAO baseline when implemented with a shallow TF-IDF classifier. The stronger DistilBERT aspect-conditioned sentiment model fixes much of that sentiment weakness, but the full DistilBERT LOAO result still does not improve the all-row robustness headline. This is useful negative evidence: stronger local encoders can perform very well on a fixed held-out-aspect split, yet still fail to generalise uniformly when every aspect becomes the unseen topic in turn.
 
-The main bottleneck is now aspect relevance under taxonomy shift. The DistilBERT LOAO run has high mean aspect micro F1 because most rows are true negatives for a one-aspect fold, but pair micro F1 and per-aspect spread show that the model is unstable for rare, ambiguous, or less lexically transparent aspects. This supports presenting the local DistilBERT pipeline as the strongest fixed-split non-LLM baseline, while using LOAO as the robustness diagnostic that motivates LLM-assisted candidate-label reasoning and selective escalation.
+The main bottleneck is now aspect relevance under taxonomy shift. Corrected positive-class presence F1 is much lower than the historical true-negative-inflated aspect micro field, and pair micro F1 plus the per-aspect spread show that the model is unstable for rare, ambiguous, or less lexically transparent aspects. This supports presenting the local DistilBERT pipeline as the strongest fixed-split non-LLM baseline, while using LOAO as the robustness diagnostic that motivates LLM-assisted candidate-label reasoning and selective escalation.
 
 ## Reproduction
 
