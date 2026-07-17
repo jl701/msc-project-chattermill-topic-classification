@@ -2,7 +2,7 @@
 
 ## Status
 
-Pre-registered on 17 July 2026. No validation or test result had been inspected when this specification was written.
+Pre-registered on 17 July 2026. Full validation is complete and the 48 method-aspect thresholds are frozen. The official test file had not been loaded when the validation evidence below was recorded.
 
 ## Objective
 
@@ -51,4 +51,25 @@ The shared sentiment component emits one sentiment for a detected candidate, whe
 
 ## Results
 
-Pending execution.
+### Validation Gate
+
+Command:
+
+```powershell
+python .\scripts\run_similarity_loao_baselines.py --stage validation --device cpu --local-files-only --output-dir .\outputs\baselines\loao_bow_sentence_embedding_v1 --public-output-dir .\docs\thesis_figure_data
+```
+
+The clean run used commit `63c3e724b336137c49425e1e7b59e257c037a5e4`, completed in `313.8` seconds on CPU, and loaded only the official train and validation CSVs. The output audit confirmed 4 methods, 12 aspects, 48 finite thresholds, 48 per-fold result rows, and 50,736 review-level validation predictions with no review text in the JSONL payloads.
+
+| Method | Pair micro F1 | Presence F1 | Presence average precision |
+| --- | ---: | ---: | ---: |
+| Count BoW | 0.3269 | 0.3763 | 0.2820 |
+| Strict train-only TF-IDF | 0.3943 | **0.4624** | 0.4027 |
+| MiniLM-L6-v2 | 0.3603 | 0.4286 | 0.4029 |
+| E5-base-v2 | **0.3944** | 0.4564 | **0.4327** |
+
+Observed fact: E5 and strict TF-IDF are effectively tied on mean validation pair micro F1 at the displayed precision, while E5 has higher ranking-quality average precision and strict TF-IDF has slightly higher thresholded presence F1. MiniLM improves over BoW but is below both E5 and strict TF-IDF on this validation aggregate. These observations do not alter the pre-registered test plan: all four methods retain their frozen per-aspect thresholds and will be evaluated once.
+
+### Test
+
+Pending the frozen test-stage run.

@@ -1,0 +1,49 @@
+method,heldout_aspect,threshold
+bow_count_1_2_train_vocab,Account management: Account access,0.03
+bow_count_1_2_train_vocab,Company brand: Competitor,0.0
+bow_count_1_2_train_vocab,Company brand: General satisfaction,0.0
+bow_count_1_2_train_vocab,Company brand: Reviews,0.05
+bow_count_1_2_train_vocab,Logistics rides: Speed,0.0
+bow_count_1_2_train_vocab,Online experience: App website,0.02
+bow_count_1_2_train_vocab,Purchase booking experience: Ease of use,0.02
+bow_count_1_2_train_vocab,Staff support: Attitude of staff,0.02
+bow_count_1_2_train_vocab,Staff support: Email,0.02
+bow_count_1_2_train_vocab,Staff support: Phone,0.01
+bow_count_1_2_train_vocab,Value: Discounts promotions,0.09
+bow_count_1_2_train_vocab,Value: Price value for money,0.01
+tfidf_char_3_5_train_vocab,Account management: Account access,0.07
+tfidf_char_3_5_train_vocab,Company brand: Competitor,0.04
+tfidf_char_3_5_train_vocab,Company brand: General satisfaction,0.0
+tfidf_char_3_5_train_vocab,Company brand: Reviews,0.12
+tfidf_char_3_5_train_vocab,Logistics rides: Speed,0.0
+tfidf_char_3_5_train_vocab,Online experience: App website,0.02
+tfidf_char_3_5_train_vocab,Purchase booking experience: Ease of use,0.02
+tfidf_char_3_5_train_vocab,Staff support: Attitude of staff,0.01
+tfidf_char_3_5_train_vocab,Staff support: Email,0.11
+tfidf_char_3_5_train_vocab,Staff support: Phone,0.05
+tfidf_char_3_5_train_vocab,Value: Discounts promotions,0.16
+tfidf_char_3_5_train_vocab,Value: Price value for money,0.04
+minilm_l6_v2,Account management: Account access,0.17
+minilm_l6_v2,Company brand: Competitor,0.16
+minilm_l6_v2,Company brand: General satisfaction,0.11
+minilm_l6_v2,Company brand: Reviews,0.34
+minilm_l6_v2,Logistics rides: Speed,0.24
+minilm_l6_v2,Online experience: App website,0.23
+minilm_l6_v2,Purchase booking experience: Ease of use,0.17
+minilm_l6_v2,Staff support: Attitude of staff,0.14
+minilm_l6_v2,Staff support: Email,0.29
+minilm_l6_v2,Staff support: Phone,0.29
+minilm_l6_v2,Value: Discounts promotions,0.28
+minilm_l6_v2,Value: Price value for money,0.13
+e5_base_v2,Account management: Account access,0.75
+e5_base_v2,Company brand: Competitor,0.74
+e5_base_v2,Company brand: General satisfaction,0.7
+e5_base_v2,Company brand: Reviews,0.77
+e5_base_v2,Logistics rides: Speed,0.75
+e5_base_v2,Online experience: App website,0.75
+e5_base_v2,Purchase booking experience: Ease of use,0.75
+e5_base_v2,Staff support: Attitude of staff,0.72
+e5_base_v2,Staff support: Email,0.77
+e5_base_v2,Staff support: Phone,0.77
+e5_base_v2,Value: Discounts promotions,0.77
+e5_base_v2,Value: Price value for money,0.76
