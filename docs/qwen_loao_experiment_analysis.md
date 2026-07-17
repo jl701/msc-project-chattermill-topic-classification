@@ -149,7 +149,7 @@ Pair samples F1 is retained for continuity with the rest of the project, but it 
 
 Pair micro F1 is the preferred all-row robustness comparison because it exposes the precision-recall trade-off at the label level. Pair macro F1 remains useful because it shows whether rare sentiment labels are handled, but it is unstable under sparse one-aspect folds.
 
-Aspect micro F1 must be interpreted cautiously in one-candidate all-row LOAO. It can look high for conservative models because true-negative empty rows dominate the fold. For this reason, the central robustness claims should use pair micro F1, precision, recall, false-positive rows per 100 reviews, and per-aspect spread rather than aspect micro F1 alone.
+The historical aspect micro F1 field is superseded for one-candidate all-row LOAO. Its one-column binary calculation included true-negative empty rows and behaved like an accuracy measure. Use the corrected positive-class presence precision, recall, and F1 in `docs/experiments/loao_presence_metric_correction_20260717.md`; pair micro F1, false-positive rows per 100 reviews, and the original model decisions are unchanged.
 
 The positive-gold diagnostic answers a different question: if the aspect is actually present, can the system recognise and sentiment-label it? For Qwen, the answer is mostly yes. The full all-row task adds the harder question: can it abstain when the candidate aspect is absent? For Qwen zero-shot, the answer is not yet reliable enough.
 

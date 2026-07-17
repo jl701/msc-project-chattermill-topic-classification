@@ -1,6 +1,6 @@
 # FABSA Evaluation Protocol
 
-This note records the current FABSA evaluation setup after Aji's feedback on the two main generalisation axes.
+This note records the FABSA evaluation setup. The hierarchy and experiment-admission rules in `docs/dissertation_experiment_design_lock_2026_07_16.md` are authoritative: all-row LOAO is the sole primary benchmark, fixed-taxonomy representation is supporting evidence, and held-out-organisation and fixed held-out-aspect results are secondary context.
 
 ## 1. Closed-Topic Benchmark
 
@@ -83,7 +83,7 @@ Leakage checks for both strategies:
 
 Protocol version: `loao_open_topic_all_row_v1`
 
-Status: frozen for the Qwen/Gemini/DistilBERT robustness stage as of 2026-07-01.
+Status: frozen as the sole primary dissertation benchmark; reaffirmed on 2026-07-16.
 
 This is the canonical robustness protocol for the open-topic claim. Fixed held-out-aspect experiments remain useful capability and deployment evidence, but they must not be presented as full open-topic robustness evidence.
 
@@ -124,6 +124,8 @@ The primary metric is pair micro F1 rather than pair samples F1 because all-row 
 
 Report these metrics for validation and test:
 
+- binary candidate-presence precision, recall, and F1
+- presence PR-AUC only when the method exposes a genuine continuous presence score
 - per-aspect `pair_samples_f1`
 - per-aspect `pair_micro_f1`
 - per-aspect `pair_micro_precision`
@@ -134,7 +136,12 @@ Report these metrics for validation and test:
 - false-negative rows per 100 reviews
 - exact-match rate
 - aspect samples/micro/macro F1
-- sentiment accuracy when the gold aspect is predicted
+- oracle-presence sentiment accuracy or macro F1 where a modular sentiment component can be run on every gold-present row
+- detected-present sentiment accuracy or macro F1, accompanied by its denominator, coverage of gold-present rows, and candidate recall
+
+The candidate-presence metrics collapse sentiment before scoring. They are not interchangeable with strict pair precision and recall, for which a correct aspect with the wrong sentiment remains an error. A discrete Qwen JSON decision has no PR-AUC unless an independently specified continuous presence score is available.
+
+Candidate-presence F1 is the positive-class binary score `2TP / (2TP + FP + FN)`. True-negative absent rows must not enter this F1. In particular, do not use scikit-learn binary `average="micro"` on the one-column singleton-aspect indicator because it collapses to an accuracy-like score that includes true negatives. The corrected implementation and frozen-prediction audit are recorded in `docs/experiments/loao_presence_metric_correction_20260717.md`.
 
 For LLM runs, also report:
 
@@ -163,6 +170,8 @@ For thresholded local models:
 - select thresholds within each fold on validation data
 - use validation `pair_micro_f1` as the preferred all-row LOAO selection metric
 - report the selected threshold per aspect
+
+This is the target-calibrated cold-start regime because each target aspect may contribute validation gold to its own threshold. The strict zero-label supporting experiment must instead select every threshold, prompt, parser policy, hyperparameter, and router rule using only the other 11 aspects, then apply the frozen pipeline to the target test fold. The existing leave-one-aspect router-policy diagnostic is partial because its underlying local threshold remains target-calibrated.
 
 For zero-shot LLM runs:
 

@@ -1,5 +1,7 @@
 # Strongest Local Non-LLM Open-Topic Baseline
 
+Metric correction, 2026-07-17: historical one-aspect `aspect_micro_f1` values in the LOAO tables below included true-negative absent rows and are not positive-class candidate-presence F1. Corrected presence metrics are in `docs/experiments/loao_presence_metric_correction_20260717.md`; pair metrics and model selection are unchanged.
+
 Last updated: 2026-07-01
 
 This note records the current strongest local non-LLM baseline for the fixed held-out-aspect open-topic protocol. It is intended to be reusable in the dissertation methods/results sections.

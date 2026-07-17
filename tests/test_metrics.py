@@ -4,11 +4,19 @@ import sys
 import unittest
 from pathlib import Path
 
+import numpy as np
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from msc_project.evaluation.metrics import evaluate_pair_and_aspect, pair_to_components, pairs_to_aspects
+from msc_project.evaluation.metrics import (
+    binary_presence_scores,
+    evaluate_pair_and_aspect,
+    multilabel_scores,
+    pair_to_components,
+    pairs_to_aspects,
+)
 from msc_project.baselines.classical import threshold_predictions
 
 
@@ -57,6 +65,42 @@ class MetricsTest(unittest.TestCase):
         self.assertEqual(scores["pair_label_fp"], 1)
         self.assertEqual(scores["pair_false_positive_rows"], 1)
         self.assertAlmostEqual(scores["pair_false_positive_rows_per_100"], 50.0)
+
+    def test_single_candidate_presence_f1_excludes_true_negatives(self) -> None:
+        scores = evaluate_pair_and_aspect(
+            [[], ["A | positive"]],
+            [[], []],
+            ["A | negative", "A | neutral", "A | positive"],
+        )
+
+        self.assertAlmostEqual(scores["presence_f1"], 0.0)
+        self.assertAlmostEqual(scores["aspect_micro_f1"], 0.0)
+        self.assertAlmostEqual(scores["aspect_macro_f1"], 0.0)
+        self.assertEqual(scores["presence_tn_rows"], 1)
+        self.assertEqual(scores["presence_fn_rows"], 1)
+
+    def test_multilabel_micro_and_macro_use_positive_label_counts(self) -> None:
+        scores = multilabel_scores(
+            np.asarray([[1, 0], [0, 1], [0, 0]]),
+            np.asarray([[1, 0], [1, 0], [0, 0]]),
+        )
+
+        self.assertAlmostEqual(scores["micro_f1"], 0.5)
+        self.assertAlmostEqual(scores["macro_f1"], 1.0 / 3.0)
+
+    def test_presence_scores_count_row_level_positive_decisions(self) -> None:
+        scores = binary_presence_scores(
+            [["A | positive"], [], ["A | negative"], []],
+            [["A | positive"], ["A | neutral"], [], []],
+        )
+
+        self.assertEqual(scores["presence_tp_rows"], 1)
+        self.assertEqual(scores["presence_fp_rows"], 1)
+        self.assertEqual(scores["presence_fn_rows"], 1)
+        self.assertEqual(scores["presence_tn_rows"], 1)
+        self.assertAlmostEqual(scores["presence_precision"], 0.5)
+        self.assertAlmostEqual(scores["presence_recall"], 0.5)
+        self.assertAlmostEqual(scores["presence_f1"], 0.5)
 
     def test_threshold_predictions_ensures_one_label(self) -> None:
         pred = threshold_predictions(
