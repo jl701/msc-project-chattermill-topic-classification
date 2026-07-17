@@ -3864,3 +3864,29 @@ Validation selection evidence:
 - Use `docs/thesis_figure_data/qwen_local_qwen_loao_pareto.csv` for the F1/call-rate curve.
 - Keep per-aspect routing as an upper-bound diagnostic only.
 - Do not start lightweight learned routers, candidate-wise Qwen judging, aspect descriptions, or full Qwen LoRA LOAO unless a supervisor requests more evidence beyond this completed global-router contribution.
+
+## 2026-07-17: Pre-Registration — Protocol-Matched BoW And Sentence Embeddings
+
+### Objective
+
+Add the missing Bag-of-Words and frozen sentence-embedding rungs to the primary twelve-fold all-row LOAO benchmark. A strict train-only character TF-IDF rerun is included because the historical lexical baseline fitted the candidate label text together with the permitted training reviews.
+
+### Frozen Protocol And Methods
+
+- Primary `example_filtered` training construction.
+- All official evaluation rows and held-out-only gold projection.
+- Raw canonical singleton candidate aspect and empty predictions allowed.
+- Validation pair micro F1 selects one threshold per method and aspect; the test stage loads frozen thresholds and never reselects them.
+- Shared global word+character TF-IDF balanced Logistic Regression sentiment component.
+- Registered methods: count BoW word 1–2 grams, strict train-only character TF-IDF 3–5 grams, frozen `all-MiniLM-L6-v2`, and frozen `e5-base-v2`.
+- Both sentence encoders are fixed a priori and reported independently; test data does not select an encoder.
+- Full parameters, revisions, threshold grid, tie-breakers, metrics, outputs, gates, and stopping rule: `configs/experiments/loao_bow_sentence_embedding_v1.json`.
+
+### Planned Execution
+
+1. Focused tests plus one-aspect validation smoke.
+2. Full validation only; verify and freeze 48 method-aspect thresholds.
+3. Single frozen test evaluation.
+4. Record commands, runtime, results, limitations, and tracked aggregate/per-aspect numeric outputs in `docs/experiments/loao_bow_sentence_embedding_v1.md`.
+
+Raw review-level outputs, model files, and cached embeddings remain local under ignored paths.
