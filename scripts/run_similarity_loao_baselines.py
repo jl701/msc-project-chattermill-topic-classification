@@ -220,7 +220,9 @@ def evaluate_scores(
         scores,
     )
     positive_rows = int(sum(bool(labels) for labels in eval_df["supervision_pair_labels"]))
-    detected_sentiment_rows = int(metrics["sentiment_evaluated_gold_aspects"])
+    # Coverage is review-level: a present review counts once even if its held-out
+    # aspect has more than one gold sentiment pair.
+    detected_sentiment_rows = int(metrics["presence_tp_rows"])
     metrics["sentiment_detection_coverage"] = (
         float(detected_sentiment_rows / positive_rows) if positive_rows else 0.0
     )

@@ -54,10 +54,10 @@ All rungs address the same primary candidate question. A rung may remain pending
 | Level | Method | Theoretical purpose | Current evidence status |
 |---:|---|---|---|
 | 0 | Always-absent and exact-overlap sanity controls | Expose target prevalence, class imbalance, and the task floor | Required consolidation; not a headline model |
-| 1 | BoW or unweighted lexical overlap | Test whether exact observed terms are sufficient | Closed-topic evidence exists; candidate-conditioned control requires consolidation |
-| 2 | Word and character TF–IDF | Test weighted lexical and spelling evidence | Primary all-row LOAO evidence complete |
+| 1 | BoW or unweighted lexical overlap | Test whether exact observed terms are sufficient | Protocol-matched candidate-conditioned count BoW complete |
+| 2 | Word and character TF–IDF | Test weighted lexical and spelling evidence | Primary all-row LOAO evidence complete; strict train-only reference rerun complete |
 | 3 | LSA/SVD | Test corpus-derived low-rank co-occurrence semantics | Closed-topic sweep exists; candidate-conditioned LOAO evidence is not yet frozen |
-| 4 | Frozen sentence embeddings | Test pretrained semantic similarity and paraphrase transfer | Planned for fixed taxonomy and primary LOAO; no result claimed |
+| 4 | Frozen sentence embeddings | Test pretrained semantic similarity and paraphrase transfer | Primary protocol-matched MiniLM and E5 LOAO evidence complete |
 | 5 | DistilBERT review–candidate cross-encoder | Test joint contextual interaction between review and candidate | Primary all-row LOAO evidence complete |
 | 6 | Zero-shot structured Qwen | Test instruction following, label semantics, and generative sentiment assignment | Primary all-row LOAO evidence complete |
 | 7 | Local-to-Qwen router | Test whether complementary local and generative errors improve quality under a call budget | TF–IDF-to-Qwen and DistilBERT-to-Qwen evidence complete |
@@ -65,6 +65,8 @@ All rungs address the same primary candidate question. A rung may remain pending
 LSA is mandatory in the fixed-taxonomy support ladder. Candidate-conditioned LSA must remain explicitly pending unless a protocol-matched row is produced. It must not be implied by the existing closed-topic sweep.
 
 Only two frozen sentence encoders are needed: one compact general-purpose model and one stronger retrieval-oriented model. Their exact identifiers, pooling, normalisation, truncation, candidate text, threshold grid, and model-selection rule must be registered before execution. Test data must not select the encoder.
+
+Completion note, 17 July 2026: the protocol-matched Count BoW, strict train-only character TF-IDF, MiniLM, and E5 experiment is recorded in `docs/experiments/loao_bow_sentence_embedding_v1.md`. E5 has the highest mean test pair micro F1 (`0.3791`), but its paired-aspect advantage over strict TF-IDF and MiniLM is not statistically resolved; strict TF-IDF is the only method with a Holm-adjusted stable improvement over Count BoW in the post-run six-pair analysis.
 
 The core Level 6 method is zero-shot Qwen under the frozen prompt and parser. Gemini fixed-split evidence and Qwen QLoRA evidence are secondary development or deployment cases, not additional primary ladder rungs.
 

@@ -1,6 +1,6 @@
 {
   "experiment_id": "loao_bow_sentence_embedding_v1",
-  "status": "validation_complete_test_frozen",
+  "status": "complete",
   "date": "2026-07-17",
   "objective": "Add protocol-matched BoW and frozen sentence-embedding baselines to the primary 12-fold all-row LOAO benchmark, with a strict train-only TF-IDF rerun as the lexical reference.",
   "dataset": "FABSA official train, validation, and test splits",
@@ -135,6 +135,41 @@
       "tfidf_char_3_5_train_vocab": 0.3942782869156877,
       "minilm_l6_v2": 0.36026157782355206,
       "e5_base_v2": 0.39442618487980896
+    }
+  },
+  "test_result": {
+    "runtime_seconds": 321.15582156181335,
+    "device": "cpu",
+    "git_commit": "c4a063757fd2260b28e526d362e1316f1d166d13",
+    "protocol_complete": true,
+    "frozen_thresholds": 48,
+    "maximum_threshold_change_from_validation": 0.0,
+    "pair_micro_f1_mean": {
+      "bow_count_1_2_train_vocab": 0.3224887175982793,
+      "tfidf_char_3_5_train_vocab": 0.36672820349357366,
+      "minilm_l6_v2": 0.36991675524709233,
+      "e5_base_v2": 0.3790661776258785
+    },
+    "presence_f1_mean": {
+      "bow_count_1_2_train_vocab": 0.3630592020456532,
+      "tfidf_char_3_5_train_vocab": 0.4160759397013804,
+      "minilm_l6_v2": 0.4137743045826507,
+      "e5_base_v2": 0.4271902651505726
+    },
+    "presence_average_precision_mean": {
+      "bow_count_1_2_train_vocab": 0.25615565592185874,
+      "tfidf_char_3_5_train_vocab": 0.34759190644698057,
+      "minilm_l6_v2": 0.38821663190593075,
+      "e5_base_v2": 0.41774483641589
+    },
+    "paired_aspect_analysis": {
+      "metric": "pair_micro_f1",
+      "status": "post_run_exploratory_aspect_stability_analysis",
+      "comparisons": "all six method pairs",
+      "multiplicity_correction": "Holm within each split",
+      "bootstrap_resamples": 100000,
+      "seed": 13,
+      "output": "docs/thesis_figure_data/loao_bow_sentence_embedding_v1_paired_comparisons.csv"
     }
   }
 }

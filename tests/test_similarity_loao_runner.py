@@ -16,6 +16,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
 
 from run_similarity_loao_baselines import (
     aggregate_results,
+    evaluate_scores,
     load_stage_frame,
     positive_average_precision,
     run,
@@ -105,6 +106,35 @@ class SimilarityLoaoRunnerTests(unittest.TestCase):
         self.assertEqual(positive_average_precision([["x"], []], np.asarray([0.9, 0.1])), 1.0)
         with self.assertRaisesRegex(ValueError, "both present and absent"):
             positive_average_precision([[], []], np.asarray([0.1, 0.2]))
+
+    def test_sentiment_detection_coverage_counts_present_reviews_not_gold_pairs(self) -> None:
+        frame = pd.DataFrame(
+            {
+                "id": ["1", "2"],
+                "row_uid": ["validation:1", "validation:2"],
+                "original_split": ["validation", "validation"],
+                "org_index": [1, 2],
+                "supervision_labels": [
+                    [(ASPECT, "positive"), (ASPECT, "negative")],
+                    [],
+                ],
+                "supervision_pair_labels": [
+                    [f"{ASPECT} | positive", f"{ASPECT} | negative"],
+                    [],
+                ],
+            }
+        )
+        metrics, _, _ = evaluate_scores(
+            frame,
+            ASPECT,
+            np.asarray([0.9, 0.1]),
+            0.5,
+            [{ASPECT: "positive"}, {ASPECT: "positive"}],
+        )
+
+        self.assertEqual(int(metrics["sentiment_evaluated_gold_aspects"]), 2)
+        self.assertEqual(int(metrics["presence_tp_rows"]), 1)
+        self.assertEqual(float(metrics["sentiment_detection_coverage"]), 1.0)
 
     def test_test_selection_requires_exact_methods_aspects_and_fingerprint(self) -> None:
         config = REGISTERED_CONFIGS["bow_count_1_2_train_vocab"]
