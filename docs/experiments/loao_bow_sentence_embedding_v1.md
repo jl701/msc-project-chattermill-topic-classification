@@ -59,7 +59,7 @@ Command:
 python .\scripts\run_similarity_loao_baselines.py --stage validation --device cpu --local-files-only --output-dir .\outputs\baselines\loao_bow_sentence_embedding_v1 --public-output-dir .\docs\thesis_figure_data
 ```
 
-The clean run used commit `63c3e724b336137c49425e1e7b59e257c037a5e4`, completed in `313.8` seconds on CPU, and loaded only the official train and validation CSVs. The output audit confirmed 4 methods, 12 aspects, 48 finite thresholds, 48 per-fold result rows, and 50,736 review-level validation predictions with no review text in the JSONL payloads.
+The final clean corrective run used commit `a6c1f85dd658879b592d283e8d92fafcb44b605d`, completed in `274.9` seconds on CPU, and loaded only the official train and validation CSVs. The output audit confirmed 4 methods, 12 aspects, 48 finite thresholds, 48 per-fold result rows, and 50,736 review-level validation predictions with no review text in the JSONL payloads. Relative to the original frozen run, only the diagnostic `sentiment_detection_coverage` column changed; all thresholds and primary/supporting pair and presence metrics were identical.
 
 | Method | Pair micro F1 | Presence F1 | Presence average precision |
 | --- | ---: | ---: | ---: |
@@ -78,7 +78,7 @@ Command:
 python .\scripts\run_similarity_loao_baselines.py --stage test --device cpu --local-files-only --output-dir .\outputs\baselines\loao_bow_sentence_embedding_v1 --public-output-dir .\docs\thesis_figure_data
 ```
 
-The clean test run used commit `c4a063757fd2260b28e526d362e1316f1d166d13` and completed in `321.2` seconds on CPU. Before loading `test.csv`, the runner required the validation manifest to declare a protocol-complete 4-method by 12-aspect selection with exact registered method/aspect keys, a matching configuration fingerprint, and finite thresholds inside the registered grid. The audit found 48 test result rows and 76,176 review-level predictions. The maximum absolute difference between the validation and test threshold mappings was `0.0`; no test threshold sweep was produced. Review text is absent from the prediction payloads.
+The final clean corrective test run used commit `0256e4d7ac58609a4de0795d12d0703be77d9451` and completed in `229.8` seconds on CPU. Before loading `test.csv`, the runner required the validation manifest to declare a protocol-complete 4-method by 12-aspect selection with exact registered method/aspect keys, a matching configuration fingerprint, and finite thresholds inside the registered grid. The audit found 48 test result rows and 76,176 review-level predictions. The maximum absolute difference between the validation and test threshold mappings was `0.0`; no test threshold sweep was produced. Review text is absent from the prediction payloads. Relative to the original frozen run, only the diagnostic coverage column changed.
 
 | Method | Pair micro F1 | Pair samples F1 | Pair macro F1 | Presence F1 | Presence average precision |
 | --- | ---: | ---: | ---: | ---: | ---: |

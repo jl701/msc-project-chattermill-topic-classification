@@ -124,9 +124,9 @@
   "commit_scope": "Source, runner, tests, config, aggregate/per-aspect numeric CSVs, and experiment report only. Model cache, review-level predictions, raw text, and local outputs remain untracked.",
   "stopping_rule": "No architecture or test-guided tuning. Stop after the four registered methods complete validation and one frozen test evaluation unless a correctness failure requires rerun.",
   "validation_result": {
-    "runtime_seconds": 313.8,
+    "runtime_seconds": 274.91552329063416,
     "device": "cpu",
-    "git_commit": "63c3e724b336137c49425e1e7b59e257c037a5e4",
+    "git_commit": "a6c1f85dd658879b592d283e8d92fafcb44b605d",
     "test_file_loaded": false,
     "protocol_complete": true,
     "selected_thresholds": 48,
@@ -138,9 +138,9 @@
     }
   },
   "test_result": {
-    "runtime_seconds": 321.15582156181335,
+    "runtime_seconds": 229.8376648426056,
     "device": "cpu",
-    "git_commit": "c4a063757fd2260b28e526d362e1316f1d166d13",
+    "git_commit": "0256e4d7ac58609a4de0795d12d0703be77d9451",
     "protocol_complete": true,
     "frozen_thresholds": 48,
     "maximum_threshold_change_from_validation": 0.0,
