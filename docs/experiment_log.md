@@ -3899,8 +3899,8 @@ The clean validation command was:
 python .\scripts\run_similarity_loao_baselines.py --stage validation --device cpu --local-files-only --output-dir .\outputs\baselines\loao_bow_sentence_embedding_v1 --public-output-dir .\docs\thesis_figure_data
 ```
 
-- Git commit: `63c3e724b336137c49425e1e7b59e257c037a5e4`.
-- Runtime: `313.8` seconds on CPU; the GPU was intentionally left to another process.
+- Final corrective-run Git commit: `a6c1f85dd658879b592d283e8d92fafcb44b605d`.
+- Final corrective runtime: `274.9` seconds on CPU; the GPU was intentionally left to another process.
 - Isolation: manifest contains SHA-256 fingerprints for `train.csv` and `validation.csv` only; `test.csv` was not loaded.
 - Completeness audit: 4 methods × 12 aspects, 48 finite frozen thresholds, 48 fold-result rows, 50,736 validation prediction rows, no review text in prediction JSONL.
 - Mean validation pair micro F1: BoW `0.3269`, strict train-only TF-IDF `0.3943`, MiniLM `0.3603`, E5 `0.3944`.
@@ -3918,6 +3918,7 @@ python .\scripts\run_similarity_loao_baselines.py --stage test --device cpu --lo
 ```
 
 - The pre-load gate required a protocol-complete validation manifest with the exact four registered methods, twelve unique aspects, matching configuration fingerprint, and all 48 finite thresholds.
+- Final corrective-run Git commit: `0256e4d7ac58609a4de0795d12d0703be77d9451`; runtime `229.8` seconds on CPU.
 - The threshold mapping used on test matched validation exactly (maximum absolute change `0.0`); no test threshold sweep or encoder selection occurred.
 - Mean test pair micro F1: BoW `0.3225`, strict train-only TF-IDF `0.3667`, MiniLM `0.3699`, E5 `0.3791`.
 - Mean test presence F1: BoW `0.3631`, strict TF-IDF `0.4161`, MiniLM `0.4138`, E5 `0.4272`.
