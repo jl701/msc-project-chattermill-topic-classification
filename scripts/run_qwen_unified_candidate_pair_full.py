@@ -250,6 +250,7 @@ def _normalised_run_manifest(
     preregistration: dict[str, object],
 ) -> dict[str, object]:
     now = datetime.now().isoformat(timespec="seconds")
+    current_commit = git_commit()
     payload = dict(existing or {})
     resumed_at = payload.get("resumed_at", [])
     if not isinstance(resumed_at, list):
@@ -269,7 +270,8 @@ def _normalised_run_manifest(
             "command": " ".join(sys.argv),
             "started_at": payload.get("started_at", now),
             "resumed_at": resumed_at,
-            "git_commit": payload.get("git_commit", git_commit()),
+            "git_commit": payload.get("git_commit", current_commit),
+            "current_execution_code_git_commit": current_commit,
             "packages": payload.get("packages", package_versions()),
             "cuda_device": payload.get(
                 "cuda_device",
@@ -278,6 +280,8 @@ def _normalised_run_manifest(
             "arguments": vars(args),
         }
     )
+    if existing is not None and payload.get("integrity_schema_version") is None:
+        payload["integrity_upgrade_git_commit"] = current_commit
     payload.pop("finished_at", None)
     return payload
 
