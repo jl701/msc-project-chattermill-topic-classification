@@ -1,0 +1,81 @@
+{
+  "version": "fabsa_aspect_descriptions_v1",
+  "frozen_at": "2026-07-17T19:00:00+01:00",
+  "provenance": "Authored from the twelve canonical taxonomy names before running the unified candidate-pair experiment. No validation/test review text, gold labels, predictions, or error analysis was consulted.",
+  "sentiments": {
+    "negative": {
+      "definition": "The writer expresses a complaint, problem, dissatisfaction, criticism, or an unfavourable judgement about this aspect.",
+      "cues": ["bad", "poor", "problem", "difficult", "slow", "expensive", "rude", "disappointed", "unhappy", "complaint"]
+    },
+    "neutral": {
+      "definition": "The writer mentions this aspect factually, ambiguously, or with mixed information but without a clearly favourable or unfavourable judgement.",
+      "cues": ["mentioned", "stated", "information", "used", "contacted", "mixed", "unclear", "neither good nor bad"]
+    },
+    "positive": {
+      "definition": "The writer expresses praise, satisfaction, approval, recommendation, or a favourable judgement about this aspect.",
+      "cues": ["good", "great", "excellent", "easy", "fast", "helpful", "friendly", "cheap", "satisfied", "recommend"]
+    }
+  },
+  "aspects": {
+    "Account management: Account access": {
+      "definition": "Accessing or regaining access to a customer account, including signing in, passwords, registration, verification, locked accounts, and account credentials.",
+      "cues": ["account", "access", "log in", "login", "sign in", "password", "reset", "locked", "register", "verification"],
+      "boundary": "Do not use this aspect merely because support was contacted by phone or email; the review must discuss account access itself."
+    },
+    "Company brand: Competitor": {
+      "definition": "Another company, provider, brand, or alternative is named, compared, preferred, considered, or used as a substitute for the focal company.",
+      "cues": ["competitor", "another company", "other provider", "alternative", "compared with", "better than", "switch to", "rival"],
+      "boundary": "General satisfaction with the focal company is not enough unless an alternative company or provider is discussed."
+    },
+    "Company brand: General satisfaction": {
+      "definition": "An overall judgement of the company, service, or complete customer experience rather than a judgement limited to one operational feature.",
+      "cues": ["overall", "experience", "service", "company", "satisfied", "happy", "unhappy", "recommend", "excellent", "terrible"],
+      "boundary": "Use a more specific operational aspect when the judgement is clearly limited to access, price, speed, staff, app, booking, discounts, phone, email, or reviews."
+    },
+    "Company brand: Reviews": {
+      "definition": "Customer reviews, ratings, testimonials, reputation feedback, or the act of reading, leaving, requesting, or responding to a review.",
+      "cues": ["review", "reviews", "rating", "ratings", "testimonial", "feedback", "stars", "reputation"],
+      "boundary": "A reviewer's own general opinion is not automatically about the Reviews aspect; the content must discuss reviews or ratings as an object."
+    },
+    "Logistics rides: Speed": {
+      "definition": "How quickly or slowly a journey, ride, delivery, collection, or logistics service happens, including delays, waiting time, and punctuality.",
+      "cues": ["speed", "fast", "quick", "slow", "delay", "late", "waiting", "on time", "arrival", "took too long"],
+      "boundary": "Ease of booking or staff responsiveness is separate unless the review discusses the elapsed speed of the logistics or ride service."
+    },
+    "Online experience: App website": {
+      "definition": "Using the mobile app, website, webpage, online portal, or digital interface, including navigation, loading, crashes, bugs, and online functionality.",
+      "cues": ["app", "website", "web site", "online", "portal", "page", "screen", "loading", "crash", "bug", "interface"],
+      "boundary": "Account access and the booking process are separate when the problem is specifically credentials or the transaction workflow rather than the digital channel generally."
+    },
+    "Purchase booking experience: Ease of use": {
+      "definition": "How easy, difficult, clear, or convenient it is to purchase, order, reserve, book, check out, or complete the customer transaction workflow.",
+      "cues": ["book", "booking", "purchase", "order", "reserve", "reservation", "checkout", "easy", "difficult", "simple", "process"],
+      "boundary": "App or website performance alone is not enough unless it affects the ease of completing a purchase or booking."
+    },
+    "Staff support: Attitude of staff": {
+      "definition": "The behaviour, manner, helpfulness, friendliness, rudeness, professionalism, knowledge, or empathy of employees and support staff.",
+      "cues": ["staff", "employee", "agent", "representative", "helpful", "friendly", "rude", "professional", "polite", "attitude"],
+      "boundary": "Phone and email are contact channels; use this aspect when the judgement concerns the people or their manner."
+    },
+    "Staff support: Email": {
+      "definition": "Customer contact or support through email, including sending messages, replies, response time, missing responses, and the quality of an email exchange.",
+      "cues": ["email", "e-mail", "emailed", "mail", "inbox", "reply", "response", "message"],
+      "boundary": "A judgement about staff attitude without an email exchange belongs to Attitude of staff; telephone calls belong to Phone."
+    },
+    "Staff support: Phone": {
+      "definition": "Customer contact or support by telephone, including calls, call centres, being on hold, callbacks, answering, and telephone conversations.",
+      "cues": ["phone", "telephone", "call", "called", "calling", "call centre", "hold", "callback", "answered"],
+      "boundary": "Email exchanges belong to Email; staff manner can additionally be Attitude of staff when the review explicitly judges the person."
+    },
+    "Value: Discounts promotions": {
+      "definition": "Discounts, promotions, promotional offers, coupons, vouchers, sales, special deals, loyalty offers, or advertised price reductions.",
+      "cues": ["discount", "promotion", "promo", "coupon", "voucher", "offer", "deal", "sale", "code", "loyalty"],
+      "boundary": "Ordinary price or value-for-money comments without a specific offer or reduction belong to Price value for money."
+    },
+    "Value: Price value for money": {
+      "definition": "The ordinary price, cost, charge, fee, affordability, expensiveness, cheapness, or whether the service is worth what the customer paid.",
+      "cues": ["price", "cost", "charge", "fee", "expensive", "cheap", "affordable", "value", "worth", "money"],
+      "boundary": "A specific coupon, sale, promotion, or advertised reduction belongs to Discounts promotions."
+    }
+  }
+}

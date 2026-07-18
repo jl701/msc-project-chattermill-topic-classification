@@ -1,0 +1,180 @@
+{
+  "protocol_id": "loao_unified_candidate_pair_experimental_v1",
+  "status": "preregistered_before_model_execution",
+  "registered_at": "2026-07-17T19:00:00+01:00",
+  "main_story_status": "isolated_pending_user_review",
+  "seed": 13,
+  "outer_protocol": {
+    "folds": 12,
+    "strategy": "example_filtered",
+    "evaluation_row_scope": "all",
+    "evaluation_label_scope": "heldout",
+    "candidate_scope": "one held-out aspect per fold",
+    "empty_predictions_allowed": true,
+    "primary_metric": "unweighted mean of fold-level test pair_micro_f1",
+    "selection_regime": "target-calibrated cold start",
+    "selection_data": "the target fold's official validation labels only",
+    "test_use": "one evaluation after the variant and threshold are frozen"
+  },
+  "task": {
+    "unit": "review x candidate aspect x candidate sentiment",
+    "target": "binary pair applicability",
+    "candidate_sentiments": [
+      "negative",
+      "neutral",
+      "positive"
+    ],
+    "prediction_rule": "emit every candidate pair whose applicability score meets the selected threshold; emit an empty set if none meet it",
+    "multi_sentiment_safe": true
+  },
+  "candidate_text": {
+    "control": "canonical aspect name plus candidate sentiment only",
+    "enhanced": "the same canonical name, frozen aspect definition, frozen lexical cues, boundary note, and candidate sentiment definition",
+    "description_source": "written once from canonical taxonomy names before model execution; no validation/test reviews, labels, predictions, or error analysis used"
+  },
+  "training_manifest": {
+    "full_positive_policy": "all permitted gold aspect-sentiment pairs",
+    "control_negatives_per_positive": 4,
+    "control_negative_policy": "deterministic random non-gold aspect-sentiment pairs",
+    "enhanced_negative_policy": [
+      "both wrong sentiments for the same gold aspect",
+      "one absent hard aspect with the same sentiment; same-parent sibling first, otherwise frozen description-similarity nearest aspect",
+      "one deterministic random absent aspect with the same sentiment"
+    ],
+    "deduplication_key": [
+      "row_uid",
+      "candidate_aspect",
+      "candidate_sentiment"
+    ],
+    "model_budget_pairs_per_fold": 4096,
+    "budget_positive_pairs": 2048,
+    "budget_negative_pairs": 2048,
+    "budget_sampling": "deterministic aspect-balanced round-robin, then seeded fill",
+    "reason_for_budget": "keep the exact training-pair budget shared by TF-IDF, DistilBERT, and the 8 GB QLoRA pilot"
+  },
+  "models": {
+    "tfidf": {
+      "estimator": "balanced binary LogisticRegression",
+      "word_tfidf": {
+        "ngram_range": [1, 2],
+        "min_df": 1,
+        "sublinear_tf": true,
+        "max_features": 60000
+      },
+      "char_tfidf": {
+        "analyzer": "char_wb",
+        "ngram_range": [3, 5],
+        "min_df": 1,
+        "sublinear_tf": true,
+        "max_features": 60000
+      },
+      "features": [
+        "word review-candidate cosine",
+        "character review-candidate cosine",
+        "aspect-cue token coverage",
+        "candidate token coverage",
+        "sentiment-cue token coverage",
+        "review sentiment-cue density"
+      ],
+      "max_iter": 1000
+    },
+    "distilbert": {
+      "model_name": "distilbert-base-uncased",
+      "head": "binary sequence classification",
+      "max_length": 256,
+      "batch_size": 32,
+      "eval_batch_size": 96,
+      "learning_rate": 0.00003,
+      "weight_decay": 0.01,
+      "epochs": 3,
+      "warmup_ratio": 0.1,
+      "amp": true,
+      "checkpoint_selection": "highest validation pair_micro_f1; pair_samples_f1 then precision then lower epoch as tie-breakers"
+    },
+    "qwen": {
+      "model_name": "Qwen/Qwen3-4B-Instruct-2507",
+      "task_format": "single candidate aspect-sentiment claim; one-token Y/N answer",
+      "score": "softmax probability of Y over Y and N next-token logits",
+      "load_in_4bit": true,
+      "quantisation": "NF4 with double quantisation and float16 compute",
+      "max_length": 384,
+      "batch_size": 1,
+      "gradient_accumulation_steps": 8,
+      "epochs": 1,
+      "learning_rate": 0.000005,
+      "weight_decay": 0.01,
+      "lora_r": 4,
+      "lora_alpha": 8,
+      "lora_dropout": 0.05,
+      "lora_target_modules": [
+        "q_proj",
+        "k_proj",
+        "v_proj",
+        "o_proj"
+      ]
+    }
+  },
+  "threshold_selection": {
+    "grid": "0.01 to 0.99 inclusive in 0.01 steps, plus every unique midpoint between adjacent validation scores",
+    "primary": "validation pair_micro_f1",
+    "tie_breakers": [
+      "validation pair_samples_f1",
+      "validation pair_micro_precision",
+      "lower false-positive rows per 100",
+      "higher threshold"
+    ]
+  },
+  "pilot": {
+    "folds": [
+      "Company brand: Competitor",
+      "Company brand: General satisfaction",
+      "Staff support: Email"
+    ],
+    "split": "validation only",
+    "local_gate": {
+      "minimum_mean_pair_micro_f1_delta_over_matched_control": 0.02,
+      "minimum_fold_wins": 2,
+      "minimum_recall_fraction_of_control_per_fold": 0.5
+    },
+    "qwen_frozen_gate": {
+      "minimum_mean_pair_micro_f1_delta_over_historical_json_zero_shot": -0.01,
+      "required_false_positive_row_reduction_fraction": 0.15
+    },
+    "qwen_qlora_gate": {
+      "minimum_mean_pair_micro_f1_delta_over_frozen_candidate_pair_qwen": 0.02,
+      "minimum_fold_wins": 2,
+      "minimum_recall_fraction_of_frozen_per_fold": 0.5
+    }
+  },
+  "full_confirmation": {
+    "run_only_for_variants_passing_their_pilot_gate": true,
+    "success_delta_over_matched_control": 0.02,
+    "minimum_fold_wins": 8,
+    "report": [
+      "per-fold pair metrics",
+      "mean, median, standard deviation, minimum and maximum",
+      "presence precision, recall and F1",
+      "false-positive and false-negative rows per 100",
+      "conditional sentiment accuracy and macro F1 with denominator",
+      "paired aspect bootstrap confidence interval",
+      "exact sign-flip p-value",
+      "runtime and peak GPU memory"
+    ]
+  },
+  "historical_context": {
+    "tfidf_test_mean_pair_micro_f1": 0.3780374895,
+    "distilbert_score_export_test_mean_pair_micro_f1": 0.31584787,
+    "qwen_json_zero_shot_test_mean_pair_micro_f1": 0.33778765,
+    "qwen_competitor_validation_json_zero_shot_pair_micro_f1": 0.23974763,
+    "qwen_competitor_validation_best_old_qlora_pair_micro_f1": 0.19
+  },
+  "isolation": {
+    "output_root": "outputs/experimental/loao_unified_candidate_pair_v1",
+    "do_not_edit": [
+      "docs/thesis_result_tables.md",
+      "docs/dissertation_experiment_design_lock_2026_07_16.md",
+      "thesis/"
+    ],
+    "admission": "results remain experimental until the user explicitly approves integration"
+  }
+}
