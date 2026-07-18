@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import gc
 import hashlib
 import json
 import math
@@ -1451,6 +1452,7 @@ def main() -> None:
                     assert training_summary_path is not None
                     write_json(summary_evidence, training_summary_path)
                     del train_model, train_tokenizer
+                    gc.collect()
                     torch.cuda.empty_cache()
                     adapter_evidence = {
                         "training_manifest_hash": digest,
@@ -1518,10 +1520,12 @@ def main() -> None:
         )
         if args.mode == "qlora":
             del model, tokenizer
+            gc.collect()
             torch.cuda.empty_cache()
 
     if frozen_model is not None:
         del frozen_model, frozen_tokenizer
+        gc.collect()
         torch.cuda.empty_cache()
     if len(all_results) != FULL_FOLD_COUNT * 2:
         raise RuntimeError("Formal full run ended without exactly 24 validation/test rows.")
