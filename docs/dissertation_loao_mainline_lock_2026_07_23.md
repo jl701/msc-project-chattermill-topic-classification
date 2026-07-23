@@ -23,10 +23,9 @@ Working title:
 Central question:
 
 > As aspect-sentiment classification moves from one supplied unseen aspect to
-> mixed seen/unseen candidate sets, multiple unseen aspects, and compound
-> organisation plus taxonomy shift, how quickly do different model families
-> degrade, and when do human-authored label descriptions and QLoRA reduce that
-> degradation?
+> mixed seen/unseen candidate sets, multiple unseen aspects, and unseen
+> parent-group shifts, how quickly do different model families degrade, and
+> when do human-authored label descriptions and QLoRA reduce that degradation?
 
 The contribution is therefore not another flat model leaderboard. It is a
 controlled difficulty ladder for taxonomy generalisation, together with matched
@@ -110,6 +109,14 @@ labelled examples. Thesis wording must call the corresponding condition
 **description-assisted zero-shot generalisation**, not zero-information
 classification.
 
+For the new stress-test suite, every seen aspect is represented by its canonical
+name plus the same frozen minimal definition whenever a method consumes a label
+representation during task-specific training. Frozen similarity methods that do
+not learn from labelled pairs still use the same label representation at
+scoring time. Description availability is manipulated only for held-out aspects
+at inference. This prevents a hidden train/test representation mismatch from
+being confused with the intended unseen-label intervention.
+
 ## Approved difficulty ladder
 
 ### Level 1 - Supplied-candidate single-unseen LOAO
@@ -123,7 +130,10 @@ For each of the twelve folds:
 
 This is the completed entry benchmark. The current headline table is
 target-calibrated; a strict zero-label calibration view remains required for
-the cross-level difficulty curve.
+the cross-level difficulty curve. The curve uses the description-complete
+`L1-D` endpoint: the supplied held-out candidate is shown by canonical name plus
+the frozen minimal definition. A matched name-only condition remains an
+intervention control rather than the curve endpoint.
 
 ### Level 2 - Generalized single-unseen LOAO
 
@@ -135,6 +145,9 @@ For each fold:
 
 This tests whether the unseen aspect is suppressed by familiar labels and
 whether adding the unseen label destabilises seen-label predictions.
+The curve uses `L2-D`: every seen label has its frozen minimal definition during
+training, and the held-out label is also supplied with its minimal definition
+at inference.
 
 ### Level 3 - Dual-unseen asymmetric-description generalisation
 
@@ -145,9 +158,10 @@ For each registered dual-holdout fold:
 
 - train on ten aspects using name + minimal definition;
 - hold out two aspects from all task-specific training evidence;
-- test both unseen aspects simultaneously on every official evaluation row;
-- allow neither, either, or both unseen aspects to be predicted, with
-  candidate-specific sentiments.
+- test all twelve candidate aspects jointly on every official evaluation row;
+- treat the ten training aspects as seen and the held-out pair as unseen; and
+- allow zero, one, or multiple aspect-sentiment pairs, including neither,
+  either, or both unseen aspects.
 
 Run the same trained model under four test representations:
 
@@ -160,6 +174,11 @@ Run the same trained model under four test representations:
 
 `DN` and `ND` are a mandatory crossover. A one-direction comparison is
 confounded by the two aspects' intrinsic difficulty.
+
+The ten seen candidates always retain their frozen minimal definitions in all
+four conditions. Only the two unseen candidates change representation. The
+cross-level difficulty curve uses the complete-description `L3-DD` endpoint;
+`NN`, `DN`, and `ND` isolate the description intervention.
 
 The initial fold schedule is the twelve cyclic pairs in frozen canonical order:
 
@@ -183,19 +202,21 @@ Hold out all children of each multi-child parent:
 
 Test all twelve candidates jointly. This measures generalisation when several
 semantically related labels and an entire supervised sub-taxonomy are unseen.
+The curve uses `L4-D`: all seen labels have definitions during training and all
+held-out group labels receive their frozen minimal definitions at inference.
 
-### Level 5 - Compound organisation and taxonomy shift
+### Deferred Level 5 - Compound organisation and taxonomy shift
 
-Use the organisation-disjoint split while also removing target aspects or a
-registered target parent group from training:
+This experiment is not part of the current dissertation execution scope. It is
+retained only as a clearly labelled future extension:
 
 - train on permitted organisations and seen aspects;
 - select configurations on the permitted validation organisation without
   target-label calibration;
 - test on unseen organisations with unseen aspects.
 
-This is the final deployment-oriented stress test. Low-support labels must be
-reported explicitly rather than hidden by a pooled score.
+No Level 5 code sweep or GPU run should be launched unless the user explicitly
+reopens the scope after Levels 1-4 are complete.
 
 ## Core description intervention
 
@@ -268,7 +289,7 @@ less-restrictive reference.
 Level 1 retains the unweighted mean of fold-level pair micro-F1 as its primary
 metric.
 
-Levels 2-5 must report:
+Levels 2-4 must report:
 
 - overall pair micro-F1 and pair macro-F1;
 - seen-aspect and unseen-aspect pair F1 separately;
@@ -329,6 +350,14 @@ must be marked as pilots, not completion.
   superseded for future-work decisions.
 - [x] Preserve completed experiment reports as historical provenance rather
   than deleting them.
+- [x] Fix Level 3 as ten-aspect training followed by joint all-twelve-candidate
+  evaluation, with two candidates marked unseen.
+- [x] Give every seen label the frozen minimal definition in the new stress-test
+  suite.
+- [x] Fix the main difficulty curve as `L1-D -> L2-D -> L3-DD -> L4-D`.
+- [x] Limit seeds 23 and 42 to the matched Level 1 QLoRA endpoints; initially
+  use seed 13 for Levels 2-4.
+- [x] Defer Level 5 outside the current dissertation execution scope.
 
 ### B. Freeze the description resource
 
@@ -383,6 +412,8 @@ must be marked as pilots, not completion.
 - [ ] Freeze the cyclic twelve-pair schedule before results.
 - [ ] Build `example_filtered` ten-aspect training folds with no held-out
   supervision.
+- [ ] Expand every evaluation review across all twelve candidates, preserving
+  seen/unseen membership for the ten-plus-two split.
 - [ ] Verify that `NN`, `DN`, `ND`, and `DD` reuse the exact same trained model,
   rows, pair identities, thresholds, and metrics.
 - [ ] Complete three-fold validation smoke tests for all core methods.
@@ -399,20 +430,20 @@ must be marked as pilots, not completion.
 - [ ] Admit Qwen/QLoRA only after the registered validation and runtime gate.
 - [ ] Compare single-unseen, dual-unseen, and group-unseen degradation.
 
-### H. Run Level 5 compound shift
+### H. Deferred Level 5
 
-- [ ] Build organisation-disjoint plus aspect-heldout folds.
-- [ ] Verify zero row, organisation, and target-supervision leakage.
-- [ ] Use strict seen-aspect calibration only.
-- [ ] Run core local models, then gated Frozen Qwen/QLoRA.
-- [ ] Report low-support aspects, uncertainty, and compound-shift degradation
-  without hiding them in pooled metrics.
+- [x] Record compound organisation-plus-taxonomy shift as future work rather
+  than part of the current execution queue.
+- [ ] Reopen Level 5 only through a new user-approved scope decision after
+  Levels 1-4 are complete.
 
 ### I. Robustness, statistics, and final thesis evidence
 
 - [ ] Use seed 13 for registered pilots and configuration selection.
-- [ ] Add seeds 23 and 42 only for the final matched QLoRA endpoints.
-- [ ] Aggregate seed-by-aspect results and report paired uncertainty.
+- [ ] Use seed 13 for the initial complete Level 2, Level 3, and Level 4 runs.
+- [ ] Add seeds 23 and 42 only for the final matched Level 1 QLoRA endpoints.
+- [ ] Aggregate the matched Level 1 seed-by-aspect results and report paired
+  uncertainty.
 - [ ] Produce the cross-level difficulty curve.
 - [ ] Produce the Level 3 description crossover table/figure.
 - [ ] Produce one matched Frozen-Qwen-to-QLoRA adaptation table.
@@ -431,23 +462,26 @@ The required order is:
 ```text
 description freeze
     -> infrastructure and leakage tests
+    -> local end-to-end smoke tests
+    -> cloud-readiness review and one-fold benchmark
     -> strict Level 1
     -> Level 2
     -> Level 3
     -> Level 4
-    -> Level 5
     -> seeds, statistics, and thesis freeze
 ```
 
 Run cheap deterministic/local methods before expensive Qwen inference. New
-pipelines require validation smoke tests before full sweeps. A failed or
+pipelines require validation smoke tests before full sweeps. No long cloud GPU
+run may begin until the code, tests, resumability, commands, manifests, expected
+runtime, and cost have passed a user-reviewed cloud-readiness gate. A failed or
 uninformative result is documented and closed; test-guided redesign is not
 permitted.
 
-Level 3 is mandatory core evidence. Levels 4 and 5 are planned stress tests but
-remain subject to registered data-support, runtime, and thesis-value gates. A
-gate may stop an expensive model within a level; it may not remove an
-unfavourable completed local result.
+Level 3 is mandatory core evidence. Level 4 is the planned stress test but
+remains subject to registered data-support, runtime, and thesis-value gates.
+Level 5 is deferred. A gate may stop an expensive model within a level; it may
+not remove an unfavourable completed local result.
 
 ## Stop rules
 

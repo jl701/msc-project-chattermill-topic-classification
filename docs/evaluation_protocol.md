@@ -96,7 +96,7 @@ experimental mainline.
 This is the canonical Level 1 protocol for the supplied single-unseen-candidate
 claim. Fixed held-out-aspect experiments remain useful capability and
 deployment evidence, but they must not be presented as full twelve-fold
-robustness evidence. Levels 2-5 below intentionally change the candidate scope
+robustness evidence. Levels 2-4 below intentionally change the candidate scope
 or shift axes and therefore use distinct protocol IDs.
 
 ### Fold Construction
@@ -224,6 +224,13 @@ The stress-test suite is governed by
 `docs/dissertation_loao_mainline_lock_2026_07_23.md`. The summary below fixes
 the protocol boundaries that future implementation must preserve.
 
+Every seen aspect uses its canonical name plus the same frozen minimal
+definition whenever a model consumes label representations during task-specific
+training. Frozen similarity methods use the same representation at scoring
+time. The primary difficulty curve uses the description-complete endpoints
+`L1-D -> L2-D -> L3-DD -> L4-D`; name-only and asymmetric-description
+conditions are matched intervention controls.
+
 ### Level 2: Generalized Single-Unseen LOAO
 
 For every target aspect:
@@ -242,14 +249,17 @@ placed beside Level 1 as though only the model changed.
 For each pre-registered pair of held-out aspects:
 
 - remove every training row containing either target aspect;
-- train on the remaining ten aspects;
-- evaluate both unseen aspects simultaneously on all official rows; and
+- train on the remaining ten aspects with their frozen minimal definitions;
+- evaluate all twelve candidate aspects jointly on all official rows, marking
+  ten as seen and the held-out pair as unseen; and
 - render the unseen pair as `NN`, `DN`, `ND`, and `DD`, where `N` means
   canonical name only and `D` means canonical name plus the frozen minimal
   definition.
 
 All four conditions must reuse the same model, rows, candidate-pair identities,
-thresholds, and metrics. `DN` and `ND` form the required crossover.
+thresholds, and metrics. The ten seen candidates retain definitions throughout;
+only the two unseen representations change. `DN` and `ND` form the required
+crossover.
 
 ### Level 4: Parent-Group Holdout
 
@@ -257,12 +267,11 @@ Hold out all children of Company brand, Staff support, or Value in turn, then
 test all twelve candidates jointly. The parent groups are separate folds and
 must not be pooled into a synthetic training set.
 
-### Level 5: Compound Organisation And Taxonomy Shift
+### Deferred Level 5: Compound Organisation And Taxonomy Shift
 
-Construct the aspect holdout inside the organisation-disjoint split. Training,
-validation, and test organisations must be disjoint, and no target-aspect label
-may calibrate the target pipeline. Report target support and per-aspect
-uncertainty because some aspect-sentiment labels are rare.
+This compound shift is retained as future work and is not part of the current
+execution queue. It may be reopened only after Levels 1-4 through a new
+user-approved scope decision.
 
 ### Strict Information Regime
 
@@ -273,7 +282,7 @@ results remain separately labelled reference evidence.
 
 ### Cross-Level Interpretation
 
-Levels deliberately differ in candidate count and distribution shift.
+Levels 1-4 deliberately differ in candidate count and distribution shift.
 Cross-level analysis must therefore focus on within-method degradation and on
 the amount recovered by a matched intervention. It must not treat raw scores
 from different levels as one interchangeable leaderboard.
