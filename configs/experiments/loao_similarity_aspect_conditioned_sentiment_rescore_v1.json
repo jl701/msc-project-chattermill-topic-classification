@@ -1,0 +1,162 @@
+{
+  "experiment_id": "loao_similarity_aspect_conditioned_sentiment_rescore_v1",
+  "status": "complete",
+  "date": "2026-07-23",
+  "objective": "Measure whether replacing the shared global document-sentiment component with one fixed DistilBERT aspect-conditioned sentiment component changes the strict Count, TF-IDF, MiniLM, and E5 LOAO baselines.",
+  "classification": "post-hoc protocol-matched component rescore using frozen prediction artifacts",
+  "research_question": "For a fixed candidate-presence method, does aspect-conditioned sentiment improve held-out-aspect pair F1 over global document sentiment?",
+  "inputs": {
+    "presence_predictions": "outputs/baselines/loao_bow_sentence_embedding_v1/{validation,test}/{method}/folds/{fold}/predictions_{split}.jsonl",
+    "global_reference": "The pred_pair_labels and selected_threshold fields already stored in the strict similarity-baseline artifacts.",
+    "aspect_conditioned_sentiment_predictions": "C:/Msc_DSML/Msc_Project/msc-project-chattermill-topic-classification/outputs/baselines/loao_cross_encoder_transformer_sentiment_example_filtered_micro_selection_score_export_20260702/cross_encoder/example_filtered/{fold}/best_{split}_predictions.jsonl"
+  },
+  "protocol": {
+    "folds": 12,
+    "heldout_unit": "one canonical aspect per fold",
+    "training_strategy": "example_filtered",
+    "evaluation_rows": "all official rows",
+    "gold_projection": "heldout aspect only",
+    "candidate_cardinality": 1,
+    "candidate_text": "raw canonical aspect string",
+    "empty_predictions_allowed": true,
+    "prediction_representation": "pair set; zero or one predicted pair per row",
+    "calibration_regime": "target_calibrated LOAO",
+    "row_alignment": "Require exact equality of split, row_uid sequence, held-out aspect, and gold pair labels between the two frozen artifact families before scoring.",
+    "sentiment_component": "One shared frozen DistilBERT classifier over (review, held-out aspect), reused from the existing score-export run for every presence method."
+  },
+  "methods": [
+    "bow_count_1_2_train_vocab",
+    "tfidf_char_3_5_train_vocab",
+    "minilm_l6_v2",
+    "e5_base_v2"
+  ],
+  "registered_analyses": {
+    "fixed_threshold_component_swap": {
+      "purpose": "Pure sentiment-component ablation.",
+      "presence_rule": "Keep each original validation-selected threshold and therefore every original present/absent decision fixed.",
+      "comparison": "Original global-sentiment pair predictions versus aspect-conditioned-sentiment pair predictions on the identical detected rows."
+    },
+    "validation_reselected_system": {
+      "purpose": "Best protocol-matched end-to-end version after changing the sentiment component.",
+      "threshold_grid": {
+        "minimum": -1.0,
+        "maximum": 1.0,
+        "step": 0.01
+      },
+      "selection_split": "validation only",
+      "primary": "pair_micro_f1",
+      "tie_breakers": [
+        "pair_samples_f1",
+        "pair_macro_f1",
+        "presence_f1",
+        "presence_precision",
+        "higher_threshold"
+      ],
+      "test_rule": "Freeze all 48 validation-selected thresholds before scoring test."
+    },
+    "oracle_presence_sentiment": {
+      "purpose": "Separate sentiment quality from presence detection.",
+      "rows": "Rows whose projected gold contains the held-out aspect.",
+      "metrics": [
+        "accuracy on rows with one gold sentiment",
+        "compatible accuracy where the prediction may match any gold sentiment for the aspect",
+        "count of multi-sentiment conflict rows"
+      ]
+    }
+  },
+  "primary_metric": "unweighted mean of per-fold pair_micro_f1",
+  "secondary_metrics": [
+    "pair_samples_f1",
+    "pair_macro_f1",
+    "presence_precision",
+    "presence_recall",
+    "presence_f1",
+    "pair_exact_match_rate",
+    "oracle_presence_sentiment_accuracy"
+  ],
+  "comparisons": {
+    "primary": [
+      "fixed-threshold aspect-conditioned minus fixed-threshold global, per method",
+      "validation-reselected aspect-conditioned minus original global, per method"
+    ],
+    "reporting": "Report mean percentage-point change across 12 folds and fold win/tie/loss counts. Do not claim statistical significance from 12 dependent aspect folds."
+  },
+  "seed": 13,
+  "implementation_constraints": [
+    "Do not retrain or alter any presence representation.",
+    "Do not use the DistilBERT selector scores or selector predictions.",
+    "Use only the predicted_sentiment field from the DistilBERT sentiment_features for the current held-out aspect.",
+    "Fail closed on duplicate or mismatched row_uids, gold labels, aspects, missing files, or non-finite presence scores.",
+    "Do not read test artifacts during validation threshold selection.",
+    "Write validation selection completely before test scoring."
+  ],
+  "stopping_rule": "Run the four registered methods once. No method-specific tuning, alternative sentiment heads, or test-guided threshold changes.",
+  "planned_outputs": {
+    "local": "outputs/analysis/loao_similarity_aspect_conditioned_sentiment_rescore_v1",
+    "tracked_numeric": "docs/thesis_figure_data/loao_similarity_aspect_conditioned_sentiment_v1_active.csv",
+    "report": "docs/experiments/loao_similarity_aspect_conditioned_sentiment_rescore_v1.md"
+  },
+  "result": {
+    "validation_alignment": {
+      "artifact_pairs": 48,
+      "row_comparisons": 50736,
+      "exact": true,
+      "frozen_reselected_thresholds": 48
+    },
+    "test_alignment": {
+      "artifact_pairs": 48,
+      "row_comparisons": 76176,
+      "exact": true
+    },
+    "test_mean_pair_micro_f1": {
+      "bow_count_1_2_train_vocab": {
+        "global_original": 0.3224887175982793,
+        "aspect_conditioned_fixed_threshold": 0.3350582311267473,
+        "aspect_conditioned_validation_reselected": 0.31441221043860423
+      },
+      "tfidf_char_3_5_train_vocab": {
+        "global_original": 0.36672820349357366,
+        "aspect_conditioned_fixed_threshold": 0.3846632637148429,
+        "aspect_conditioned_validation_reselected": 0.38564006469164386
+      },
+      "minilm_l6_v2": {
+        "global_original": 0.36991675524709233,
+        "aspect_conditioned_fixed_threshold": 0.38615215431854044,
+        "aspect_conditioned_validation_reselected": 0.3888830304649798
+      },
+      "e5_base_v2": {
+        "global_original": 0.3790661776258785,
+        "aspect_conditioned_fixed_threshold": 0.39682880507000196,
+        "aspect_conditioned_validation_reselected": 0.40130102400140827
+      }
+    },
+    "test_oracle_presence_sentiment_accuracy_mean": {
+      "global": 0.8798814983324678,
+      "aspect_conditioned": 0.9103294385472734,
+      "difference": 0.03044794021480562
+    },
+    "primary_conclusion": "With every original presence decision fixed, the stronger DistilBERT aspect-conditioned sentiment component improves mean test pair micro-F1 for all four registered baselines. The older negative result was specific to the shallow TF-IDF sentiment classifier, not to aspect conditioning itself.",
+    "secondary_conclusion": "Validation reselection improves strict TF-IDF, MiniLM, and E5 further, but reduces Count mean test F1 because the Staff support: Email threshold moves from 0.02 to 0.07 and fails to transfer."
+  },
+  "dissertation_adoption": {
+    "decision": "Aji requires aspect-conditioned sentiment for every active baseline.",
+    "active_system_rule": "Use the validation-reselected aspect-conditioned result for each method.",
+    "active_results": {
+      "bow_count_1_2_train_vocab": 0.31441221043860423,
+      "tfidf_char_3_5_train_vocab": 0.38564006469164386,
+      "minilm_l6_v2": 0.3888830304649798,
+      "e5_base_v2": 0.40130102400140827
+    },
+    "not_thesis_facing": [
+      "global-sentiment source results",
+      "fixed-threshold component-swap values",
+      "shallow TF-IDF aspect-conditioned sentiment results"
+    ]
+  },
+  "known_limitations": [
+    "This is a post-hoc rescore designed after the original test results were known, so it is confirmatory only within the locked transformation and must not be described as a pristine preregistered test.",
+    "The reused DistilBERT sentiment model is target-calibrated through validation-model selection; the result is not strict zero-target-label LOAO.",
+    "All methods share the same aspect-conditioned sentiment artifact, so the comparison isolates presence methods but is not an independent end-to-end training run.",
+    "A singleton held-out candidate is evaluated per fold; the 12 folds together cover all canonical aspects, but this run is not a joint 12-aspect inference call."
+  ]
+}

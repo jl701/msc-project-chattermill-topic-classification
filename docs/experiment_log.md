@@ -3926,3 +3926,53 @@ python .\scripts\run_similarity_loao_baselines.py --stage test --device cpu --lo
 - Audit: four methods × twelve aspects, 48 result rows, 76,176 review-level test predictions, and no review text in the prediction JSONL records.
 - A post-run exploratory paired-aspect table reports all six method pairs with exact sign-flip tests, Holm correction, and seeded 100,000-resample bootstrap intervals. E5 is numerically highest, but E5/MiniLM/strict-TF-IDF differences are not statistically resolved across the twelve aspects. Strict TF-IDF versus Count BoW is `+0.0442` pair micro F1 with 95% interval `[0.0202, 0.0710]` and Holm-adjusted `p=0.0234` after all six comparisons.
 - Final review found and corrected a diagnostic-only unit mismatch in `sentiment_detection_coverage`: successful present reviews are now divided by gold-present reviews, rather than counting multiple gold sentiment pairs in the numerator. It does not affect threshold selection, presence metrics, pair metrics, or the conclusions above; the affected validation/test artefacts were rerun under the frozen protocol.
+
+## 2026-07-23: Strict Similarity Baselines With Aspect-Conditioned Sentiment
+
+### Objective and design
+
+Test the user's memory that aspect-conditioned sentiment reduced baseline F1, but do so for the newer strict Count, train-vocabulary-only TF-IDF, MiniLM, and E5 presence artifacts and with the stronger existing DistilBERT sentiment head. The design was recorded before the new rescore in `configs/experiments/loao_similarity_aspect_conditioned_sentiment_rescore_v1.json`.
+
+Two comparisons were registered:
+
+- fixed-threshold component swap, preserving every original presence decision;
+- validation-reselected complete system, freezing 48 new thresholds before reading test.
+
+The DistilBERT candidate-selector outputs were not used. Only the frozen per-row `sentiment_features[heldout_aspect].predicted_sentiment` field was joined to each strict presence artifact.
+
+### Commands
+
+```powershell
+$env:PYTHONPATH=(Resolve-Path 'src').Path
+python .\scripts\rescore_similarity_loao_with_aspect_sentiment.py --stage validation --sentiment-root 'C:\Msc_DSML\Msc_Project\msc-project-chattermill-topic-classification\outputs\baselines\loao_cross_encoder_transformer_sentiment_example_filtered_micro_selection_score_export_20260702\cross_encoder\example_filtered'
+python .\scripts\rescore_similarity_loao_with_aspect_sentiment.py --stage test --sentiment-root 'C:\Msc_DSML\Msc_Project\msc-project-chattermill-topic-classification\outputs\baselines\loao_cross_encoder_transformer_sentiment_example_filtered_micro_selection_score_export_20260702\cross_encoder\example_filtered' --selection-manifest '.\outputs\analysis\loao_similarity_aspect_conditioned_sentiment_rescore_v1\validation\selection_manifest.json'
+python -m pytest -q
+```
+
+### Audit and results
+
+- Exact alignment passed for all 48 method-fold artifact pairs: 50,736 validation and 76,176 test method-row comparisons.
+- All 48 validation-selected thresholds were frozen before test scoring.
+- The recomputed global results exactly reproduce the original strict baseline.
+- The fixed-threshold comparison has exactly identical presence counts and metrics per fold.
+- Mean test pair micro F1, global to fixed-threshold aspect-conditioned:
+  - Count: `0.3225 -> 0.3351` (`+1.26 pp`, 9/2/1 folds);
+  - strict TF-IDF: `0.3667 -> 0.3847` (`+1.79 pp`, 10/1/1);
+  - MiniLM: `0.3699 -> 0.3862` (`+1.62 pp`, 10/0/2);
+  - E5: `0.3791 -> 0.3968` (`+1.78 pp`, 11/0/1).
+- Mean oracle-presence sentiment accuracy rises from `0.8799` to `0.9103` (`+3.04 pp`).
+- With validation reselection, strict TF-IDF reaches `0.3856`, MiniLM `0.3889`, and E5 `0.4013`. Count falls to `0.3144` because the reselected `Staff support: Email` threshold fails to transfer to test.
+- 139 repository tests passed.
+
+The earlier legacy negative result remains valid for its shallow classifier (`0.3780 -> 0.3576`). The new controlled result shows that aspect conditioning is not inherently harmful: a stronger DistilBERT aspect-conditioned sentiment head improves all four presence methods when the detection operating point is held fixed.
+
+### Post-meeting adoption
+
+Aji subsequently fixed aspect-conditioned sentiment as a task requirement for every active baseline. The dissertation therefore adopts only the validation-reselected aspect-conditioned systems:
+
+- Count `0.3144`;
+- strict TF-IDF `0.3856`;
+- MiniLM `0.3889`;
+- E5 `0.4013`.
+
+Global-sentiment results, the shallow sentiment result, and fixed-threshold component-swap values remain chronological provenance only. They must not appear as active thesis rows or future modelling alternatives.
