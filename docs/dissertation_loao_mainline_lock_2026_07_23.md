@@ -136,20 +136,25 @@ This checklist is the authority for subsequent LOAO work. Complete it in order. 
 - [x] Verify exact validation/test row alignment and freeze 48 validation-selected thresholds before test.
 - [x] Replace the active global-sentiment baseline numbers with the validation-reselected aspect-conditioned numbers.
 - [x] Remove shallow-sentiment, global-sentiment, legacy TF-IDF, and legacy-router results from the active thesis direction.
-- [ ] Integrate the completed aspect-conditioned rescore code, config, tests, report, and tracked numeric exports from `agent/bow-sentence-embedding-baselines` into the final target branch after user review.
-- [ ] Rebuild one authoritative baseline table from the active result registry and verify that no retired row is regenerated.
+- [x] Integrate the completed aspect-conditioned rescore code, config, tests, report, and tracked numeric exports from `agent/bow-sentence-embedding-baselines` into the final target branch after user review.
+- [x] Rebuild one authoritative baseline table from the active result registry and verify that no retired row is regenerated.
 
 ### B. Rebuild the optional strict TF-IDF router
 
 This block is permitted only with the strict TF-IDF presence representation and the shared DistilBERT aspect-conditioned sentiment component.
 
-- [ ] Record a strict aspect-conditioned router protocol/config before running the replacement analysis.
-- [ ] Add and test a compatibility path exposing strict TF-IDF `presence_score`, its validation-reselected threshold, present/absent prediction, and candidate-specific sentiment to the router analyser without changing the frozen source artifacts.
-- [ ] Verify exact validation/test row alignment between strict aspect-conditioned TF-IDF and reused Qwen predictions for all twelve aspects.
-- [ ] Select one global router policy from validation only; do not inspect or tune against router test results.
-- [ ] Freeze the policy and evaluate it once on all twelve test folds.
-- [ ] Report strict local-only and router pair F1, presence precision/recall/F1, FP/FN rows per 100, Qwen call rate, per-aspect deltas, and paired descriptive uncertainty.
-- [ ] Decide from the registered result whether the router remains a supporting deployment method or is dropped entirely.
+- [x] Record a strict aspect-conditioned router protocol/config before running the replacement analysis.
+- [x] Add and test a compatibility path exposing strict TF-IDF `presence_score`, its validation-reselected threshold, present/absent prediction, and candidate-specific sentiment to the router analyser without changing the frozen source artifacts.
+- [x] Verify exact validation/test row alignment between strict aspect-conditioned TF-IDF and reused Qwen predictions for all twelve aspects.
+- [x] Select one global router policy from validation only; do not inspect or tune against router test results.
+- [x] Freeze the policy and evaluate it once on all twelve test folds.
+- [x] Report strict local-only and router pair F1, presence precision/recall/F1, FP/FN rows per 100, Qwen call rate, per-aspect deltas, and paired descriptive uncertainty.
+- [x] Decide from the registered result whether the router remains a supporting deployment method or is dropped entirely.
+
+The rebuilt router selected the zero-call local-only policy on validation. Its test
+pair F1 was therefore identical to strict TF-IDF (`0.385640`) with zero Qwen calls
+and zero gain. It failed the registered `+0.01` admission gate and is dropped from
+the dissertation mainline.
 
 The legacy global-sentiment router is not a baseline, fallback, or selection reference for this block.
 
@@ -166,9 +171,9 @@ The current thesis claim treats descriptions, contrastive negatives, balancing, 
 
 ### D. Freeze the final evidence set
 
-- [ ] Produce one authoritative table containing only the active rows listed above.
+- [x] Produce one authoritative table containing only the active rows listed above.
 - [ ] Produce a separate matched-effect table for the strict representation block and frozen-Qwen-to-QLoRA adaptation.
-- [ ] Produce a quality–call-rate table or figure only if the rebuilt strict aspect-conditioned router passes its registered gate.
+- [x] Produce a quality–call-rate table or figure only if the rebuilt strict aspect-conditioned router passes its registered gate. Not produced: the router failed its gate.
 - [ ] Verify that validation pilots, fixed-split results, positive-only diagnostics, post-hoc sensitivities, and component audits are not mixed with headline all-row results.
 - [ ] Search thesis prose, tables, figures, captions, abstract, handoff prompts, and generated CSVs for every retired value and model name.
 - [ ] Freeze final source paths, protocol labels, seeds, uncertainty wording, and limitations.

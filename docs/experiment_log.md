@@ -3976,3 +3976,49 @@ Aji subsequently fixed aspect-conditioned sentiment as a task requirement for ev
 - E5 `0.4013`.
 
 Global-sentiment results, the shallow sentiment result, and fixed-threshold component-swap values remain chronological provenance only. They must not appear as active thesis rows or future modelling alternatives.
+
+## 2026-07-23: Strict TF-IDF To Frozen Candidate-Pair Qwen Router
+
+### Registration and isolation
+
+The replacement router protocol was committed before execution in
+`configs/experiments/loao_strict_tfidf_aspect_qwen_router_v1.json`. It combines:
+
+- strict train-vocabulary-only character TF-IDF presence scores;
+- the validation-reselected TF-IDF threshold for each held-out aspect;
+- frozen DistilBERT aspect-conditioned sentiment predictions; and
+- frozen enhanced candidate-pair Qwen predictions.
+
+The analysis reused saved predictions only. It did not train a model, run new
+inference, read a legacy router artifact, or use historical JSON-prompt Qwen.
+Validation and test joins passed exact `row_uid`-set and gold-label checks on all
+twelve aspects. Test artifacts were not read until one global validation policy
+and all fold cutoffs had been frozen in a selection manifest.
+
+### Registered selection
+
+The asymmetric boundary family crossed rescue and confirmation fractions
+`[0, .05, .10, .15, .20, .30, .40, .50]`, giving 64 policies. Validation selected
+`rescue_0.00_confirm_0.00`: mean pair F1 `0.425221` with Qwen call rate `0`. The
+closest non-zero-call policy scored `0.424413` at call rate `0.079628`, so no
+selective Qwen policy beat strict local on validation.
+
+### Frozen test and decision
+
+- Strict TF-IDF: pair F1 `0.385640`, precision `0.415569`, recall `0.504221`,
+  presence F1 `0.417175`, FP/FN rows per 100 `17.617/4.442`.
+- Frozen candidate-pair Qwen: pair F1 `0.337804`, precision `0.244003`, recall
+  `0.651851`, presence F1 `0.451565`, FP/FN rows per 100 `14.288/4.584`.
+- Selected router: identical to strict TF-IDF, pair F1 `0.385640`, call rate `0`.
+
+The registered admission gate required at least `+0.01` pair F1 at no more than
+`0.50` test call rate. The observed gain was exactly zero, so the router is a
+complete negative optional experiment and is dropped from the dissertation
+mainline. No quality–call-rate figure is authorised.
+
+The unchanged frozen test command was replayed once after the result solely to
+have the analyser write the tracked public CSVs. It performed no model inference,
+selection, or boundary change and reproduced the same values.
+
+Full protocol, commands, limitations, and tracked exports are recorded in
+`docs/experiments/loao_strict_tfidf_aspect_qwen_router_v1.md`.

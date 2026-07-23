@@ -22,10 +22,12 @@ FABSA data:
 Before proposing or running work, read:
 1. docs/dissertation_loao_mainline_lock_2026_07_23.md
 2. docs/evaluation_protocol.md
-3. docs/experiments/loao_bow_sentence_embedding_v1.md
-4. docs/experiments/loao_similarity_aspect_conditioned_sentiment_rescore_v1.md, once integrated from the baseline branch
-5. docs/experiments/loao_unified_candidate_pair_experimental_v1.md
-6. docs/experiment_reproducibility_register.md
+3. docs/thesis_result_tables.md
+4. docs/experiments/loao_bow_sentence_embedding_v1.md
+5. docs/experiments/loao_similarity_aspect_conditioned_sentiment_rescore_v1.md
+6. docs/experiments/loao_unified_candidate_pair_experimental_v1.md
+7. docs/experiments/loao_strict_tfidf_aspect_qwen_router_v1.md
+8. docs/experiment_reproducibility_register.md
 
 The first file is the sole authority for method selection, active result numbers, the remaining-work checklist, and stopping decisions. Older roadmaps, meeting notes, result tables, router documents, and experiment logs are historical provenance only wherever they conflict with it.
 
@@ -69,13 +71,15 @@ Do not quote, regenerate, tune from, or reintroduce retired results. They may re
 Continue from the ordered checklist in:
 docs/dissertation_loao_mainline_lock_2026_07_23.md
 
-The next unresolved items are:
-1. integrate the completed aspect-conditioned rescore files from agent/bow-sentence-embedding-baselines after user review;
-2. rebuild the authoritative active baseline table;
-3. optionally rebuild the strict TF-IDF router using aspect-conditioned sentiment and validation-only policy selection;
-4. complete strict zero-label Qwen/QLoRA analysis;
-5. run registered additional QLoRA seed replication;
-6. freeze the final evidence set and finish the dissertation.
+Completed on 23 July:
+- the aspect-conditioned similarity rescore files were integrated;
+- the authoritative seven-row active baseline table was generated and guarded against retired rows;
+- the strict TF-IDF to frozen candidate-pair Qwen router was rebuilt under validation-only selection;
+- validation selected the zero-call local-only policy, test gain was exactly zero, and the router was dropped from the dissertation mainline.
 
-Do not commit, merge, or push until the user has reviewed the current changes.
+The next unresolved items are:
+1. complete strict zero-label Qwen/QLoRA analysis;
+2. run registered additional QLoRA seed replication;
+3. produce the separate matched-effect table;
+4. freeze the final evidence set and finish the dissertation.
 ```
