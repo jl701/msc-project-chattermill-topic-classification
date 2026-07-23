@@ -88,3 +88,40 @@ Reflection after this stage:
   thresholds or metrics are computed; and
 - formal data execution remains closed because description and statistical
   approval gates are intentionally still pending.
+
+### Stage 2 - method and execution contracts (complete)
+
+Completed on 23 July 2026 without reading new official validation or test
+results:
+
+- froze an ordered five-method registry with pinned E5, DistilBERT and Qwen
+  revisions, starting recipes, finite seen-only tuning grids and stopping rules;
+- exposed one probability-scoring runtime boundary for strict TF-IDF, E5,
+  DistilBERT, Frozen Qwen and QLoRA;
+- moved the reusable QLoRA training loop into the source package and added
+  deterministic epoch callbacks;
+- implemented validation-only preparation so tuning jobs need not load the
+  official test split;
+- implemented content-addressed run contracts, review-cluster sharding, atomic
+  score writes, exact shard merge, cache validation and fail-closed resume;
+- removed review and candidate text from score artifacts while retaining local
+  identity and gold-alignment evidence;
+- added a local formal-test ledger that allows exact-contract resume but rejects
+  an incompatible second use of the same test endpoint;
+- implemented per-aspect, per-sentiment and Level 3 crossover diagnostics; and
+- passed the complete repository test suite: 248 tests.
+
+Reflection after this stage:
+
+- identical interfaces do not imply identical model internals: E5 and Frozen
+  Qwen remain frozen, whereas TF-IDF, DistilBERT and QLoRA learn from the same
+  registered pair manifest;
+- strict TF-IDF may fit review and seen-candidate text from the training
+  manifest, but its vocabulary and IDF cannot see held-out candidates,
+  validation text or test text;
+- Frozen Qwen and QLoRA are locked to the same base-model revision, prompt,
+  candidate rendering, verbalizers and probability mapping;
+- all conditions in a crossover must share training and evaluation identity
+  hashes; and
+- no method smoke has yet been counted as complete: real cached-model smoke,
+  checkpoint recovery and the cloud runner remain the next stage.

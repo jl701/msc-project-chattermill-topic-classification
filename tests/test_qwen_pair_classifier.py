@@ -7,6 +7,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import torch
+import pytest
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -14,12 +15,14 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from msc_project.llm.qwen_pair_classifier import (
     CandidatePairBatchCollator,
+    QwenPairTrainingConfig,
     VerbalizerTokenIds,
     collate_candidate_pair_batch,
     encode_candidate_pair_training_example,
     present_probabilities_from_logits,
     render_candidate_pair_prompt,
     score_candidate_pair_batch,
+    train_qwen_pair_adapter,
     validate_verbalizer_token_ids,
 )
 
@@ -66,6 +69,20 @@ class FakeModel:
         self.last_input_ids = input_ids
         self.last_attention_mask = attention_mask
         return SimpleNamespace(logits=self._logits.to(input_ids.device))
+
+
+class TinyTrainableQwen(torch.nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        self.projection = torch.nn.Linear(1, 10)
+
+    def forward(self, input_ids, attention_mask, labels=None):
+        logits = self.projection(input_ids.float().unsqueeze(-1))
+        loss = None
+        if labels is not None:
+            selected = labels != -100
+            loss = torch.nn.functional.cross_entropy(logits[selected], labels[selected])
+        return SimpleNamespace(logits=logits, loss=loss)
 
 
 class QwenPairClassifierTests(unittest.TestCase):
@@ -185,6 +202,37 @@ class QwenPairClassifierTests(unittest.TestCase):
 
         self.assertAlmostEqual(scores[0], 0.119203, places=6)
         self.assertAlmostEqual(scores[1], 0.880797, places=6)
+
+    def test_generic_qlora_training_loop_runs_and_calls_each_epoch(self) -> None:
+        callbacks = []
+        history = train_qwen_pair_adapter(
+            TinyTrainableQwen(),
+            FakeTokenizer(),
+            VerbalizerTokenIds(yes=7, no=8),
+            [("good", "candidate", 1), ("bad", "candidate", 0)],
+            QwenPairTrainingConfig(
+                max_length=8,
+                batch_size=1,
+                gradient_accumulation_steps=2,
+                epochs=2,
+                learning_rate=1e-3,
+            ),
+            epoch_callback=lambda epoch, evidence, model, tokenizer: callbacks.append(
+                (epoch, evidence["global_step"])
+            ),
+        )
+        self.assertEqual(len(history), 2)
+        self.assertEqual(callbacks, [(1, 1), (2, 2)])
+        self.assertTrue(all(row["train_loss"] >= 0 for row in history))
+
+    def test_generic_qlora_training_rejects_empty_pairs(self) -> None:
+        with pytest.raises(ValueError, match="at least one"):
+            train_qwen_pair_adapter(
+                TinyTrainableQwen(),
+                FakeTokenizer(),
+                VerbalizerTokenIds(yes=7, no=8),
+                [],
+            )
 
 
 if __name__ == "__main__":

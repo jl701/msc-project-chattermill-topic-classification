@@ -83,6 +83,7 @@ class TinyPairModel(torch.nn.Module):
 class UnifiedPairScorersTest(unittest.TestCase):
     def test_cross_encoder_defaults_match_preregistered_recipe(self) -> None:
         config = UnifiedPairCrossEncoderConfig()
+        self.assertIsNone(config.model_revision)
         self.assertEqual(config.max_length, 256)
         self.assertEqual(config.batch_size, 32)
         self.assertEqual(config.eval_batch_size, 96)

@@ -10,8 +10,13 @@ QLoRA-adapted models without relying on free-form JSON generation.
 from __future__ import annotations
 
 import json
+import math
+import random
+import time
 from dataclasses import dataclass
-from typing import Any, Iterable, Sequence
+from typing import Any, Callable, Iterable, Sequence
+
+import numpy as np
 
 
 YES_VERBALIZER = "Y"
@@ -47,6 +52,21 @@ class QwenPairQLoRAConfig:
     lora_alpha: int = 8
     lora_dropout: float = 0.05
     target_modules: tuple[str, ...] = DEFAULT_LORA_TARGET_MODULES
+
+
+@dataclass(frozen=True)
+class QwenPairTrainingConfig:
+    """Training-loop parameters shared by taxonomy QLoRA folds."""
+
+    max_length: int = 384
+    batch_size: int = 1
+    gradient_accumulation_steps: int = 8
+    epochs: int = 2
+    learning_rate: float = 5e-6
+    weight_decay: float = 0.01
+    warmup_ratio: float = 0.1
+    max_grad_norm: float = 1.0
+    seed: int = 13
 
 
 def build_candidate_pair_messages(review_text: str, candidate_text: str) -> list[dict[str, str]]:
@@ -368,9 +388,171 @@ def score_candidate_pairs(
     return scores
 
 
+class EncodedCandidatePairDataset:
+    """Minimal torch Dataset kept dependency-light for import-time testing."""
+
+    def __init__(self, items: Sequence[dict[str, list[int]]]) -> None:
+        self.items = list(items)
+
+    def __len__(self) -> int:
+        return len(self.items)
+
+    def __getitem__(self, index: int) -> dict[str, list[int]]:
+        return self.items[index]
+
+
+def set_qwen_pair_seed(seed: int) -> None:
+    import torch
+
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+
+
+def train_qwen_pair_adapter(
+    model: Any,
+    tokenizer: Any,
+    verbalizer_ids: VerbalizerTokenIds,
+    training_pairs: Iterable[tuple[str, str, bool | int]],
+    config: QwenPairTrainingConfig | None = None,
+    *,
+    epoch_callback: Callable[[int, dict[str, object], Any, Any], None] | None = None,
+) -> list[dict[str, object]]:
+    """Train an attached QLoRA adapter and expose deterministic epoch checkpoints."""
+
+    import torch
+    from torch.utils.data import DataLoader
+    from transformers import get_linear_schedule_with_warmup
+
+    cfg = config or QwenPairTrainingConfig()
+    if cfg.batch_size < 1 or cfg.gradient_accumulation_steps < 1 or cfg.epochs < 1:
+        raise ValueError("Batch size, accumulation steps, and epochs must be positive.")
+    if cfg.learning_rate <= 0 or not 0 <= cfg.warmup_ratio < 1:
+        raise ValueError("QLoRA learning rate and warmup ratio are invalid.")
+    pairs = list(training_pairs)
+    if not pairs:
+        raise ValueError("QLoRA training requires at least one candidate pair.")
+    items = training_items_from_pairs(
+        tokenizer,
+        pairs,
+        max_length=cfg.max_length,
+        verbalizer_ids=verbalizer_ids,
+    )
+    set_qwen_pair_seed(cfg.seed)
+    generator = torch.Generator()
+    generator.manual_seed(cfg.seed)
+    loader = DataLoader(
+        EncodedCandidatePairDataset(items),
+        batch_size=cfg.batch_size,
+        shuffle=True,
+        generator=generator,
+        collate_fn=CandidatePairBatchCollator(tokenizer, padding_side="right"),
+    )
+    updates_per_epoch = math.ceil(
+        len(loader) / cfg.gradient_accumulation_steps
+    )
+    planned_steps = updates_per_epoch * cfg.epochs
+    trainable = [parameter for parameter in model.parameters() if parameter.requires_grad]
+    if not trainable:
+        raise ValueError("QLoRA model exposes no trainable parameters.")
+    optimizer = torch.optim.AdamW(
+        trainable,
+        lr=cfg.learning_rate,
+        weight_decay=cfg.weight_decay,
+    )
+    scheduler = get_linear_schedule_with_warmup(
+        optimizer,
+        num_warmup_steps=int(planned_steps * cfg.warmup_ratio),
+        num_training_steps=planned_steps,
+    )
+    device = _model_device(model)
+    history: list[dict[str, object]] = []
+    global_step = 0
+    optimizer.zero_grad(set_to_none=True)
+    for epoch in range(1, cfg.epochs + 1):
+        model.train()
+        started = time.perf_counter()
+        loss_sum = 0.0
+        batches = 0
+        for batch_number, batch in enumerate(loader, start=1):
+            if device is not None:
+                batch = {key: value.to(device) for key, value in batch.items()}
+            output = model(**batch)
+            loss_value = output["loss"] if isinstance(output, dict) else output.loss
+            if not torch.isfinite(loss_value.detach()).item():
+                raise RuntimeError(
+                    f"Non-finite QLoRA loss at epoch {epoch}, batch {batch_number}."
+                )
+            (loss_value / cfg.gradient_accumulation_steps).backward()
+            loss_sum += float(loss_value.detach().cpu())
+            batches += 1
+            should_update = (
+                batch_number % cfg.gradient_accumulation_steps == 0
+                or batch_number == len(loader)
+            )
+            if should_update:
+                torch.nn.utils.clip_grad_norm_(trainable, cfg.max_grad_norm)
+                optimizer.step()
+                scheduler.step()
+                optimizer.zero_grad(set_to_none=True)
+                global_step += 1
+        evidence = {
+            "epoch": int(epoch),
+            "global_step": int(global_step),
+            "planned_steps": int(planned_steps),
+            "train_loss": float(loss_sum / max(1, batches)),
+            "seconds": float(time.perf_counter() - started),
+        }
+        history.append(evidence)
+        if epoch_callback is not None:
+            epoch_callback(epoch, evidence, model, tokenizer)
+    return history
+
+
+def load_frozen_qwen_pair(
+    model_name: str,
+    *,
+    revision: str | None = None,
+    load_in_4bit: bool = True,
+) -> tuple[Any, Any, VerbalizerTokenIds]:
+    """Load the pinned frozen model used as the direct QLoRA control."""
+
+    import torch
+    from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+
+    tokenizer = AutoTokenizer.from_pretrained(
+        model_name,
+        revision=revision,
+        trust_remote_code=True,
+    )
+    if tokenizer.pad_token_id is None:
+        tokenizer.pad_token = tokenizer.eos_token
+    quantization_config = None
+    if load_in_4bit:
+        quantization_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_compute_dtype=torch.float16,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_use_double_quant=True,
+        )
+    model = AutoModelForCausalLM.from_pretrained(
+        model_name,
+        revision=revision,
+        device_map="auto",
+        torch_dtype=torch.float16,
+        quantization_config=quantization_config,
+        trust_remote_code=True,
+    )
+    model.eval()
+    return tokenizer, model, validate_verbalizer_token_ids(tokenizer)
+
+
 def load_qwen_pair_qlora(
     model_name: str,
     config: QwenPairQLoRAConfig | None = None,
+    *,
+    revision: str | None = None,
 ) -> tuple[Any, Any, VerbalizerTokenIds]:
     """Load a 4-bit Qwen causal LM and attach the unified r=4 QLoRA adapter."""
 
@@ -379,7 +561,11 @@ def load_qwen_pair_qlora(
     from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
     cfg = config or QwenPairQLoRAConfig()
-    tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(
+        model_name,
+        revision=revision,
+        trust_remote_code=True,
+    )
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token = tokenizer.eos_token
     verbalizer_ids = validate_verbalizer_token_ids(tokenizer)
@@ -394,6 +580,7 @@ def load_qwen_pair_qlora(
         )
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
+        revision=revision,
         device_map="auto",
         torch_dtype=torch.float16,
         quantization_config=quantization_config,

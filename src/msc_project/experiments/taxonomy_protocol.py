@@ -195,6 +195,7 @@ def build_taxonomy_fold_splits(
     fold: TaxonomyFold,
     *,
     all_aspects: Sequence[str] | None = None,
+    evaluation_splits: Sequence[str] = ("validation", "test"),
 ) -> dict[str, pd.DataFrame]:
     canonical = tuple(all_aspects or canonical_aspects())
     fold.validate(canonical)
@@ -204,8 +205,22 @@ def build_taxonomy_fold_splits(
         raise ValueError(f"FABSA frame is missing split columns: {missing}")
     if frame["row_uid"].astype(str).duplicated().any():
         raise ValueError("FABSA row_uid values must be globally unique.")
+    requested_evaluation = tuple(str(value) for value in evaluation_splits)
+    if (
+        not requested_evaluation
+        or len(requested_evaluation) != len(set(requested_evaluation))
+        or set(requested_evaluation) - {"validation", "test"}
+    ):
+        raise ValueError(
+            "evaluation_splits must be a non-empty unique subset of validation/test."
+        )
+    available = set(frame["original_split"].astype(str))
+    required_splits = {"train", *requested_evaluation}
+    missing_splits = sorted(required_splits - available)
+    if missing_splits:
+        raise ValueError(f"FABSA frame is missing requested official splits: {missing_splits}")
 
-    splits = build_heldout_aspect_split(
+    all_splits = build_heldout_aspect_split(
         frame,
         fold.heldout_aspects,
         strategy="example_filtered",
@@ -215,24 +230,30 @@ def build_taxonomy_fold_splits(
     heldout = set(fold.heldout_aspects)
     train_original = {
         aspect
-        for labels in splits["train"]["labels"]
+        for labels in all_splits["train"]["labels"]
         for aspect, _ in labels
     }
     train_supervision = {
         aspect
-        for labels in splits["train"]["supervision_labels"]
+        for labels in all_splits["train"]["supervision_labels"]
         for aspect, _ in labels
     }
     if heldout & train_original or heldout & train_supervision:
         raise AssertionError("Held-out aspects survived example-filtered training.")
-    for split_name in ("validation", "test"):
+    for split_name in requested_evaluation:
         expected = set(
             frame.loc[frame["original_split"] == split_name, "row_uid"].astype(str)
         )
-        observed = set(splits[split_name]["row_uid"].astype(str))
+        observed = set(all_splits[split_name]["row_uid"].astype(str))
         if observed != expected:
             raise AssertionError(f"{split_name} does not preserve every official row.")
-    return splits
+    return {
+        "train": all_splits["train"],
+        **{
+            split_name: all_splits[split_name]
+            for split_name in requested_evaluation
+        },
+    }
 
 
 def _heldout_variants(fold: TaxonomyFold, condition: str) -> dict[str, str]:

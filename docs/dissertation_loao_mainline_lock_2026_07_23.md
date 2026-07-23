@@ -428,7 +428,7 @@ must be marked as pilots, not completion.
   exact alignment guards and protocol-specific aggregation.
 - [x] Implement Level 3 `NN/DN/ND/DD` rendering with identical row and pair
   identities across conditions.
-- [ ] Add leakage checks for rows, organisations, supervision labels,
+- [x] Add leakage checks for rows, organisations, supervision labels,
   vocabularies, description hashes, target calibration, and test reuse.
 - [ ] Add focused unit and smoke tests before model execution.
 - [x] Add deterministic statistical tests covering cluster preservation,

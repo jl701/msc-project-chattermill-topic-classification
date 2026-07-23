@@ -303,6 +303,7 @@ class UnifiedTfidfPairScorer:
 @dataclass(frozen=True)
 class UnifiedPairCrossEncoderConfig:
     model_name: str = "distilbert-base-uncased"
+    model_revision: str | None = None
     max_length: int = 256
     batch_size: int = 32
     eval_batch_size: int = 96
@@ -359,9 +360,13 @@ def set_unified_pair_seed(seed: int) -> None:
 
 
 def make_unified_pair_tokenizer_and_model(config: UnifiedPairCrossEncoderConfig):
-    tokenizer = AutoTokenizer.from_pretrained(config.model_name)
+    tokenizer = AutoTokenizer.from_pretrained(
+        config.model_name,
+        revision=config.model_revision,
+    )
     model = AutoModelForSequenceClassification.from_pretrained(
         config.model_name,
+        revision=config.model_revision,
         num_labels=2,
         id2label={0: "absent", 1: "present"},
         label2id={"absent": 0, "present": 1},

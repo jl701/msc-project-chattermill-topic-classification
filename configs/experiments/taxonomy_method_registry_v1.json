@@ -1,0 +1,133 @@
+{
+  "registry_id": "taxonomy_method_registry_v1",
+  "status": "precloud_starting_recipes_pending_seen_only_validation_tuning",
+  "created_at": "2026-07-23T00:00:00+01:00",
+  "shared_contract": {
+    "input": "aligned review text and one rendered candidate aspect-sentiment claim",
+    "output": "one finite applicability probability in [0,1] per input pair",
+    "training_pair_budget": 4096,
+    "positive_pair_budget": 2048,
+    "seed": 13,
+    "threshold": "one outer-fold threshold selected from pooled seen-aspect validation evidence only",
+    "formal_description_status": "approved_and_frozen"
+  },
+  "methods": {
+    "strict_train_only_tfidf": {
+      "order": 1,
+      "family": "supervised_lexical_pair_classifier",
+      "thesis_role": "classical lexical baseline",
+      "requires_pair_training": true,
+      "fit_scope": "official training-fold review text and seen-candidate text in the training manifest only; no held-out candidate, validation, or test text",
+      "estimator": "balanced binary logistic regression over six lexical interaction features",
+      "starting_recipe": {
+        "word_ngram_range": [1, 2],
+        "char_ngram_range": [3, 5],
+        "min_df": 1,
+        "max_word_features": 80000,
+        "max_char_features": 120000,
+        "classifier_c": 1.0,
+        "max_iter": 1000
+      },
+      "seen_only_tuning": {
+        "pilot_outer_folds": ["l2-a02", "l2-a03", "l2-a09"],
+        "classifier_c": [0.1, 0.3, 1.0, 3.0, 10.0],
+        "feature_ablation": ["word_and_char", "char_only", "word_only"],
+        "stopping_rule": "freeze the best mean seen-validation pair_micro_f1 recipe after the registered grid; use pair_samples_f1, precision, then lower complexity as tie-breakers"
+      }
+    },
+    "e5_base_v2": {
+      "order": 2,
+      "family": "frozen_bi_encoder_similarity",
+      "thesis_role": "frozen semantic representation baseline",
+      "requires_pair_training": false,
+      "model_id": "intfloat/e5-base-v2",
+      "model_revision": "f52bf8ec8c7124536f0efb74aca902b2995e5bcd",
+      "starting_recipe": {
+        "review_prefix": "passage: ",
+        "candidate_prefix": "query: ",
+        "pooling": "attention_mask_mean",
+        "normalisation": "l2",
+        "max_length": 256,
+        "batch_size": 64
+      },
+      "seen_only_tuning": {
+        "parameters": "none beyond the shared threshold",
+        "stopping_rule": "no encoder, pooling, prompt-prefix, or model sweep"
+      }
+    },
+    "distilbert_review_candidate_cross_encoder": {
+      "order": 3,
+      "family": "supervised_transformer_cross_encoder",
+      "thesis_role": "supervised contextual baseline",
+      "requires_pair_training": true,
+      "model_id": "distilbert-base-uncased",
+      "model_revision": "12040accade4e8a0f71eabdb258fecc2e7e948be",
+      "starting_recipe": {
+        "head": "binary sequence classification",
+        "max_length": 256,
+        "batch_size": 32,
+        "eval_batch_size": 96,
+        "learning_rate": 0.00003,
+        "weight_decay": 0.01,
+        "epochs": 4,
+        "warmup_ratio": 0.1,
+        "amp": true
+      },
+      "seen_only_tuning": {
+        "pilot_outer_folds": ["l2-a02", "l2-a03", "l2-a09"],
+        "learning_rate": [0.00002, 0.00003, 0.00005],
+        "checkpoint_epochs": [1, 2, 3, 4],
+        "stopping_rule": "select the learning-rate and epoch checkpoint with best mean seen-validation pair_micro_f1; use pair_samples_f1, precision, then lower epoch as tie-breakers"
+      }
+    },
+    "frozen_qwen_candidate_pair": {
+      "order": 4,
+      "family": "frozen_causal_lm_candidate_pair",
+      "thesis_role": "matched no-adapter LLM control",
+      "requires_pair_training": false,
+      "model_id": "Qwen/Qwen3-4B-Instruct-2507",
+      "model_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+      "starting_recipe": {
+        "task_format": "single candidate claim with one-token Y/N answer",
+        "score": "softmax probability of Y over Y and N next-token logits",
+        "load_in_4bit": true,
+        "quantisation": "NF4 double quantisation with float16 compute",
+        "max_length": 384,
+        "eval_batch_size": 6
+      },
+      "seen_only_tuning": {
+        "parameters": "shared threshold only",
+        "stopping_rule": "prompt, verbalizers, parser, model revision, and quantisation are locked"
+      }
+    },
+    "qwen_candidate_pair_qlora": {
+      "order": 5,
+      "family": "qlora_adapted_causal_lm_candidate_pair",
+      "thesis_role": "main task-adaptation method",
+      "requires_pair_training": true,
+      "model_id": "Qwen/Qwen3-4B-Instruct-2507",
+      "model_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+      "starting_recipe": {
+        "task_format": "identical to frozen_qwen_candidate_pair",
+        "load_in_4bit": true,
+        "max_length": 384,
+        "batch_size": 1,
+        "gradient_accumulation_steps": 8,
+        "learning_rate": 0.000005,
+        "weight_decay": 0.01,
+        "epochs": 2,
+        "lora_r": 4,
+        "lora_alpha": 8,
+        "lora_dropout": 0.05,
+        "lora_target_modules": ["q_proj", "k_proj", "v_proj", "o_proj"]
+      },
+      "seen_only_tuning": {
+        "pilot_outer_folds": ["l2-a02", "l2-a03", "l2-a09"],
+        "learning_rate": [0.000002, 0.000005, 0.00001],
+        "checkpoint_epochs": [1, 2],
+        "fixed_for_compute": ["lora_r", "lora_alpha", "lora_dropout", "lora_target_modules", "training_pair_budget"],
+        "stopping_rule": "freeze the learning-rate and checkpoint with best mean seen-validation pair_micro_f1; use pair_samples_f1, precision, then lower epoch as tie-breakers; do not expand the grid after results"
+      }
+    }
+  }
+}

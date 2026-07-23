@@ -131,6 +131,24 @@ def test_splits_use_example_filtering_and_all_official_eval_rows() -> None:
     )
 
 
+def test_split_builder_can_avoid_loading_the_test_split_before_test_stage() -> None:
+    frame = tiny_official_frame()
+    validation_only = frame[frame["original_split"].isin(["train", "validation"])]
+    fold = registered_folds("L2")[0]
+    splits = build_taxonomy_fold_splits(
+        validation_only,
+        fold,
+        evaluation_splits=("validation",),
+    )
+    assert set(splits) == {"train", "validation"}
+    with pytest.raises(ValueError, match="missing requested"):
+        build_taxonomy_fold_splits(
+            validation_only,
+            fold,
+            evaluation_splits=("test",),
+        )
+
+
 def test_l1_and_l2_separate_candidate_scope_from_gold_scope() -> None:
     frame = tiny_official_frame()
     resource = load_minimal_descriptions(require_approved=False)
