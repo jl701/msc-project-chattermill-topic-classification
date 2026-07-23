@@ -30,7 +30,7 @@
     "new_model_inference": false,
     "reuse_saved_predictions": true,
     "strict_alignment": [
-      "row_uid order",
+      "exact one-to-one row_uid set, deterministically joined in strict TF-IDF artifact order",
       "gold pair labels",
       "singleton held-out aspect",
       "validation/test split",
