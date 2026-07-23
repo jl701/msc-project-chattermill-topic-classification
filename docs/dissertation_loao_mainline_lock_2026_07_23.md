@@ -403,41 +403,41 @@ must be marked as pilots, not completion.
 
 ### B. Freeze the description resource
 
-- [ ] Audit all twelve existing definitions using only canonical names and
+- [x] Audit all twelve existing definitions using only canonical names and
   taxonomy hierarchy.
-- [ ] Create the minimal-description v2 file without cues, examples, or
+- [x] Create the minimal-description v2 file without cues, examples, or
   decision-boundary text.
 - [ ] Record authorship, allowed sources, forbidden sources, canonical order,
   freeze time, and SHA-256.
-- [ ] Add tests for exact label coverage, non-empty definitions, stable order,
+- [x] Add tests for exact label coverage, non-empty definitions, stable order,
   and manifest hash.
 - [ ] Obtain user approval of the exact twelve descriptions before any new
   validation/test run.
 
 ### C. Build the common stress-test infrastructure
 
-- [ ] Pre-register protocol IDs, split construction, candidate scope, pair
+- [x] Pre-register protocol IDs, split construction, candidate scope, pair
   sampling, seeds, budgets, selection rules, outputs, and stop rules.
-- [ ] Implement one candidate-pair builder that supports one, two, parent-group,
+- [x] Implement one candidate-pair builder that supports one, two, parent-group,
   and all-candidate evaluation.
-- [ ] Implement generalized seen/unseen metric partitions and harmonic-mean
+- [x] Implement generalized seen/unseen metric partitions and harmonic-mean
   reporting.
-- [ ] Implement paired review-cluster bootstrap that resamples `row_uid` and
+- [x] Implement paired review-cluster bootstrap that resamples `row_uid` and
   retains all candidate pairs for each sampled review.
-- [ ] Extend the existing paired-aspect bootstrap/sign-flip utilities with
+- [x] Extend the existing paired-aspect bootstrap/sign-flip utilities with
   exact alignment guards and protocol-specific aggregation.
-- [ ] Implement Level 3 `NN/DN/ND/DD` rendering with identical row and pair
+- [x] Implement Level 3 `NN/DN/ND/DD` rendering with identical row and pair
   identities across conditions.
 - [ ] Add leakage checks for rows, organisations, supervision labels,
   vocabularies, description hashes, target calibration, and test reuse.
 - [ ] Add focused unit and smoke tests before model execution.
-- [ ] Add deterministic statistical tests covering cluster preservation,
+- [x] Add deterministic statistical tests covering cluster preservation,
   paired resampling, nonlinear metric recomputation, degenerate intervals, and
   mismatched prediction failures.
 
 ### D. Complete strict Level 1
 
-- [ ] Register the cross-aspect zero-label threshold-transfer rule.
+- [x] Register the cross-aspect zero-label threshold-transfer rule.
 - [ ] Recalculate strict zero-label Level 1 results from saved compatible scores
   where retraining is unnecessary.
 - [ ] Produce matched name-only Frozen Qwen and name-only QLoRA evidence where
@@ -458,10 +458,10 @@ must be marked as pilots, not completion.
 
 ### F. Run Level 3 dual-unseen asymmetric-description crossover
 
-- [ ] Freeze the cyclic twelve-pair schedule before results.
-- [ ] Build `example_filtered` ten-aspect training folds with no held-out
+- [x] Freeze the cyclic twelve-pair schedule before results.
+- [x] Build `example_filtered` ten-aspect training folds with no held-out
   supervision.
-- [ ] Expand every evaluation review across all twelve candidates, preserving
+- [x] Expand every evaluation review across all twelve candidates, preserving
   seen/unseen membership for the ten-plus-two split.
 - [ ] Verify that `NN`, `DN`, `ND`, and `DD` reuse the exact same trained model,
   rows, pair identities, thresholds, and metrics.
@@ -473,7 +473,7 @@ must be marked as pilots, not completion.
 
 ### G. Run Level 4 parent-group holdout
 
-- [ ] Pre-register Company brand, Staff support, and Value group folds.
+- [x] Pre-register Company brand, Staff support, and Value group folds.
 - [ ] Audit remaining training support and validation/test target support.
 - [ ] Run cheap/core local models first.
 - [ ] Admit Qwen/QLoRA only after the registered validation and runtime gate.
@@ -490,7 +490,7 @@ must be marked as pilots, not completion.
 
 - [ ] Obtain user approval of the exact confidence-interval and primary-contrast
   plan before any new test result is inspected.
-- [ ] Pre-register bootstrap unit, interval method, bootstrap count and seed,
+- [x] Pre-register bootstrap unit, interval method, bootstrap count and seed,
   primary contrasts, sign-flip rule, multiplicity handling, and permitted
   wording.
 - [ ] Use seed 13 for registered pilots and configuration selection.
