@@ -1,10 +1,20 @@
 # LLM Next Experiment Directions
 
+> **Superseded for future-work decisions on 23 July 2026.** This file records
+> the earlier LLM-centred route. The approved next work is the
+> taxonomy-generalisation difficulty ladder and asymmetric-description stress
+> test in `docs/dissertation_loao_mainline_lock_2026_07_23.md`.
+
 Last updated: 2026-07-03
 
-This note records the recommended next LLM-centred experiments after the completed local DistilBERT LOAO robustness run, Qwen zero-shot LOAO run, fixed-split Gemini Pareto/cascade experiments, and Gemini aspect-description ablation. The current completion-level roadmap is `docs/thesis_completion_roadmap.md`; this file remains the LLM-specific companion note.
+This note records the LLM-centred recommendations that applied after the
+completed local DistilBERT LOAO, Qwen zero-shot LOAO, fixed-split Gemini
+Pareto/cascade, and Gemini aspect-description experiments. It is now historical.
 
-The current direction has now pivoted after the Qwen LoRA validation-gated pilot and the local-to-Qwen LOAO cascade diagnostics. The next modelling work should start from `docs/qwen_local_hybrid_direction.md`: treat DistilBERT as the cheap calibrated gate and Qwen as the semantic judge for uncertain or unfamiliar unseen-aspect cases. Do not default back to launching full 12-fold Qwen JSON-SFT LOAO with the current recipe.
+At that time, the direction pivoted after the Qwen LoRA validation-gated pilot
+and the local-to-Qwen LOAO cascade diagnostics: DistilBERT was treated as the
+cheap calibrated gate and Qwen as the semantic judge. That route is complete
+historical evidence and is not the approved next modelling task.
 
 ## Current Evidence Position
 

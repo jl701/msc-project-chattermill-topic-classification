@@ -1,8 +1,36 @@
 # Report Notes
 
-Last updated: 2026-07-02
+Last updated: 2026-07-23
 
 This file is a compact evidence ledger for dissertation/report drafting. Detailed experiment records remain in `docs/`.
+
+## 2026-07-23 - Approved Taxonomy-Generalisation Mainline
+
+Decision:
+
+- Replace the single-benchmark completion route with an increasing-difficulty
+  taxonomy-generalisation mainline.
+- Retain supplied-candidate LOAO as Level 1.
+- Add generalized single-unseen prediction, dual-unseen asymmetric-description
+  crossover, parent-group holdout, and compound organisation plus taxonomy
+  shift.
+- Treat the supervisor-proposed `NN/DN/ND/DD` dual-unseen crossover as a core
+  dissertation experiment.
+- Use human-authored minimal aspect definitions only after provenance, leakage
+  rules, exact content, and SHA-256 are frozen.
+- Keep canonical aspect names visible in every core condition.
+- Use strict zero-label calibration for the cross-level difficulty curve.
+- Keep aspect-conditioned sentiment and pair-set output for every active method.
+
+Authority and live checklist:
+
+- `docs/dissertation_loao_mainline_lock_2026_07_23.md`
+
+Execution status:
+
+- Mainline approved and documented.
+- No new stress-test experiment has yet been run.
+- The next unchecked block is description-resource audit and freeze.
 
 ## 2026-07-01 - Gemini-Generated Aspect Descriptions
 

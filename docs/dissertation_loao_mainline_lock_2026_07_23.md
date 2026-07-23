@@ -1,200 +1,466 @@
-# Dissertation LOAO Mainline Lock — 23 July 2026
+# Dissertation Taxonomy-Generalisation Mainline Lock - 23 July 2026
 
 ## Status and authority
 
-This is the sole operational source of truth for the dissertation's LOAO experiments, active results, remaining work, and stopping decisions.
+This is the sole operational source of truth for the dissertation's experiment
+mainline, active results, remaining work, and stopping decisions.
 
-It incorporates:
+The user approved this revised direction on 23 July 2026 after discussing the
+UCL supervisor's proposed train/test designs. It supersedes every older
+roadmap, modelling pivot, launch queue, and experiment-priority note. Historical
+experiment reports remain valid within their recorded scopes, but they do not
+define what should be run next.
 
-- the user's 23 July review of the strict representation and QLoRA evidence;
-- the completed strict similarity-baseline sentiment rescore; and
-- Aji's subsequent instruction that all active baselines must use aspect-conditioned sentiment, regardless of whether a shallow baseline becomes numerically weaker.
+No new experiment was run to create this lock.
 
-It supersedes:
+## Working title and central question
 
-- `docs/dissertation_experiment_design_lock_2026_07_16.md`;
-- the old completion order in `docs/thesis_completion_roadmap.md`;
-- the global-sentiment and shallow-sentiment directions in older baseline notes;
-- the legacy TF-IDF-to-Qwen router as an active dissertation result; and
-- any thesis table or handoff prompt that still presents a global-sentiment baseline as current.
+Working title:
 
-Older experiment logs remain provenance only. They do not define the current method, result table, or next task.
+> From Supplied Candidates to Evolving Taxonomies: Generalising Fine-grained
+> Aspect-Based Sentiment Models to Unseen Aspects
 
-## Fixed modelling decision: aspect-conditioned sentiment everywhere
+Central question:
 
-Every active method must predict sentiment conditional on the supplied candidate aspect.
+> As aspect-sentiment classification moves from one supplied unseen aspect to
+> mixed seen/unseen candidate sets, multiple unseen aspects, and compound
+> organisation plus taxonomy shift, how quickly do different model families
+> degrade, and when do human-authored label descriptions and QLoRA reduce that
+> degradation?
 
-For modular representation baselines:
+The contribution is therefore not another flat model leaderboard. It is a
+controlled difficulty ladder for taxonomy generalisation, together with matched
+tests of label-side semantic information and task-specific adaptation.
+
+The narrative remains valid whether an intervention improves or harms F1.
+Negative results must narrow the claim rather than be hidden or replaced by a
+more favourable post-hoc protocol.
+
+## Fixed task contract
+
+Every active method must:
+
+1. receive a supplied candidate aspect or candidate set rather than discover
+   unrestricted topics;
+2. predict sentiment conditional on each candidate aspect;
+3. permit different sentiments for different aspects in the same review;
+4. retain the pair-set output so that multiple aspect-sentiment pairs and empty
+   predictions are representable;
+5. evaluate every official row in the declared validation/test split;
+6. use corrected positive-class presence F1 that excludes true negatives;
+7. keep all vocabularies, IDF weights, encoders, adapters, thresholds, prompts,
+   parsers, and policies inside the declared information regime; and
+8. use test labels once, only after the complete configuration is frozen.
+
+The common prediction unit for new stress-test work is:
 
 ```text
-review + candidate aspect
-        |
-        +--> candidate-presence score
-        |
-        +--> DistilBERT aspect-conditioned sentiment
-        |
-        +--> absent, or candidate aspect | candidate-specific sentiment
+(review, candidate aspect representation, candidate sentiment)
+                              |
+                              v
+                    applicable / not applicable
 ```
 
-The following rules are now fixed:
+Predictions for all permitted candidates are unioned into the review-level
+aspect-sentiment pair set.
 
-1. Count BoW, strict TF-IDF, MiniLM, and E5 use the same frozen DistilBERT aspect-conditioned sentiment component.
-2. Each complete system selects its own presence threshold on validation after the sentiment component has been fixed.
-3. The DistilBERT candidate cross-encoder retains its existing DistilBERT aspect-conditioned sentiment component.
-4. Frozen candidate-pair Qwen and candidate-pair QLoRA are aspect-conditioned by construction because both presence and sentiment are predicted from `(review, candidate aspect)`.
-5. No active baseline may assign one document-level global sentiment to every detected aspect.
-6. The shallow TF-IDF aspect-conditioned sentiment classifier is retired. Its negative result is not a reason to use global sentiment and is not part of the thesis argument.
+## Label-description governance
 
-This decision makes the task formulation consistent with reviews that contain different sentiments for different aspects. The primary LOAO evaluation remains singleton-candidate per fold; applying the same method separately to different candidates permits different candidate-specific sentiments.
+There is no official FABSA annotation guidance. The project will use a
+human-authored, label-side semantic resource under the following rules.
 
-## Locked primary evaluation scope
+### Representation levels
 
-The sole headline benchmark remains twelve-fold all-row LOAO:
+- **Name-only:** the canonical hierarchical aspect name is always visible.
+- **Name + minimal definition:** the canonical name plus one short neutral
+  definition is visible.
+- **Rich guidance:** definition, lexical cues, or decision boundaries. This is
+  optional secondary evidence, not the core description treatment.
+- **Opaque ID only:** an identifier such as `A12` without name or definition.
+  This is permitted only as a negative-control diagnostic.
 
-- `example_filtered` permitted training construction;
-- each of the twelve FABSA aspects held out from task-specific training in turn;
-- all official validation and test rows retained;
-- gold labels projected to the held-out aspect;
-- raw canonical singleton candidate supplied;
-- empty predictions permitted;
-- pair-set output retained because a review–aspect instance may contain more than one gold sentiment;
-- primary metric: unweighted mean of twelve fold-level test pair micro-F1 values;
-- presence, conditional sentiment, false-positive/false-negative rows per 100, and per-aspect spread reported as diagnostics;
-- target-calibrated and strict zero-label results labelled as different information regimes.
+"No description" never means hiding the canonical aspect name in a core
+comparison.
 
-Every fitted vocabulary, IDF weight, classifier, encoder, adapter, threshold, checkpoint, and router policy must obey its declared training and calibration information regime.
+### Leakage-prevention rules
 
-## Locked thesis argument
+The minimal descriptions:
 
-The dissertation will make the following empirical argument:
+1. may use only the twelve canonical names, their parent-child hierarchy, and
+   general language knowledge;
+2. must not use review text, corpus keywords, label frequencies, validation/test
+   labels, predictions, confusion matrices, or error analyses;
+3. must not contain example reviews copied or paraphrased from FABSA;
+4. must be reviewed and frozen before any new validation/test result is
+   inspected;
+5. must be versioned with provenance, an exact content hash, and an immutable
+   canonical order;
+6. must not be rewritten after results are known; and
+7. must be presented in the dissertation appendix so the supplied supervision is
+   auditable.
 
-> Under supplied unseen-aspect taxonomy shift, stronger representations do not automatically solve candidate-absence detection. Fair baselines must nevertheless predict sentiment conditional on the supplied aspect. Under that task-correct formulation, E5 is the strongest retained non-fine-tuned representation baseline, while absence-aware candidate-pair QLoRA provides the largest matched improvement over frozen Qwen. Selective routing is retained only if it can be rebuilt from the strict aspect-conditioned TF-IDF endpoint without test-guided tuning.
+The existing
+`configs/experiments/fabsa_aspect_descriptions_v1.json` is the frozen draft
+resource. The core `minimal_v2` resource should mechanically retain only the
+reviewed definition field. Cues and boundaries must not silently enter the
+minimal treatment.
 
-The results progression is:
+Descriptions are legitimate label-side semantic supervision, not target
+labelled examples. Thesis wording must call the corresponding condition
+**description-assisted zero-shot generalisation**, not zero-information
+classification.
 
-1. establish a simple Count sanity control and a strict sparse TF-IDF baseline;
-2. test frozen semantic transfer with E5;
-3. test a fine-tuned DistilBERT candidate cross-encoder;
-4. diagnose candidate absence and false-positive control;
-5. test frozen candidate-pair Qwen;
-6. test candidate-pair QLoRA as task-specific adaptation;
-7. test zero-label calibration and seed robustness before freezing the final claim.
+## Approved difficulty ladder
 
-## Active result registry
+### Level 1 - Supplied-candidate single-unseen LOAO
 
-Only the rows below are eligible for the primary all-row LOAO result table.
+For each of the twelve folds:
 
-| Method | Sentiment formulation | Test mean pair micro-F1 | Thesis role |
-|---|---|---:|---|
-| Count BoW | Shared DistilBERT aspect-conditioned sentiment; validation-reselected presence threshold | 0.3144 | Compact sanity control |
-| Strict train-only character TF-IDF | Shared DistilBERT aspect-conditioned sentiment; validation-reselected presence threshold | 0.3856 | Main classical baseline |
-| MiniLM-L6-v2 | Shared DistilBERT aspect-conditioned sentiment; validation-reselected presence threshold | 0.3889 | Repository/appendix only |
-| E5-base-v2 | Shared DistilBERT aspect-conditioned sentiment; validation-reselected presence threshold | 0.4013 | Main frozen sentence-embedding baseline |
-| DistilBERT review–candidate cross-encoder | DistilBERT aspect-conditioned sentiment | 0.3158 | Representative fine-tuned contextual baseline |
-| Frozen candidate-pair Qwen | Joint candidate-conditioned pair prediction | 0.337804 | Matched QLoRA control |
-| Candidate-pair QLoRA | Joint candidate-conditioned pair prediction | 0.483158 | Main task-adaptation contribution |
+- train without one target aspect using `example_filtered`;
+- test only whether that supplied target aspect is present;
+- predict its candidate-specific sentiment when present;
+- retain all official validation/test rows and allow an empty output.
 
-The strict similarity rescore exactly aligned all 48 validation and 48 test method-fold artifact pairs. It froze all 48 validation-selected thresholds before test scoring. The completed component audit showed that the stronger aspect-conditioned sentiment head improved all four similarity methods when presence decisions were held fixed, but those fixed-threshold numbers are diagnostic rather than the registered complete-system rows above.
+This is the completed entry benchmark. The current headline table is
+target-calibrated; a strict zero-label calibration view remains required for
+the cross-level difficulty curve.
 
-## Evidence removed from the active direction
+### Level 2 - Generalized single-unseen LOAO
 
-The following results and claims are retired. They must not appear in the dissertation prose, tables, figures, captions, abstract, or new-task instructions.
+For each fold:
 
-| Retired evidence | Treatment |
-|---|---|
-| Any global-document-sentiment Count, TF-IDF, MiniLM, E5, or fixed-split baseline | Historical experiment record only |
-| Strict similarity results with global sentiment: Count `0.3225`, TF-IDF `0.3667`, MiniLM `0.3699`, E5 `0.3791` | Internal component reference only; not an active baseline |
-| Fixed-threshold sentiment-swap results: Count `0.3351`, TF-IDF `0.3847`, MiniLM `0.3862`, E5 `0.3968` | Internal causal diagnostic only; not the complete-system table |
-| Shallow TF-IDF aspect-conditioned sentiment and its `0.3576` LOAO result | Retired; no thesis claim and no rerun |
-| Legacy lexical TF-IDF `0.3780` | Retired; candidate text participated in vectorizer fitting and sentiment was global |
-| Legacy TF-IDF-to-Qwen router `0.4549` and refined `0.4560` | Retired; must not be presented or regenerated as current evidence |
-| Any derivative legacy-router Pareto, per-aspect, uncertainty, boundary-search, or leave-one-aspect result | Retired from the thesis |
-| The claim that aspect conditioning is harmful because a shallow classifier was weaker | Deleted from the active argument |
-| The direction “keep global sentiment because it scores better for a shallow baseline” | Prohibited |
+- train on eleven aspects and hold out the twelfth;
+- test all twelve candidate aspects jointly on every review;
+- score seen and unseen aspect-sentiment pairs separately and together.
 
-Historical logs may retain these values solely to explain what was run. No future task may select, tune, compare against, or build a thesis claim from them.
+This tests whether the unseen aspect is suppressed by familiar labels and
+whether adding the unseen label destabilises seen-label predictions.
 
-## Comparison language
+### Level 3 - Dual-unseen asymmetric-description generalisation
 
-Three comparison levels must remain explicit:
+This supervisor-proposed experiment is a core dissertation contribution, not
+an appendix diagnostic.
 
-1. **Strict representation comparison.** Count, strict TF-IDF, MiniLM, and E5 share the same outer LOAO data, candidate text, aspect-conditioned sentiment component, validation-selection rule, output representation, and metric implementation. Their main difference is the presence representation.
-2. **Matched adaptation comparison.** Frozen candidate-pair Qwen versus candidate-pair QLoRA holds the candidate-pair task and evaluation fixed while changing task-specific adapter training.
-3. **Common outer-benchmark comparison.** DistilBERT, representation baselines, Qwen, QLoRA, and any router share the outer twelve-fold all-row LOAO benchmark but differ in internal architecture, training, or calibration. Their point estimates may share a table, but only the two matched blocks support intervention-level claims.
+For each registered dual-holdout fold:
 
-Do not describe every retained method as internally identical.
+- train on ten aspects using name + minimal definition;
+- hold out two aspects from all task-specific training evidence;
+- test both unseen aspects simultaneously on every official evaluation row;
+- allow neither, either, or both unseen aspects to be predicted, with
+  candidate-specific sentiments.
 
-## Locked remaining-work checklist
+Run the same trained model under four test representations:
 
-This checklist is the authority for subsequent LOAO work. Complete it in order. Change `[ ]` to `[x]` only after the named evidence, validation, and documentation are complete.
+| Condition | Unseen aspect A | Unseen aspect B |
+| --- | --- | --- |
+| `NN` | name only | name only |
+| `DN` | name + definition | name only |
+| `ND` | name only | name + definition |
+| `DD` | name + definition | name + definition |
 
-### A. Governance and baseline consolidation
+`DN` and `ND` are a mandatory crossover. A one-direction comparison is
+confounded by the two aspects' intrinsic difficulty.
 
-- [x] Approve the evidence-driven LOAO thesis mainline.
-- [x] Record Aji's decision that every active baseline must use aspect-conditioned sentiment.
-- [x] Complete the strict Count/TF-IDF/MiniLM/E5 aspect-conditioned sentiment rescore.
-- [x] Verify exact validation/test row alignment and freeze 48 validation-selected thresholds before test.
-- [x] Replace the active global-sentiment baseline numbers with the validation-reselected aspect-conditioned numbers.
-- [x] Remove shallow-sentiment, global-sentiment, legacy TF-IDF, and legacy-router results from the active thesis direction.
-- [x] Integrate the completed aspect-conditioned rescore code, config, tests, report, and tracked numeric exports from `agent/bow-sentence-embedding-baselines` into the final target branch after user review.
-- [x] Rebuild one authoritative baseline table from the active result registry and verify that no retired row is regenerated.
+The initial fold schedule is the twelve cyclic pairs in frozen canonical order:
 
-### B. Rebuild the optional strict TF-IDF router
+```text
+(A1, A2), (A2, A3), ..., (A11, A12), (A12, A1)
+```
 
-This block is permitted only with the strict TF-IDF presence representation and the shared DistilBERT aspect-conditioned sentiment component.
+This schedule is deterministic, gives every aspect two dual-unseen
+appearances, includes both related and cross-parent pairs, and avoids selecting
+pairs after seeing results. It must be confirmed during pre-registration before
+execution; any replacement schedule requires a written rationale based only on
+taxonomy structure and compute, not results.
 
-- [x] Record a strict aspect-conditioned router protocol/config before running the replacement analysis.
-- [x] Add and test a compatibility path exposing strict TF-IDF `presence_score`, its validation-reselected threshold, present/absent prediction, and candidate-specific sentiment to the router analyser without changing the frozen source artifacts.
-- [x] Verify exact validation/test row alignment between strict aspect-conditioned TF-IDF and reused Qwen predictions for all twelve aspects.
-- [x] Select one global router policy from validation only; do not inspect or tune against router test results.
-- [x] Freeze the policy and evaluate it once on all twelve test folds.
-- [x] Report strict local-only and router pair F1, presence precision/recall/F1, FP/FN rows per 100, Qwen call rate, per-aspect deltas, and paired descriptive uncertainty.
-- [x] Decide from the registered result whether the router remains a supporting deployment method or is dropped entirely.
+### Level 4 - Multi-aspect parent-group holdout
 
-The rebuilt router selected the zero-call local-only policy on validation. Its test
-pair F1 was therefore identical to strict TF-IDF (`0.385640`) with zero Qwen calls
-and zero gain. It failed the registered `+0.01` admission gate and is dropped from
-the dissertation mainline.
+Hold out all children of each multi-child parent:
 
-The legacy global-sentiment router is not a baseline, fallback, or selection reference for this block.
+- `Company brand` (three aspects);
+- `Staff support` (three aspects); and
+- `Value` (two aspects).
 
-### C. Strengthen the QLoRA claim
+Test all twelve candidates jointly. This measures generalisation when several
+semantically related labels and an entire supervised sub-taxonomy are unseen.
 
-- [ ] Register a strict zero-label calibration analysis for frozen candidate-pair Qwen and QLoRA using only non-target-aspect validation evidence for each target fold.
-- [ ] Execute the strict zero-label analysis from saved validation/test scores without retraining or changing predictions.
-- [ ] Compare target-calibrated and strict zero-label results and freeze the permitted generalisation wording.
-- [ ] Register additional QLoRA seeds with unchanged configuration, aggregation, stopping rule, runtime budget, and output locations.
-- [ ] Run the registered additional full twelve-fold QLoRA seed replication.
-- [ ] Aggregate seed-by-aspect results and determine whether the single-seed `12/12` improvement and mean gain remain stable.
+### Level 5 - Compound organisation and taxonomy shift
 
-The current thesis claim treats descriptions, contrastive negatives, balancing, and adapter training as one QLoRA candidate-pair package. A factorial component ablation is not required.
+Use the organisation-disjoint split while also removing target aspects or a
+registered target parent group from training:
 
-### D. Freeze the final evidence set
+- train on permitted organisations and seen aspects;
+- select configurations on the permitted validation organisation without
+  target-label calibration;
+- test on unseen organisations with unseen aspects.
 
-- [x] Produce one authoritative table containing only the active rows listed above.
-- [ ] Produce a separate matched-effect table for the strict representation block and frozen-Qwen-to-QLoRA adaptation.
-- [x] Produce a quality–call-rate table or figure only if the rebuilt strict aspect-conditioned router passes its registered gate. Not produced: the router failed its gate.
-- [ ] Verify that validation pilots, fixed-split results, positive-only diagnostics, post-hoc sensitivities, and component audits are not mixed with headline all-row results.
-- [ ] Search thesis prose, tables, figures, captions, abstract, handoff prompts, and generated CSVs for every retired value and model name.
-- [ ] Freeze final source paths, protocol labels, seeds, uncertainty wording, and limitations.
+This is the final deployment-oriented stress test. Low-support labels must be
+reported explicitly rather than hidden by a pooled score.
 
-### E. Write and validate the dissertation
+## Core description intervention
 
-- [ ] Update Methods around candidate-conditioned sentiment, information regimes, retained methods, matched comparisons, and common outer-benchmark comparisons.
-- [ ] Update Results in the locked progression: baselines, absence diagnosis, optional strict router, QLoRA, and robustness.
-- [ ] Update Discussion around task-correct sentiment conditioning, non-monotonic representation gains, absence calibration, QLoRA limitations, and any router quality–cost trade-off.
-- [ ] Keep discarded development experiments out of the main dissertation; cite repository provenance only if necessary.
+The main description study is the Level 3 `NN/DN/ND/DD` crossover. It directly
+tests incomplete label documentation when two unseen labels compete.
+
+All four conditions must share:
+
+- identical train/validation/test rows;
+- identical positive and negative candidate-pair identities;
+- identical training budget and seeds;
+- identical sentiment representation;
+- identical hyperparameters and checkpoint-selection rule;
+- identical strict calibration rule; and
+- identical metrics and aggregation.
+
+Only the two unseen aspects' test-time definition availability may change
+between `NN`, `DN`, `ND`, and `DD`. Negative examples must be sampled once and
+reused; description availability must not alter the training-pair set.
+
+The analysis must include:
+
+- F1 for described and undescribed unseen aspects;
+- within-aspect described-minus-name-only deltas;
+- both-present recall;
+- performance when only the undescribed aspect is gold;
+- false positives when neither is gold;
+- whether predictions are biased toward the described candidate; and
+- per-aspect conditional sentiment diagnostics.
+
+## Method roster
+
+The core methods for new protocols are:
+
+| Method | Thesis role |
+| --- | --- |
+| Strict train-only TF-IDF | Classical lexical baseline |
+| E5-base-v2 | Frozen semantic representation baseline |
+| DistilBERT review-candidate cross-encoder | Supervised contextual baseline |
+| Frozen candidate-pair Qwen | Matched no-adapter LLM control |
+| Candidate-pair QLoRA | Main task-adaptation method |
+
+Count BoW remains a Level 1 sanity control. MiniLM remains repository/appendix
+evidence. The failed strict TF-IDF-to-Qwen router, Gemini branches, legacy
+global-sentiment methods, legacy TF-IDF, shallow sentiment, and unrelated model
+sweeps do not enter the new stress-test mainline.
+
+Methods share the outer protocol and prediction interface. Their internal
+architectures need not be identical. Intervention claims are permitted only
+where the compared conditions are matched within a method or explicitly share a
+registered component block.
+
+## Information regimes and measurement
+
+### Strict core regime
+
+The difficulty curve and new stress tests use strict zero-label calibration:
+
+- no target-aspect validation label may select a threshold, prompt, parser,
+  checkpoint, policy, description, or hyperparameter;
+- target thresholds must be transferred from seen-aspect evidence according to
+  a pre-registered rule; and
+- the target test set is evaluated once.
+
+Existing target-calibrated Level 1 results remain a separately labelled,
+less-restrictive reference.
+
+### Metrics
+
+Level 1 retains the unweighted mean of fold-level pair micro-F1 as its primary
+metric.
+
+Levels 2-5 must report:
+
+- overall pair micro-F1 and pair macro-F1;
+- seen-aspect and unseen-aspect pair F1 separately;
+- a pre-registered harmonic mean of seen and unseen performance where both
+  partitions exist;
+- corrected presence precision, recall, and F1;
+- exact-match rate;
+- false-positive and false-negative rows per 100;
+- per-aspect and per-sentiment results;
+- conditional sentiment accuracy or macro-F1 with denominator and coverage;
+- prediction-set size and described-candidate selection bias for Level 3; and
+- runtime, GPU memory, latency, schema validity, and cost where applicable.
+
+Raw F1 values from different levels are not the same benchmark. The main
+cross-level analysis is each method's degradation from one level to the next and
+the amount recovered by description or adaptation.
+
+## Completed Level 1 evidence
+
+Only these rows are active in the existing target-calibrated, twelve-fold,
+all-row Level 1 table:
+
+| Method | Test mean pair micro-F1 | Role |
+| --- | ---: | --- |
+| Count BoW | 0.314412 | Sanity control |
+| Strict train-only character TF-IDF | 0.385640 | Main classical baseline |
+| MiniLM-L6-v2 | 0.388883 | Appendix/repository |
+| E5-base-v2 | 0.401301 | Main frozen embedding baseline |
+| DistilBERT review-candidate cross-encoder | 0.315848 | Contextual baseline |
+| Frozen candidate-pair Qwen | 0.337804 | Matched QLoRA control |
+| Candidate-pair QLoRA | 0.483158 | Current strongest Level 1 method |
+
+Every row uses aspect-conditioned sentiment. The QLoRA result uses a bundled
+enhanced package: description, hard negatives, balancing, candidate-pair
+training, adapter training, and target validation threshold selection. It does
+not isolate a minimal-description effect and is not yet strict zero-label
+evidence.
+
+The active generated table remains `docs/thesis_result_tables.md`. Retired
+global-sentiment and legacy-router values remain prohibited.
+
+## Approved execution checklist
+
+A box may be checked only when the code/configuration, result, documentation,
+relevant tests, and safe GitHub sync for that item are complete. Partial pilots
+must be marked as pilots, not completion.
+
+### A. Governance and cleanup
+
+- [x] Approve the taxonomy-generalisation difficulty ladder as the thesis
+  mainline.
+- [x] Make this file the sole operational roadmap and TODO list.
+- [x] Retain aspect-conditioned sentiment and pair-set prediction as fixed task
+  requirements.
+- [x] Elevate the dual-unseen asymmetric-description crossover to a core
+  experiment.
+- [x] Mark earlier roadmap, hybrid-pivot, and QLoRA-launch documents as
+  superseded for future-work decisions.
+- [x] Preserve completed experiment reports as historical provenance rather
+  than deleting them.
+
+### B. Freeze the description resource
+
+- [ ] Audit all twelve existing definitions using only canonical names and
+  taxonomy hierarchy.
+- [ ] Create the minimal-description v2 file without cues, examples, or
+  decision-boundary text.
+- [ ] Record authorship, allowed sources, forbidden sources, canonical order,
+  freeze time, and SHA-256.
+- [ ] Add tests for exact label coverage, non-empty definitions, stable order,
+  and manifest hash.
+- [ ] Obtain user approval of the exact twelve descriptions before any new
+  validation/test run.
+
+### C. Build the common stress-test infrastructure
+
+- [ ] Pre-register protocol IDs, split construction, candidate scope, pair
+  sampling, seeds, budgets, selection rules, outputs, and stop rules.
+- [ ] Implement one candidate-pair builder that supports one, two, parent-group,
+  and all-candidate evaluation.
+- [ ] Implement generalized seen/unseen metric partitions and harmonic-mean
+  reporting.
+- [ ] Implement Level 3 `NN/DN/ND/DD` rendering with identical row and pair
+  identities across conditions.
+- [ ] Add leakage checks for rows, organisations, supervision labels,
+  vocabularies, description hashes, target calibration, and test reuse.
+- [ ] Add focused unit and smoke tests before model execution.
+
+### D. Complete strict Level 1
+
+- [ ] Register the cross-aspect zero-label threshold-transfer rule.
+- [ ] Recalculate strict zero-label Level 1 results from saved compatible scores
+  where retraining is unnecessary.
+- [ ] Produce matched name-only Frozen Qwen and name-only QLoRA evidence where
+  existing artifacts are not compatible.
+- [ ] Separate the current enhanced QLoRA package from the minimal description
+  and name-only conditions.
+- [ ] Freeze the strict Level 1 table used by the difficulty curve.
+
+### E. Run Level 2 generalized single-unseen LOAO
+
+- [ ] Complete data/metric smoke tests on three validation folds.
+- [ ] Run strict TF-IDF, E5, and DistilBERT on all twelve folds.
+- [ ] Run Frozen Qwen and QLoRA validation pilots under the same outer protocol.
+- [ ] Pass the registered quality/runtime gate before full Qwen/QLoRA scoring.
+- [ ] Complete all admitted twelve-fold evaluations.
+- [ ] Report overall, seen, unseen, harmonic-mean, exact-match, presence, and
+  sentiment results.
+
+### F. Run Level 3 dual-unseen asymmetric-description crossover
+
+- [ ] Freeze the cyclic twelve-pair schedule before results.
+- [ ] Build `example_filtered` ten-aspect training folds with no held-out
+  supervision.
+- [ ] Verify that `NN`, `DN`, `ND`, and `DD` reuse the exact same trained model,
+  rows, pair identities, thresholds, and metrics.
+- [ ] Complete three-fold validation smoke tests for all core methods.
+- [ ] Run all admitted models on the full registered pair schedule.
+- [ ] Report within-aspect description effects, described-candidate bias,
+  neither/either/both-present cases, and sentiment diagnostics.
+- [ ] Freeze the Level 3 table and crossover figure.
+
+### G. Run Level 4 parent-group holdout
+
+- [ ] Pre-register Company brand, Staff support, and Value group folds.
+- [ ] Audit remaining training support and validation/test target support.
+- [ ] Run cheap/core local models first.
+- [ ] Admit Qwen/QLoRA only after the registered validation and runtime gate.
+- [ ] Compare single-unseen, dual-unseen, and group-unseen degradation.
+
+### H. Run Level 5 compound shift
+
+- [ ] Build organisation-disjoint plus aspect-heldout folds.
+- [ ] Verify zero row, organisation, and target-supervision leakage.
+- [ ] Use strict seen-aspect calibration only.
+- [ ] Run core local models, then gated Frozen Qwen/QLoRA.
+- [ ] Report low-support aspects, uncertainty, and compound-shift degradation
+  without hiding them in pooled metrics.
+
+### I. Robustness, statistics, and final thesis evidence
+
+- [ ] Use seed 13 for registered pilots and configuration selection.
+- [ ] Add seeds 23 and 42 only for the final matched QLoRA endpoints.
+- [ ] Aggregate seed-by-aspect results and report paired uncertainty.
+- [ ] Produce the cross-level difficulty curve.
+- [ ] Produce the Level 3 description crossover table/figure.
+- [ ] Produce one matched Frozen-Qwen-to-QLoRA adaptation table.
+- [ ] Freeze the final permitted claims, limitations, source paths, and table
+  registry.
+- [ ] Update Methods, Results, Discussion, abstract, captions, and appendices.
 - [ ] Compile and visually inspect the complete thesis PDF.
-- [ ] Run final citation, cross-reference, metric-definition, retired-result, secret, and reproducibility checks.
-- [ ] Commit and push the final safe tracked evidence and thesis changes after user review.
+- [ ] Run final tests, citation checks, metric checks, retired-result search,
+  secret scan, and reproducibility audit.
+- [ ] Commit and push every completed safe stage to GitHub main.
+
+## Execution order and gates
+
+The required order is:
+
+```text
+description freeze
+    -> infrastructure and leakage tests
+    -> strict Level 1
+    -> Level 2
+    -> Level 3
+    -> Level 4
+    -> Level 5
+    -> seeds, statistics, and thesis freeze
+```
+
+Run cheap deterministic/local methods before expensive Qwen inference. New
+pipelines require validation smoke tests before full sweeps. A failed or
+uninformative result is documented and closed; test-guided redesign is not
+permitted.
+
+Level 3 is mandatory core evidence. Levels 4 and 5 are planned stress tests but
+remain subject to registered data-support, runtime, and thesis-value gates. A
+gate may stop an expensive model within a level; it may not remove an
+unfavourable completed local result.
 
 ## Stop rules
 
-- Do not run or report global-document-sentiment baselines.
-- Do not rerun the shallow TF-IDF aspect-conditioned sentiment classifier.
-- Do not use legacy TF-IDF or legacy-router outputs for any new analysis.
-- Do not tune router boundaries after observing test.
-- Do not add another sentence encoder unless a named thesis gap cannot be answered by E5.
-- Do not add Gemini, anomaly detection, unrelated model sweeps, or fixed-split experiments to the LOAO mainline.
-- Do not start QLoRA component ablations unless an approved component-level claim requires them.
-- If strict zero-label or multi-seed evidence weakens QLoRA, narrow the claim rather than selecting a favourable post-hoc protocol.
+- Do not use target labels to write or revise descriptions.
+- Do not hide aspect names in a core "no description" condition.
+- Do not run a one-direction described-versus-undescribed pair without the
+  `DN/ND` crossover.
+- Do not alter negative-pair identities across description conditions.
+- Do not tune thresholds, prompts, parsers, folds, or descriptions on test.
+- Do not call different difficulty levels an identical protocol.
+- Do not add another encoder, router, Gemini branch, anomaly detector, or model
+  sweep unless a named mainline research question cannot be answered otherwise.
+- Do not restore global-document sentiment, legacy TF-IDF, shallow sentiment,
+  or retired router results.
+- If strict calibration, harder protocols, or extra seeds weaken QLoRA, narrow
+  the claim rather than selecting a favourable post-hoc subset.

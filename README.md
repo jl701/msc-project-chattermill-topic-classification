@@ -4,20 +4,30 @@ Private project workspace for the UCL MSc project with Chattermill.
 
 Working title:
 
-**Open-vocabulary Topic Classification with LLMs**
+**From Supplied Candidates to Evolving Taxonomies: Generalising Fine-grained
+Aspect-Based Sentiment Models to Unseen Aspects**
+
+The sole operational experiment roadmap and live checklist are in:
+
+- [docs/dissertation_loao_mainline_lock_2026_07_23.md](docs/dissertation_loao_mainline_lock_2026_07_23.md)
+
+The approved mainline progresses from supplied single-unseen LOAO to
+generalized seen/unseen prediction, dual-unseen asymmetric-description
+evaluation, parent-group holdout, and compound organisation plus taxonomy
+shift. Older roadmap and modelling-pivot files are retained as historical
+provenance only.
 
 The main project context, current understanding, datasets, modelling plan, evaluation plan, and open questions are collected in:
 
 - [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md)
+- [docs/dissertation_loao_mainline_lock_2026_07_23.md](docs/dissertation_loao_mainline_lock_2026_07_23.md)
+- [docs/evaluation_protocol.md](docs/evaluation_protocol.md)
 - [docs/github_upload_scope.md](docs/github_upload_scope.md)
 - [docs/non_llm_open_topic_baseline.md](docs/non_llm_open_topic_baseline.md)
-- [docs/next_stage_and_literature_review_plan.md](docs/next_stage_and_literature_review_plan.md)
 - [docs/literature_review_scoping_2026_06_29.md](docs/literature_review_scoping_2026_06_29.md)
-- [docs/dissertation_internal_spec.md](docs/dissertation_internal_spec.md)
 - [docs/literature_review_matrix.md](docs/literature_review_matrix.md)
 - [docs/aji_updates_2026_06_29.md](docs/aji_updates_2026_06_29.md)
 - [docs/gemini_candidate_label_baseline.md](docs/gemini_candidate_label_baseline.md)
-- [docs/llm_next_experiment_directions.md](docs/llm_next_experiment_directions.md)
 - [docs/experiment_reproducibility_register.md](docs/experiment_reproducibility_register.md)
 
 Experiment close-out rule: after every meaningful experiment, record the exact parameters/configuration and results in tracked project documentation, run relevant validation checks, then commit and push safe code/docs/config changes to GitHub. Do not commit or push `outputs/`, raw data, credentials, checkpoints, model weights, raw prediction files, or confidential material.

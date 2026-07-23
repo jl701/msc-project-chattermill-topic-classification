@@ -1,8 +1,14 @@
 # Dissertation Internal Spec
 
+> **Superseded for experiment planning on 23 July 2026.** The stable task
+> principles below remain useful, but the current title, research questions,
+> difficulty ladder, description rules, and live TODO are defined in
+> `docs/dissertation_loao_mainline_lock_2026_07_23.md`.
+
 Last updated: 2026-06-29
 
-This internal spec freezes the current dissertation spine and the experiment rules that future modelling work should follow. It is deliberately concise and operational: future Qwen, Gemini, LOAO, or joint-pair-scoring runs should conform to this document unless the protocol is explicitly revised.
+This internal spec froze the dissertation spine used in June 2026. It is
+retained as historical provenance and no longer authorises future runs.
 
 ## Working Dissertation Spine
 

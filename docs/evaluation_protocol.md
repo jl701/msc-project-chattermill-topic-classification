@@ -1,6 +1,12 @@
 # FABSA Evaluation Protocol
 
-This note records the FABSA evaluation setup. The hierarchy and experiment-admission rules in `docs/dissertation_experiment_design_lock_2026_07_16.md` are authoritative: all-row LOAO is the sole primary benchmark, fixed-taxonomy representation is supporting evidence, and held-out-organisation and fixed held-out-aspect results are secondary context.
+This note records the FABSA evaluation setup. The current experiment hierarchy,
+admission rules, and completion checklist are defined only in
+`docs/dissertation_loao_mainline_lock_2026_07_23.md`. The older
+`docs/dissertation_experiment_design_lock_2026_07_16.md` is historical
+provenance. The completed singleton all-row LOAO protocol below is now Level 1
+of the approved taxonomy-generalisation difficulty ladder rather than the sole
+future benchmark.
 
 ## 1. Closed-Topic Benchmark
 
@@ -83,9 +89,15 @@ Leakage checks for both strategies:
 
 Protocol version: `loao_open_topic_all_row_v1`
 
-Status: frozen as the sole primary dissertation benchmark; reaffirmed on 2026-07-16.
+Status: frozen as the completed Level 1 supplied-candidate benchmark. It remains
+the entry point for the dissertation, but it no longer defines the entire
+experimental mainline.
 
-This is the canonical robustness protocol for the open-topic claim. Fixed held-out-aspect experiments remain useful capability and deployment evidence, but they must not be presented as full open-topic robustness evidence.
+This is the canonical Level 1 protocol for the supplied single-unseen-candidate
+claim. Fixed held-out-aspect experiments remain useful capability and
+deployment evidence, but they must not be presented as full twelve-fold
+robustness evidence. Levels 2-5 below intentionally change the candidate scope
+or shift axes and therefore use distinct protocol IDs.
 
 ### Fold Construction
 
@@ -205,6 +217,66 @@ Sampled hosted-LLM LOAO is allowed when API cost makes full LOAO unreasonable, b
 - Use positive-row LOAO only for sentiment diagnostics.
 - Use hosted Gemini fixed/cascade results as hosted-LLM reference or upper-bound evidence unless a clearly labelled Gemini LOAO diagnostic is run.
 - Any future change to row scope, candidate-set size, aggregation, or primary metric must be named as a new protocol version rather than silently replacing `loao_open_topic_all_row_v1`.
+
+## 5. Approved Taxonomy-Generalisation Stress-Test Suite
+
+The stress-test suite is governed by
+`docs/dissertation_loao_mainline_lock_2026_07_23.md`. The summary below fixes
+the protocol boundaries that future implementation must preserve.
+
+### Level 2: Generalized Single-Unseen LOAO
+
+For every target aspect:
+
+- train on the other eleven aspects using `example_filtered`;
+- evaluate all twelve candidate aspects on every official validation/test row;
+- keep the target aspect marked as unseen and the other eleven as seen;
+- allow a review to receive zero, one, or multiple aspect-sentiment pairs; and
+- report overall, seen, unseen, and harmonic-mean performance.
+
+The candidate-set expansion makes this a new protocol. Its raw F1 must not be
+placed beside Level 1 as though only the model changed.
+
+### Level 3: Dual-Unseen Asymmetric Descriptions
+
+For each pre-registered pair of held-out aspects:
+
+- remove every training row containing either target aspect;
+- train on the remaining ten aspects;
+- evaluate both unseen aspects simultaneously on all official rows; and
+- render the unseen pair as `NN`, `DN`, `ND`, and `DD`, where `N` means
+  canonical name only and `D` means canonical name plus the frozen minimal
+  definition.
+
+All four conditions must reuse the same model, rows, candidate-pair identities,
+thresholds, and metrics. `DN` and `ND` form the required crossover.
+
+### Level 4: Parent-Group Holdout
+
+Hold out all children of Company brand, Staff support, or Value in turn, then
+test all twelve candidates jointly. The parent groups are separate folds and
+must not be pooled into a synthetic training set.
+
+### Level 5: Compound Organisation And Taxonomy Shift
+
+Construct the aspect holdout inside the organisation-disjoint split. Training,
+validation, and test organisations must be disjoint, and no target-aspect label
+may calibrate the target pipeline. Report target support and per-aspect
+uncertainty because some aspect-sentiment labels are rare.
+
+### Strict Information Regime
+
+The new difficulty curve uses strict zero-label selection. A target-aspect
+validation label may not select descriptions, thresholds, prompts, parsers,
+checkpoints, policies, or hyperparameters. Existing target-calibrated Level 1
+results remain separately labelled reference evidence.
+
+### Cross-Level Interpretation
+
+Levels deliberately differ in candidate count and distribution shift.
+Cross-level analysis must therefore focus on within-method degradation and on
+the amount recovered by a matched intervention. It must not treat raw scores
+from different levels as one interchangeable leaderboard.
 
 ## Reproduction
 

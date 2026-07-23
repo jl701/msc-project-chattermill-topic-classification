@@ -1,8 +1,15 @@
 # Qwen-Local Hybrid Direction
 
+> **Historical completed branch.** This local-to-Qwen pivot and its router
+> results are retained as experiment provenance, but the router has been
+> dropped from the active dissertation mainline. Future work is governed only
+> by `docs/dissertation_loao_mainline_lock_2026_07_23.md`.
+
 Last updated: 2026-07-03
 
-This note records the current modelling pivot after the fixed held-out-aspect Qwen LoRA run, the single-fold all-row Qwen LoRA validation pilot, the offline local-to-Qwen LOAO cascade diagnostics, the completed local score/margin routing analysis, and the completed asymmetric score-distance/Pareto analysis.
+This note records the modelling pivot that followed the fixed held-out-aspect
+Qwen LoRA run, the single-fold all-row Qwen LoRA validation pilot, and the
+offline local-to-Qwen cascade analyses. It no longer defines the current pivot.
 
 ## Decision
 
@@ -57,7 +64,8 @@ Therefore the next experiments should use Qwen where semantic judgement matters 
 
 ## User-Confirmed Next Optimisation Queue
 
-The numbered queue below is the current source of truth for future local-to-Qwen work. The numbers are intentionally stable so they can be referenced in later discussions.
+The numbered queue below records the source-of-truth state of the historical
+local-to-Qwen branch at completion. It is not a live future-work queue.
 
 Current decision:
 

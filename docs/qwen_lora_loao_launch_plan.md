@@ -1,5 +1,11 @@
 # Qwen LoRA Held-Out-Aspect And LOAO Launch Plan
 
+> **Superseded as a launch queue on 23 July 2026.** The commands and completed
+> readiness evidence remain useful provenance, but no full run should be
+> launched from this document. QLoRA work must follow the strict calibration,
+> generalized, dual-unseen, and runtime gates in
+> `docs/dissertation_loao_mainline_lock_2026_07_23.md`.
+
 Last updated: 2026-07-02
 
 This note records the completed fixed held-out-aspect Qwen LoRA run, the later single-fold all-row validation-gated pilot, and the launch plan for a possible full 12-fold Qwen LoRA leave-one-aspect-out (LOAO) run. The fixed run and single-fold pilot are complete; the full 12-fold Qwen LoRA LOAO run has not been started.

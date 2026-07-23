@@ -1,5 +1,10 @@
 # Next Stage And Literature Review Plan
 
+> **Superseded for experiment planning on 23 July 2026.** Retain this document
+> for literature-review and historical provenance only. The live experimental
+> sequence and checklist are in
+> `docs/dissertation_loao_mainline_lock_2026_07_23.md`.
+
 Last updated: 2026-06-29
 
 This note records the project state after completing the strongest current local non-LLM open-topic baseline. The next major modelling phase is intentionally paused while the dissertation literature review and overall framework are developed.

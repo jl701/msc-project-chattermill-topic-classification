@@ -1,12 +1,37 @@
 # Project Overview: Open-Vocabulary Topic Classification With LLMs
 
-Last updated: 2026-07-03
+Last updated: 2026-07-23
 Local workspace: `C:\Msc_DSML\Msc_Project`  
 GitHub repo: `https://github.com/jl701/msc-project-chattermill-topic-classification`  
 
+## Current Authoritative Direction - 23 July 2026
+
+The sole live experiment roadmap is
+`docs/dissertation_loao_mainline_lock_2026_07_23.md`. It supersedes earlier
+completion roadmaps, router/hybrid pivots, QLoRA launch queues, and experiment
+priority notes.
+
+The approved thesis mainline studies taxonomy generalisation under increasing
+difficulty:
+
+1. supplied-candidate single-unseen LOAO;
+2. generalized prediction over seen and unseen aspects;
+3. dual-unseen prediction with asymmetric label descriptions (`NN`, `DN`,
+   `ND`, `DD`);
+4. multi-aspect parent-group holdout; and
+5. compound organisation plus taxonomy shift.
+
+All active methods must use aspect-conditioned sentiment and pair-set output.
+The main new intervention is a frozen human-authored minimal definition that
+uses only canonical taxonomy names and hierarchy. The dual-unseen description
+crossover is core evidence. Completed historical results below retain their
+recorded scope but do not define the next task.
+
 ## 1. One-Sentence Summary
 
-This project aims to build and evaluate a system for assigning multiple topic labels to customer feedback, with a focus on robust generalisation to new or flexible topics and to data from different companies/organisations.
+This project evaluates fine-grained aspect-sentiment systems under progressively
+harder taxonomy change, from one supplied unseen aspect to incomplete
+descriptions, multiple unseen aspects, and compound organisation shift.
 
 ## 2. People And Context
 
@@ -814,44 +839,30 @@ Future dissertation-writing work should edit the LaTeX source directly. Markdown
    - Flash-Lite provides the cheapest and fastest hosted baseline.
    - The local-to-Gemini cascade is complete and is the strongest fixed-split system result, but it remains fixed three-aspect evidence rather than LOAO robustness evidence.
    - The Pro cascade beats pure Pro through error complementarity: Pro handles most uncertain rows, while the local fallback protects against Pro abstentions and some local-reliable rows.
-   - The strongest next dissertation-oriented work is not more DistilBERT LOAO, more Gemini prompt sweeps, or full Gemini LOAO by default. The roadmap is recorded in `docs/thesis_completion_roadmap.md`.
+   - This was the pre-23-July position. The approved next work is now the
+     taxonomy-generalisation difficulty ladder in
+     `docs/dissertation_loao_mainline_lock_2026_07_23.md`.
    - Candidate-aspect descriptions, the Gemini-assisted qualitative error taxonomy, thesis-ready tables, cascade score/margin uncertainty, Qwen LoRA runner readiness, tiny Qwen LoRA smoke testing, the fixed held-out-aspect Qwen LoRA validation/test run, the Qwen LoRA full LOAO launch plan, a single-fold all-row Qwen LoRA validation-gated pilot, local-to-Qwen score-distance routing, asymmetric global routing, and F1/call-rate Pareto reporting are now complete. The global-router contribution is sufficient for the thesis-facing local-to-Qwen method unless a supervisor requests more evidence. Per-aspect routing should remain an upper-bound diagnostic, and candidate-wise Qwen judgement plus descriptions are deferred unless a new Qwen-inference question is explicitly needed.
 
 ## 16. Immediate Next Steps
 
-1. Use `docs/thesis_completion_roadmap.md` as the current task ordering before starting new modelling work.
+Use only the checklist in
+`docs/dissertation_loao_mainline_lock_2026_07_23.md`. The next unfinished block
+is description-resource audit and freeze.
 
-2. Keep the provided FABSA split as the closed-topic benchmark.
+The approved order is:
 
-3. Treat `example_filtered` as the cleaner fixed held-out-aspect result and `label_masked` as an incomplete-label-noise ablation.
+1. freeze the leakage-safe minimal description resource;
+2. build and test the common candidate-pair stress-test infrastructure;
+3. complete strict zero-label Level 1;
+4. run generalized single-unseen Level 2;
+5. run the core dual-unseen `NN/DN/ND/DD` crossover;
+6. run gated parent-group and compound-shift stress tests; and
+7. add final QLoRA seeds, statistics, figures, and thesis text.
 
-4. Treat the completed Gemini Flash fixed held-out-aspect result as a hosted baseline, but do not over-claim it as LOAO evidence.
-
-5. Keep LOAO all-row evaluation as the robustness view and positive-row LOAO only as a sentiment diagnostic.
-
-6. Treat the completed DistilBERT all-row LOAO result as the robustness caveat for the local non-LLM branch: strong fixed three-aspect performance, weak and highly variable full LOAO performance.
-
-7. Treat the completed Qwen all-row LOAO result as the local open-weight zero-shot robustness baseline before Qwen fine-tuning. It is strong on positive rows but weak on all-row absence calibration, so do not treat it as a finished calibrated open-topic system.
-
-8. Treat the fixed-split hosted Pareto comparison as complete: Flash-Lite, Flash, and Pro have all been run on validation/test.
-
-9. Treat the local-to-Gemini cascade as complete fixed-split selective-deployment evidence; its Pro variant beats pure Pro through fallback recovery and lower false-negative count, not because local is globally stronger. Use `docs/local_gemini_cascade.md` and `docs/tasks_1_to_3_thesis_prep.md` as the clean evidence map.
-
-10. Treat Gemini-generated aspect descriptions as complete Task 4 evidence. Do not rerun the same description API work unless a new thesis question requires it.
-
-11. Treat the Gemini-assisted qualitative error taxonomy as complete and keep raw review text, Gemini prompts, and Gemini drafts under ignored `outputs/`.
-
-12. Treat thesis-ready evidence tables and figure inputs as complete; they are recorded in `docs/thesis_result_tables.md` and `docs/thesis_figure_data/`.
-
-13. Treat the cascade score/margin uncertainty check as complete. It is a negative methodological check: score/margin features are exportable but did not improve the validation-selected cascade over the reliability proxy.
-
-14. Treat the final Qwen LoRA SFT/evaluation runner, tiny local smoke test, fixed held-out-aspect Qwen LoRA validation/test run, and single-fold all-row Qwen LoRA validation-gated pilot as complete. Use `docs/qwen_lora_loao_launch_plan.md` before any long GPU run, but do not launch full LOAO with the current singleton SFT recipe.
-
-15. Treat the local-to-Qwen asymmetric score-distance hybrid as the immediate Qwen modelling result. The strongest local DistilBERT LOAO predictions have been rerun with score, threshold-distance, and sentiment-confidence features, and existing Qwen zero-shot LOAO predictions have been reused for validation-selected routing. The selected unified global router is `score_asym_rescue_le_0.05_confirm_le_0.30`, with test mean pair micro F1 `0.3900` and Qwen call rate `29.1%`. Items 3-6 are not the next default: lightweight defer routing is lower priority, per-aspect routing is diagnostic only, and candidate-wise Qwen semantic judging with descriptions is deferred.
-
-16. Do not run full Gemini Pro LOAO unless the dissertation value justifies the added cost and latency.
-
-17. Treat full fine-tuned Qwen LoRA LOAO as a deferred compute-bound experiment, not as a prerequisite for finishing the rest of the dissertation evidence package. Do not launch it until a revised absence-calibration objective passes a validation gate and the target GPU environment, storage budget, package versions, and data-transfer rules are confirmed.
+Completed Gemini, router, fixed-split, old Qwen JSON-SFT, and historical
+description experiments remain evidence only. They are not alternative live
+queues.
 
 ## 17. Notes For Repository Hygiene
 

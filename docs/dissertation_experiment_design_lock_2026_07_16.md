@@ -1,8 +1,16 @@
 # Dissertation Experiment Design Lock — 16 July 2026
 
+> **Superseded for planning on 23 July 2026.** This document is retained only
+> as historical design provenance. The approved taxonomy-generalisation
+> difficulty ladder, description governance, stress tests, and live checklist
+> are defined in `docs/dissertation_loao_mainline_lock_2026_07_23.md`. Do not
+> use this file to decide or authorise future experiments.
+
 ## Status and Authority
 
-This document freezes the supervisor-aligned dissertation experiment design after the 16 July 2026 discussion with Aji. It supersedes earlier experiment-priority notes wherever they propose multiple parallel thesis tasks, continued router boundary tuning, full Qwen LoRA LOAO by default, or equal headline status for incompatible protocols.
+This document froze the supervisor-aligned dissertation experiment design after
+the 16 July 2026 discussion with Aji. It was superseded by the user-approved
+23 July taxonomy-generalisation mainline.
 
 The lock changes the organisation of evidence, not the provenance of completed experiments. Existing results remain available in their recorded scopes.
 

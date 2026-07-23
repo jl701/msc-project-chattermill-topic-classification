@@ -1,5 +1,11 @@
 # Thesis Completion Roadmap
 
+> **Superseded for planning on 23 July 2026.** This file preserves the old
+> pre-QLoRA and hybrid-routing roadmap as provenance. The only live thesis
+> checklist is now in
+> `docs/dissertation_loao_mainline_lock_2026_07_23.md`. Do not resume unchecked
+> items here unless the new mainline explicitly re-registers them.
+
 Last updated: 2026-07-03
 
 This note freezes the remaining dissertation-oriented work around the Qwen LoRA LOAO boundary. The original aim was to keep the project moving while GPU access was being negotiated. A later single-fold all-row Qwen LoRA pilot showed that the current SFT recipe does not pass the validation gate, so the full 12-fold run should now wait for a revised absence-calibration objective rather than GPU access alone. The immediate modelling direction has shifted to local-to-Qwen hybrid routing: DistilBERT acts as a cheap calibrated gate, while Qwen is used as a semantic judge for uncertain or unfamiliar unseen-aspect cases.
@@ -67,7 +73,8 @@ Qwen should be evaluated as a selective semantic judge in a hybrid local-to-Qwen
 
 ## Work To Finish Before Full Qwen LoRA LOAO
 
-Use the checklist below as the operational source of truth before starting the full fine-tuned Qwen LoRA LOAO run. When a task is completed, update this file by changing `[ ]` to `[x]`, then record the command/result in `docs/experiment_log.md` and `report_notes.md` where relevant.
+The checklist below was the operational source of truth for the earlier Qwen
+LoRA plan. It is now historical and must not be updated as the live queue.
 
 ### Pre-Qwen LoRA Full LOAO Checklist
 
@@ -320,7 +327,9 @@ If the revised recipe does not pass validation or GPU access is not granted:
 
 ## Next Immediate Order
 
-1. Keep `docs/qwen_local_hybrid_direction.md` as the source of truth for the current modelling pivot.
+1. Historical decision at the time: keep
+   `docs/qwen_local_hybrid_direction.md` as the source of truth for that
+   completed modelling pivot. It no longer governs future work.
 2. Treat the local DistilBERT LOAO score/sentiment-confidence export as complete and reusable for future router diagnostics.
 3. Treat the completed user-confirmed local-to-Qwen item 1 and item 2 as sufficient for the thesis-facing local-to-Qwen contribution: the global selected rule is `score_asym_rescue_le_0.05_confirm_le_0.30`, and the public Pareto CSV is `docs/thesis_figure_data/qwen_local_qwen_loao_pareto.csv`.
 4. Keep lightweight defer routing as a non-default follow-up because it may overfit and may not beat the simple score-distance rule.
