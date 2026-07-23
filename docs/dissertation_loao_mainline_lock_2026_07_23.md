@@ -307,6 +307,44 @@ Raw F1 values from different levels are not the same benchmark. The main
 cross-level analysis is each method's degradation from one level to the next and
 the amount recovered by description or adaptation.
 
+### Statistical uncertainty and paired inference
+
+Confidence intervals are a required part of the final thesis evidence, not an
+optional post-hoc decoration. The exact implementation must be frozen before
+any new test result is inspected. The proposed contract, pending the user's
+final execution-plan approval, is:
+
+- report point estimates and 95% confidence intervals for the primary metrics;
+- compare matched systems with a paired interval for the metric difference,
+  rather than inferring improvement from two separate model intervals;
+- use `row_uid` as the review-level bootstrap cluster, retaining every
+  candidate aspect, candidate sentiment, gold label, and paired model
+  prediction for the sampled review;
+- recompute F1 and every nonlinear metric inside each bootstrap replicate;
+- use identical bootstrap draws for both sides of a matched comparison;
+- supplement review-level intervals with paired per-aspect deltas,
+  wins/ties/losses, and an exact sign-flip test where the registered number of
+  units permits it;
+- keep review-sampling, aspect/fold, and training-seed uncertainty explicitly
+  separate; and
+- describe an interval excluding zero as evidence of a stable paired
+  difference under the registered resampling regime, never as absolute proof.
+
+The primary proposed paired contrasts are:
+
+1. candidate-pair QLoRA minus Frozen candidate-pair Qwen;
+2. minimal-description minus name-only within a matched model, especially the
+   Level 3 `NN/DN/ND/DD` crossover; and
+3. registered within-method degradation across the description-complete
+   difficulty endpoints.
+
+Level 4 has only three parent-group folds. It must therefore report
+review-cluster intervals within every group and show all group results; it must
+not claim strong cross-group inference from three fold values. Levels 2-4 use
+seed 13 initially, so their intervals do not include training-seed variability.
+The final matched Level 1 QLoRA analysis may additionally use seeds 13, 23, and
+42 to report seed sensitivity.
+
 ## Completed Level 1 evidence
 
 Only these rows are active in the existing target-calibrated, twelve-fold,
@@ -358,6 +396,10 @@ must be marked as pilots, not completion.
 - [x] Limit seeds 23 and 42 to the matched Level 1 QLoRA endpoints; initially
   use seed 13 for Levels 2-4.
 - [x] Defer Level 5 outside the current dissertation execution scope.
+- [x] Retain DistilBERT as the supervised contextual baseline rather than
+  replacing it with a new encoder sweep.
+- [x] Require confidence intervals and paired uncertainty for final primary
+  claims.
 
 ### B. Freeze the description resource
 
@@ -380,11 +422,18 @@ must be marked as pilots, not completion.
   and all-candidate evaluation.
 - [ ] Implement generalized seen/unseen metric partitions and harmonic-mean
   reporting.
+- [ ] Implement paired review-cluster bootstrap that resamples `row_uid` and
+  retains all candidate pairs for each sampled review.
+- [ ] Extend the existing paired-aspect bootstrap/sign-flip utilities with
+  exact alignment guards and protocol-specific aggregation.
 - [ ] Implement Level 3 `NN/DN/ND/DD` rendering with identical row and pair
   identities across conditions.
 - [ ] Add leakage checks for rows, organisations, supervision labels,
   vocabularies, description hashes, target calibration, and test reuse.
 - [ ] Add focused unit and smoke tests before model execution.
+- [ ] Add deterministic statistical tests covering cluster preservation,
+  paired resampling, nonlinear metric recomputation, degenerate intervals, and
+  mismatched prediction failures.
 
 ### D. Complete strict Level 1
 
@@ -439,11 +488,24 @@ must be marked as pilots, not completion.
 
 ### I. Robustness, statistics, and final thesis evidence
 
+- [ ] Obtain user approval of the exact confidence-interval and primary-contrast
+  plan before any new test result is inspected.
+- [ ] Pre-register bootstrap unit, interval method, bootstrap count and seed,
+  primary contrasts, sign-flip rule, multiplicity handling, and permitted
+  wording.
 - [ ] Use seed 13 for registered pilots and configuration selection.
 - [ ] Use seed 13 for the initial complete Level 2, Level 3, and Level 4 runs.
 - [ ] Add seeds 23 and 42 only for the final matched Level 1 QLoRA endpoints.
 - [ ] Aggregate the matched Level 1 seed-by-aspect results and report paired
   uncertainty.
+- [ ] Report review-cluster 95% intervals for primary model metrics and paired
+  95% intervals for every registered primary delta.
+- [ ] Report paired aspect deltas, wins/ties/losses, and sign-flip evidence
+  without treating the twelve aspects as independent review observations.
+- [ ] Label every interval by the uncertainty it includes: review sampling,
+  aspect/fold variation, and, where available, training-seed variation.
+- [ ] Report Level 4 review-cluster intervals per parent group and avoid a
+  strong cross-group significance claim from only three group folds.
 - [ ] Produce the cross-level difficulty curve.
 - [ ] Produce the Level 3 description crossover table/figure.
 - [ ] Produce one matched Frozen-Qwen-to-QLoRA adaptation table.
@@ -461,7 +523,8 @@ The required order is:
 
 ```text
 description freeze
-    -> infrastructure and leakage tests
+    -> statistical protocol freeze
+    -> infrastructure, leakage, and statistical tests
     -> local end-to-end smoke tests
     -> cloud-readiness review and one-fold benchmark
     -> strict Level 1

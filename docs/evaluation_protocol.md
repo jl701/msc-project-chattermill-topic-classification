@@ -173,6 +173,31 @@ The main LOAO table should report the unweighted mean, standard deviation, minim
 
 Pooled micro F1 across all folds may be reported as an optional diagnostic, but it must not replace the unweighted aspect-level spread because pooled scores are dominated by more frequent aspects.
 
+### Planned Confidence Intervals And Paired Inference
+
+The final strict Levels 1-4 suite must add a pre-registered uncertainty
+protocol before any new test result is inspected. The current proposal, pending
+the user's final execution-plan approval, is:
+
+- use paired review-cluster bootstrap for matched model or intervention
+  comparisons;
+- sample `row_uid` clusters with replacement and keep every candidate aspect,
+  sentiment, gold label, and paired model prediction belonging to the sampled
+  review;
+- recompute the complete nonlinear metric, including F1, in every replicate;
+- report the point difference and 95% interval for the paired difference;
+- supplement it with paired aspect/fold deltas, wins/ties/losses, and a
+  registered sign-flip test;
+- distinguish review-sampling, aspect/fold, and training-seed uncertainty; and
+- avoid interpreting a confidence interval as absolute proof.
+
+The primary proposed contrasts are QLoRA minus matched Frozen Qwen,
+minimal-description minus name-only within a matched model, and registered
+within-method difficulty degradation. Level 4 must report review-cluster
+intervals separately for Company brand, Staff support, and Value because three
+parent groups are insufficient for strong cross-group inference. With seed 13
+alone, Levels 2-4 intervals exclude training-seed variability.
+
 ### Selection Rules
 
 Validation data may be used for model, threshold, prompt, and hyperparameter selection. Test labels must only be used after the selected configuration is fixed.
