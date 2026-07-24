@@ -42,7 +42,7 @@ from msc_project.experiments.taxonomy_protocol import (
     scientific_protocol_sha256,
     training_scope_id,
 )
-from msc_project.experiments.taxonomy_resources import load_minimal_descriptions
+from msc_project.experiments.taxonomy_resources import load_description_bundle
 from msc_project.experiments.taxonomy_runtime_factory import (
     create_runtime_for_training,
     load_runtime_checkpoint,
@@ -141,14 +141,14 @@ def run_smoke(
     method_id: str,
     output_root: Path,
     *,
-    conditions: tuple[str, ...] = ("NN", "DN", "ND", "DD"),
+    conditions: tuple[str, ...] = ("NN", "DN", "ND", "DD", "RR"),
     seed: int = 13,
     local_files_only: bool = True,
 ) -> dict[str, object]:
     fold = registered_folds("L3")[0]
     if set(conditions) - set(fold.conditions):
         raise ValueError("Smoke condition is not registered for Level 3.")
-    resource = load_minimal_descriptions(require_approved=False)
+    resource = load_description_bundle(require_approved=False)
     frame = synthetic_frame()
     prepared = [
         prepare_fold_evaluation(
@@ -383,7 +383,7 @@ def main() -> None:
     result = run_smoke(
         args.method,
         args.output_root,
-        conditions=tuple(args.condition or ("NN", "DN", "ND", "DD")),
+        conditions=tuple(args.condition or ("NN", "DN", "ND", "DD", "RR")),
         local_files_only=not args.allow_download,
     )
     print(json.dumps(result, ensure_ascii=False), flush=True)

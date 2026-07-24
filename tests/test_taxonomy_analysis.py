@@ -31,9 +31,10 @@ def l3_scored_grid(condition: str = "DN") -> pd.DataFrame:
         "name_only": {(fold.heldout_aspects[1], "positive")},
         "neither": set(),
     }
+    marker_variants = {"N": "name_only", "D": "minimal", "R": "rich"}
     represented = {
-        fold.heldout_aspects[0]: "minimal" if condition[0] == "D" else "name_only",
-        fold.heldout_aspects[1]: "minimal" if condition[1] == "D" else "name_only",
+        fold.heldout_aspects[0]: marker_variants[condition[0]],
+        fold.heldout_aspects[1]: marker_variants[condition[1]],
     }
     for row_index, (row_uid, gold_pairs) in enumerate(gold.items()):
         for aspect in fold.heldout_aspects:
@@ -109,6 +110,20 @@ def test_symmetric_conditions_do_not_invent_asymmetric_bias() -> None:
     )
     assert result["described_minus_name_only_selection_rate"] is None
     assert result["only_name_only_gold_rows"] is None
+
+
+def test_rich_condition_is_reported_without_reusing_minimal_bias_fields() -> None:
+    fold = registered_folds("L3")[0]
+    result = level3_condition_diagnostics(
+        l3_scored_grid("RR"),
+        fold,
+        "RR",
+        0.5,
+    )
+    assert result["minimal_definition_aspects"] == []
+    assert result["name_only_aspects"] == []
+    assert result["rich_guidance_aspects"] == list(fold.heldout_aspects)
+    assert result["described_minus_name_only_selection_rate"] is None
 
 
 def test_threshold_guard_requires_same_value_and_seen_set() -> None:

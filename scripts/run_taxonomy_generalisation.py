@@ -70,7 +70,7 @@ from msc_project.experiments.taxonomy_protocol import (
     select_strict_seen_threshold,
     training_scope_id,
 )
-from msc_project.experiments.taxonomy_resources import load_minimal_descriptions
+from msc_project.experiments.taxonomy_resources import load_description_bundle
 from msc_project.experiments.taxonomy_runtime_factory import (
     create_runtime_for_training,
     load_runtime_checkpoint,
@@ -222,7 +222,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         selection_path=args.parameter_selection,
         expected_training_scope_id=training_scope_id(fold),
     )
-    resource = load_minimal_descriptions(require_approved=False)
+    resource = load_description_bundle(require_approved=False)
     config = load_precloud_config()
     assert_formal_run_gates(resource, config)
 

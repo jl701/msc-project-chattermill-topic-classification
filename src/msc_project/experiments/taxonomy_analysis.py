@@ -279,6 +279,11 @@ def level3_condition_diagnostics(
         for aspect in fold.heldout_aspects
         if represented.get(aspect) == "name_only"
     ]
+    rich_guidance = [
+        aspect
+        for aspect in fold.heldout_aspects
+        if represented.get(aspect) == "rich"
+    ]
 
     def safe_rate(numerator: int, denominator: int) -> float | None:
         return float(numerator / denominator) if denominator else None
@@ -301,6 +306,8 @@ def level3_condition_diagnostics(
             int(neither_gold.sum()),
         ),
         "described_aspects": described,
+        "minimal_definition_aspects": described,
+        "rich_guidance_aspects": rich_guidance,
         "name_only_aspects": undescribed,
     }
     if len(described) == 1 and len(undescribed) == 1:

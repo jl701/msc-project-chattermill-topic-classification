@@ -50,7 +50,7 @@ from msc_project.experiments.taxonomy_protocol import (
     registered_folds,
     training_scope_id,
 )
-from msc_project.experiments.taxonomy_resources import load_minimal_descriptions
+from msc_project.experiments.taxonomy_resources import load_description_bundle
 from msc_project.experiments.taxonomy_selection import (
     load_threshold_transfer_artifact,
 )
@@ -204,6 +204,7 @@ def build_primary_comparisons(
         )
 
     description = []
+    rich_guidance = []
     crossover = {}
     for method_id in METHOD_IDS:
         value = matched_protocol_comparison(
@@ -217,6 +218,23 @@ def build_primary_comparisons(
                 "comparison_id": f"L3-{method_id}-DD-minus-NN",
                 "method_id": method_id,
                 **value,
+            }
+        )
+        rich_value = matched_protocol_comparison(
+            endpoints[(method_id, "L3", "RR")],
+            endpoints[(method_id, "L3", "DD")],
+            replicates=replicates,
+            seed=seed,
+        )
+        rich_guidance.append(
+            {
+                "comparison_id": f"L3-{method_id}-RR-minus-DD",
+                "method_id": method_id,
+                "interpretation": (
+                    "secondary rich taxonomy guidance minus matched minimal "
+                    "definitions for both held-out aspects"
+                ),
+                **rich_value,
             }
         )
         directional = []
@@ -271,6 +289,9 @@ def build_primary_comparisons(
     return {
         "qlora_minus_frozen_family": holm_adjust_comparison_family(adaptation),
         "level3_dd_minus_nn_family": holm_adjust_comparison_family(description),
+        "level3_rr_minus_dd_secondary_family": holm_adjust_comparison_family(
+            rich_guidance
+        ),
         "level3_directional_crossover_by_method": crossover,
         "cross_level_degradation": degradation,
     }
@@ -356,7 +377,10 @@ def _write_new(path: Path, value: dict[str, object]) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Build the three preregistered primary taxonomy comparisons."
+        description=(
+            "Build the preregistered primary taxonomy comparisons and the "
+            "secondary Level 3 RR-minus-DD rich-guidance family."
+        )
     )
     parser.add_argument("--output-root", type=Path, required=True)
     parser.add_argument("--parameter-selection-dir", type=Path, required=True)
@@ -366,7 +390,7 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=13)
     args = parser.parse_args()
 
-    resource = load_minimal_descriptions(require_approved=False)
+    resource = load_description_bundle(require_approved=False)
     config = load_precloud_config()
     assert_formal_run_gates(resource, config)
     replicates = int(config["statistics"]["bootstrap_replicates"])
@@ -378,7 +402,7 @@ def main() -> None:
     required_conditions = {
         "L1": ("D",),
         "L2": ("D",),
-        "L3": ("NN", "DN", "ND", "DD"),
+        "L3": ("NN", "DN", "ND", "DD", "RR"),
         "L4": ("D",),
     }
     for method_id in METHOD_IDS:
@@ -430,7 +454,7 @@ def main() -> None:
         )
 
     report = {
-        "schema_version": "taxonomy_primary_comparisons_v1",
+        "schema_version": "taxonomy_primary_comparisons_v2",
         "created_at": datetime.now(timezone.utc).isoformat(),
         "protocol_id": config["protocol_id"],
         "seed": args.seed,

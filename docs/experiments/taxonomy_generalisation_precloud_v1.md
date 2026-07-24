@@ -1,5 +1,12 @@
 # Taxonomy-Generalisation Pre-Cloud Implementation v1
 
+> Historical pre-cloud implementation record. Its statements that description
+> approval is pending and formal execution is blocked were superseded on
+> 24 July 2026 by
+> `taxonomy_level3_rich_guidance_preregistration_20260724.md` and the live
+> dissertation mainline. Preserve this file as provenance; do not use it as the
+> current execution gate.
+
 ## Status
 
 This implementation plan was registered on 23 July 2026 after the user approved

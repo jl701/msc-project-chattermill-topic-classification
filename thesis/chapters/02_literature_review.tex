@@ -133,6 +133,16 @@ the FABSA labels are project-specific hierarchical composites, a uniformly
 authored definition is more reproducible than selecting different external web
 pages for different labels.
 
+Gao et al.'s intervention is stronger than merely appending a definition at
+inference: label terms, related terms, dictionary or Wikipedia text, and
+templates become labelled description examples used to fine-tune the model.
+The present core protocol does not expose held-out aspects through such
+task-specific training. Its secondary rich condition adds fixed aliases and
+taxonomy boundaries only at representation time. This preserves the same
+training manifest and threshold as the minimal condition, so
+\texttt{RR}-minus-\texttt{DD} measures richer label-side guidance rather than
+additional target-aspect optimisation.
+
 Description choice itself can become hidden model selection. Basile et al.\
 note that a true zero-shot setting lacks a labelled target development set and
 therefore rank or aggregate multiple descriptions without target labels
@@ -154,7 +164,9 @@ rewriting the description after observing target results. The Level~3
 \texttt{NN}/\texttt{DN}/\texttt{ND}/\texttt{DD} crossover extends this logic
 to incomplete documentation. The two directions are both required because a
 one-direction result would confound description availability with the intrinsic
-difficulty of the two held-out aspects.
+difficulty of the two held-out aspects. The secondary \texttt{RR} condition is
+therefore symmetric and deliberately does not expand the experiment to every
+possible name/minimal/rich pairing.
 
 \section{A Matched Spectrum of Model Capacity}
 

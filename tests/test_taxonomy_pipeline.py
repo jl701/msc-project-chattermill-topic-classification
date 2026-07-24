@@ -23,7 +23,7 @@ from msc_project.experiments.taxonomy_pipeline import (
     unique_rendered_claim_count,
 )
 from msc_project.experiments.taxonomy_protocol import registered_folds
-from msc_project.experiments.taxonomy_resources import load_minimal_descriptions
+from msc_project.experiments.taxonomy_resources import load_description_bundle
 from msc_project.experiments.unified_candidate_pairs import manifest_hash
 
 
@@ -81,7 +81,7 @@ class DeterministicRuntime:
 def prepared_conditions():
     frame = synthetic_frame()
     fold = registered_folds("L3")[0]
-    resource = load_minimal_descriptions(require_approved=False)
+    resource = load_description_bundle(require_approved=False)
     return [
         prepare_fold_evaluation(
             frame,
@@ -109,7 +109,7 @@ def test_training_preparation_needs_only_the_official_train_split() -> None:
     frame = synthetic_frame()
     train_only = frame[frame["original_split"] == "train"].copy()
     fold = registered_folds("L3")[0]
-    resource = load_minimal_descriptions(require_approved=False)
+    resource = load_description_bundle(require_approved=False)
     split, manifest = prepare_fold_training(
         train_only,
         fold,
@@ -125,7 +125,7 @@ def test_training_preparation_needs_only_the_official_train_split() -> None:
 def test_l1_strict_calibration_uses_seen_gold_on_a_matched_l2_grid() -> None:
     frame = synthetic_frame()
     fold = registered_folds("L1")[0]
-    resource = load_minimal_descriptions(require_approved=False)
+    resource = load_description_bundle(require_approved=False)
     target = prepare_fold_evaluation(
         frame,
         fold,
@@ -158,7 +158,7 @@ def test_l1_strict_calibration_uses_seen_gold_on_a_matched_l2_grid() -> None:
 
 def test_every_level_strict_calibration_excludes_heldout_candidates() -> None:
     frame = synthetic_frame()
-    resource = load_minimal_descriptions(require_approved=False)
+    resource = load_description_bundle(require_approved=False)
     for level in ("L1", "L2", "L3", "L4"):
         fold = registered_folds(level)[0]
         calibration = prepare_strict_seen_calibration(frame, fold, resource)
@@ -243,10 +243,10 @@ def test_condition_scoring_deduplicates_identical_rendered_claims(tmp_path: Path
         resume=False,
     )
     naive_count = sum(len(value.evaluation_grid) for value in prepared)
-    assert set(artifacts) == set(states) == {"NN", "DN", "ND", "DD"}
+    assert set(artifacts) == set(states) == {"NN", "DN", "ND", "DD", "RR"}
     assert unique_count == runtime.scored_rows
     assert unique_count < naive_count
     # Two synthetic reviews x (10 seen aspects * 3 sentiments +
-    # 2 held-out aspects * 2 representation variants * 3 sentiments).
-    assert unique_count == 2 * 42
+    # 2 held-out aspects * 3 representation variants * 3 sentiments).
+    assert unique_count == 2 * 48
     assert unique_rendered_claim_count(prepared) == unique_count

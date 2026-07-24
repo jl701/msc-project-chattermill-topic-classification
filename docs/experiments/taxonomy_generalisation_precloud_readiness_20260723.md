@@ -1,12 +1,11 @@
 # Taxonomy-Generalisation Pre-Cloud Readiness Report — 23 July 2026
 
-> Historical readiness snapshot. The scientific protocol remains current, but
-> the execution placement, Frozen-Qwen workload and local/cloud time estimates
-> in Sections 11-12 were superseded on 24 July 2026 by
-> `docs/experiments/taxonomy_local_non_qlora_execution_readiness_20260724.md`.
-> TF-IDF, E5, DistilBERT and cached Frozen Qwen are now local; QLoRA is cloud.
-> The user also approved and froze the statistical protocol on 24 July 2026;
-> statements below that it remains pending describe the 23 July snapshot.
+> Historical readiness snapshot. Its four-condition Level 3 protocol,
+> description-pending gate, protocol hash, execution placement and workload
+> were superseded on 24 July 2026 by the local-execution readiness report and
+> `taxonomy_level3_rich_guidance_preregistration_20260724.md`. TF-IDF, E5,
+> DistilBERT and cached Frozen Qwen are local; QLoRA is cloud. Statements below
+> that descriptions or statistics remain pending describe the 23 July snapshot.
 
 ## Executive conclusion
 

@@ -1,7 +1,10 @@
 {
   "version": "fabsa_aspect_descriptions_minimal_v2",
-  "status": "pending_user_approval",
+  "status": "approved_and_frozen",
   "created_at": "2026-07-23T00:00:00+01:00",
+  "approved_at": "2026-07-24T22:53:32+01:00",
+  "frozen_at": "2026-07-24T22:53:32+01:00",
+  "approval": "The user explicitly approved the exact minimal_v2 resource before formal taxonomy-generalisation execution. The twelve definitions are frozen and must not be rewritten in response to validation or test results.",
   "authorship": "Human-authored project taxonomy resource, mechanically reduced from the definition fields of fabsa_aspect_descriptions_v1 before any new taxonomy-generalisation validation or test result.",
   "allowed_sources": [
     "the twelve canonical FABSA aspect names",

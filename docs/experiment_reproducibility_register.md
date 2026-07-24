@@ -1,21 +1,23 @@
 # Experiment Reproducibility Register
 
-Last updated: 2026-07-23
+Last updated: 2026-07-24
 
 This register audits whether the project experiments have enough recorded parameters for the user, Aji, or a future project session to reproduce the reported results. It complements `docs/experiment_log.md`, which remains the chronological ledger.
 
 Current experiment authority is
 `docs/dissertation_loao_mainline_lock_2026_07_23.md`. It defines the approved
-Level 1-5 taxonomy-generalisation ladder and the only live TODO list.
+Level 1-4 taxonomy-generalisation ladder, deferred Level 5, and the only live
+TODO list.
 Earlier global-sentiment, historical JSON-prompt Qwen, and legacy router entries
 below are provenance only, even where their original status text called them
 positive or thesis-facing. They are not active results or permitted selection
 references.
 
-The generalized single-unseen, dual-unseen `NN/DN/ND/DD`, parent-group, and
-compound-shift protocols are approved plans but have not yet produced results.
-They must enter this register only after their configs and exact execution
-commands are pre-registered.
+The generalised single-unseen, dual-unseen `NN/DN/ND/DD` crossover, secondary
+Level 3 `RR - DD` rich-guidance comparison, and parent-group protocols are
+approved plans but have not yet produced formal results. Their configs,
+resources, hashes, and execution rules are pre-registered; compound shift is
+deferred.
 
 ## Recording Standard
 

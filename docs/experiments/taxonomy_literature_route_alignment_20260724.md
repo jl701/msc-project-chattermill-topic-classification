@@ -184,3 +184,15 @@ Validation after the edits:
 - the full repository test suite passed: 292 tests.
 
 Formal local model execution remains intentionally unstarted in this stage.
+
+## 10. Post-review approved extension
+
+After reviewing Gao et al.'s stronger label-description-training intervention,
+the user retained minimal definitions as the core treatment and approved one
+bounded secondary Level 3 `DD` versus `RR` comparison. `RR` supplies fixed
+aliases and taxonomy boundaries at representation time but does not create
+synthetic target-aspect training examples. The exact contract and frozen hashes
+are recorded in
+`taxonomy_level3_rich_guidance_preregistration_20260724.md`. This later
+decision does not change the literature review's terminology, primary
+difficulty curve, or five-method roster.

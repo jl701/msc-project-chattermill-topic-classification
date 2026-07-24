@@ -2,9 +2,9 @@
   "protocol_id": "taxonomy_generalisation_precloud_v1",
   "status": "implementation_preregistered_before_new_validation_or_test",
   "registered_at": "2026-07-23T00:00:00+01:00",
-  "scope": "Complete code, tests, leakage audits, resumability, local synthetic smoke tests, and cloud-readiness evidence. Do not run new official validation or test inference before the description and statistical gates are approved.",
-  "objective": "Build the strict Levels 1-4 taxonomy-generalisation suite without changing the approved thesis question or using target-aspect labels for calibration.",
-  "thesis_question": "How do lexical, frozen semantic, supervised contextual, frozen LLM, and QLoRA-adapted candidate-label methods degrade as unseen-taxonomy difficulty increases, and how much is recovered by minimal label descriptions and task adaptation?",
+  "scope": "Run the approved Levels 1-4 taxonomy-generalisation suite after the minimal description, secondary Level 3 rich-guidance, and statistical gates have been frozen. Validation selection remains seen-only and formal test use remains single-pass.",
+  "objective": "Evaluate the strict Levels 1-4 taxonomy-generalisation suite without changing the approved thesis question or using target-aspect labels for calibration, with one secondary Level 3 DD-versus-RR rich-taxonomy-guidance comparison.",
+  "thesis_question": "How do lexical, frozen semantic, supervised contextual, frozen LLM, and QLoRA-adapted candidate-label methods degrade as unseen-taxonomy difficulty increases; how much is recovered by minimal label descriptions and task adaptation; and, secondarily, does richer fixed taxonomy guidance improve dual-unseen performance beyond minimal definitions?",
   "canonical_aspects": [
     "Account management: Account access",
     "Company brand: Competitor",
@@ -27,10 +27,15 @@
   "description_resource": {
     "path": "configs/experiments/fabsa_aspect_descriptions_minimal_v2.json",
     "required_version": "fabsa_aspect_descriptions_minimal_v2",
+    "rich_path": "configs/experiments/fabsa_aspect_rich_taxonomy_guidance_v1.json",
+    "rich_required_version": "fabsa_aspect_rich_taxonomy_guidance_v1",
+    "bundle_version": "fabsa_description_bundle_v1",
     "formal_run_required_status": "approved_and_frozen",
     "name_only": "canonical hierarchical aspect name plus candidate sentiment label",
     "minimal": "the same canonical name plus one frozen neutral aspect definition and the candidate sentiment label",
-    "fixed_rule": "Seen labels use minimal descriptions whenever a model consumes label text during task-specific training; frozen similarity methods use the same representation at scoring time."
+    "rich": "the canonical name and exact minimal definition plus three to five non-corpus aliases, one inclusion boundary, one contrastive boundary, and the candidate sentiment label",
+    "fixed_rule": "Seen labels use minimal descriptions whenever a model consumes label text during task-specific training; frozen similarity methods use the same representation at scoring time.",
+    "rich_fixed_rule": "Rich guidance is used only by the two held-out aspects in the secondary Level 3 RR condition. RR reuses the exact DD-trained model, seen-only threshold, rows, pair identities, and budget; target data or results cannot revise the rich cards."
   },
   "split_policy": {
     "training_strategy": "example_filtered",
@@ -62,9 +67,17 @@
         "NN",
         "DN",
         "ND",
+        "DD",
+        "RR"
+      ],
+      "primary_crossover_conditions": [
+        "NN",
+        "DN",
+        "ND",
         "DD"
       ],
-      "difficulty_curve_endpoint": "DD"
+      "difficulty_curve_endpoint": "DD",
+      "secondary_rich_guidance_comparison": "RR minus DD"
     },
     "L4_D": {
       "heldout_groups": {
@@ -135,6 +148,9 @@
       "minimal description minus name-only within matched models, centred on the Level 3 crossover",
       "within-method degradation across L1-D, L2-D, L3-DD, and L4-D"
     ],
+    "secondary_families": [
+      "Level 3 RR rich taxonomy guidance minus DD minimal definitions within each matched method"
+    ],
     "seed_scope": "Levels 2-4 initially include review/fold uncertainty at seed 13 only; final matched Level 1 QLoRA endpoints add seeds 23 and 42"
   },
   "core_methods": [
@@ -160,7 +176,7 @@
       42
     ]
   },
-  "precloud_stop_rule": "Stop before official validation or test execution. Deliver an auditable cloud-readiness pack and obtain user approval.",
+  "formal_execution_rule": "Official seen-only validation selection may start after both description resources, statistics, code, smoke tests, and execution manifests are frozen. Formal test scoring occurs once after every admitted method and threshold is frozen.",
   "output_policy": {
     "tracked": [
       "configs",

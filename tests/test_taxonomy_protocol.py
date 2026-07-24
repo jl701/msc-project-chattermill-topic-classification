@@ -27,7 +27,7 @@ from msc_project.experiments.taxonomy_protocol import (
     select_strict_seen_threshold,
     training_scope_id,
 )
-from msc_project.experiments.taxonomy_resources import load_minimal_descriptions
+from msc_project.experiments.taxonomy_resources import load_description_bundle
 
 
 ASPECTS = canonical_aspects()
@@ -112,7 +112,10 @@ def test_registered_fold_schedule_is_fixed_and_complete() -> None:
     assert l2[0].conditions == ("D",)
     assert l3[0].heldout_aspects == (ASPECTS[0], ASPECTS[1])
     assert l3[-1].heldout_aspects == (ASPECTS[-1], ASPECTS[0])
-    assert all(fold.conditions == ("NN", "DN", "ND", "DD") for fold in l3)
+    assert all(
+        fold.conditions == ("NN", "DN", "ND", "DD", "RR")
+        for fold in l3
+    )
     assert all(fold.conditions == ("D",) for fold in l4)
     appearances = {
         aspect: sum(aspect in fold.heldout_aspects for fold in l3)
@@ -159,7 +162,7 @@ def test_split_builder_can_avoid_loading_the_test_split_before_test_stage() -> N
 
 def test_l1_and_l2_separate_candidate_scope_from_gold_scope() -> None:
     frame = tiny_official_frame()
-    resource = load_minimal_descriptions(require_approved=False)
+    resource = load_description_bundle(require_approved=False)
     l1 = registered_folds("L1")[0]
     l2 = registered_folds("L2")[0]
     l1_splits = build_taxonomy_fold_splits(frame, l1)
@@ -184,7 +187,7 @@ def test_l3_crossover_changes_only_heldout_text_not_pair_identity() -> None:
     frame = tiny_official_frame()
     fold = registered_folds("L3")[0]
     splits = build_taxonomy_fold_splits(frame, fold)
-    resource = load_minimal_descriptions(require_approved=False)
+    resource = load_description_bundle(require_approved=False)
     hashes = []
     texts: dict[str, dict[tuple[str, str], str]] = {}
     for condition in fold.conditions:
@@ -208,6 +211,9 @@ def test_l3_crossover_changes_only_heldout_text_not_pair_identity() -> None:
     assert texts["DN"][(second, "positive")] == texts["NN"][(second, "positive")]
     assert texts["ND"][(first, "positive")] == texts["NN"][(first, "positive")]
     assert texts["ND"][(second, "positive")] == texts["DD"][(second, "positive")]
+    assert texts["RR"][(first, "positive")] != texts["DD"][(first, "positive")]
+    assert texts["RR"][(second, "positive")] != texts["DD"][(second, "positive")]
+    assert "Aliases:" in texts["RR"][(first, "positive")]
 
 
 def test_candidate_variants_keep_seen_descriptions_in_every_condition() -> None:
@@ -218,14 +224,18 @@ def test_candidate_variants_keep_seen_descriptions_in_every_condition() -> None:
     assert [
         candidate_representation_variants(fold, condition)[fold.heldout_aspects[0]]
         for condition in fold.conditions
-    ] == ["name_only", "minimal", "name_only", "minimal"]
+    ] == ["name_only", "minimal", "name_only", "minimal", "rich"]
+    assert {
+        candidate_representation_variants(fold, "RR")[aspect]
+        for aspect in fold.heldout_aspects
+    } == {"rich"}
 
 
 def test_training_manifest_excludes_heldout_and_is_deterministic() -> None:
     frame = tiny_official_frame()
     fold = registered_folds("L1")[0]
     splits = build_taxonomy_fold_splits(frame, fold)
-    resource = load_minimal_descriptions(require_approved=False)
+    resource = load_description_bundle(require_approved=False)
     first = build_taxonomy_training_manifest(splits["train"], fold, resource)
     second = build_taxonomy_training_manifest(
         splits["train"].sample(frac=1, random_state=7), fold, resource
@@ -259,7 +269,7 @@ def test_training_manifest_excludes_heldout_and_is_deterministic() -> None:
 
 def test_training_manifest_never_turns_a_second_gold_sentiment_into_a_negative() -> None:
     fold = registered_folds("L1")[0]
-    resource = load_minimal_descriptions(require_approved=False)
+    resource = load_description_bundle(require_approved=False)
     frame = pd.DataFrame(
         [
             {

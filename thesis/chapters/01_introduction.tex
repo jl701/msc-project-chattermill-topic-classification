@@ -58,7 +58,9 @@ The study is organised around four questions:
     \item \textbf{RQ2: Label semantics.} How much unseen-aspect performance is
     recovered by adding one frozen minimal taxonomy definition to the canonical
     aspect name, and does asymmetric description availability bias prediction
-    towards the described candidate?
+    towards the described candidate? As a secondary question, does fixed rich
+    taxonomy guidance improve dual-unseen performance beyond minimal
+    definitions?
 
     \item \textbf{RQ3: Task adaptation.} Under a matched candidate-pair
     interface, does QLoRA adaptation improve on a frozen Qwen control, and is
@@ -84,7 +86,10 @@ zero-shot text classification.
 Level~3 removes two aspects at a time and evaluates all twelve candidates. Its
 core \texttt{NN}/\texttt{DN}/\texttt{ND}/\texttt{DD} crossover independently
 varies whether the two unseen aspects receive their frozen minimal definitions;
-the ten seen aspects retain their definitions in every condition. Level~4
+the ten seen aspects retain their definitions in every condition. A secondary
+\texttt{RR} condition gives both unseen aspects fixed rich taxonomy cards while
+reusing the same model, threshold, rows, and candidate pairs. It does not enter
+the primary difficulty curve. Level~4
 withholds all children of each multi-child parent group and again evaluates the
 complete candidate set. The description-complete path
 \texttt{L1-D $\rightarrow$ L2-D $\rightarrow$ L3-DD $\rightarrow$ L4-D}
@@ -114,6 +119,13 @@ used to construct or revise these descriptions. Consequently, the treatment is
 described as \emph{description-assisted zero-shot generalisation}, not
 zero-information classification.
 
+A separately frozen rich card retains the exact minimal definition and adds
+three to five non-corpus-derived aliases, one inclusion boundary, and one
+contrastive boundary. It is used only in the Level~3 \texttt{RR} secondary
+condition and is called \emph{rich taxonomy guidance}. It is not
+label-description training: no synthetic target-aspect example updates model
+weights, and no target review or result selects its content.
+
 \section{Evaluation Commitments}
 
 All active methods preserve aspect-conditioned sentiment, permit different
@@ -131,7 +143,8 @@ and conditional sentiment diagnostics. Point estimates are accompanied by
 paired review-cluster confidence intervals for the registered primary
 comparisons. Per-aspect or per-group differences are shown separately so that
 review-sampling uncertainty is not confused with variation across taxonomic
-units or training seeds.
+units or training seeds. The secondary \texttt{RR}-minus-\texttt{DD} family is
+reported separately and cannot replace the primary minimal-description result.
 
 \section{Scope of the Contribution}
 
@@ -140,7 +153,8 @@ zero-shot learning, or that a larger model must outperform a smaller one. Its
 contribution is a controlled and auditable study of candidate-label
 aspect-sentiment classification under increasingly difficult taxonomy change.
 The central outputs are the difficulty curve, the dual-unseen asymmetric
-description crossover, and the matched frozen-to-QLoRA adaptation comparison.
+description crossover, the compact secondary rich-guidance comparison, and the
+matched frozen-to-QLoRA adaptation comparison.
 Earlier closed-taxonomy, held-out-organisation, hosted Gemini, and router
 experiments provide project provenance or secondary context, but they do not
 define the active thesis mainline.

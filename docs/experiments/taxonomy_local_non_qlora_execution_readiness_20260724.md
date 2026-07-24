@@ -1,5 +1,11 @@
 # Local Non-QLoRA Execution Readiness - 24 July 2026
 
+> This report remains authoritative for local-versus-cloud placement and cache
+> design, but its description-pending gate, four-condition Level 3 protocol
+> hash, and 152,316-input Frozen-Qwen estimate were superseded later on
+> 24 July 2026. The revised `RR` protocol and 209,448-input maximum are recorded
+> in `taxonomy_level3_rich_guidance_preregistration_20260724.md`.
+
 ## 1. Outcome
 
 The approved compute split is now implemented:

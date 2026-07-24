@@ -21,7 +21,7 @@ from msc_project.experiments.taxonomy_protocol import (
     scientific_protocol_sha256,
     training_scope_id,
 )
-from msc_project.experiments.taxonomy_resources import load_minimal_descriptions
+from msc_project.experiments.taxonomy_resources import load_description_bundle
 from msc_project.experiments.taxonomy_tuning import (
     registered_tuning_candidates,
 )
@@ -179,7 +179,7 @@ def build_plan(
 ) -> dict[str, object]:
     if shard_count < 1:
         raise ValueError("shard_count must be positive.")
-    resource = load_minimal_descriptions(require_approved=False)
+    resource = load_description_bundle(require_approved=False)
     config = load_precloud_config()
     execution = load_execution_placement()
     jobs: list[dict[str, object]] = []
@@ -545,7 +545,7 @@ def build_plan(
     validation_core_per_method = (
         OFFICIAL_ROWS["validation"] * validation_claims_per_review
     )
-    test_core_per_method = OFFICIAL_ROWS["test"] * 1116
+    test_core_per_method = OFFICIAL_ROWS["test"] * 1188
     core_per_method = validation_core_per_method + test_core_per_method
     qlora_extra_seed_pairs = 2 * (
         OFFICIAL_ROWS["validation"] * (12 * 11 * 3)
@@ -586,13 +586,13 @@ def build_plan(
         job["executor"] = _executor_for_job(job, placement)
     executor_counts = Counter(str(job["executor"]) for job in jobs)
     frozen_cache_validation_inputs = OFFICIAL_ROWS["validation"] * 12 * 3
-    frozen_cache_test_inputs = OFFICIAL_ROWS["test"] * 12 * 3 * 2
+    frozen_cache_test_inputs = OFFICIAL_ROWS["test"] * 12 * 3 * 3
     frozen_cache_total_inputs = (
         frozen_cache_validation_inputs + frozen_cache_test_inputs
     )
 
     return {
-        "schema_version": "taxonomy_cloud_execution_plan_v1",
+        "schema_version": "taxonomy_cloud_execution_plan_v2",
         "created_at": datetime.now(timezone.utc).isoformat(),
         "scientific_protocol_sha256": scientific_protocol_sha256(config),
         "formal_execution_blocked": not (
@@ -663,7 +663,7 @@ def build_plan(
                 ),
             },
             "scoring_optimisations": [
-                "L3 scores 42 unique rendered claims per review instead of 144 logical condition claims.",
+                "L3 scores 48 unique rendered claims per review instead of 180 logical condition claims.",
                 "L1 validation scores only the matched L2-D seen-aspect calibration grid; held-out validation targets are never scored.",
                 "Every level scores seen candidates only during validation; held-out validation candidates are never rendered or scored.",
                 "The L1 calibration score artifacts are reused by L2 threshold selection.",
@@ -691,7 +691,7 @@ def _write_new(path: Path, value: dict[str, object]) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Generate the blocked, dependency-aware taxonomy cloud plan."
+        description="Generate the dependency-aware taxonomy execution plan."
     )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--output-root", type=Path, default=DEFAULT_OUTPUT_ROOT)

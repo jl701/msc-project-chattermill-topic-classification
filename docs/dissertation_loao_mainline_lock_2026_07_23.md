@@ -26,8 +26,7 @@ The implementation and current workload evidence are in
 This later report supersedes the 23 July report only for execution placement,
 Frozen-Qwen caching and workload estimates. Scientific descriptions and
 statistical gates were initially pending separately. The user approved and
-froze the complete statistical protocol on 24 July 2026; only the description
-resource remains unresolved.
+froze the complete statistical protocol on 24 July 2026.
 
 Before formal local execution, the thesis route and literature were realigned
 on 24 July 2026. The evidence map and terminology audit are recorded in
@@ -36,6 +35,13 @@ confirmed the Level 1--4 route and five-method roster, corrected Level 1 versus
 label-partially-unseen terminology, and repositioned earlier Gemini/router work
 as historical or secondary evidence. No official validation or test experiment
 was run during the literature stage.
+
+Later on 24 July 2026 the user approved the exact minimal definitions and one
+secondary Level 3 `DD` versus `RR` rich-taxonomy-guidance comparison. The
+pre-registration and revised protocol hashes are recorded in
+`docs/experiments/taxonomy_level3_rich_guidance_preregistration_20260724.md`.
+This secondary comparison does not alter the primary `NN/DN/ND/DD` crossover
+or the `L1-D -> L2-D -> L3-DD -> L4-D` difficulty curve.
 
 ## Working title and central question
 
@@ -98,7 +104,7 @@ human-authored, label-side semantic resource under the following rules.
 - **Name + minimal definition:** the canonical name plus one short neutral
   definition is visible.
 - **Rich guidance:** definition, lexical cues, or decision boundaries. This is
-  optional secondary evidence, not the core description treatment.
+  frozen secondary Level 3 evidence, not the core description treatment.
 - **Opaque ID only:** an identifier such as `A12` without name or definition.
   This is permitted only as a negative-control diagnostic.
 
@@ -122,11 +128,15 @@ The minimal descriptions:
 7. must be presented in the dissertation appendix so the supplied supervision is
    auditable.
 
-The existing
-`configs/experiments/fabsa_aspect_descriptions_v1.json` is the frozen draft
-resource. The core `minimal_v2` resource should mechanically retain only the
-reviewed definition field. Cues and boundaries must not silently enter the
-minimal treatment.
+The exact `configs/experiments/fabsa_aspect_descriptions_minimal_v2.json`
+resource was approved and frozen on 24 July 2026 without changing its twelve
+definitions. Cues and boundaries must not silently enter the minimal treatment.
+The separate
+`configs/experiments/fabsa_aspect_rich_taxonomy_guidance_v1.json` resource uses
+one uniform template: the exact minimal definition, three to five
+non-corpus-derived aliases, one inclusion boundary, and one contrastive
+boundary. It is permitted only in the registered Level 3 `RR` secondary
+condition.
 
 The validation rule was pre-registered on 24 July 2026 before formal local
 execution. Description text may receive a blind semantic-format check for
@@ -196,7 +206,7 @@ For each registered dual-holdout fold:
 - allow zero, one, or multiple aspect-sentiment pairs, including neither,
   either, or both unseen aspects.
 
-Run the same trained model under four test representations:
+Run the same trained model under five test representations:
 
 | Condition | Unseen aspect A | Unseen aspect B |
 | --- | --- | --- |
@@ -204,14 +214,17 @@ Run the same trained model under four test representations:
 | `DN` | name + definition | name only |
 | `ND` | name only | name + definition |
 | `DD` | name + definition | name + definition |
+| `RR` | rich taxonomy guidance | rich taxonomy guidance |
 
 `DN` and `ND` are a mandatory crossover. A one-direction comparison is
 confounded by the two aspects' intrinsic difficulty.
 
 The ten seen candidates always retain their frozen minimal definitions in all
-four conditions. Only the two unseen candidates change representation. The
+five conditions. Only the two unseen candidates change representation. The
 cross-level difficulty curve uses the complete-description `L3-DD` endpoint;
-`NN`, `DN`, and `ND` isolate the description intervention.
+`NN`, `DN`, and `ND` isolate the core description intervention. `RR` is
+secondary evidence about whether richer fixed taxonomy guidance improves on
+`DD`; it is never substituted into the difficulty curve.
 
 The initial fold schedule is the twelve cyclic pairs in frozen canonical order:
 
@@ -254,9 +267,10 @@ reopens the scope after Levels 1-4 are complete.
 ## Core description intervention
 
 The main description study is the Level 3 `NN/DN/ND/DD` crossover. It directly
-tests incomplete label documentation when two unseen labels compete.
+tests incomplete label documentation when two unseen labels compete. The
+separate `RR` condition is a secondary rich-guidance extension.
 
-All four conditions must share:
+All five conditions must share:
 
 - identical train/validation/test rows;
 - identical positive and negative candidate-pair identities;
@@ -267,8 +281,10 @@ All four conditions must share:
 - identical metrics and aggregation.
 
 Only the two unseen aspects' test-time definition availability may change
-between `NN`, `DN`, `ND`, and `DD`. Negative examples must be sampled once and
-reused; description availability must not alter the training-pair set.
+between `NN`, `DN`, `ND`, `DD`, and `RR`. Negative examples must be sampled
+once and reused; representation availability must not alter the training-pair
+set. `RR` must reuse the exact `DD` model and threshold and must be reported as
+rich taxonomy guidance, not as another minimal-description condition.
 
 The analysis must include:
 
@@ -279,6 +295,10 @@ The analysis must include:
 - false positives when neither is gold;
 - whether predictions are biased toward the described candidate; and
 - per-aspect conditional sentiment diagnostics.
+
+The secondary `RR - DD` family must report paired review-cluster intervals,
+per-method effect sizes, and Holm-adjusted sign-flip evidence within the five
+methods. It cannot be used to hide or replace the core `DD` result.
 
 ## Method roster
 
@@ -450,7 +470,7 @@ must be marked as pilots, not completion.
   decision-boundary text.
 - [x] Record authorship, allowed sources, forbidden sources, canonical order,
   and SHA-256.
-- [ ] Record the final freeze time after user approval without changing the
+- [x] Record the final freeze time after user approval without changing the
   reviewed text.
 - [x] Add tests for exact label coverage, non-empty definitions, stable order,
   and manifest hash.
@@ -458,8 +478,12 @@ must be marked as pilots, not completion.
   validation/test F1 must not select or rewrite target descriptions; permitted
   evidence may include blind semantic review and pseudo-unseen experiments
   using seen-aspect labels only.
-- [ ] Freeze the exact twelve descriptions under that rule before any new
+- [x] Freeze the exact twelve descriptions under that rule before any new
   official validation/test run.
+- [x] Pre-register one secondary Level 3 `DD` versus `RR` rich-taxonomy-guidance
+  comparison without expanding to a full three-by-three crossover.
+- [x] Freeze twelve uniform rich label cards with 3--5 non-corpus aliases, one
+  inclusion boundary, one contrastive boundary, provenance, and SHA-256.
 
 ### C. Build the common stress-test infrastructure
 
@@ -473,8 +497,8 @@ must be marked as pilots, not completion.
   retains all candidate pairs for each sampled review.
 - [x] Extend the existing paired-aspect bootstrap/sign-flip utilities with
   exact alignment guards and protocol-specific aggregation.
-- [x] Implement Level 3 `NN/DN/ND/DD` rendering with identical row and pair
-  identities across conditions.
+- [x] Implement Level 3 `NN/DN/ND/DD/RR` rendering with identical row and pair
+  identities and one shared training manifest across conditions.
 - [x] Add leakage checks for rows, organisations, supervision labels,
   vocabularies, description hashes, target calibration, and test reuse.
 - [x] Add focused unit and smoke tests before model execution.
@@ -494,8 +518,9 @@ must be marked as pilots, not completion.
   stores no text, labels, thresholds, predictions or metrics.
 - [x] Add lazy Frozen-Qwen loading so a complete cache hit never loads the
   4B model.
-- [x] Tag the dependency plan by executor and recalculate Frozen-Qwen inference
-  from 2,658,972 uncached pairs to at most 152,316 unique inputs.
+- [x] Tag the dependency plan by executor and recalculate the revised
+  Frozen-Qwen maximum from 2,773,236 uncached pairs to at most 209,448 unique
+  inputs after adding `RR`.
 - [x] Pass a bounded real-model cache-equivalence benchmark using synthetic
   reviews only.
 
@@ -529,13 +554,15 @@ must be marked as pilots, not completion.
   supervision.
 - [x] Expand every evaluation review across all twelve candidates, preserving
   seen/unseen membership for the ten-plus-two split.
-- [x] Verify that `NN`, `DN`, `ND`, and `DD` reuse the exact same trained model,
-  rows, pair identities, thresholds, and metrics.
+- [x] Verify that `NN`, `DN`, `ND`, `DD`, and `RR` reuse the exact same trained
+  model, rows, pair identities, thresholds, and metrics.
 - [ ] Complete nested seen-only selection and validation/runtime gates for all
   admitted core methods.
 - [ ] Run all admitted models on the full registered pair schedule.
 - [ ] Report within-aspect description effects, described-candidate bias,
   neither/either/both-present cases, and sentiment diagnostics.
+- [ ] Report the secondary `RR - DD` rich-guidance family separately from the
+  primary crossover.
 - [ ] Freeze the Level 3 table and crossover figure.
 
 ### G. Run Level 4 parent-group holdout
@@ -575,6 +602,7 @@ must be marked as pilots, not completion.
   strong cross-group significance claim from only three group folds.
 - [ ] Produce the cross-level difficulty curve.
 - [ ] Produce the Level 3 description crossover table/figure.
+- [ ] Produce one compact Level 3 `RR` versus `DD` secondary table.
 - [ ] Produce one matched Frozen-Qwen-to-QLoRA adaptation table.
 - [ ] Freeze the final permitted claims, limitations, source paths, and table
   registry.
@@ -589,7 +617,7 @@ must be marked as pilots, not completion.
 The required order is:
 
 ```text
-description freeze
+minimal and rich resource freeze
     -> statistical protocol freeze
     -> infrastructure, leakage, and statistical tests
     -> local end-to-end smoke tests
@@ -623,6 +651,10 @@ not remove an unfavourable completed local result.
   `DN/ND` crossover.
 - Do not alter negative-pair identities across description conditions.
 - Do not tune thresholds, prompts, parsers, folds, or descriptions on test.
+- Do not construct or revise rich aliases or boundaries from target reviews,
+  corpus frequencies, predictions, error analysis, or target F1.
+- Do not replace the primary Level 3 crossover or difficulty endpoint with
+  `RR`, even if `RR` performs better.
 - Do not share raw-score caches between validation and test, cache QLoRA across
   adapters, or store labels, thresholds, predictions or metrics in the
   Frozen-Qwen cache.

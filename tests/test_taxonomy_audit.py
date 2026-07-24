@@ -26,7 +26,7 @@ from msc_project.experiments.taxonomy_protocol import (
     pair_identity_hash,
     registered_folds,
 )
-from msc_project.experiments.taxonomy_resources import load_minimal_descriptions
+from msc_project.experiments.taxonomy_resources import load_description_bundle
 
 
 def source_frame() -> pd.DataFrame:
@@ -68,7 +68,7 @@ def valid_audit_inputs():
     frame = source_frame()
     fold = registered_folds("L3")[0]
     splits = build_taxonomy_fold_splits(frame, fold)
-    resource = load_minimal_descriptions(require_approved=False)
+    resource = load_description_bundle(require_approved=False)
     training = build_budgeted_training_manifest(
         splits["train"],
         fold,
@@ -135,13 +135,20 @@ def test_calibration_audit_requires_exact_seen_set() -> None:
 
 
 def test_formal_gate_rejects_pending_resource_and_statistics() -> None:
-    resource = load_minimal_descriptions(require_approved=False)
+    resource = load_description_bundle(require_approved=False)
+    pending = dict(resource)
+    pending["status"] = "pending_user_approval"
     with pytest.raises(ValueError, match="descriptions"):
-        assert_formal_run_gates(resource, {"statistics": {"status": "approved_and_frozen"}})
-    approved = dict(resource)
-    approved["status"] = "approved_and_frozen"
+        assert_formal_run_gates(
+            pending,
+            {"statistics": {"status": "approved_and_frozen"}},
+        )
     with pytest.raises(ValueError, match="statistical"):
-        assert_formal_run_gates(approved, {"statistics": {"status": "proposed"}})
+        assert_formal_run_gates(resource, {"statistics": {"status": "proposed"}})
+    assert_formal_run_gates(
+        resource,
+        {"statistics": {"status": "approved_and_frozen"}},
+    )
 
 
 def formal_contract() -> RunContract:

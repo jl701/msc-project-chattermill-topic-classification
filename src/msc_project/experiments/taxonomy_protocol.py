@@ -16,7 +16,7 @@ from msc_project.data.splits import build_heldout_aspect_split
 from msc_project.evaluation.metrics import evaluate_pair_and_aspect
 from msc_project.experiments.taxonomy_resources import (
     REPRESENTATIONS,
-    load_minimal_descriptions,
+    load_description_bundle,
     mixed_representation_sha256,
     render_candidate_claim,
 )
@@ -36,7 +36,7 @@ PRECLOUD_CONFIG_PATH = (
 )
 PAIR_KEY = ("row_uid", "candidate_aspect", "candidate_sentiment")
 LEVELS = ("L1", "L2", "L3", "L4")
-L3_CONDITIONS = ("NN", "DN", "ND", "DD")
+L3_CONDITIONS = ("NN", "DN", "ND", "DD", "RR")
 
 
 def _read_json(path: Path) -> dict[str, object]:
@@ -299,8 +299,13 @@ def _heldout_variants(fold: TaxonomyFold, condition: str) -> dict[str, str]:
     if fold.level == "L3":
         if len(fold.heldout_aspects) != 2 or len(condition) != 2:
             raise AssertionError("Level 3 requires two ordered held-out aspects.")
+        marker_variants = {
+            "N": "name_only",
+            "D": "minimal",
+            "R": "rich",
+        }
         return {
-            aspect: "minimal" if marker == "D" else "name_only"
+            aspect: marker_variants[marker]
             for aspect, marker in zip(fold.heldout_aspects, condition)
         }
     variant = "minimal" if condition == "D" else "name_only"
@@ -321,7 +326,7 @@ def build_candidate_table(
     condition: str,
     resource: Mapping[str, object] | None = None,
 ) -> pd.DataFrame:
-    descriptions = resource or load_minimal_descriptions(require_approved=False)
+    descriptions = resource or load_description_bundle(require_approved=False)
     variants = candidate_representation_variants(fold, condition)
     records: list[dict[str, object]] = []
     for aspect in fold.evaluation_aspects:
@@ -485,7 +490,7 @@ def build_taxonomy_training_manifest(
         raise ValueError(f"Training frame is missing columns: {missing}")
     if frame["row_uid"].astype(str).duplicated().any():
         raise ValueError("Training row_uid values must be unique.")
-    descriptions = resource or load_minimal_descriptions(require_approved=False)
+    descriptions = resource or load_description_bundle(require_approved=False)
     candidate_set = set(fold.seen_aspects)
     records: list[dict[str, object]] = []
 

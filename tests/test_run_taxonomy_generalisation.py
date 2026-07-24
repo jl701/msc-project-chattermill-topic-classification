@@ -99,7 +99,10 @@ def test_nested_method_cannot_use_global_parameter_selection(
         )
 
 
-def test_current_formal_gate_blocks_before_official_data_load(tmp_path: Path) -> None:
+def test_pending_formal_gate_blocks_before_official_data_load(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
     args = MODULE.argparse.Namespace(
         method="strict_train_only_tfidf",
         level="L2",
@@ -116,6 +119,14 @@ def test_current_formal_gate_blocks_before_official_data_load(tmp_path: Path) ->
         shard_index=0,
         resume=False,
         local_files_only=True,
+    )
+    approved = MODULE.load_description_bundle(require_approved=False)
+    pending = dict(approved)
+    pending["status"] = "pending_user_approval"
+    monkeypatch.setattr(
+        MODULE,
+        "load_description_bundle",
+        lambda **_: pending,
     )
     with pytest.raises(ValueError, match="approved_and_frozen descriptions"):
         MODULE.run(args)

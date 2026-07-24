@@ -4,6 +4,52 @@ Last updated: 2026-07-24
 
 This file is a compact evidence ledger for dissertation/report drafting. Detailed experiment records remain in `docs/`.
 
+## 2026-07-24 - Description Freeze and Level 3 Rich-Guidance Extension
+
+Decision:
+
+- The user approved and froze the exact twelve `minimal_v2` definitions.
+- Add one secondary Level 3 `DD` versus `RR` comparison.
+- `R` means the canonical name, exact minimal definition, 3--5
+  non-corpus-derived aliases, one inclusion boundary, and one contrastive
+  boundary.
+- Do not add the complete nine-condition name/minimal/rich factorial.
+- Keep `NN/DN/ND/DD` as the primary crossover and `L3-DD` as the difficulty
+  endpoint.
+
+Scientific control:
+
+- `RR` changes only the two unseen candidate texts.
+- The ten seen labels, training manifest, model, threshold, rows, pair
+  identities, seed, budget, and metrics remain matched to `DD`.
+- No FABSA review text, corpus statistics, labels, predictions, error analysis,
+  or target performance entered either resource.
+- Gao-style label-description training remains outside the active protocol.
+
+Frozen hashes:
+
+- minimal: `fc93cf27efdb64ad335f39f4a0dbdbd3dad13b1aae5de0010280931867af7d4c`;
+- rich: `289ba3238cb6772f9bfda98eb73ac8a1108ba4b2bb3d23eecf72826881f415b9`;
+- bound resource: `fcf546d227ad2ac52ccfa9682fc3685d2e396069ed911016f0bc12bf205f1367`;
+- revised scientific protocol:
+  `d7ccded514ac1cbccf337e496e039ac418698566be0c0ca0c21e18608cc40f85`.
+
+Tracked pre-registration:
+
+- `docs/experiments/taxonomy_level3_rich_guidance_preregistration_20260724.md`
+
+Execution state:
+
+- Focused resource/protocol/pipeline/governance tests: 52 passed.
+- Full repository suite: 297 passed.
+- Strict TF-IDF, E5, DistilBERT, and Frozen Qwen real-model synthetic smokes
+  all passed `NN/DN/ND/DD/RR`, shard-resume validation, and the
+  `official_data_read: false` guard.
+- Execution plan v2 contains 2,611 dependency-ordered jobs; SHA-256:
+  `e2a06d17ed35db8ce0afd3c67c22122dd04ba299019d11c34c6f1504f84e9685`.
+- No new official validation or test model result had been inspected at this
+  pre-flight checkpoint. Official test remains sealed.
+
 ## 2026-07-24 - Taxonomy-Generalisation Literature and Thesis Alignment
 
 Task:

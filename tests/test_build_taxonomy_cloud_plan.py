@@ -14,20 +14,20 @@ assert SPEC.loader is not None
 SPEC.loader.exec_module(MODULE)
 
 
-def test_cloud_plan_is_blocked_complete_and_compute_deduplicated() -> None:
+def test_execution_plan_is_unblocked_complete_and_compute_deduplicated() -> None:
     plan = MODULE.build_plan()
-    assert plan["formal_execution_blocked"] is True
+    assert plan["formal_execution_blocked"] is False
     assert plan["jobs_total"] == 2611
     compute = plan["compute_summary"]
     assert compute["core_unique_training_scopes_per_method"] == 26
     assert compute["qlora_task_specific_training_runs_total"] == 102
     assert (
         compute["unique_pair_scores"]["qlora_total_including_tuning_and_extra_seeds"]
-        == 5_436_984
+        == 5_551_248
     )
     assert (
         compute["unique_pair_scores"]["frozen_qwen_plus_qlora_total"]
-        == 8_095_956
+        == 8_324_484
     )
     assert plan["job_counts_by_executor"] == {
         "cloud_control": 230,
@@ -36,11 +36,11 @@ def test_cloud_plan_is_blocked_complete_and_compute_deduplicated() -> None:
         "local_gpu": 354,
     }
     scores = compute["unique_pair_scores"]
-    assert scores["frozen_qwen_uncached_core_total"] == 2_658_972
+    assert scores["frozen_qwen_uncached_core_total"] == 2_773_236
     assert scores["frozen_qwen_cached_unique_validation_inputs"] == 38_052
-    assert scores["frozen_qwen_cached_unique_test_inputs"] == 114_264
-    assert scores["frozen_qwen_cached_unique_total_inputs"] == 152_316
-    assert scores["frozen_qwen_cache_inference_reduction_fraction"] > 0.94
+    assert scores["frozen_qwen_cached_unique_test_inputs"] == 171_396
+    assert scores["frozen_qwen_cached_unique_total_inputs"] == 209_448
+    assert scores["frozen_qwen_cache_inference_reduction_fraction"] > 0.92
     assert {
         value["executor"]
         for value in plan["jobs"]

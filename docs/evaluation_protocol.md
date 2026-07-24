@@ -254,7 +254,8 @@ definition whenever a model consumes label representations during task-specific
 training. Frozen similarity methods use the same representation at scoring
 time. The primary difficulty curve uses the description-complete endpoints
 `L1-D -> L2-D -> L3-DD -> L4-D`; name-only and asymmetric-description
-conditions are matched intervention controls.
+conditions are matched intervention controls. A separately frozen Level 3
+`RR` rich-guidance condition is secondary and does not enter the curve.
 
 ### Level 2: Generalized Single-Unseen LOAO
 
@@ -283,10 +284,16 @@ For each pre-registered pair of held-out aspects:
   canonical name only and `D` means canonical name plus the frozen minimal
   definition.
 
-All four conditions must reuse the same model, rows, candidate-pair identities,
+All four core conditions must reuse the same model, rows, candidate-pair identities,
 thresholds, and metrics. The ten seen candidates retain definitions throughout;
 only the two unseen representations change. `DN` and `ND` form the required
 crossover.
+
+The secondary `RR` condition gives both unseen aspects the exact minimal
+definition plus 3--5 fixed aliases, one inclusion boundary, and one contrastive
+boundary. It reuses the same model, threshold, rows, and pair identities and is
+reported only as `RR - DD` rich taxonomy guidance. No asymmetric `R` conditions
+or full three-by-three factorial are registered.
 
 ### Level 4: Parent-Group Holdout
 
