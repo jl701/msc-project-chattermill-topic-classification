@@ -7,6 +7,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import time
 from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
 from datetime import datetime, timezone
 from pathlib import Path
@@ -195,7 +196,14 @@ def write_state(path: Path, state: dict[str, object]) -> None:
         with os.fdopen(handle, "w", encoding="utf-8", newline="\n") as stream:
             json.dump(state, stream, indent=2, ensure_ascii=False)
             stream.write("\n")
-        os.replace(temporary_name, path)
+        for attempt in range(20):
+            try:
+                os.replace(temporary_name, path)
+                break
+            except PermissionError:
+                if attempt == 19:
+                    raise
+                time.sleep(0.05)
     except BaseException:
         Path(temporary_name).unlink(missing_ok=True)
         raise

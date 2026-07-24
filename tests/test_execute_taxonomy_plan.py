@@ -201,3 +201,30 @@ def test_parallel_executor_runs_only_ready_jobs_and_records_state(
     assert maximum_active == 2
     assert set(state["completed_job_ids"]) == {"first", "second", "final"}
     assert state["running_job_ids"] == []
+
+
+def test_atomic_state_write_retries_a_transient_windows_reader_lock(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    state_path = tmp_path / "state.json"
+    real_replace = MODULE.os.replace
+    calls = 0
+
+    def transiently_locked(source: str, target: Path) -> None:
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise PermissionError("simulated Windows reader lock")
+        real_replace(source, target)
+
+    monkeypatch.setattr(MODULE.os, "replace", transiently_locked)
+    monkeypatch.setattr(MODULE.time, "sleep", lambda _: None)
+    state = MODULE._empty_state(
+        plan_path=tmp_path / "plan.json",
+        plan_sha256="plan",
+        methods=("strict_train_only_tfidf",),
+        include_official_test=False,
+    )
+    MODULE.write_state(state_path, state)
+    assert calls == 2
+    assert state_path.exists()
