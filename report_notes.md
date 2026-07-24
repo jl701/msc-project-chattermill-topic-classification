@@ -50,6 +50,20 @@ Execution state:
 - No new official validation or test model result had been inspected at this
   pre-flight checkpoint. Official test remains sealed.
 
+## 2026-07-24 - Exact Validation Threshold-Sweep Optimisation
+
+- The first formal TF-IDF validation scope exposed a quadratic threshold-sweep
+  implementation.
+- It was replaced by an exact descending sufficient-statistic sweep; the
+  registered thresholds, metrics, ranking, and tie-breaks are unchanged.
+- Brute-force equivalence is covered by a dedicated test; full suite:
+  303 passed.
+- First official scope benchmark: 34,881 pairs and 32,965 thresholds in
+  approximately 0.30 seconds.
+- Official test remained sealed.
+- Detailed record:
+  `docs/experiments/taxonomy_threshold_sweep_optimization_20260724.md`.
+
 ## 2026-07-24 - Taxonomy-Generalisation Literature and Thesis Alignment
 
 Task:

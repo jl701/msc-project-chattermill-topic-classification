@@ -25,6 +25,7 @@ from msc_project.experiments.taxonomy_protocol import (
     registered_folds,
     scientific_protocol_sha256,
     select_strict_seen_threshold,
+    strict_threshold_candidates,
     training_scope_id,
 )
 from msc_project.experiments.taxonomy_resources import load_description_bundle
@@ -336,6 +337,53 @@ def test_strict_threshold_ignores_heldout_scores_and_labels() -> None:
     assert first.threshold == second.threshold
     pd.testing.assert_frame_equal(first.sweep, second.sweep)
     assert first.calibration_aspects == seen
+
+
+def test_fast_strict_threshold_sweep_matches_brute_force_metrics() -> None:
+    frame, seen, heldout = scored_validation_grid()
+    extra = frame.copy()
+    extra["row_uid"] = extra["row_uid"].astype(str) + "-extra"
+    extra["score"] = [
+        0.12,
+        0.12,
+        0.24,
+        0.36,
+        0.36,
+        0.48,
+    ] * 3
+    frame = pd.concat([frame, extra], ignore_index=True)
+    selection = select_strict_seen_threshold(
+        frame, seen_aspects=seen, heldout_aspects=heldout
+    )
+    seen_frame = frame[frame["candidate_aspect"].isin(seen)]
+
+    brute_rows = []
+    for threshold in strict_threshold_candidates(seen_frame["score"]):
+        metrics = evaluate_scored_grid(
+            seen_frame,
+            threshold,
+            seen_aspects=seen,
+            heldout_aspects=heldout,
+        )["seen"]
+        brute_rows.append(
+            {
+                "threshold": threshold,
+                "pair_micro_f1": metrics["pair_micro_f1"],
+                "pair_samples_f1": metrics["pair_samples_f1"],
+                "pair_micro_precision": metrics["pair_micro_precision"],
+                "presence_false_positive_rows_per_100": metrics[
+                    "presence_false_positive_rows_per_100"
+                ],
+            }
+        )
+    brute = pd.DataFrame(brute_rows)
+    pd.testing.assert_frame_equal(
+        selection.sweep,
+        brute,
+        check_exact=False,
+        rtol=1e-12,
+        atol=1e-12,
+    )
 
 
 def test_partition_metrics_and_harmonic_mean_use_common_threshold() -> None:

@@ -741,6 +741,116 @@ def strict_threshold_candidates(scores: Iterable[float]) -> list[float]:
     return sorted({round(float(value), 12) for value in values})
 
 
+def _strict_threshold_sweep(
+    calibration: pd.DataFrame,
+) -> pd.DataFrame:
+    """Evaluate every registered threshold in one exact descending sweep.
+
+    Rebuilding multilabel matrices independently for every unique-score
+    midpoint is quadratic in the number of candidate pairs. The sufficient
+    statistics used by the registered tie-break can instead be updated once
+    whenever a candidate pair enters the predicted set.
+    """
+
+    required = {"row_uid", "target", "score", *PAIR_KEY}
+    missing = sorted(required - set(calibration.columns))
+    if missing:
+        raise ValueError(f"Scored grid is missing columns: {missing}")
+    if calibration.empty:
+        raise ValueError("Strict threshold calibration is empty.")
+    if calibration.duplicated(list(PAIR_KEY)).any():
+        raise ValueError("Scored grid contains duplicate pair identities.")
+
+    scores = calibration["score"].to_numpy(dtype=float)
+    if not np.isfinite(scores).all():
+        raise ValueError("Scores must be finite.")
+    targets = calibration["target"].astype(int).eq(1).to_numpy(dtype=bool)
+    row_uids = calibration["row_uid"].astype(str).to_numpy()
+    unique_rows, row_indices = np.unique(row_uids, return_inverse=True)
+    gold_by_row = np.bincount(
+        row_indices, weights=targets.astype(np.int64), minlength=len(unique_rows)
+    ).astype(np.int64)
+    predicted_by_row = np.zeros(len(unique_rows), dtype=np.int64)
+    true_positive_by_row = np.zeros(len(unique_rows), dtype=np.int64)
+
+    order = np.argsort(-scores, kind="stable")
+    sorted_scores = scores[order]
+    sorted_targets = targets[order]
+    sorted_row_indices = row_indices[order]
+    thresholds_descending = sorted(
+        strict_threshold_candidates(scores), reverse=True
+    )
+
+    total_gold = int(targets.sum())
+    predicted_count = 0
+    true_positive_count = 0
+    samples_f1_sum = 0.0
+    false_positive_rows = 0
+    pointer = 0
+    rows: list[dict[str, float]] = []
+
+    for threshold in thresholds_descending:
+        while (
+            pointer < len(sorted_scores)
+            and sorted_scores[pointer] >= threshold
+        ):
+            row_index = int(sorted_row_indices[pointer])
+            old_predicted = int(predicted_by_row[row_index])
+            old_true_positive = int(true_positive_by_row[row_index])
+            gold_count = int(gold_by_row[row_index])
+            old_denominator = gold_count + old_predicted
+            old_samples_f1 = (
+                2.0 * old_true_positive / old_denominator
+                if old_denominator
+                else 0.0
+            )
+
+            predicted_by_row[row_index] += 1
+            predicted_count += 1
+            if bool(sorted_targets[pointer]):
+                true_positive_by_row[row_index] += 1
+                true_positive_count += 1
+            if old_predicted == 0 and gold_count == 0:
+                false_positive_rows += 1
+
+            new_predicted = int(predicted_by_row[row_index])
+            new_true_positive = int(true_positive_by_row[row_index])
+            new_samples_f1 = (
+                2.0 * new_true_positive / (gold_count + new_predicted)
+            )
+            samples_f1_sum += new_samples_f1 - old_samples_f1
+            pointer += 1
+
+        false_positive_count = predicted_count - true_positive_count
+        false_negative_count = total_gold - true_positive_count
+        micro_denominator = (
+            2 * true_positive_count
+            + false_positive_count
+            + false_negative_count
+        )
+        rows.append(
+            {
+                "threshold": float(threshold),
+                "pair_micro_f1": (
+                    2.0 * true_positive_count / micro_denominator
+                    if micro_denominator
+                    else 0.0
+                ),
+                "pair_samples_f1": float(samples_f1_sum / len(unique_rows)),
+                "pair_micro_precision": (
+                    true_positive_count / predicted_count
+                    if predicted_count
+                    else 0.0
+                ),
+                "presence_false_positive_rows_per_100": float(
+                    false_positive_rows * 100 / len(unique_rows)
+                ),
+            }
+        )
+
+    return pd.DataFrame(rows).sort_values("threshold").reset_index(drop=True)
+
+
 @dataclass(frozen=True)
 class StrictThresholdSelection:
     threshold: float
@@ -769,26 +879,9 @@ def select_strict_seen_threshold(
     if set(calibration["candidate_aspect"].astype(str)) & heldout:
         raise AssertionError("Held-out candidates entered strict threshold calibration.")
 
-    rows: list[dict[str, float]] = []
-    for threshold in strict_threshold_candidates(calibration["score"]):
-        _, gold, predicted, classes = _prediction_sets(
-            calibration,
-            threshold,
-            allowed_aspects=set(seen),
-        )
-        metrics = evaluate_pair_and_aspect(gold, predicted, classes)
-        rows.append(
-            {
-                "threshold": float(threshold),
-                "pair_micro_f1": float(metrics["pair_micro_f1"]),
-                "pair_samples_f1": float(metrics["pair_samples_f1"]),
-                "pair_micro_precision": float(metrics["pair_micro_precision"]),
-                "presence_false_positive_rows_per_100": float(
-                    metrics["presence_false_positive_rows_per_100"]
-                ),
-            }
-        )
-    if not rows:
+    sweep = _strict_threshold_sweep(calibration)
+    rows = sweep.to_dict(orient="records")
+    if sweep.empty:
         raise ValueError("Strict threshold search produced no candidates.")
     ranked = sorted(
         rows,
@@ -811,7 +904,7 @@ def select_strict_seen_threshold(
     return StrictThresholdSelection(
         threshold=threshold,
         metrics=metrics,
-        sweep=pd.DataFrame(rows).sort_values("threshold").reset_index(drop=True),
+        sweep=sweep,
         calibration_aspects=seen,
     )
 
