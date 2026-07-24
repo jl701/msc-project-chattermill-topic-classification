@@ -1,15 +1,146 @@
 \chapter{Introduction}
 
-\section{Working Dissertation Frame}
+\section{Motivation}
 
-Customer-feedback analytics often needs more than a document-level positive or negative judgement. A single review can mention several service features, product issues, support interactions, or user-experience points, and these aspects can carry different sentiment. This dissertation therefore studies aspect-sentiment classification for customer feedback, with a particular focus on what happens when the target aspect taxonomy changes.
+Customer-feedback analytics requires more than a document-level positive or
+negative judgement. A single review can praise the attitude of staff while
+criticising an application, or approve of a discount while judging the ordinary
+price unfavourably. Aspect-Based Sentiment Analysis (ABSA) addresses this
+fine-grained setting by associating sentiment with a particular aspect rather
+than assigning one polarity to the whole document
+\cite{pontiki2016semeval,zhang2023survey}. In an operational system, however,
+the aspect taxonomy is rarely immutable. Organisations introduce new products,
+channels, policies, and reporting categories, while supervised classifiers are
+normally trained for a fixed output space.
 
-The working dissertation frame is structured candidate-label aspect-sentiment classification under taxonomy shift in customer feedback. In this framing, the model is not asked to invent arbitrary topics. Instead, at inference time it receives a supplied set of candidate aspect labels and predicts which candidate aspects are relevant to the review, together with their sentiment. This makes the open-topic claim operational and measurable while matching a realistic analytics setting where organisations may revise or extend their feedback taxonomy.
+This dissertation studies that mismatch. The task is not unrestricted topic
+discovery: a model is not asked to invent or name arbitrary categories.
+Instead, it receives a supplied set of canonical candidate aspects and predicts
+the applicable aspect--sentiment pairs. Each candidate is judged separately, so
+the output can contain several aspects with different sentiments or be empty.
+This candidate-label formulation keeps evaluation exact while representing a
+realistic taxonomy-maintenance problem.
 
-\section{Current Empirical Position}
+\section{Research Gap}
 
-The project currently has a set of local and language-model baselines over FABSA. Closed-topic and held-out organisation evaluations establish the fixed-taxonomy reference points. Fixed held-out-aspect and leave-one-aspect-out evaluations then test taxonomy-shift behaviour. The strongest current fixed held-out-aspect local non-LLM baseline is a candidate-aspect DistilBERT selector combined with a DistilBERT aspect-conditioned sentiment classifier, achieving 0.6071 pair samples F1. Under full all-row LOAO, however, the preferred DistilBERT branch drops to 0.3128 mean pair micro F1, showing that the fixed held-out-aspect result overstates robustness across aspect rotations. The Qwen indexed zero-shot LOAO baseline reaches 0.3378 mean test pair micro F1 with stable JSON, but its positive-gold diagnostic is much stronger than its all-row score, indicating that absence calibration on empty-gold rows is the main failure mode. Hosted Gemini and local-to-Gemini cascade experiments are complete for the fixed held-out-aspect setting and provide cost, latency, schema-reliability, and selective-deployment evidence, but they should not be treated as full LOAO robustness results.
+Zero-shot text classification has considered labels absent from task-specific
+training, including the label-partially-unseen setting in which a model is
+trained on some labels and evaluated jointly on seen and unseen labels
+\cite{yin2019benchmarking}. Multi-label work has additionally used label
+descriptions and known label structures to transfer to rare or unseen labels
+\cite{rios2018structured,liu2021hierarchy}. Within ABSA, natural-language
+prompts, auxiliary sentences, and weak label-side supervision show that an
+aspect can be supplied as semantic input rather than represented only by a
+fixed classifier index
+\cite{sun2019auxiliary,seoh2021open,huang2020weakly}.
 
-\section{Contribution Shape}
+These strands do not by themselves answer how an aspect-sentiment system
+degrades as the taxonomy shift becomes progressively harder. A singleton unseen
+candidate does not compete with familiar labels; a jointly evaluated unseen
+candidate does. Two unseen aspects introduce competition between unfamiliar
+labels, while withholding a complete parent group removes an entire supervised
+sub-taxonomy. The reviewed literature also does not provide a directly matched
+ABSA protocol for testing asymmetric documentation, where two unseen aspects
+are predicted together but only one receives a natural-language definition.
+The dissertation therefore treats the evaluation design, rather than a flat
+model leaderboard, as its organising contribution.
 
-The intended contribution is an evaluation-centred study rather than a claim that any one model family is automatically superior. The dissertation compares increasingly difficult generalisation settings: fixed taxonomy, unseen organisations, held-out aspects, and leave-one-aspect-out rotations. It also compares model families that can consume candidate labels, including local discriminative baselines, open-weight structured-output Qwen, hosted Gemini, and selective local-hosted cascades. Full fine-tuned Qwen LoRA LOAO remains the main pending compute-bound experiment; if completed, it will test whether task-specific open-weight adaptation can reduce the zero-shot absence-calibration failure under the same LOAO protocol.
+\section{Research Questions}
+
+The study is organised around four questions:
+
+\begin{enumerate}
+    \item \textbf{RQ1: Taxonomy difficulty.} How quickly do lexical, frozen
+    semantic, supervised contextual, and language-model methods degrade as the
+    task moves from a supplied singleton unseen aspect to mixed seen/unseen
+    candidate sets, two unseen aspects, and unseen parent groups?
+
+    \item \textbf{RQ2: Label semantics.} How much unseen-aspect performance is
+    recovered by adding one frozen minimal taxonomy definition to the canonical
+    aspect name, and does asymmetric description availability bias prediction
+    towards the described candidate?
+
+    \item \textbf{RQ3: Task adaptation.} Under a matched candidate-pair
+    interface, does QLoRA adaptation improve on a frozen Qwen control, and is
+    any gain achieved without sacrificing performance on unseen labels or
+    destabilising seen-label predictions?
+
+    \item \textbf{RQ4: Reliability.} Are the main differences stable under
+    paired review-level resampling and across the registered aspect or
+    parent-group units, and what precision, recall, calibration, and runtime
+    trade-offs accompany them?
+\end{enumerate}
+
+\section{Controlled Difficulty Ladder}
+
+The active experiment route contains four levels. Level~1 is
+supplied-candidate single-unseen leave-one-aspect-out (LOAO): one aspect is
+removed from task-specific training and is the only candidate judged at
+evaluation. Level~2 retains the same twelve outer folds but evaluates all twelve
+aspects jointly, so one unseen label competes with eleven seen labels. This is
+the dissertation's closest analogue to label-partially-unseen or generalised
+zero-shot text classification.
+
+Level~3 removes two aspects at a time and evaluates all twelve candidates. Its
+core \texttt{NN}/\texttt{DN}/\texttt{ND}/\texttt{DD} crossover independently
+varies whether the two unseen aspects receive their frozen minimal definitions;
+the ten seen aspects retain their definitions in every condition. Level~4
+withholds all children of each multi-child parent group and again evaluates the
+complete candidate set. The description-complete path
+\texttt{L1-D $\rightarrow$ L2-D $\rightarrow$ L3-DD $\rightarrow$ L4-D}
+forms the primary difficulty curve. Compound organisation and taxonomy shift is
+retained as deferred future work rather than included in the active scope.
+
+The raw F1 values at different levels are not treated as interchangeable
+benchmarks. The important evidence is the within-method degradation along the
+registered path, together with matched within-level interventions.
+
+\section{Model and Information Controls}
+
+Five model families span increasing representational and adaptation capacity:
+strict train-only TF--IDF, frozen E5-base-v2 embeddings, a supervised
+DistilBERT review--candidate cross-encoder, frozen candidate-pair Qwen, and
+candidate-pair QLoRA. Every method receives the same conceptual claim:
+\emph{review, candidate aspect representation, candidate sentiment}. Count
+bag-of-words remains a Level~1 sanity control rather than a core cross-level
+method.
+
+The aspect representation is explicitly controlled. A name-only condition
+contains the full canonical hierarchical name. A description condition adds
+one short, frozen, neutral taxonomy gloss written from the names, hierarchy,
+and general language knowledge only. No review text, corpus keyword
+statistics, validation or test labels, predictions, or error analysis may be
+used to construct or revise these descriptions. Consequently, the treatment is
+described as \emph{description-assisted zero-shot generalisation}, not
+zero-information classification.
+
+\section{Evaluation Commitments}
+
+All active methods preserve aspect-conditioned sentiment, permit different
+sentiments for different aspects in one review, and produce a set of
+aspect--sentiment pairs. Hyperparameters, thresholds, prompts, and checkpoints
+are selected from seen-aspect validation evidence only within each outer
+training scope. Held-out-aspect validation labels cannot calibrate the strict
+difficulty curve, and the test set is used only after the configuration is
+frozen.
+
+The analysis separates overall, seen, and unseen performance. It reports pair
+micro- and macro-F1, corrected positive-class presence precision, recall and
+F1, exact match, false-positive and false-negative rows, prediction-set size,
+and conditional sentiment diagnostics. Point estimates are accompanied by
+paired review-cluster confidence intervals for the registered primary
+comparisons. Per-aspect or per-group differences are shown separately so that
+review-sampling uncertainty is not confused with variation across taxonomic
+units or training seeds.
+
+\section{Scope of the Contribution}
+
+The dissertation does not claim unrestricted topic discovery, universal
+zero-shot learning, or that a larger model must outperform a smaller one. Its
+contribution is a controlled and auditable study of candidate-label
+aspect-sentiment classification under increasingly difficult taxonomy change.
+The central outputs are the difficulty curve, the dual-unseen asymmetric
+description crossover, and the matched frozen-to-QLoRA adaptation comparison.
+Earlier closed-taxonomy, held-out-organisation, hosted Gemini, and router
+experiments provide project provenance or secondary context, but they do not
+define the active thesis mainline.

@@ -1,51 +1,234 @@
 \chapter{Literature Review}
 
-% Working first-pass draft adapted from Pro model feedback on 2026-06-30 and the existing project literature matrices.
+\section{Customer Feedback and Aspect-Based Sentiment Analysis}
 
-\section{Customer Feedback Mining and Opinion Mining}
+Customer-review mining seeks to convert unstructured opinions into structured
+evidence about product or service features. Early feature-based review
+summarisation already separated what was discussed from the polarity expressed
+towards it \cite{hu2004mining}, while broader sentiment-analysis work
+distinguished document-level judgement from more fine-grained opinion mining
+\cite{pang2008opinion}. ABSA develops this distinction by associating a
+sentiment with an aspect term or category. Shared tasks such as SemEval-2016
+formalised aspect-category and polarity settings across several domains
+\cite{pontiki2016semeval}, and later surveys organise ABSA into aspect
+extraction, aspect-category detection, and aspect-level sentiment
+classification \cite{zhang2023survey}.
 
-Customer feedback analytics aims to transform large volumes of unstructured comments into interpretable signals about what customers discuss and how they feel. Early work on customer review mining already framed this as a structured opinion-mining problem rather than simple document classification. Hu and Liu proposed mining product features and summarising positive and negative opinions around those features \cite{hu2004mining}, while Pang and Lee situated sentiment analysis within the broader problem of opinion-oriented information access \cite{pang2008opinion}. This line of work motivates the broad problem addressed in this dissertation: customer feedback is useful to organisations only when it can be organised into actionable topics, aspects, and sentiment signals.
+This distinction is methodologically important for FABSA. A multi-aspect review
+cannot be represented faithfully by attaching one global sentiment to every
+detected aspect. Aspect-level architectures therefore condition sentiment on
+the target aspect, for example by learning aspect-specific context
+representations \cite{tang2016deep}. The present dissertation adopts the same
+principle throughout: the atomic claim combines a review, one candidate aspect,
+and one candidate sentiment, and review-level predictions are formed by
+unioning the applicable claims.
 
-\section{Aspect-Based Sentiment Analysis}
+\section{Candidate-Conditioned and Multi-Label ABSA}
 
-Document-level sentiment alone is insufficient for many customer-feedback settings. A review may be positive about staff support but negative about a website, or it may praise price while criticising delivery speed. Aspect-Based Sentiment Analysis (ABSA) addresses this limitation by associating sentiment with specific aspects or targets. Shared tasks such as SemEval-2016 Task 5 helped standardise ABSA settings involving aspect categories, aspect terms, and polarity labels across domains \cite{pontiki2016semeval}. More recent surveys describe ABSA as a family of tasks covering aspect extraction, aspect-category detection, and aspect-level sentiment classification \cite{zhang2023survey}. The key idea for this dissertation is that sentiment should be conditioned on what the text is about, not only on the overall document.
+Several ABSA formulations support treating the aspect as textual input rather
+than as an implicit fixed output index. Sun et al.\ construct an auxiliary
+sentence from an aspect and transform ABSA into a sentence-pair problem related
+to question answering and natural-language inference
+\cite{sun2019auxiliary}. Seoh et al.\ similarly use natural-language prompts to
+support arbitrary aspect targets in zero- and few-shot sentiment classification
+\cite{seoh2021open}. These studies motivate a review--candidate cross-encoder:
+the model can condition its decision on the supplied aspect semantics instead
+of learning only a document representation.
 
-Aspect-conditioned sentiment modelling provides a direct foundation for the modelling choices in this project. Tang et al. argue that aspect-level sentiment classification requires models to attend to the context relevant to a given aspect \cite{tang2016deep}. Although their setting differs from document-level, multi-label customer feedback, the principle transfers: a model should not assign one global sentiment to every aspect mentioned in a review. This is important for the current project because early held-out-aspect baselines used a global sentiment approximation, while the strongest current local non-LLM baseline uses a candidate-aspect DistilBERT selector followed by a DistilBERT aspect-conditioned sentiment classifier. The improvement of the stronger aspect-conditioned pipeline over the global-sentiment version supports the ABSA claim that aspect-specific sentiment is methodologically necessary, while also showing that model strength matters.
+Other work represents the output directly in natural language. Unified and
+text-generation formulations allow several ABSA subtasks or
+aspect--sentiment outputs to share one generative interface
+\cite{yan2021unified}. Instruction-based ABSA extends this principle to
+prompted task definitions \cite{scaria2024instructabsa}. Such work supports the
+candidate-pair Qwen interface used here, but does not imply that free-form
+generation is required. A one-token applicability score is deliberately used
+in the core experiments to keep thresholds, empty predictions, and
+frozen-to-adapted comparisons auditable.
 
-Generative and instruction-based ABSA also provide a bridge toward later structured-output LLM comparisons. Yan et al. show that several ABSA subtasks can be reformulated in a unified generative framework \cite{yan2021unified}, while Scaria et al. study instruction learning for ABSA \cite{scaria2024instructabsa}. These papers support treating ABSA outputs as structured predictions, but they should not be used to imply that all instruction-following or generative models will outperform smaller supervised baselines in this dissertation's taxonomy-shift setting.
+Weak-supervision research demonstrates that label-side semantics can support
+ABSA without conventional labelled examples. Huang et al.\ use small sets of
+keywords describing aspects and sentiments to learn joint aspect--sentiment
+topic representations \cite{huang2020weakly}. AX-MABSA begins from one
+indicative word per class and produces multi-label aspect-category--sentiment
+sets \cite{kamila2022ax}. These approaches establish that label names or
+keywords are genuine supervision. They are therefore adjacent to, but stronger
+than, this dissertation's minimal-description treatment: automatically mined
+corpus keywords are excluded from the strict description regime.
 
-\section{FABSA as a Customer-Feedback ABSA Benchmark}
+\section{From Fixed Labels to Evolving Taxonomies}
 
-The empirical anchor for this dissertation is FABSA, a public customer-feedback ABSA dataset introduced by Kontonatsios et al. \cite{kontonatsios2023fabsa}. FABSA contains approximately 10,574 user feedback reviews, 14 anonymised organisations, 10 domains, 12 child aspect categories, 3 sentiment polarities, and 36 aspect-sentiment pair labels. It is therefore suitable for studying customer-feedback classification because it combines several properties that are often isolated in benchmark datasets: it is customer-feedback oriented, multi-domain, multi-organisation, and multi-label.
+Conventional supervised text classifiers assume that the output label set is
+fixed. Work on evolving label sets and dynamic text classification instead
+considers categories added after initial model training
+\cite{godbole2005evolvinglabelsets,wohlwend2019dynamictextclassification}.
+Open-domain topic-classification systems likewise allow users to provide or
+revise a taxonomy \cite{ding2022opendomain}. These settings motivate the
+practical problem, but this dissertation makes a narrower claim: the candidate
+taxonomy is supplied at inference, and the task is selection from that
+canonical set rather than discovery of unrestricted topics.
 
-In the original FABSA setting, the taxonomy is fixed. This dissertation keeps that fixed-taxonomy setting as a baseline but extends the evaluation to held-out organisations and held-out aspects in order to study different forms of generalisation. The held-out-aspect and leave-one-aspect-out protocols are therefore project-level evaluation extensions rather than claims that FABSA itself was originally proposed as a taxonomy-shift benchmark. FABSA also motivates candidate-aspect scoring because a model can be given a review and a target aspect and asked whether the aspect is absent or present with a polarity. This makes candidate-label modelling a natural extension of the dataset rather than an unrelated modelling choice.
+Yin et al.\ distinguish label-partially-unseen evaluation---training on some
+labels and testing on all labels---from label-fully-unseen classification with
+no task-specific labelled data \cite{yin2019benchmarking}. This distinction
+prevents an important terminology error. The dissertation's Level~2 is
+label-partially-unseen because eleven trained aspects and one unseen aspect are
+jointly evaluated. Level~1 is an easier singleton-candidate diagnostic, not a
+fully-unseen task: the model still learns the task from the other aspects.
+Levels~3 and~4 extend the partially unseen setting to two unseen labels and an
+unseen parent group.
 
-\section{Multi-Label Classification and Evaluation}
+The joint prediction of seen and unseen labels corresponds to the generalised
+zero-shot concern that a model can perform well on familiar labels while
+suppressing unfamiliar ones. Generalised zero-shot evaluation conventionally
+reports seen and unseen performance separately and uses their harmonic mean to
+expose this imbalance \cite{xian2017zsl}. Although that evaluation convention
+was standardised in computer vision, the same seen/unseen separation appears
+in zero-shot multi-label text classification
+\cite{liu2021hierarchy}. Accordingly, Levels~2--4 report overall, seen, unseen,
+and harmonic-mean results rather than allowing high seen-label performance to
+hide failure on the held-out aspects.
 
-The multi-label nature of FABSA is central. A single review can have zero, one, or several aspect-sentiment labels depending on the evaluation scope. Multi-label learning literature therefore provides the basis for evaluating the task. Tsoumakas and Katakis define multi-label classification as a setting in which each instance may belong to multiple labels \cite{tsoumakas2007multilabel,tsoumakas2008multilabel}, and Zhang and Zhou review algorithms and evaluation measures for such tasks \cite{zhang2014review}. In this dissertation, pair samples F1 is used as a headline metric because it reflects per-review prediction quality over aspect-sentiment pairs. Pair micro F1 captures aggregate label-decision performance, while pair macro F1 exposes performance on rarer labels. Aspect-only metrics and sentiment accuracy conditional on a correct aspect prediction help separate errors in aspect selection from errors in sentiment assignment.
+\section{Structured Multi-Label Spaces and Hierarchy}
 
-Metric choice is especially important in leave-one-aspect-out evaluation. In all-row LOAO, many rows do not contain the current held-out aspect and therefore have empty gold labels. A sample-level F1 score does not reward true-negative empty predictions and can hide different false-positive behaviours. This motivates reporting micro F1, precision, recall, false-positive rows, and exact-match style diagnostics alongside samples F1. The purpose is not merely to report more numbers, but to avoid drawing misleading conclusions about new-aspect detection from a metric that behaves differently when many examples have empty gold labels. General analyses of classification performance measures provide useful caution when choosing and interpreting these metrics \cite{sokolova2009systematic}.
+Multi-label text classification permits several correct labels for one
+document, so instance-based and label-based metrics reveal different behaviour
+\cite{tsoumakas2007multilabel,zhang2014review}. Zero-shot multi-label research
+has additionally exploited known structure over label spaces. Rios and Kavuluru
+study few- and zero-shot labels in structured medical taxonomies
+\cite{rios2018structured}. Liu et al.\ define both unseen-only and generalised
+seen-plus-unseen settings and use parent--child relations to strengthen
+multi-label prediction \cite{liu2021hierarchy}. Semantic-knowledge approaches
+likewise combine class descriptions and class hierarchy when recognising
+unseen categories \cite{zhang2019semantic}.
 
-\section{Generalisation under Domain and Organisation Shift}
+FABSA's twelve labels contain explicit parent--child structure, for example
+\texttt{Staff support: Email} and \texttt{Staff support: Phone}. Keeping the
+full hierarchical name visible is therefore not cosmetic: it supplies a
+controlled form of label semantics. The Level~4 parent-group holdout uses this
+structure as an evaluation intervention. It does not implement hierarchical
+inference or assume that a parent prediction entails every child. Instead, it
+asks whether models trained without all children of a parent can transfer to
+that coherent unseen sub-taxonomy.
 
-The dissertation also distinguishes organisation or domain shift from taxonomy shift. Domain adaptation work in sentiment analysis has long shown that models trained in one domain can degrade when applied to another, and that collecting labelled data for every target domain is costly \cite{blitzer2007biographies}. Broader surveys of neural domain adaptation in NLP similarly emphasise that distribution shift is a central generalisation problem \cite{ramponi2020neural}. In this project, held-out organisation evaluation tests whether models generalise to unseen organisations while keeping the same FABSA taxonomy. This is important for customer-feedback analytics because different organisations and domains may have different vocabulary, review styles, and customer concerns. Nevertheless, it is not the same problem as taxonomy shift: the output labels remain known during training.
+\section{Names, Descriptions, and Label-Side Supervision}
 
-Cross-domain ABSA work provides a closer task-level comparison point. Yu et al. study cross-domain data augmentation with domain-adaptive language modelling for ABSA \cite{yu2023crossdomainabsa}, and Li et al. propose a structure-aware generation model for cross-domain aspect-category sentiment analysis \cite{li2024structureaware}. These papers help motivate cross-domain ABSA as a relevant related area, while this dissertation's held-out organisation protocol should still be described as an evaluation setting rather than a full domain-adaptation method.
+Treating labels as text provides an interface for unseen categories. GILE
+jointly embeds inputs and textual label descriptions, avoiding a classifier
+whose parameters are inseparable from a fixed label inventory
+\cite{pappas2019gile}. Meng et al.\ go further in a dataless setting by
+starting from label names and using unlabelled documents for language-model
+self-training \cite{meng2020labelnames}. These studies justify name-only as a
+meaningful semantic baseline, but they also show that information regimes must
+be stated: name-only plus target-corpus self-training is not the same treatment
+as name-only inference with a frozen encoder.
 
-\section{Taxonomy Shift and Candidate Labels}
+Label descriptions may add objective definitions, related terms, or natural
+language templates. Gao et al.\ curate compact label-description data using
+related terms, dictionary definitions, Wikipedia sentences, and
+sentiment-specific templates; their experiments show gains over zero-shot
+classification and reduced sensitivity to pattern choice
+\cite{gao2023labeldesc}. This supports the dissertation's use of a short
+taxonomy gloss when no official FABSA annotation guidance is available. Because
+the FABSA labels are project-specific hierarchical composites, a uniformly
+authored definition is more reproducible than selecting different external web
+pages for different labels.
 
-Taxonomy shift is the narrower and more novel axis of this dissertation. Standard supervised classifiers typically assume that the output label set is fixed between training and inference. This assumption is problematic when customer-feedback taxonomies evolve, for example when new product features, support channels, or complaint categories appear. The broader text-classification literature has treated this as an evolving label-set problem, where new classes may appear after the initial training set has been collected \cite{godbole2005evolvinglabelsets}. More recent work on dynamic text classification similarly argues that fixed-label classifiers are poorly matched to applications where the label set changes over time and labels may be added or removed \cite{wohlwend2019dynamictextclassification}. The practical problem studied here is not free-form topic discovery. Instead, it is candidate-label new-aspect generalisation: at inference time, the model is given a set of candidate aspect labels and must select the relevant ones and assign sentiment. This distinction is important because it makes the task evaluable and operationally realistic while avoiding the stronger claim that the model invents arbitrary new topics.
+Description choice itself can become hidden model selection. Basile et al.\
+note that a true zero-shot setting lacks a labelled target development set and
+therefore rank or aggregate multiple descriptions without target labels
+\cite{basile2022ranking}. Chu et al.\ refine weak label representations using
+unlabelled target documents and clustering \cite{chu2021labelrefinement}, while
+Yano et al.\ generate and rerank keywords for relevance, diversity, and
+inter-class exclusivity \cite{yano2024relevance}. Both are useful extensions,
+but they consume an additional information source or introduce a richer
+description generator. The core thesis instead fixes one minimal definition
+using only the canonical names, parent--child hierarchy, and general language
+knowledge. Target reviews, corpus statistics, labels, predictions, and error
+analysis are prohibited.
 
-Candidate-label and zero-shot classification literature motivates this formulation. Ding et al. propose open-domain topic classification with user-defined taxonomies and label-aware classification, showing how labels can be treated as semantic inputs rather than fixed classifier indices \cite{ding2022opendomain}. Yin et al. study zero-shot text classification through entailment-style formulations, where label descriptions help connect unseen labels to text \cite{yin2019benchmarking}. Related work on dataless classification, generalised input-label embeddings, and description-based classification similarly supports the idea that label semantics can be used during inference \cite{chang2008semantic,pappas2019gile,chai2020description}. In this dissertation, these ideas are adapted to FABSA's aspect-sentiment setting: the model receives candidate aspect labels and predicts aspect-sentiment pairs from the supplied candidate set.
+The description's usefulness is then an empirical question, not an editing
+criterion. Once frozen, name-only and name-plus-definition conditions can be
+compared on identical examples. A poor result means that the fixed description
+did not help that model under the declared protocol; it does not authorise
+rewriting the description after observing target results. The Level~3
+\texttt{NN}/\texttt{DN}/\texttt{ND}/\texttt{DD} crossover extends this logic
+to incomplete documentation. The two directions are both required because a
+one-direction result would confound description availability with the intrinsic
+difficulty of the two held-out aspects.
 
-This framing also clarifies the role of the project's evaluation protocols. The closed-topic split measures conventional fixed-taxonomy performance. The held-out organisation split measures generalisation to unseen organisations under the same taxonomy. The fixed held-out-aspect split measures whether models can use supplied candidate labels for aspects excluded from training supervision. Finally, LOAO rotates each aspect as held out, providing robustness diagnostics and reducing the risk that a single three-aspect split is unusually easy or hard. These protocols turn the dissertation from a single benchmark comparison into a structured study of how performance changes as the evaluation moves from stable taxonomy to organisation shift and then to taxonomy shift.
+\section{A Matched Spectrum of Model Capacity}
 
-\section{Structured-Output LLMs as Candidate-Label Classifiers}
+The five core methods are chosen to test representational and adaptation
+capacity without turning the thesis into an unrestricted model sweep. Strict
+train-only TF--IDF provides a lexical baseline whose vocabulary and inverse
+document frequencies are fitted inside the training scope. E5-base-v2 provides
+a frozen dense semantic baseline; E5 was trained contrastively for transferable
+single-vector text representations across retrieval and classification tasks
+\cite{wang2022e5}. The supervised DistilBERT cross-encoder supplies contextual
+token interaction while retaining a relatively compact encoder. DistilBERT
+uses pre-training-stage knowledge distillation to reduce BERT's size and
+inference cost \cite{sanh2019distilbert}, while the sentence-pair design follows
+the candidate-conditioned ABSA motivation discussed above.
 
-Structured-output LLMs form the final part of the literature review because they are a plausible model family for candidate-label classification. Instruction-following models can consume natural-language label lists and generate structured predictions, and generative ABSA work has already shown that ABSA subtasks can be reformulated as sequence generation \cite{yan2021unified,scaria2024instructabsa}. However, this dissertation should not assume that LLMs are automatically superior. Yu et al. compare open, closed, and small language models for text classification and show that smaller supervised models can remain highly competitive across many classification settings \cite{yu2023openclosedsmall}. This supports keeping DistilBERT-style local baselines as serious comparators. For this project, Qwen and Gemini are therefore best understood as structured generative candidate-label classifiers to be compared under the same held-out-aspect protocol.
+Qwen3 supplies the common causal language-model backbone for the final two
+methods \cite{yang2025qwen3}. Frozen Qwen converts the next-token logits for
+fixed ``yes'' and ``no'' verbalizers into an applicability score. QLoRA keeps
+the same input, verbalizers, score, and base-model revision while adapting
+low-rank modules. LoRA freezes the base weights and learns low-rank updates
+\cite{hu2022lora}; QLoRA back-propagates through a frozen four-bit model into
+those adapters to reduce memory requirements \cite{dettmers2023qlora}.
 
-Because the LLM output is structured, evaluation must include more than F1. Work on guided generation and structured-output restrictions shows that constraining model outputs can improve parseability but may interact with model behaviour and task performance \cite{willard2023guided,tam2024speakfreely}. JSONSchemaBench and related work on prompting-as-programming further motivate explicit evaluation of schema adherence and structured-output failure modes \cite{geng2025jsonschemabench,beurerkellner2023prompting}. For candidate-label ABSA, invalid JSON, hallucinated candidate labels, invalid sentiment values, duplicate labels, or unparsable outputs directly affect usability. Therefore, future Qwen/Gemini experiments should report valid JSON rate, schema-valid rate, parse failures, hallucinated labels, latency, token usage, and cost-related diagnostics alongside predictive metrics. This keeps the LLM comparison connected to the central dissertation problem rather than turning it into an unrelated API benchmark.
+This matched control is scientifically important. Recent zero-shot multi-label
+work reports that supervised fine-tuning can improve overall performance while
+eroding unseen-label capability, even when label descriptions are present
+\cite{chen2025preserving}. QLoRA is therefore not assumed to win because it is
+adapted. The comparison asks whether adaptation improves the candidate-pair
+task while preserving the semantic route to aspects excluded from
+task-specific training.
 
-\section{Summary}
+\section{Metrics and Statistical Uncertainty}
 
-The literature supports a dissertation centred on structured candidate-label aspect-sentiment classification under taxonomy shift. Customer review mining motivates the need for structured feedback signals; ABSA motivates aspect-specific sentiment; FABSA provides a public multi-label customer-feedback dataset; multi-label learning motivates the metrics; domain adaptation literature motivates held-out organisation evaluation; candidate-label and zero-shot classification motivate unseen-label prediction from supplied labels; and structured-output LLM research motivates Qwen/Gemini as future model families. The key limitation to state throughout is that this dissertation studies selection from supplied candidate labels, not unrestricted topic discovery or production-ready deployment.
+Multi-label evaluation requires more than one F1 variant. Pair micro-F1
+aggregates claim decisions, macro-F1 exposes rare aspect--sentiment labels, and
+example-based F1 describes review-level set quality. In all-row unseen-aspect
+evaluation, true-negative empty rows can dominate, so presence F1 must be
+defined over the positive class rather than counting correct absence as
+positive evidence. Exact match, prediction-set size, false-positive and
+false-negative rows, and conditional sentiment coverage further separate
+aspect detection from sentiment assignment. General metric analyses caution
+that different averaging rules answer different questions
+\cite{sokolova2009systematic}.
+
+Because every matched system is evaluated on the same reviews and candidate
+claims, uncertainty analysis should preserve that pairing. Dror et al.\ show
+that statistical procedures in NLP must match the evaluation measure and
+experimental structure \cite{dror2018hitchhiker}. Paired evaluation likewise
+uses the common instances rather than comparing two unrelated averages
+\cite{peyrard2021paired}. The dissertation therefore resamples reviews as
+clusters, retains all candidate claims belonging to a sampled review, and
+recomputes nonlinear metrics within each replicate. Paired metric-difference
+intervals are primary for model and description contrasts. Per-aspect
+wins/ties/losses and sign-flip evidence address variation across the registered
+taxonomic units, while multiple-comparison claims are kept within
+pre-registered families \cite{dror2017replicability}.
+
+\section{Synthesis and Positioning}
+
+The literature provides strong support for the components of the revised
+route: ABSA requires aspect-conditioned sentiment; auxiliary-sentence and
+prompt methods support candidate-conditioned inputs; zero-shot text
+classification distinguishes unseen-only from joint seen/unseen evaluation;
+structured multi-label work exploits label descriptions and hierarchy; and
+parameter-efficient adaptation supplies a feasible test of task-specific LLM
+training.
+
+The dissertation combines these components into one controlled difficulty
+ladder for customer-feedback ABSA. Its most distinctive experiment is not a new
+description-generation algorithm. It is the matched dual-unseen crossover,
+which tests whether incomplete semantic documentation changes competition
+between two unseen aspects while the training data, candidate pairs, model, and
+budget remain fixed. The parent-group holdout then asks whether the same methods
+survive a coherent sub-taxonomy shift. This positioning keeps the contribution
+challenging but bounded: supplied candidate labels rather than arbitrary topic
+generation, and evidence about degradation, description, and adaptation rather
+than a claim of universal zero-shot performance.

@@ -1,8 +1,62 @@
 # Report Notes
 
-Last updated: 2026-07-23
+Last updated: 2026-07-24
 
 This file is a compact evidence ledger for dissertation/report drafting. Detailed experiment records remain in `docs/`.
+
+## 2026-07-24 - Taxonomy-Generalisation Literature and Thesis Alignment
+
+Task:
+
+- Re-review the literature after the dissertation route changed from a
+  fixed-split/LLM/router story to a Level 1--4 taxonomy-generalisation
+  difficulty ladder.
+- Update the local thesis before any formal local model execution.
+
+Evidence process:
+
+- Used original papers and official ACL, CVPR, OpenReview, arXiv, and Qwen
+  sources.
+- Covered candidate-conditioned ABSA, generalised zero-shot text
+  classification, structured zero-shot multi-label learning, label
+  descriptions and hierarchy, E5/DistilBERT/Qwen/QLoRA, and paired statistical
+  evaluation.
+- No official validation or test model run was performed.
+
+Main decisions:
+
+- Level 1 is a supplied-candidate singleton unseen-label diagnostic, not a
+  label-fully-unseen task.
+- Level 2 is the closest label-partially-unseen/generalised zero-shot analogue.
+- Levels 3 and 4 are progressively harder multi-unseen and sub-taxonomy
+  extensions.
+- The exact `NN/DN/ND/DD` dual-unseen crossover is a project synthesis supported
+  by adjacent description and generalised zero-shot literature, not a copied
+  standard benchmark.
+- Frozen Qwen versus QLoRA is interpreted as an unseen-label preservation versus
+  task-adaptation comparison, motivated directly by recent multi-label
+  fine-tuning evidence.
+- Earlier closed-taxonomy, organisation, Gemini, and routing work remains
+  historical or secondary evidence and no longer defines the thesis spine.
+
+Tracked outputs:
+
+- `docs/experiments/taxonomy_literature_route_alignment_20260724.md`
+- `thesis/chapters/01_introduction.tex`
+- `thesis/chapters/02_literature_review.tex`
+- `thesis/main.tex`
+- `thesis/references.bib`
+- `docs/dissertation_loao_mainline_lock_2026_07_23.md`
+
+Validation:
+
+- 37 unique citation keys resolved against 52 unique bibliography entries;
+  no key was missing or duplicated.
+- The full XeLaTeX/BibTeX build completed and produced a 30-page thesis PDF
+  without undefined citations, references, or LaTeX errors.
+- `git diff --check` passed.
+- The complete repository test suite passed: 292 tests.
+- Formal local model execution was deliberately not started.
 
 ## 2026-07-23 - Approved Taxonomy-Generalisation Mainline
 

@@ -29,6 +29,14 @@ statistical gates were initially pending separately. The user approved and
 froze the complete statistical protocol on 24 July 2026; only the description
 resource remains unresolved.
 
+Before formal local execution, the thesis route and literature were realigned
+on 24 July 2026. The evidence map and terminology audit are recorded in
+`docs/experiments/taxonomy_literature_route_alignment_20260724.md`. This review
+confirmed the Level 1--4 route and five-method roster, corrected Level 1 versus
+label-partially-unseen terminology, and repositioned earlier Gemini/router work
+as historical or secondary evidence. No official validation or test experiment
+was run during the literature stage.
+
 ## Working title and central question
 
 Working title:
@@ -119,6 +127,15 @@ The existing
 resource. The core `minimal_v2` resource should mechanically retain only the
 reviewed definition field. Cues and boundaries must not silently enter the
 minimal treatment.
+
+The validation rule was pre-registered on 24 July 2026 before formal local
+execution. Description text may receive a blind semantic-format check for
+neutrality, label-name consistency, and prohibited information, or a
+pseudo-unseen check using seen-aspect labels only. Target-aspect validation or
+test performance must never select, rank, or rewrite a definition. The
+usefulness of a frozen definition is evaluated only afterwards through the
+matched name-only versus minimal-definition contrast; a weak result is an
+experimental result, not permission to edit the resource.
 
 Descriptions are legitimate label-side semantic supervision, not target
 labelled examples. Thesis wording must call the corresponding condition
@@ -421,6 +438,9 @@ must be marked as pilots, not completion.
   replacing it with a new encoder sweep.
 - [x] Require confidence intervals and paired uncertainty for final primary
   claims.
+- [x] Realign the thesis introduction, literature review, method route, and
+  references with the approved Level 1--4 taxonomy-generalisation mainline
+  before formal local execution.
 
 ### B. Freeze the description resource
 
@@ -434,7 +454,7 @@ must be marked as pilots, not completion.
   reviewed text.
 - [x] Add tests for exact label coverage, non-empty definitions, stable order,
   and manifest hash.
-- [ ] Pre-register a leakage-safe description validation rule. Target-aspect
+- [x] Pre-register a leakage-safe description validation rule. Target-aspect
   validation/test F1 must not select or rewrite target descriptions; permitted
   evidence may include blind semantic review and pseudo-unseen experiments
   using seen-aspect labels only.
