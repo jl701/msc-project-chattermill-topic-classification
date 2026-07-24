@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -166,6 +167,78 @@ def _load_all_shards(prepared, contract, output_root: Path) -> pd.DataFrame:
             shard_index=shard_index,
         )
     return merge_score_shards(artifacts, contract, prepared.evaluation_grid)
+
+
+def _validated_existing_threshold_summary(
+    path: Path,
+    *,
+    args: argparse.Namespace,
+    fold: TaxonomyFold,
+    parameters_sha256: str,
+    training_contract_sha256: str,
+) -> dict[str, object]:
+    value = json.loads(path.read_text(encoding="utf-8"))
+    if value.get("event") != "threshold_selected":
+        raise ValueError("Existing validation summary has the wrong event.")
+    observation = value.get("tuning_observation")
+    if not isinstance(observation, dict):
+        raise ValueError("Existing validation summary lacks a tuning observation.")
+    expected = {
+        "method_id": args.method,
+        "candidate_id": args.candidate_id,
+        "parameters_sha256": parameters_sha256,
+        "fold_id": fold.fold_id,
+        "calibration_scope": "seen_aspects_only",
+    }
+    mismatches = {
+        key: {"expected": expected_value, "observed": observation.get(key)}
+        for key, expected_value in expected.items()
+        if observation.get(key) != expected_value
+    }
+    if mismatches:
+        raise ValueError(
+            f"Existing validation summary contract mismatch: {mismatches}"
+        )
+    condition_metrics = value.get("per_condition_selection_metrics")
+    if not isinstance(condition_metrics, dict) or set(condition_metrics) != set(
+        fold.conditions
+    ):
+        raise ValueError("Existing validation summary has wrong fold conditions.")
+    thresholds = {
+        float(metrics["threshold"])
+        for metrics in condition_metrics.values()
+    }
+    if len(thresholds) != 1:
+        raise ValueError("Existing validation summary does not share one threshold.")
+
+    threshold_artifact_sha256 = None
+    if args.purpose == "final":
+        artifact = load_threshold_transfer_artifact(
+            threshold_path_for(
+                args.output_root,
+                args.method,
+                fold,
+                parameters_sha256,
+                args.seed,
+            ),
+            fold=fold,
+            method_id=args.method,
+            scientific_parameters_sha256=parameters_sha256,
+            training_contract_sha256=training_contract_sha256,
+        )
+        if value.get("threshold_artifact") != artifact.to_dict():
+            raise ValueError(
+                "Existing validation summary and threshold artifact disagree."
+            )
+        threshold_artifact_sha256 = artifact.artifact_sha256
+
+    return {
+        "event": "threshold_selection_resumed",
+        "summary_path": str(path),
+        "summary_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        "threshold": next(iter(thresholds)),
+        "threshold_artifact_sha256": threshold_artifact_sha256,
+    }
 
 
 def _validate_purpose(
@@ -468,6 +541,23 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         }
 
     if args.phase == "select-threshold":
+        validation_summary_path = summary_path_for(
+            args.output_root,
+            args.purpose,
+            "validation",
+            args.method,
+            fold,
+            parameters_sha256,
+            args.seed,
+        )
+        if args.resume and validation_summary_path.exists():
+            return _validated_existing_threshold_summary(
+                validation_summary_path,
+                args=args,
+                fold=fold,
+                parameters_sha256=parameters_sha256,
+                training_contract_sha256=train_contract.contract_sha256,
+            )
         selections = {}
         merged_by_condition = {}
         assert calibration_prepared is not None
@@ -543,15 +633,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
             write_threshold_transfer_artifact(path, artifact)
             summary["threshold_artifact"] = artifact.to_dict()
         _write_json_new(
-            summary_path_for(
-                args.output_root,
-                args.purpose,
-                "validation",
-                args.method,
-                fold,
-                parameters_sha256,
-                args.seed,
-            ),
+            validation_summary_path,
             summary,
         )
         return summary

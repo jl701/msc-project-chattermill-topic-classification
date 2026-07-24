@@ -131,6 +131,47 @@ def test_dry_run_simulates_completed_dependencies_without_writing(
     assert not state_path.exists()
 
 
+def test_resumable_executor_adds_only_administrative_threshold_resume(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    observed: list[list[str]] = []
+
+    def fake_run(argv: list[str], **_: object) -> SimpleNamespace:
+        observed.append(argv)
+        return SimpleNamespace(returncode=0)
+
+    monkeypatch.setattr(MODULE.subprocess, "run", fake_run)
+    jobs = [
+        {
+            "job_id": "threshold",
+            "stage": "tuning-select-threshold",
+            "depends_on": [],
+            "official_splits_opened": ["validation"],
+            "argv": ["python", "runner.py", "--phase", "select-threshold"],
+            "executor": "local_cpu",
+        }
+    ]
+    state = MODULE._empty_state(
+        plan_path=tmp_path / "plan.json",
+        plan_sha256="plan",
+        methods=("strict_train_only_tfidf",),
+        include_official_test=False,
+    )
+    assert (
+        MODULE.execute_jobs(
+            jobs,
+            state=state,
+            state_path=tmp_path / "state.json",
+            dry_run=False,
+            stop_after=None,
+        )
+        == 0
+    )
+    assert observed == [
+        ["python", "runner.py", "--phase", "select-threshold", "--resume"]
+    ]
+
+
 def test_parallel_executor_runs_only_ready_jobs_and_records_state(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

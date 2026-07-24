@@ -73,6 +73,49 @@ def test_tuning_scope_is_nested_and_rejects_any_test_phase() -> None:
         )
 
 
+def test_existing_tuning_threshold_summary_is_validated_for_resume(
+    tmp_path: Path,
+) -> None:
+    fold = MODULE.resolve_fold("L1", "l1-a01")
+    parameters_sha256 = "a" * 64
+    path = tmp_path / "summary.json"
+    threshold = 0.42
+    path.write_text(
+        json.dumps(
+            {
+                "event": "threshold_selected",
+                "tuning_observation": {
+                    "method_id": "strict_train_only_tfidf",
+                    "candidate_id": "strict_train_only_tfidf-001",
+                    "parameters_sha256": parameters_sha256,
+                    "fold_id": fold.fold_id,
+                    "calibration_scope": "seen_aspects_only",
+                },
+                "per_condition_selection_metrics": {
+                    condition: {"threshold": threshold}
+                    for condition in fold.conditions
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    args = MODULE.argparse.Namespace(
+        method="strict_train_only_tfidf",
+        candidate_id="strict_train_only_tfidf-001",
+        purpose="tuning",
+    )
+    result = MODULE._validated_existing_threshold_summary(
+        path,
+        args=args,
+        fold=fold,
+        parameters_sha256=parameters_sha256,
+        training_contract_sha256="b" * 64,
+    )
+    assert result["event"] == "threshold_selection_resumed"
+    assert result["threshold"] == threshold
+    assert result["threshold_artifact_sha256"] is None
+
+
 def test_nested_method_cannot_use_global_parameter_selection(
     tmp_path: Path,
 ) -> None:

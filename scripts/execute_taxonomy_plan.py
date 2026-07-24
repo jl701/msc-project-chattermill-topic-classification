@@ -228,6 +228,12 @@ def execute_jobs(
     def emit_start(job: dict[str, object]) -> list[str]:
         job_id = str(job["job_id"])
         argv = [str(value) for value in job["argv"]]
+        if (
+            str(job["stage"])
+            in {"tuning-select-threshold", "formal-select-threshold"}
+            and "--resume" not in argv
+        ):
+            argv.append("--resume")
         print(
             json.dumps(
                 {
