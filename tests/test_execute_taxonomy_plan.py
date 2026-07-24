@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import importlib.util
+import threading
+import time
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -126,3 +129,75 @@ def test_dry_run_simulates_completed_dependencies_without_writing(
         == 0
     )
     assert not state_path.exists()
+
+
+def test_parallel_executor_runs_only_ready_jobs_and_records_state(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    jobs = [
+        {
+            "job_id": "first",
+            "stage": "tuning-train",
+            "depends_on": [],
+            "official_splits_opened": ["train"],
+            "argv": ["python", "first.py"],
+            "executor": "local_cpu",
+        },
+        {
+            "job_id": "second",
+            "stage": "tuning-train",
+            "depends_on": [],
+            "official_splits_opened": ["train"],
+            "argv": ["python", "second.py"],
+            "executor": "local_cpu",
+        },
+        {
+            "job_id": "final",
+            "stage": "tuning-score-validation",
+            "depends_on": ["first", "second"],
+            "official_splits_opened": ["validation"],
+            "argv": ["python", "final.py"],
+            "executor": "local_cpu",
+        },
+    ]
+    lock = threading.Lock()
+    active = 0
+    maximum_active = 0
+    finished: set[str] = set()
+
+    def fake_run(argv: list[str], **_: object) -> SimpleNamespace:
+        nonlocal active, maximum_active
+        name = Path(argv[1]).stem
+        with lock:
+            if name == "final":
+                assert finished == {"first", "second"}
+            active += 1
+            maximum_active = max(maximum_active, active)
+        time.sleep(0.02)
+        with lock:
+            active -= 1
+            finished.add(name)
+        return SimpleNamespace(returncode=0)
+
+    monkeypatch.setattr(MODULE.subprocess, "run", fake_run)
+    state = MODULE._empty_state(
+        plan_path=tmp_path / "plan.json",
+        plan_sha256="plan",
+        methods=("strict_train_only_tfidf",),
+        include_official_test=False,
+    )
+    state_path = tmp_path / "state.json"
+    assert (
+        MODULE.execute_jobs(
+            jobs,
+            state=state,
+            state_path=state_path,
+            dry_run=False,
+            stop_after=None,
+            max_workers=2,
+        )
+        == 0
+    )
+    assert maximum_active == 2
+    assert set(state["completed_job_ids"]) == {"first", "second", "final"}
+    assert state["running_job_ids"] == []

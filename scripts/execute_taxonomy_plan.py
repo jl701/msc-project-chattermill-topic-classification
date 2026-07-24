@@ -7,6 +7,7 @@ import os
 import subprocess
 import sys
 import tempfile
+from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable, Sequence
@@ -147,6 +148,7 @@ def _empty_state(
         "created_at": _utc_now(),
         "updated_at": _utc_now(),
         "current_job_id": None,
+        "running_job_ids": [],
         "completed_job_ids": [],
         "failed_jobs": [],
     }
@@ -206,25 +208,17 @@ def execute_jobs(
     state_path: Path,
     dry_run: bool,
     stop_after: int | None,
+    max_workers: int = 1,
 ) -> int:
+    if max_workers < 1:
+        raise ValueError("max_workers must be positive.")
     completed = set(str(value) for value in state["completed_job_ids"])
-    executed = 0
-    for job in jobs:
-        job_id = str(job["job_id"])
-        if job_id in completed:
-            continue
-        unresolved = [
-            str(value)
-            for value in job["depends_on"]
-            if str(value) not in completed
-        ]
-        if unresolved:
-            raise RuntimeError(
-                f"{job_id} reached before dependencies completed: {unresolved[:5]}"
-            )
-        if stop_after is not None and executed >= stop_after:
-            break
+    pending = [
+        job for job in jobs if str(job["job_id"]) not in completed
+    ]
 
+    def emit_start(job: dict[str, object]) -> list[str]:
+        job_id = str(job["job_id"])
         argv = [str(value) for value in job["argv"]]
         print(
             json.dumps(
@@ -240,42 +234,127 @@ def execute_jobs(
             ),
             flush=True,
         )
-        if dry_run:
-            completed.add(job_id)
-            executed += 1
-            continue
+        return argv
 
-        state["current_job_id"] = job_id
-        write_state(state_path, state)
-        completed_process = subprocess.run(argv, cwd=PROJECT_ROOT, check=False)
-        if completed_process.returncode != 0:
-            state["failed_jobs"].append(
-                {
-                    "job_id": job_id,
-                    "returncode": completed_process.returncode,
-                    "failed_at": _utc_now(),
-                }
+    if dry_run:
+        executed = 0
+        while pending:
+            ready = next(
+                (
+                    job
+                    for job in pending
+                    if all(
+                        str(value) in completed
+                        for value in job["depends_on"]
+                    )
+                ),
+                None,
             )
-            state["current_job_id"] = None
-            write_state(state_path, state)
-            return completed_process.returncode
+            if ready is None:
+                raise RuntimeError("Dry-run dependency graph cannot make progress.")
+            if stop_after is not None and executed >= stop_after:
+                break
+            emit_start(ready)
+            job_id = str(ready["job_id"])
+            completed.add(job_id)
+            pending.remove(ready)
+            executed += 1
+        return 0
 
-        state["completed_job_ids"].append(job_id)
-        state["current_job_id"] = None
-        completed.add(job_id)
-        executed += 1
-        write_state(state_path, state)
-        print(
-            json.dumps(
-                {
-                    "event": "job_complete",
-                    "job_id": job_id,
-                    "completed_in_this_invocation": executed,
-                    "completed_in_state": len(completed),
+    state["current_job_id"] = None
+    state["running_job_ids"] = []
+    write_state(state_path, state)
+    executed = 0
+    scheduled = 0
+    failure_code: int | None = None
+    in_flight: dict[Future[int], dict[str, object]] = {}
+
+    def run(argv: Sequence[str]) -> int:
+        return subprocess.run(
+            list(argv), cwd=PROJECT_ROOT, check=False
+        ).returncode
+
+    with ThreadPoolExecutor(max_workers=max_workers) as pool:
+        while pending or in_flight:
+            if failure_code is None:
+                for job in list(pending):
+                    if len(in_flight) >= max_workers:
+                        break
+                    if stop_after is not None and scheduled >= stop_after:
+                        break
+                    if not all(
+                        str(value) in completed
+                        for value in job["depends_on"]
+                    ):
+                        continue
+                    job_id = str(job["job_id"])
+                    argv = emit_start(job)
+                    pending.remove(job)
+                    state["running_job_ids"].append(job_id)
+                    write_state(state_path, state)
+                    in_flight[pool.submit(run, argv)] = job
+                    scheduled += 1
+
+            if not in_flight:
+                if stop_after is not None and scheduled >= stop_after:
+                    break
+                unresolved = {
+                    str(job["job_id"]): [
+                        str(value)
+                        for value in job["depends_on"]
+                        if str(value) not in completed
+                    ]
+                    for job in pending
                 }
-            ),
-            flush=True,
-        )
+                raise RuntimeError(
+                    "Dependency graph cannot make progress: "
+                    f"{list(unresolved.items())[:3]}"
+                )
+
+            finished, _ = wait(in_flight, return_when=FIRST_COMPLETED)
+            for future in finished:
+                job = in_flight.pop(future)
+                job_id = str(job["job_id"])
+                state["running_job_ids"].remove(job_id)
+                try:
+                    returncode = int(future.result())
+                    error = None
+                except BaseException as exc:
+                    returncode = 1
+                    error = f"{type(exc).__name__}: {exc}"
+                if returncode != 0:
+                    failure_code = failure_code or returncode
+                    state["failed_jobs"].append(
+                        {
+                            "job_id": job_id,
+                            "returncode": returncode,
+                            "error": error,
+                            "failed_at": _utc_now(),
+                        }
+                    )
+                else:
+                    state["completed_job_ids"].append(job_id)
+                    completed.add(job_id)
+                    executed += 1
+                    print(
+                        json.dumps(
+                            {
+                                "event": "job_complete",
+                                "job_id": job_id,
+                                "completed_in_this_invocation": executed,
+                                "completed_in_state": len(completed),
+                            }
+                        ),
+                        flush=True,
+                    )
+                write_state(state_path, state)
+
+    if failure_code is not None:
+        return failure_code
+    if state["running_job_ids"]:
+        raise AssertionError("Execution finished with jobs still marked running.")
+    state["current_job_id"] = None
+    write_state(state_path, state)
     return 0
 
 
@@ -298,6 +377,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--stop-after", type=int)
     parser.add_argument(
+        "--max-workers",
+        type=int,
+        default=1,
+        help=(
+            "Maximum independent plan jobs to run concurrently. Keep this at "
+            "one for GPU methods; four is the validated local TF-IDF setting."
+        ),
+    )
+    parser.add_argument(
         "--include-official-test",
         action="store_true",
         help=(
@@ -312,6 +400,8 @@ def main() -> int:
     args = parse_args()
     if args.stop_after is not None and args.stop_after < 1:
         raise ValueError("--stop-after must be positive.")
+    if args.max_workers < 1:
+        raise ValueError("--max-workers must be positive.")
     methods = tuple(dict.fromkeys(args.methods))
     plan_path = args.plan.resolve()
     plan = load_plan(plan_path)
@@ -349,6 +439,7 @@ def main() -> int:
                 "already_completed": len(state["completed_job_ids"]),
                 "state_path": state_path.as_posix(),
                 "dry_run": args.dry_run,
+                "max_workers": args.max_workers,
             }
         ),
         flush=True,
@@ -359,6 +450,7 @@ def main() -> int:
         state_path=state_path,
         dry_run=args.dry_run,
         stop_after=args.stop_after,
+        max_workers=args.max_workers,
     )
 
 
