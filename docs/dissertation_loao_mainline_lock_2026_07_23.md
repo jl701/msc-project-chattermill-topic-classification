@@ -25,7 +25,9 @@ The implementation and current workload evidence are in
 `docs/experiments/taxonomy_local_non_qlora_execution_readiness_20260724.md`.
 This later report supersedes the 23 July report only for execution placement,
 Frozen-Qwen caching and workload estimates. Scientific descriptions and
-statistical gates remain separately pending.
+statistical gates were initially pending separately. The user approved and
+froze the complete statistical protocol on 24 July 2026; only the description
+resource remains unresolved.
 
 ## Working title and central question
 
@@ -329,9 +331,9 @@ the amount recovered by description or adaptation.
 ### Statistical uncertainty and paired inference
 
 Confidence intervals are a required part of the final thesis evidence, not an
-optional post-hoc decoration. The exact implementation must be frozen before
-any new test result is inspected. The proposed contract, pending the user's
-final execution-plan approval, is:
+optional post-hoc decoration. The exact implementation was approved and frozen
+by the user on 24 July 2026 before any new official validation/test result was
+inspected. The contract is:
 
 - report point estimates and 95% confidence intervals for the primary metrics;
 - compare matched systems with a paired interval for the metric difference,
@@ -432,8 +434,12 @@ must be marked as pilots, not completion.
   reviewed text.
 - [x] Add tests for exact label coverage, non-empty definitions, stable order,
   and manifest hash.
-- [ ] Obtain user approval of the exact twelve descriptions before any new
-  validation/test run.
+- [ ] Pre-register a leakage-safe description validation rule. Target-aspect
+  validation/test F1 must not select or rewrite target descriptions; permitted
+  evidence may include blind semantic review and pseudo-unseen experiments
+  using seen-aspect labels only.
+- [ ] Freeze the exact twelve descriptions under that rule before any new
+  official validation/test run.
 
 ### C. Build the common stress-test infrastructure
 
@@ -529,7 +535,7 @@ must be marked as pilots, not completion.
 
 ### I. Robustness, statistics, and final thesis evidence
 
-- [ ] Obtain user approval of the exact confidence-interval and primary-contrast
+- [x] Obtain user approval of the exact confidence-interval and primary-contrast
   plan before any new test result is inspected.
 - [x] Pre-register bootstrap unit, interval method, bootstrap count and seed,
   primary contrasts, sign-flip rule, multiplicity handling, and permitted

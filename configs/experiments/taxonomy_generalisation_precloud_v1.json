@@ -122,7 +122,7 @@
     "test_rule": "freeze the complete pipeline before one test evaluation"
   },
   "statistics": {
-    "status": "proposed_pending_final_user_gate",
+    "status": "approved_and_frozen",
     "review_cluster_key": "row_uid",
     "bootstrap_replicates": 20000,
     "bootstrap_seed": 13,

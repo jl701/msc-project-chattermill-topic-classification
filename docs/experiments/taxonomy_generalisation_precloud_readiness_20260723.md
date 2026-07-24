@@ -5,6 +5,8 @@
 > in Sections 11-12 were superseded on 24 July 2026 by
 > `docs/experiments/taxonomy_local_non_qlora_execution_readiness_20260724.md`.
 > TF-IDF, E5, DistilBERT and cached Frozen Qwen are now local; QLoRA is cloud.
+> The user also approved and froze the statistical protocol on 24 July 2026;
+> statements below that it remains pending describe the 23 July snapshot.
 
 ## Executive conclusion
 

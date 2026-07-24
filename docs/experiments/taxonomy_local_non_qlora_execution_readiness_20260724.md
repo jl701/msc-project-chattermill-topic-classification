@@ -34,7 +34,7 @@ The locally generated hybrid plan is:
 
 ```text
 outputs/experimental/taxonomy_hybrid_execution_plan_v1_20260724.json
-SHA-256 0af8f8d6ac5eaef8989c73060b8f793062d37e389c9f9251a955d86b40913bed
+SHA-256 1817e4bf107e3bb3b00ff1993701cc05f40aa44ba07fdfb94ab6d801dd7f5565
 ```
 
 It retains scientific protocol SHA-256
@@ -263,7 +263,8 @@ Completed in this stage:
 Still deliberately blocked:
 
 - [ ] approve and freeze the exact twelve minimal descriptions;
-- [ ] approve and freeze the statistical/primary-comparison contract;
+- [x] approve and freeze the statistical/primary-comparison contract
+  (approved by the user on 24 July 2026);
 - [ ] run official seen-only nested validation selection for TF-IDF and
   DistilBERT;
 - [ ] run official local TF-IDF, E5, DistilBERT and Frozen-Qwen stages;
@@ -273,14 +274,15 @@ Still deliberately blocked:
 - [ ] produce Level 1-4 tables, confidence intervals and thesis claims.
 
 The user's approval of the compute split authorises this engineering and
-synthetic verification stage. It does not silently approve the exact
-description texts or the final statistical gates. Consequently, no new
+synthetic verification stage. The user separately approved the complete
+statistical protocol on 24 July 2026. The exact description texts and their
+leakage-safe validation/freeze rule remain unresolved. Consequently, no new
 official validation or test result was inspected in this stage.
 
-## 6. Execution order after the two scientific approvals
+## 6. Execution order after the remaining description decision
 
 ```text
-freeze exact descriptions and statistics
+freeze the leakage-safe description protocol and exact descriptions
     -> run local TF-IDF nested selection
     -> run local DistilBERT nested selection
     -> generate fixed E5 and Frozen-Qwen selections

@@ -53,8 +53,9 @@ This phase ends at the Cloud Readiness Gate. Completion requires:
   limitations and user decisions still required.
 
 The description resource remains `pending_user_approval`. Formal
-validation/test execution is blocked until the user approves its exact twelve
-definitions and the final statistical contract.
+validation/test execution is blocked until its leakage-safe construction and
+exact twelve definitions are frozen. The user approved and froze the complete
+statistical contract on 24 July 2026.
 
 ## Implementation progress
 
@@ -182,8 +183,8 @@ Reflection after this stage:
 - matched model/description contrasts and cross-level difficulty changes now
   have different, explicit inference contracts;
 - synthetic smoke metrics remain prohibited from thesis result tables; and
-- formal execution remains blocked until the exact descriptions and
-  statistical contract are user-approved and frozen.
+- at that time formal execution remained blocked on both descriptions and
+  statistics; the statistical gate was subsequently approved on 24 July 2026.
 
 The detailed readiness hand-off is
 `docs/experiments/taxonomy_generalisation_precloud_readiness_20260723.md`.
@@ -217,5 +218,5 @@ without reading official validation or test data:
 The complete implementation, benchmark and revised local runtime estimate are
 recorded in
 `docs/experiments/taxonomy_local_non_qlora_execution_readiness_20260724.md`.
-Official validation and test remain blocked until the exact descriptions and
-statistical contract are approved and frozen.
+Official validation and test remain blocked only on the unresolved
+description-resource protocol and freeze.
