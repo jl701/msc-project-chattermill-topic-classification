@@ -548,6 +548,34 @@ def load_frozen_qwen_pair(
     return tokenizer, model, validate_verbalizer_token_ids(tokenizer)
 
 
+def load_saved_qwen_pair_adapter(
+    model_name: str,
+    adapter_dir: Any,
+    *,
+    revision: str | None = None,
+) -> tuple[Any, Any, VerbalizerTokenIds]:
+    """Load an immutable saved adapter on the same pinned frozen base model."""
+
+    from peft import PeftModel
+
+    tokenizer, base_model, verbalizer_ids = load_frozen_qwen_pair(
+        model_name,
+        revision=revision,
+        load_in_4bit=True,
+    )
+    model = PeftModel.from_pretrained(
+        base_model,
+        adapter_dir,
+        is_trainable=False,
+    )
+    model.eval()
+    if hasattr(model, "gradient_checkpointing_disable"):
+        model.gradient_checkpointing_disable()
+    if hasattr(model.config, "use_cache"):
+        model.config.use_cache = True
+    return tokenizer, model, verbalizer_ids
+
+
 def load_qwen_pair_qlora(
     model_name: str,
     config: QwenPairQLoRAConfig | None = None,

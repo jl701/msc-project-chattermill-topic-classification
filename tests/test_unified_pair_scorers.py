@@ -16,6 +16,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 from msc_project.baselines.unified_pair_scorers import (
     UnifiedPairCrossEncoderConfig,
     UnifiedPairDataset,
+    UnifiedTfidfPairConfig,
     UnifiedTfidfPairScorer,
     build_unified_pair_eval_grid,
     build_unified_pair_optimizer_and_scheduler,
@@ -149,6 +150,28 @@ class UnifiedPairScorersTest(unittest.TestCase):
         self.assertAlmostEqual(features[0, 3], 2.0 / 4.0)
         self.assertAlmostEqual(features[0, 4], 1.0 / 13.0)
         self.assertAlmostEqual(features[0, 5], 2.0 / 8.0)
+
+    def test_tfidf_feature_ablation_changes_only_registered_columns(self) -> None:
+        manifest = pair_manifest()
+        all_features = UnifiedTfidfPairScorer(
+            UnifiedTfidfPairConfig(feature_ablation="all_six")
+        ).fit(manifest).transform_features(manifest)
+        char_features = UnifiedTfidfPairScorer(
+            UnifiedTfidfPairConfig(feature_ablation="char_cosine_and_cues")
+        ).fit(manifest).transform_features(manifest)
+        word_features = UnifiedTfidfPairScorer(
+            UnifiedTfidfPairConfig(feature_ablation="word_cosine_and_cues")
+        ).fit(manifest).transform_features(manifest)
+        self.assertEqual(char_features.shape[1], 5)
+        self.assertEqual(word_features.shape[1], 5)
+        np.testing.assert_allclose(
+            char_features,
+            all_features[:, [1, 2, 3, 4, 5]],
+        )
+        np.testing.assert_allclose(
+            word_features,
+            all_features[:, [0, 2, 3, 4, 5]],
+        )
 
     def test_pair_dataset_uses_sentence_pairs_without_download(self) -> None:
         tokenizer = FakeTokenizer()

@@ -18,9 +18,12 @@ from msc_project.experiments.taxonomy_methods import (
     METHOD_IDS,
     QwenPairRuntime,
     StrictTfidfRuntime,
+    distilbert_config_from_parameters,
     load_method_registry,
     method_registry_sha256,
+    qlora_training_config_from_parameters,
     resolve_method_spec,
+    tfidf_config_from_parameters,
     validate_probability_scores,
 )
 from msc_project.llm.qwen_pair_classifier import VerbalizerTokenIds
@@ -79,6 +82,33 @@ def test_registry_has_exact_five_ordered_methods_and_matched_qwen_base() -> None
     assert frozen.model_revision == qlora.model_revision
     assert frozen.requires_pair_training is False
     assert qlora.requires_pair_training is True
+
+
+def test_registry_parameters_create_exact_runtime_configs() -> None:
+    registry = load_method_registry()
+    tfidf_spec = resolve_method_spec("strict_train_only_tfidf", registry)
+    tfidf = tfidf_config_from_parameters(tfidf_spec.starting_recipe)
+    assert tfidf.feature_ablation == "all_six"
+    assert tfidf.classifier_c == pytest.approx(1.0)
+
+    distil_spec = resolve_method_spec(
+        "distilbert_review_candidate_cross_encoder",
+        registry,
+    )
+    distil_parameters = {
+        **distil_spec.starting_recipe,
+        "selected_checkpoint_epoch": 2,
+    }
+    distil = distilbert_config_from_parameters(distil_parameters, distil_spec)
+    assert distil.model_revision == distil_spec.model_revision
+    assert distil.epochs == 2
+
+    qlora_spec = resolve_method_spec("qwen_candidate_pair_qlora", registry)
+    qlora = qlora_training_config_from_parameters(
+        {**qlora_spec.starting_recipe, "selected_checkpoint_epoch": 1}
+    )
+    assert qlora.epochs == 1
+    assert qlora.gradient_accumulation_steps == 8
 
 
 def test_probability_contract_rejects_shape_range_and_nan() -> None:

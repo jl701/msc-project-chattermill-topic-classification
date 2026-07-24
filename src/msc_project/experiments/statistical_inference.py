@@ -324,6 +324,65 @@ def cluster_bootstrap_interval(
     }
 
 
+def paired_partition_harmonic_interval(
+    seen_statistics: ClusterSufficientStatistics,
+    unseen_statistics: ClusterSufficientStatistics,
+    *,
+    replicates: int = 20_000,
+    seed: int = 13,
+) -> dict[str, object]:
+    """Bootstrap the nonlinear harmonic mean of seen and unseen pair F1."""
+
+    if seen_statistics.cluster_ids != unseen_statistics.cluster_ids:
+        raise ValueError("Seen and unseen statistics must share review clusters.")
+
+    def harmonic(seen: np.ndarray, unseen: np.ndarray) -> np.ndarray:
+        denominator = seen + unseen
+        return np.divide(
+            2 * seen * unseen,
+            denominator,
+            out=np.zeros_like(denominator, dtype=float),
+            where=denominator != 0,
+        )
+
+    point_weights = np.ones(seen_statistics.cluster_count, dtype=np.int64)
+    seen_point = metric_from_cluster_weights(
+        seen_statistics, point_weights, "pair_micro_f1"
+    )
+    unseen_point = metric_from_cluster_weights(
+        unseen_statistics, point_weights, "pair_micro_f1"
+    )
+    samples = []
+    for weights in _bootstrap_weight_batches(
+        seen_statistics.cluster_count,
+        replicates,
+        seed,
+    ):
+        samples.append(
+            harmonic(
+                metric_from_cluster_weights(
+                    seen_statistics, weights, "pair_micro_f1"
+                ),
+                metric_from_cluster_weights(
+                    unseen_statistics, weights, "pair_micro_f1"
+                ),
+            )
+        )
+    values = np.concatenate(samples)
+    lower, upper = np.quantile(values, [0.025, 0.975])
+    return {
+        "metric": "seen_unseen_harmonic_pair_micro_f1",
+        "point_estimate": float(harmonic(seen_point, unseen_point)[0]),
+        "confidence_level": 0.95,
+        "interval_method": "paired_cluster_percentile_bootstrap",
+        "ci_lower": float(lower),
+        "ci_upper": float(upper),
+        "clusters": seen_statistics.cluster_count,
+        "bootstrap_replicates": int(replicates),
+        "bootstrap_seed": int(seed),
+    }
+
+
 def align_paired_prediction_frames(
     challenger: pd.DataFrame,
     reference: pd.DataFrame,
@@ -438,6 +497,76 @@ def paired_cluster_bootstrap_difference(
         "point_difference": challenger_point - reference_point,
         "confidence_level": 0.95,
         "interval_method": "paired_cluster_percentile_bootstrap",
+        "ci_lower": float(lower),
+        "ci_upper": float(upper),
+        "clusters": challenger_stats.cluster_count,
+        "bootstrap_replicates": int(replicates),
+        "bootstrap_seed": int(seed),
+    }
+
+
+def shared_cluster_bootstrap_difference(
+    challenger: pd.DataFrame,
+    reference: pd.DataFrame,
+    pair_classes: Sequence[str],
+    metric: str,
+    *,
+    challenger_observation_keys: Sequence[str],
+    reference_observation_keys: Sequence[str],
+    cluster_column: str = "row_uid",
+    gold_column: str = "gold_pairs",
+    prediction_column: str = "pred_pairs",
+    replicates: int = 20_000,
+    seed: int = 13,
+) -> dict[str, object]:
+    """Pair review resamples while allowing the two task grids to differ."""
+
+    challenger_stats = build_cluster_sufficient_statistics(
+        challenger,
+        pair_classes,
+        cluster_column=cluster_column,
+        gold_column=gold_column,
+        prediction_column=prediction_column,
+        observation_key_columns=challenger_observation_keys,
+    )
+    reference_stats = build_cluster_sufficient_statistics(
+        reference,
+        pair_classes,
+        cluster_column=cluster_column,
+        gold_column=gold_column,
+        prediction_column=prediction_column,
+        observation_key_columns=reference_observation_keys,
+    )
+    if challenger_stats.cluster_ids != reference_stats.cluster_ids:
+        raise ValueError("Cross-protocol frames do not share identical review clusters.")
+
+    point_weights = np.ones(challenger_stats.cluster_count, dtype=np.int64)
+    challenger_point = float(
+        metric_from_cluster_weights(challenger_stats, point_weights, metric)[0]
+    )
+    reference_point = float(
+        metric_from_cluster_weights(reference_stats, point_weights, metric)[0]
+    )
+    samples = []
+    for weights in _bootstrap_weight_batches(
+        challenger_stats.cluster_count,
+        replicates,
+        seed,
+    ):
+        samples.append(
+            metric_from_cluster_weights(challenger_stats, weights, metric)
+            - metric_from_cluster_weights(reference_stats, weights, metric)
+        )
+    differences = np.concatenate(samples)
+    lower, upper = np.quantile(differences, [0.025, 0.975])
+    return {
+        "metric": metric,
+        "challenger_point": challenger_point,
+        "reference_point": reference_point,
+        "point_difference": challenger_point - reference_point,
+        "confidence_level": 0.95,
+        "interval_method": "shared_review_cluster_percentile_bootstrap",
+        "task_grids_identical": False,
         "ci_lower": float(lower),
         "ci_upper": float(upper),
         "clusters": challenger_stats.cluster_count,

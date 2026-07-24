@@ -41,6 +41,34 @@ def load_all_fabsa(data_dir: Path | None = None) -> pd.DataFrame:
     return pd.concat(frames, ignore_index=True)
 
 
+def load_official_fabsa_splits(
+    data_dir: Path | None,
+    splits: Iterable[str],
+) -> pd.DataFrame:
+    """Load only explicitly permitted official splits.
+
+    Validation/tuning jobs can therefore avoid opening the test file at all.
+    """
+
+    requested = tuple(str(value) for value in splits)
+    if not requested or len(requested) != len(set(requested)):
+        raise ValueError("Requested FABSA splits must be non-empty and unique.")
+    unknown = sorted(set(requested) - set(SPLITS))
+    if unknown:
+        raise ValueError(f"Unknown FABSA splits: {unknown}")
+    frames = []
+    for split in requested:
+        frame = load_split(data_dir, split).copy()
+        frame["original_split"] = split
+        frame["row_uid"] = (
+            frame["original_split"].astype(str)
+            + ":"
+            + frame["id"].astype(str)
+        )
+        frames.append(frame)
+    return pd.concat(frames, ignore_index=True)
+
+
 def flatten(rows: Iterable[Iterable[str]]) -> list[str]:
     values: list[str] = []
     for row in rows:

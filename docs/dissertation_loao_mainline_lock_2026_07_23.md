@@ -13,6 +13,12 @@ define what should be run next.
 
 No new experiment was run to create this lock.
 
+The pre-cloud implementation subsequently completed on 23 July 2026. Its
+authoritative readiness evidence is
+`docs/experiments/taxonomy_generalisation_precloud_readiness_20260723.md`.
+This does not change the experiment order or authorise official
+validation/test execution.
+
 ## Working title and central question
 
 Working title:
@@ -277,6 +283,11 @@ The difficulty curve and new stress tests use strict zero-label calibration:
 
 - no target-aspect validation label may select a threshold, prompt, parser,
   checkpoint, policy, description, or hyperparameter;
+- validation grids are constructed from seen-aspect candidates only, so
+  held-out candidate claims are never rendered or scored on validation;
+- every trainable method selects hyperparameters independently within each
+  unique outer training scope; validation evidence is never pooled across
+  outer folds, because a target aspect in one fold is seen in another;
 - target thresholds must be transferred from seen-aspect evidence according to
   a pre-registered rule; and
 - the target test set is evaluated once.
@@ -407,8 +418,10 @@ must be marked as pilots, not completion.
   taxonomy hierarchy.
 - [x] Create the minimal-description v2 file without cues, examples, or
   decision-boundary text.
-- [ ] Record authorship, allowed sources, forbidden sources, canonical order,
-  freeze time, and SHA-256.
+- [x] Record authorship, allowed sources, forbidden sources, canonical order,
+  and SHA-256.
+- [ ] Record the final freeze time after user approval without changing the
+  reviewed text.
 - [x] Add tests for exact label coverage, non-empty definitions, stable order,
   and manifest hash.
 - [ ] Obtain user approval of the exact twelve descriptions before any new
@@ -430,10 +443,17 @@ must be marked as pilots, not completion.
   identities across conditions.
 - [x] Add leakage checks for rows, organisations, supervision labels,
   vocabularies, description hashes, target calibration, and test reuse.
-- [ ] Add focused unit and smoke tests before model execution.
+- [x] Add focused unit and smoke tests before model execution.
 - [x] Add deterministic statistical tests covering cluster preservation,
   paired resampling, nonlinear metric recomputation, degenerate intervals, and
   mismatched prediction failures.
+- [x] Complete real cached-model synthetic smoke tests for all five methods,
+  including checkpoint reload, sharding and resume, without reading official
+  validation/test data.
+- [x] Generate a dependency-aware cloud plan with exact training scopes, pair
+  counts, commands and formal approval gates.
+- [x] Replace cross-fold pilot tuning with nested per-training-scope selection
+  and verify that validation never renders held-out candidates.
 
 ### D. Complete strict Level 1
 
@@ -448,9 +468,11 @@ must be marked as pilots, not completion.
 
 ### E. Run Level 2 generalized single-unseen LOAO
 
-- [ ] Complete data/metric smoke tests on three validation folds.
+- [ ] Complete nested seen-only parameter selection for every unique training
+  scope.
 - [ ] Run strict TF-IDF, E5, and DistilBERT on all twelve folds.
-- [ ] Run Frozen Qwen and QLoRA validation pilots under the same outer protocol.
+- [ ] Run Frozen Qwen and QLoRA validation/runtime gates under the same outer
+  protocol.
 - [ ] Pass the registered quality/runtime gate before full Qwen/QLoRA scoring.
 - [ ] Complete all admitted twelve-fold evaluations.
 - [ ] Report overall, seen, unseen, harmonic-mean, exact-match, presence, and
@@ -463,9 +485,10 @@ must be marked as pilots, not completion.
   supervision.
 - [x] Expand every evaluation review across all twelve candidates, preserving
   seen/unseen membership for the ten-plus-two split.
-- [ ] Verify that `NN`, `DN`, `ND`, and `DD` reuse the exact same trained model,
+- [x] Verify that `NN`, `DN`, `ND`, and `DD` reuse the exact same trained model,
   rows, pair identities, thresholds, and metrics.
-- [ ] Complete three-fold validation smoke tests for all core methods.
+- [ ] Complete nested seen-only selection and validation/runtime gates for all
+  admitted core methods.
 - [ ] Run all admitted models on the full registered pair schedule.
 - [ ] Report within-aspect description effects, described-candidate bias,
   neither/either/both-present cases, and sentiment diagnostics.
@@ -493,7 +516,7 @@ must be marked as pilots, not completion.
 - [x] Pre-register bootstrap unit, interval method, bootstrap count and seed,
   primary contrasts, sign-flip rule, multiplicity handling, and permitted
   wording.
-- [ ] Use seed 13 for registered pilots and configuration selection.
+- [ ] Use seed 13 for nested per-training-scope configuration selection.
 - [ ] Use seed 13 for the initial complete Level 2, Level 3, and Level 4 runs.
 - [ ] Add seeds 23 and 42 only for the final matched Level 1 QLoRA endpoints.
 - [ ] Aggregate the matched Level 1 seed-by-aspect results and report paired
@@ -515,7 +538,7 @@ must be marked as pilots, not completion.
 - [ ] Compile and visually inspect the complete thesis PDF.
 - [ ] Run final tests, citation checks, metric checks, retired-result search,
   secret scan, and reproducibility audit.
-- [ ] Commit and push every completed safe stage to GitHub main.
+- [x] Commit and push every completed safe pre-cloud stage to GitHub main.
 
 ## Execution order and gates
 

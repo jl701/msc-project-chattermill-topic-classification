@@ -24,6 +24,7 @@ from msc_project.baselines.unified_pair_scorers import (
     validate_pair_manifest,
 )
 from msc_project.llm.qwen_pair_classifier import (
+    QwenPairTrainingConfig,
     VerbalizerTokenIds,
     score_candidate_pairs,
 )
@@ -139,6 +140,85 @@ def resolve_method_spec(
     )
 
 
+def tfidf_config_from_parameters(
+    parameters: Mapping[str, object],
+    *,
+    seed: int = 13,
+) -> UnifiedTfidfPairConfig:
+    return UnifiedTfidfPairConfig(
+        word_ngram_range=tuple(int(value) for value in parameters["word_ngram_range"]),
+        char_ngram_range=tuple(int(value) for value in parameters["char_ngram_range"]),
+        min_df=int(parameters["min_df"]),
+        max_word_features=(
+            int(parameters["max_word_features"])
+            if parameters.get("max_word_features") is not None
+            else None
+        ),
+        max_char_features=(
+            int(parameters["max_char_features"])
+            if parameters.get("max_char_features") is not None
+            else None
+        ),
+        classifier_c=float(parameters["classifier_c"]),
+        feature_ablation=str(parameters["feature_ablation"]),
+        max_iter=int(parameters["max_iter"]),
+        seed=seed,
+    )
+
+
+def distilbert_config_from_parameters(
+    parameters: Mapping[str, object],
+    spec: MethodSpec,
+    *,
+    seed: int = 13,
+) -> UnifiedPairCrossEncoderConfig:
+    if not spec.model_id or not spec.model_revision:
+        raise ValueError("DistilBERT method spec must pin its model and revision.")
+    selected_epoch = int(
+        parameters.get("selected_checkpoint_epoch", parameters["epochs"])
+    )
+    if selected_epoch < 1 or selected_epoch > int(parameters["epochs"]):
+        raise ValueError("Selected DistilBERT checkpoint epoch is outside the run.")
+    return UnifiedPairCrossEncoderConfig(
+        model_name=spec.model_id,
+        model_revision=spec.model_revision,
+        max_length=int(parameters["max_length"]),
+        batch_size=int(parameters["batch_size"]),
+        eval_batch_size=int(parameters["eval_batch_size"]),
+        learning_rate=float(parameters["learning_rate"]),
+        weight_decay=float(parameters["weight_decay"]),
+        epochs=selected_epoch,
+        warmup_ratio=float(parameters["warmup_ratio"]),
+        seed=seed,
+        use_amp=bool(parameters["amp"]),
+    )
+
+
+def qlora_training_config_from_parameters(
+    parameters: Mapping[str, object],
+    *,
+    seed: int = 13,
+) -> QwenPairTrainingConfig:
+    selected_epoch = int(
+        parameters.get("selected_checkpoint_epoch", parameters["epochs"])
+    )
+    if selected_epoch < 1 or selected_epoch > int(parameters["epochs"]):
+        raise ValueError("Selected QLoRA checkpoint epoch is outside the run.")
+    return QwenPairTrainingConfig(
+        max_length=int(parameters["max_length"]),
+        batch_size=int(parameters["batch_size"]),
+        gradient_accumulation_steps=int(
+            parameters["gradient_accumulation_steps"]
+        ),
+        epochs=selected_epoch,
+        learning_rate=float(parameters["learning_rate"]),
+        weight_decay=float(parameters["weight_decay"]),
+        warmup_ratio=0.1,
+        max_grad_norm=1.0,
+        seed=seed,
+    )
+
+
 class PairProbabilityRuntime(Protocol):
     """Runtime boundary shared by all method families."""
 
@@ -203,11 +283,12 @@ class E5PairRuntime:
         self,
         encoder: Any | None = None,
         *,
+        config: Any | None = None,
         device: str = "auto",
         local_files_only: bool = False,
     ) -> None:
         self.encoder = encoder or FrozenTransformerSentenceEncoder(
-            SIMILARITY_CONFIGS["e5_base_v2"],
+            config or SIMILARITY_CONFIGS["e5_base_v2"],
             device=device,
             local_files_only=local_files_only,
         )
@@ -299,7 +380,7 @@ class DistilBertPairRuntime:
         if self.model is not None:
             try:
                 self.model.to("cpu")
-            except (AttributeError, RuntimeError):
+            except (AttributeError, RuntimeError, ValueError):
                 pass
 
 
@@ -317,13 +398,18 @@ class QwenPairRuntime:
         batch_size: int = 6,
         fit_callback: Callable[[pd.DataFrame], tuple[Any, Any, VerbalizerTokenIds]]
         | None = None,
+        trained_adapter: bool = False,
     ) -> None:
         if method_id not in {
             "frozen_qwen_candidate_pair",
             "qwen_candidate_pair_qlora",
         }:
             raise ValueError("Qwen runtime received a non-Qwen method_id.")
-        if method_id == "qwen_candidate_pair_qlora" and fit_callback is None:
+        if (
+            method_id == "qwen_candidate_pair_qlora"
+            and fit_callback is None
+            and not trained_adapter
+        ):
             raise ValueError("QLoRA runtime requires an explicit fit_callback.")
         if method_id == "frozen_qwen_candidate_pair" and fit_callback is not None:
             raise ValueError("Frozen Qwen must not receive a training callback.")
@@ -334,7 +420,9 @@ class QwenPairRuntime:
         self.max_length = max_length
         self.batch_size = batch_size
         self.fit_callback = fit_callback
-        self._ready = method_id == "frozen_qwen_candidate_pair"
+        self._ready = (
+            method_id == "frozen_qwen_candidate_pair" or trained_adapter
+        )
 
     def fit(self, train_manifest: pd.DataFrame) -> "QwenPairRuntime":
         validate_pair_manifest(train_manifest, require_target=True)
@@ -363,5 +451,5 @@ class QwenPairRuntime:
     def close(self) -> None:
         try:
             self.model.to("cpu")
-        except (AttributeError, RuntimeError):
+        except (AttributeError, RuntimeError, ValueError):
             pass

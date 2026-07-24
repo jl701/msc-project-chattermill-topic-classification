@@ -26,13 +26,14 @@
         "max_word_features": 80000,
         "max_char_features": 120000,
         "classifier_c": 1.0,
+        "feature_ablation": "all_six",
         "max_iter": 1000
       },
       "seen_only_tuning": {
-        "pilot_outer_folds": ["l2-a02", "l2-a03", "l2-a09"],
+        "selection_scope": "nested_per_training_scope",
         "classifier_c": [0.1, 0.3, 1.0, 3.0, 10.0],
-        "feature_ablation": ["word_and_char", "char_only", "word_only"],
-        "stopping_rule": "freeze the best mean seen-validation pair_micro_f1 recipe after the registered grid; use pair_samples_f1, precision, then lower complexity as tie-breakers"
+        "feature_ablation": ["all_six", "char_cosine_and_cues", "word_cosine_and_cues"],
+        "stopping_rule": "within each outer training scope, freeze the best seen-validation pair_micro_f1 recipe after the registered grid; use pair_samples_f1, precision, then lower complexity as tie-breakers; never pool an aspect's validation label into another scope's selection"
       }
     },
     "e5_base_v2": {
@@ -69,15 +70,16 @@
         "eval_batch_size": 96,
         "learning_rate": 0.00003,
         "weight_decay": 0.01,
-        "epochs": 4,
+        "epochs": 3,
         "warmup_ratio": 0.1,
         "amp": true
       },
       "seen_only_tuning": {
-        "pilot_outer_folds": ["l2-a02", "l2-a03", "l2-a09"],
+        "selection_scope": "nested_per_training_scope",
         "learning_rate": [0.00002, 0.00003, 0.00005],
-        "checkpoint_epochs": [1, 2, 3, 4],
-        "stopping_rule": "select the learning-rate and epoch checkpoint with best mean seen-validation pair_micro_f1; use pair_samples_f1, precision, then lower epoch as tie-breakers"
+        "checkpoint_epochs": [3],
+        "fixed_for_compute": ["epochs", "model_revision", "max_length", "batch_size", "weight_decay", "warmup_ratio"],
+        "stopping_rule": "freeze the learning rate with best mean seen-validation pair_micro_f1; use pair_samples_f1, precision, then lower learning rate as tie-breakers; keep the historically used three-epoch recipe fixed and do not expand the grid after results"
       }
     },
     "frozen_qwen_candidate_pair": {
@@ -115,18 +117,18 @@
         "gradient_accumulation_steps": 8,
         "learning_rate": 0.000005,
         "weight_decay": 0.01,
-        "epochs": 2,
+        "epochs": 1,
         "lora_r": 4,
         "lora_alpha": 8,
         "lora_dropout": 0.05,
         "lora_target_modules": ["q_proj", "k_proj", "v_proj", "o_proj"]
       },
       "seen_only_tuning": {
-        "pilot_outer_folds": ["l2-a02", "l2-a03", "l2-a09"],
+        "selection_scope": "nested_per_training_scope",
         "learning_rate": [0.000002, 0.000005, 0.00001],
-        "checkpoint_epochs": [1, 2],
-        "fixed_for_compute": ["lora_r", "lora_alpha", "lora_dropout", "lora_target_modules", "training_pair_budget"],
-        "stopping_rule": "freeze the learning-rate and checkpoint with best mean seen-validation pair_micro_f1; use pair_samples_f1, precision, then lower epoch as tie-breakers; do not expand the grid after results"
+        "checkpoint_epochs": [1],
+        "fixed_for_compute": ["epochs", "lora_r", "lora_alpha", "lora_dropout", "lora_target_modules", "training_pair_budget"],
+        "stopping_rule": "freeze the learning rate with best mean seen-validation pair_micro_f1; use pair_samples_f1, precision, then lower learning rate as tie-breakers; keep the historically successful one-epoch recipe fixed and do not expand the grid after results"
       }
     }
   }

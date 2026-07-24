@@ -15,7 +15,9 @@ from msc_project.experiments.statistical_inference import (
     cluster_bootstrap_interval,
     holm_adjust,
     paired_cluster_bootstrap_difference,
+    paired_partition_harmonic_interval,
     paired_unit_statistics,
+    shared_cluster_bootstrap_difference,
 )
 
 
@@ -141,3 +143,59 @@ def test_paired_unit_statistics_align_and_report_exact_sign_flip() -> None:
 def test_holm_adjustment_is_monotone_in_sorted_p_values() -> None:
     adjusted = holm_adjust([0.01, 0.04, 0.03])
     assert adjusted == pytest.approx([0.03, 0.06, 0.06])
+
+
+def test_harmonic_interval_recomputes_the_nonlinear_metric() -> None:
+    seen = build_cluster_sufficient_statistics(
+        prediction_frame([["A | positive"], [], []]),
+        CLASSES,
+    )
+    unseen = build_cluster_sufficient_statistics(
+        prediction_frame([[], ["A | negative"], []]),
+        CLASSES,
+    )
+    result = paired_partition_harmonic_interval(
+        seen,
+        unseen,
+        replicates=200,
+        seed=13,
+    )
+    assert 0.0 <= result["point_estimate"] <= 1.0
+    assert result["ci_lower"] <= result["point_estimate"] <= result["ci_upper"]
+
+
+def test_shared_cluster_difference_allows_different_task_observations() -> None:
+    challenger = prediction_frame(
+        [["A | positive"], ["A | negative"], []]
+    ).assign(task_row=["c1", "c2", "c3"])
+    reference = pd.concat(
+        [
+            prediction_frame([[], [], []]).assign(task_row=["r1a", "r2a", "r3a"]),
+            prediction_frame([[], [], []]).assign(task_row=["r1b", "r2b", "r3b"]),
+        ],
+        ignore_index=True,
+    )
+    result = shared_cluster_bootstrap_difference(
+        challenger,
+        reference,
+        CLASSES,
+        "pair_micro_f1",
+        challenger_observation_keys=("task_row",),
+        reference_observation_keys=("task_row",),
+        replicates=200,
+        seed=13,
+    )
+    assert result["task_grids_identical"] is False
+    assert result["point_difference"] > 0
+
+    reference.loc[reference["row_uid"] == "r3", "row_uid"] = "missing-r3"
+    with pytest.raises(ValueError, match="review clusters"):
+        shared_cluster_bootstrap_difference(
+            challenger,
+            reference,
+            CLASSES,
+            "pair_micro_f1",
+            challenger_observation_keys=("task_row",),
+            reference_observation_keys=("task_row",),
+            replicates=10,
+        )

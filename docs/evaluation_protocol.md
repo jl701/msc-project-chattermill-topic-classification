@@ -261,7 +261,8 @@ conditions are matched intervention controls.
 For every target aspect:
 
 - train on the other eleven aspects using `example_filtered`;
-- evaluate all twelve candidate aspects on every official validation/test row;
+- calibrate on the eleven seen candidates only, then evaluate all twelve
+  candidate aspects on every official test row;
 - keep the target aspect marked as unseen and the other eleven as seen;
 - allow a review to receive zero, one, or multiple aspect-sentiment pairs; and
 - report overall, seen, unseen, and harmonic-mean performance.
@@ -275,8 +276,9 @@ For each pre-registered pair of held-out aspects:
 
 - remove every training row containing either target aspect;
 - train on the remaining ten aspects with their frozen minimal definitions;
-- evaluate all twelve candidate aspects jointly on all official rows, marking
-  ten as seen and the held-out pair as unseen; and
+- calibrate on the ten seen candidates only, then evaluate all twelve
+  candidate aspects jointly on all official test rows, marking ten as seen
+  and the held-out pair as unseen; and
 - render the unseen pair as `NN`, `DN`, `ND`, and `DD`, where `N` means
   canonical name only and `D` means canonical name plus the frozen minimal
   definition.
@@ -289,8 +291,9 @@ crossover.
 ### Level 4: Parent-Group Holdout
 
 Hold out all children of Company brand, Staff support, or Value in turn, then
-test all twelve candidates jointly. The parent groups are separate folds and
-must not be pooled into a synthetic training set.
+calibrate on the remaining seen candidates and test all twelve candidates
+jointly. The parent groups are separate folds and must not be pooled into a
+synthetic training set.
 
 ### Deferred Level 5: Compound Organisation And Taxonomy Shift
 
@@ -302,8 +305,12 @@ user-approved scope decision.
 
 The new difficulty curve uses strict zero-label selection. A target-aspect
 validation label may not select descriptions, thresholds, prompts, parsers,
-checkpoints, policies, or hyperparameters. Existing target-calibrated Level 1
-results remain separately labelled reference evidence.
+checkpoints, policies, or hyperparameters. Validation constructs and scores
+seen-candidate claims only; held-out candidate claims are never rendered on
+that split. Trainable methods select hyperparameters independently within each
+unique outer training scope, without pooling validation evidence across outer
+folds. Existing target-calibrated Level 1 results remain separately labelled
+reference evidence.
 
 ### Cross-Level Interpretation
 

@@ -153,6 +153,7 @@ class UnifiedTfidfPairConfig:
     max_word_features: int | None = 80_000
     max_char_features: int | None = 120_000
     classifier_c: float = 1.0
+    feature_ablation: str = "all_six"
     max_iter: int = 1_000
     seed: int = 13
 
@@ -173,9 +174,18 @@ class UnifiedTfidfPairScorer:
         "sentiment_cue_token_coverage",
         "review_sentiment_cue_density",
     )
+    _feature_ablation_indices = {
+        "all_six": (0, 1, 2, 3, 4, 5),
+        "char_cosine_and_cues": (1, 2, 3, 4, 5),
+        "word_cosine_and_cues": (0, 2, 3, 4, 5),
+    }
 
     def __init__(self, config: UnifiedTfidfPairConfig | None = None) -> None:
         self.config = config or UnifiedTfidfPairConfig()
+        if self.config.feature_ablation not in self._feature_ablation_indices:
+            raise ValueError(
+                f"Unknown TF-IDF feature ablation: {self.config.feature_ablation!r}"
+            )
         self.word_vectorizer: TfidfVectorizer | None = None
         self.char_vectorizer: TfidfVectorizer | None = None
         self.classifier: Pipeline | None = None
@@ -278,7 +288,7 @@ class UnifiedTfidfPairScorer:
         aspect_coverage = np.asarray(aspect_coverages, dtype=float)
         sentiment_coverage = np.asarray(sentiment_coverages, dtype=float)
         review_sentiment_density = np.asarray(review_sentiment_densities, dtype=float)
-        return np.column_stack(
+        full = np.column_stack(
             [
                 word_cosine,
                 char_cosine,
@@ -288,6 +298,7 @@ class UnifiedTfidfPairScorer:
                 review_sentiment_density,
             ]
         )
+        return full[:, self._feature_ablation_indices[self.config.feature_ablation]]
 
     def predict_proba(self, manifest: pd.DataFrame) -> np.ndarray:
         if self.classifier is None:

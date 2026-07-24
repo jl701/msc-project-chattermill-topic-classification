@@ -1,0 +1,59 @@
+{
+  "schema_version": "taxonomy_precloud_smoke_summary_v1",
+  "completed_at": "2026-07-24T01:38:42+01:00",
+  "scientific_protocol_sha256": "1dff49a855048891a7b3ecdb6d69304ba0bc387d3eba87c4b945f0df34bdb174",
+  "source_root": "outputs/experimental/taxonomy_precloud_real_model_smoke_v6_20260723",
+  "official_data_read": false,
+  "fixture": {
+    "kind": "code-generated synthetic reviews",
+    "fold_id": "l3-a01-a02",
+    "conditions": ["NN", "DN", "ND", "DD"],
+    "training_pairs": 47,
+    "logical_evaluation_pairs_per_condition": 108,
+    "logical_evaluation_pairs_across_conditions": 432,
+    "unique_rendered_claims_scored_across_conditions": 126
+  },
+  "methods": {
+    "strict_train_only_tfidf": {
+      "fit_seconds": 0.035113,
+      "score_seconds": 2.428542,
+      "training_contract_sha256": "fa6a6a051674e90ac9db5376cb072b13c6355153ffe87c4adeb034c881558e40",
+      "checkpoint_reload_passed": true,
+      "two_shard_resume_passed": true
+    },
+    "e5_base_v2": {
+      "fit_seconds": 0.920249,
+      "score_seconds": 3.123754,
+      "training_contract_sha256": "344686131792bab3074bba48736d01db11a797e0dac136d574d0ff0ca27f937a",
+      "checkpoint_reload_passed": true,
+      "two_shard_resume_passed": true
+    },
+    "distilbert_review_candidate_cross_encoder": {
+      "fit_seconds": 1.799448,
+      "score_seconds": 2.662908,
+      "training_contract_sha256": "803e32f57e6e353b2f78f6c0bfb87d30aced699c2c4cbaf596e2a857a4017f1a",
+      "checkpoint_reload_passed": true,
+      "two_shard_resume_passed": true
+    },
+    "frozen_qwen_candidate_pair": {
+      "fit_seconds": 10.460499,
+      "score_seconds": 16.227049,
+      "training_contract_sha256": "e4f904cff12996579790715db71e2e079f294843e76359f758bb55cdba382a17",
+      "checkpoint_reload_passed": true,
+      "two_shard_resume_passed": true
+    },
+    "qwen_candidate_pair_qlora": {
+      "fit_seconds": 35.157095,
+      "score_seconds": 17.427524,
+      "training_contract_sha256": "1d543e1f3531fbe2cd3caea9e880c0489690e949b1b1ecd7204eb23b1fa46f2b",
+      "checkpoint_reload_passed": true,
+      "two_shard_resume_passed": true,
+      "cross_process_resume": {
+        "fit_seconds": 0.0,
+        "new_pairs_scored": 0,
+        "scientific_outputs_identical": true
+      }
+    }
+  },
+  "interpretation": "This evidence validates code paths, real cached model loading, bounded training, checkpoint reload, condition projection, sharding, and resume. Synthetic metric values are not scientific results and must not enter thesis result tables."
+}

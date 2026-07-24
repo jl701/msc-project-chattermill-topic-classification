@@ -48,6 +48,30 @@ def _read_json(path: Path) -> dict[str, object]:
     return value
 
 
+def scientific_protocol_sha256(
+    config: Mapping[str, object] | None = None,
+) -> str:
+    """Hash scientific choices while excluding administrative approval state."""
+
+    value = json.loads(json.dumps(dict(config or load_precloud_config())))
+    value.pop("status", None)
+    value.pop("registered_at", None)
+    value.pop("scope", None)
+    description = value.get("description_resource")
+    if isinstance(description, dict):
+        description.pop("formal_run_required_status", None)
+    statistics = value.get("statistics")
+    if isinstance(statistics, dict):
+        statistics.pop("status", None)
+    payload = json.dumps(
+        value,
+        sort_keys=True,
+        ensure_ascii=False,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
 def load_precloud_config(path: Path | None = None) -> dict[str, object]:
     config = _read_json(path or PRECLOUD_CONFIG_PATH)
     if config.get("protocol_id") != "taxonomy_generalisation_precloud_v1":
@@ -146,7 +170,7 @@ def registered_folds(
                 aspects=aspects,
                 evaluation_aspects=(aspect,) if level == "L1" else aspects,
                 evaluation_label_scope="heldout" if level == "L1" else "full",
-                conditions=("N", "D"),
+                conditions=("N", "D") if level == "L1" else ("D",),
             )
             for index, aspect in enumerate(aspects, start=1)
         ]
@@ -183,11 +207,23 @@ def registered_folds(
                 aspects=aspects,
                 evaluation_aspects=aspects,
                 evaluation_label_scope="full",
-                conditions=("N", "D"),
+                conditions=("D",),
                 heldout_group=str(group),
             )
         )
     return folds
+
+
+def training_scope_id(
+    fold: TaxonomyFold,
+    all_aspects: Sequence[str] | None = None,
+) -> str:
+    """Identify folds with exactly the same task-specific training evidence."""
+
+    aspects = tuple(all_aspects or canonical_aspects())
+    fold.validate(aspects)
+    indices = tuple(aspects.index(aspect) + 1 for aspect in fold.heldout_aspects)
+    return "heldout-" + "-".join(f"a{index:02d}" for index in indices)
 
 
 def build_taxonomy_fold_splits(
@@ -207,12 +243,11 @@ def build_taxonomy_fold_splits(
         raise ValueError("FABSA row_uid values must be globally unique.")
     requested_evaluation = tuple(str(value) for value in evaluation_splits)
     if (
-        not requested_evaluation
-        or len(requested_evaluation) != len(set(requested_evaluation))
+        len(requested_evaluation) != len(set(requested_evaluation))
         or set(requested_evaluation) - {"validation", "test"}
     ):
         raise ValueError(
-            "evaluation_splits must be a non-empty unique subset of validation/test."
+            "evaluation_splits must be a unique subset of validation/test."
         )
     available = set(frame["original_split"].astype(str))
     required_splits = {"train", *requested_evaluation}
@@ -384,6 +419,9 @@ def build_taxonomy_eval_grid(
                     **candidate,
                     "target": int(pair in gold),
                     "pair_label": pair,
+                    "negative_type": (
+                        "gold_positive" if pair in gold else "evaluation_non_gold"
+                    ),
                 }
             )
     result = pd.DataFrame.from_records(records)

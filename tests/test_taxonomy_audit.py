@@ -147,6 +147,7 @@ def test_formal_gate_rejects_pending_resource_and_statistics() -> None:
 def formal_contract() -> RunContract:
     return RunContract(
         protocol_id="p",
+        scientific_protocol_sha256="0" * 64,
         method_id="m",
         method_spec_sha256="a" * 64,
         method_registry_sha256="b" * 64,
@@ -178,3 +179,7 @@ def test_test_use_ledger_allows_resume_but_rejects_new_contract(tmp_path: Path) 
     )
     with pytest.raises(ValueError, match="different formal contract"):
         ledger.claim(changed)
+
+    other_seed = replace(run, seed=23)
+    assert ledger.claim(other_seed)["status"] == "started"
+    assert ledger.complete(other_seed)["status"] == "complete"

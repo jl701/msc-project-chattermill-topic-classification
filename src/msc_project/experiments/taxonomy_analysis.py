@@ -13,6 +13,11 @@ from msc_project.experiments.taxonomy_protocol import (
     TaxonomyFold,
     _prediction_sets,
 )
+from msc_project.experiments.statistical_inference import (
+    build_cluster_sufficient_statistics,
+    cluster_bootstrap_interval,
+    paired_partition_harmonic_interval,
+)
 from msc_project.experiments.unified_candidate_pairs import CANDIDATE_SENTIMENTS
 
 
@@ -104,6 +109,96 @@ def per_sentiment_metrics(
             }
         )
     return pd.DataFrame.from_records(rows)
+
+
+def prediction_frame_for_aspects(
+    scored_grid: pd.DataFrame,
+    threshold: float,
+    aspects: set[str],
+) -> tuple[pd.DataFrame, tuple[str, ...]]:
+    """Collapse an exhaustive pair grid to one gold/predicted set per review."""
+
+    frame = _validate_scored_grid(scored_grid)
+    row_uids, gold, predicted, classes = _prediction_sets(
+        frame,
+        threshold,
+        allowed_aspects=aspects,
+    )
+    return (
+        pd.DataFrame(
+            {
+                "row_uid": row_uids,
+                "gold_pairs": gold,
+                "pred_pairs": predicted,
+            }
+        ),
+        tuple(classes),
+    )
+
+
+def condition_cluster_uncertainty(
+    scored_grid: pd.DataFrame,
+    threshold: float,
+    fold: TaxonomyFold,
+    *,
+    replicates: int = 20_000,
+    seed: int = 13,
+) -> dict[str, object]:
+    """Compute registered review-cluster intervals for one fold-condition."""
+
+    available = set(scored_grid["candidate_aspect"].astype(str))
+    partitions = {
+        "overall": available,
+        "seen": available & set(fold.seen_aspects),
+        "unseen": available & set(fold.heldout_aspects),
+    }
+    statistics = {}
+    intervals: dict[str, object] = {}
+    for name, aspects in partitions.items():
+        if not aspects:
+            intervals[name] = None
+            continue
+        prediction_frame, pair_classes = prediction_frame_for_aspects(
+            scored_grid,
+            threshold,
+            aspects,
+        )
+        stats = build_cluster_sufficient_statistics(
+            prediction_frame,
+            pair_classes,
+        )
+        statistics[name] = stats
+        intervals[name] = {
+            "pair_micro_f1": cluster_bootstrap_interval(
+                stats,
+                "pair_micro_f1",
+                replicates=replicates,
+                seed=seed,
+            )
+        }
+        if name == "overall":
+            intervals[name]["presence_f1"] = cluster_bootstrap_interval(
+                stats,
+                "presence_f1",
+                replicates=replicates,
+                seed=seed,
+            )
+    if "seen" in statistics and "unseen" in statistics:
+        intervals["seen_unseen_harmonic_pair_micro_f1"] = (
+            paired_partition_harmonic_interval(
+                statistics["seen"],
+                statistics["unseen"],
+                replicates=replicates,
+                seed=seed,
+            )
+        )
+    else:
+        intervals["seen_unseen_harmonic_pair_micro_f1"] = None
+    return {
+        "cluster_unit": "row_uid",
+        "interval_method": "paired_cluster_percentile_bootstrap",
+        "partitions": intervals,
+    }
 
 
 def _aspect_presence_by_row(

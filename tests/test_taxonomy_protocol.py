@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import sys
 from pathlib import Path
 
@@ -19,9 +20,12 @@ from msc_project.experiments.taxonomy_protocol import (
     candidate_representation_variants,
     canonical_aspects,
     evaluate_scored_grid,
+    load_precloud_config,
     pair_identity_hash,
     registered_folds,
+    scientific_protocol_sha256,
     select_strict_seen_threshold,
+    training_scope_id,
 )
 from msc_project.experiments.taxonomy_resources import load_minimal_descriptions
 
@@ -105,14 +109,18 @@ def test_registered_fold_schedule_is_fixed_and_complete() -> None:
     assert l1[0].heldout_aspects == (ASPECTS[0],)
     assert l1[0].evaluation_aspects == (ASPECTS[0],)
     assert l2[0].evaluation_aspects == ASPECTS
+    assert l2[0].conditions == ("D",)
     assert l3[0].heldout_aspects == (ASPECTS[0], ASPECTS[1])
     assert l3[-1].heldout_aspects == (ASPECTS[-1], ASPECTS[0])
     assert all(fold.conditions == ("NN", "DN", "ND", "DD") for fold in l3)
+    assert all(fold.conditions == ("D",) for fold in l4)
     appearances = {
         aspect: sum(aspect in fold.heldout_aspects for fold in l3)
         for aspect in ASPECTS
     }
     assert set(appearances.values()) == {2}
+    assert training_scope_id(l1[0]) == training_scope_id(l2[0])
+    assert training_scope_id(l3[0]) != training_scope_id(l2[0])
 
 
 def test_splits_use_example_filtering_and_all_official_eval_rows() -> None:
@@ -332,3 +340,19 @@ def test_partition_metrics_and_harmonic_mean_use_common_threshold() -> None:
     assert result["seen"]["pair_micro_f1"] == pytest.approx(1.0)
     assert result["unseen"]["pair_micro_f1"] == pytest.approx(0.2)
     assert result["seen_unseen_harmonic_pair_micro_f1"] == pytest.approx(1 / 3)
+
+
+def test_scientific_protocol_hash_excludes_only_administrative_gate_state() -> None:
+    config = load_precloud_config()
+    changed_status = copy.deepcopy(config)
+    changed_status["status"] = "approved"
+    changed_status["statistics"]["status"] = "approved_and_frozen"
+    assert scientific_protocol_sha256(config) == scientific_protocol_sha256(
+        changed_status
+    )
+
+    changed_science = copy.deepcopy(config)
+    changed_science["pair_training"]["budget_pairs_per_fold"] = 2048
+    assert scientific_protocol_sha256(config) != scientific_protocol_sha256(
+        changed_science
+    )

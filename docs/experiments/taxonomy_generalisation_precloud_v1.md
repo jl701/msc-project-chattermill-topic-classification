@@ -125,3 +125,65 @@ Reflection after this stage:
   hashes; and
 - no method smoke has yet been counted as complete: real cached-model smoke,
   checkpoint recovery and the cloud runner remain the next stage.
+
+### Stage 3 - cloud runner, inference and real-model smoke (complete)
+
+Completed on 23 July 2026 without reading new official validation or test
+results:
+
+- implemented guarded `train -> score-validation -> select-threshold ->
+  score-test -> analyse-test` phases;
+- made training open only the official train split, validation stages open
+  train plus validation, and test stages open train plus test;
+- corrected strict Level 1 calibration so held-out validation targets are
+  never scored and thresholds transfer from the matched eleven-seen-aspect
+  L2-D grid;
+- reused that exact calibration artifact for Level 2 threshold selection;
+- made every trainable method select hyperparameters independently inside each
+  of the 26 unique outer training scopes, using seen-candidate validation
+  grids only and never pooling evidence across outer folds;
+- added fixed-recipe selection artifacts for E5 and Frozen Qwen without a
+  fictitious tuning sweep;
+- reduced DistilBERT and QLoRA optimisation to finite three-learning-rate
+  grids with historically grounded fixed epoch counts;
+- added one-load/all-shards execution while preserving independent resumable
+  shards;
+- deduplicated identical rendered claims across Level 3 conditions, reducing
+  three-review smoke inference from 432 logical calls to 126 unique calls;
+- identified and reused the common L3 `(A11,A12)` / L4 `Value` training scope,
+  leaving 26 unique core training scopes;
+- integrated per-condition review-cluster confidence intervals, nonlinear
+  harmonic-F1 resampling, paired matched comparisons, explicit
+  different-task cross-level degradation and Holm-adjusted sign-flip families;
+- added three-seed Level 1 QLoRA sensitivity aggregation without conflating
+  seed and review-sampling uncertainty;
+- added scientific-protocol hashes to training and score contracts while
+  excluding administrative approval status;
+- generated a 2,611-job dependency-aware cloud plan with 102 actual QLoRA
+  training runs and exact score-volume estimates;
+- completed bounded real-model synthetic smoke tests for all five methods,
+  including checkpoint reload, two-shard merge and resume;
+- completed an independent second-process QLoRA resume with zero retraining and
+  zero rescoring; and
+- passed the complete repository test suite: 285 tests.
+
+Reflection after this stage:
+
+- the strict Level 1 curve was previously under-specified because a
+  target-only evaluation grid contains no seen candidates for calibration;
+  the matched L2-D calibration branch resolves this without using target
+  validation labels;
+- a three-fold global pilot would still be non-strict because an aspect held
+  out in one fold is seen in another; nested selection per outer training
+  scope removes that indirect route;
+- condition caching, cross-level calibration reuse, shared training scopes and
+  frozen-method marker checkpoints reduce compute without changing any
+  scientific comparison;
+- matched model/description contrasts and cross-level difficulty changes now
+  have different, explicit inference contracts;
+- synthetic smoke metrics remain prohibited from thesis result tables; and
+- formal execution remains blocked until the exact descriptions and
+  statistical contract are user-approved and frozen.
+
+The detailed readiness hand-off is
+`docs/experiments/taxonomy_generalisation_precloud_readiness_20260723.md`.

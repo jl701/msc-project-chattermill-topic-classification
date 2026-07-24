@@ -300,6 +300,7 @@ def _test_use_key(contract: RunContract) -> str:
             contract.fold_id,
             contract.condition,
             contract.split,
+            f"seed-{contract.seed:04d}",
         )
     )
 

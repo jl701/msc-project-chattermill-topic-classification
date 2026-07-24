@@ -68,6 +68,7 @@ def dataframe_sha256(
 @dataclass(frozen=True)
 class RunContract:
     protocol_id: str
+    scientific_protocol_sha256: str
     method_id: str
     method_spec_sha256: str
     method_registry_sha256: str
@@ -88,8 +89,10 @@ class RunContract:
     def validate(self) -> None:
         text_fields = (
             "protocol_id",
+            "scientific_protocol_sha256",
             "method_id",
             "method_spec_sha256",
+            "scientific_protocol_sha256",
             "method_registry_sha256",
             "description_resource_sha256",
             "candidate_representation_sha256",

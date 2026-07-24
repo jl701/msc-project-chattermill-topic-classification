@@ -15,10 +15,16 @@ from msc_project.experiments.taxonomy_pipeline import (
     assert_condition_pair_identity,
     build_run_contract,
     prepare_fold_evaluation,
+    prepare_l1_strict_calibration,
+    prepare_strict_seen_calibration,
+    prepare_fold_training,
     score_prepared_shard,
+    score_prepared_conditions_shard,
+    unique_rendered_claim_count,
 )
 from msc_project.experiments.taxonomy_protocol import registered_folds
 from msc_project.experiments.taxonomy_resources import load_minimal_descriptions
+from msc_project.experiments.unified_candidate_pairs import manifest_hash
 
 
 def synthetic_frame() -> pd.DataFrame:
@@ -99,6 +105,68 @@ def test_prepared_l3_conditions_share_training_and_evaluation_identities() -> No
     }
 
 
+def test_training_preparation_needs_only_the_official_train_split() -> None:
+    frame = synthetic_frame()
+    train_only = frame[frame["original_split"] == "train"].copy()
+    fold = registered_folds("L3")[0]
+    resource = load_minimal_descriptions(require_approved=False)
+    split, manifest = prepare_fold_training(
+        train_only,
+        fold,
+        resource,
+        total_budget=16,
+        positive_budget=8,
+    )
+    assert set(split["original_split"]) == {"train"}
+    assert not manifest.empty
+    assert not set(manifest["candidate_aspect"]) & set(fold.heldout_aspects)
+
+
+def test_l1_strict_calibration_uses_seen_gold_on_a_matched_l2_grid() -> None:
+    frame = synthetic_frame()
+    fold = registered_folds("L1")[0]
+    resource = load_minimal_descriptions(require_approved=False)
+    target = prepare_fold_evaluation(
+        frame,
+        fold,
+        "D",
+        "validation",
+        resource,
+        total_budget=16,
+        positive_budget=8,
+    )
+    calibration = prepare_l1_strict_calibration(
+        frame,
+        fold,
+        resource,
+        total_budget=16,
+        positive_budget=8,
+    )
+    assert set(target.evaluation_grid["candidate_aspect"]) == set(
+        fold.heldout_aspects
+    )
+    assert set(calibration.evaluation_grid["candidate_aspect"]) == set(
+        fold.seen_aspects
+    )
+    assert not set(calibration.evaluation_grid["candidate_aspect"]) & set(
+        fold.heldout_aspects
+    )
+    assert manifest_hash(target.training_manifest) == manifest_hash(
+        calibration.training_manifest
+    )
+
+
+def test_every_level_strict_calibration_excludes_heldout_candidates() -> None:
+    frame = synthetic_frame()
+    resource = load_minimal_descriptions(require_approved=False)
+    for level in ("L1", "L2", "L3", "L4"):
+        fold = registered_folds(level)[0]
+        calibration = prepare_strict_seen_calibration(frame, fold, resource)
+        observed = set(calibration.evaluation_grid["candidate_aspect"])
+        assert observed == set(fold.seen_aspects)
+        assert not observed & set(fold.heldout_aspects)
+
+
 def test_pipeline_builds_hashed_contract_scores_and_resumes(tmp_path: Path) -> None:
     prepared = prepared_conditions()[0]
     run = build_run_contract(
@@ -142,3 +210,43 @@ def test_condition_identity_guard_rejects_changed_training_pairs() -> None:
     )
     with pytest.raises(ValueError, match="training pair"):
         assert_condition_pair_identity([prepared[0], changed])
+
+
+class CountingRuntime(DeterministicRuntime):
+    def __init__(self):
+        self.scored_rows = 0
+
+    def score(self, pair_manifest):
+        self.scored_rows += len(pair_manifest)
+        return super().score(pair_manifest)
+
+
+def test_condition_scoring_deduplicates_identical_rendered_claims(tmp_path: Path) -> None:
+    prepared = prepared_conditions()
+    runtime = CountingRuntime().fit(prepared[0].training_manifest)
+    contracts = {
+        value.condition: build_run_contract(
+            value,
+            runtime.method_id,
+            {"classifier_c": 1.0},
+            shard_count=1,
+            formal=False,
+        )
+        for value in prepared
+    }
+    artifacts, states, unique_count = score_prepared_conditions_shard(
+        prepared,
+        runtime,
+        contracts,
+        tmp_path,
+        shard_index=0,
+        resume=False,
+    )
+    naive_count = sum(len(value.evaluation_grid) for value in prepared)
+    assert set(artifacts) == set(states) == {"NN", "DN", "ND", "DD"}
+    assert unique_count == runtime.scored_rows
+    assert unique_count < naive_count
+    # Two synthetic reviews x (10 seen aspects * 3 sentiments +
+    # 2 held-out aspects * 2 representation variants * 3 sentiments).
+    assert unique_count == 2 * 42
+    assert unique_rendered_claim_count(prepared) == unique_count

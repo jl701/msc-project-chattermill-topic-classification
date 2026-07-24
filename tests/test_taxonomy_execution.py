@@ -55,6 +55,7 @@ def contract(grid: pd.DataFrame, *, shard_count: int = 2) -> RunContract:
     digest = "a" * 64
     return RunContract(
         protocol_id="taxonomy_generalisation_precloud_v1",
+        scientific_protocol_sha256="0" * 64,
         method_id="strict_train_only_tfidf",
         method_spec_sha256="b" * 64,
         method_registry_sha256="c" * 64,
