@@ -64,6 +64,19 @@ Execution state:
 - Detailed record:
   `docs/experiments/taxonomy_threshold_sweep_optimization_20260724.md`.
 
+## 2026-07-24 - E5 Official Validation Complete
+
+- Guarded through-validation plan: 93/93 jobs, zero failures.
+- Fixed parameter SHA-256:
+  `584218f2d0af9bb5703377aba010106d43dc4e12a2442fdc3113d5ff62096319`.
+- Artifacts: 26 checkpoint contracts, 27 validation score scopes,
+  216 score shards with 216 matching manifests, and 39 threshold transfers.
+- Level 3 threshold contracts contain `NN/DN/ND/DD/RR` with one shared
+  seen-only threshold.
+- No official-test artifact or ledger use was created.
+- Validation-only completion record:
+  `docs/experiments/taxonomy_e5_validation_completion_20260724.md`.
+
 ## 2026-07-24 - Taxonomy-Generalisation Literature and Thesis Alignment
 
 Task:
