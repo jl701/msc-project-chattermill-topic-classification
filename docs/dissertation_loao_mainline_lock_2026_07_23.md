@@ -19,6 +19,14 @@ authoritative readiness evidence is
 This does not change the experiment order or authorise official
 validation/test execution.
 
+On 24 July 2026 the user approved the compute split: TF-IDF, E5, DistilBERT and
+Frozen Qwen run locally, while every QLoRA model stage runs in the cloud.
+The implementation and current workload evidence are in
+`docs/experiments/taxonomy_local_non_qlora_execution_readiness_20260724.md`.
+This later report supersedes the 23 July report only for execution placement,
+Frozen-Qwen caching and workload estimates. Scientific descriptions and
+statistical gates remain separately pending.
+
 ## Working title and central question
 
 Working title:
@@ -454,6 +462,16 @@ must be marked as pilots, not completion.
   counts, commands and formal approval gates.
 - [x] Replace cross-fold pilot tuning with nested per-training-scope selection
   and verify that validation never renders held-out candidates.
+- [x] Freeze the local TF-IDF/E5/DistilBERT/Frozen-Qwen versus cloud QLoRA
+  execution placement without changing the scientific protocol hash.
+- [x] Implement and verify a split-isolated Frozen-Qwen raw-score cache that
+  stores no text, labels, thresholds, predictions or metrics.
+- [x] Add lazy Frozen-Qwen loading so a complete cache hit never loads the
+  4B model.
+- [x] Tag the dependency plan by executor and recalculate Frozen-Qwen inference
+  from 2,658,972 uncached pairs to at most 152,316 unique inputs.
+- [x] Pass a bounded real-model cache-equivalence benchmark using synthetic
+  reviews only.
 
 ### D. Complete strict Level 1
 
@@ -549,20 +567,22 @@ description freeze
     -> statistical protocol freeze
     -> infrastructure, leakage, and statistical tests
     -> local end-to-end smoke tests
-    -> cloud-readiness review and one-fold benchmark
-    -> strict Level 1
-    -> Level 2
-    -> Level 3
-    -> Level 4
+    -> local non-QLoRA nested selection and validation gates
+    -> one-scope cloud QLoRA runtime/cost benchmark
+    -> complete all admitted validation selection
+    -> freeze every method, threshold and comparison
+    -> one controlled Level 1-4 formal test pass
     -> seeds, statistics, and thesis freeze
 ```
 
-Run cheap deterministic/local methods before expensive Qwen inference. New
-pipelines require validation smoke tests before full sweeps. No long cloud GPU
-run may begin until the code, tests, resumability, commands, manifests, expected
-runtime, and cost have passed a user-reviewed cloud-readiness gate. A failed or
-uninformative result is documented and closed; test-guided redesign is not
-permitted.
+Run cheap deterministic/local methods before expensive QLoRA inference. Frozen
+Qwen is local and may reuse only exact raw `P(Y)` values under the registered
+split-isolated cache contract; QLoRA adapters are never shared across training
+scopes. New pipelines require validation smoke tests before full sweeps. No
+long cloud GPU run may begin until the code, tests, resumability, commands,
+manifests, expected runtime, and cost have passed a user-reviewed
+cloud-readiness gate. A failed or uninformative result is documented and
+closed; test-guided redesign is not permitted.
 
 Level 3 is mandatory core evidence. Level 4 is the planned stress test but
 remains subject to registered data-support, runtime, and thesis-value gates.
@@ -577,6 +597,11 @@ not remove an unfavourable completed local result.
   `DN/ND` crossover.
 - Do not alter negative-pair identities across description conditions.
 - Do not tune thresholds, prompts, parsers, folds, or descriptions on test.
+- Do not share raw-score caches between validation and test, cache QLoRA across
+  adapters, or store labels, thresholds, predictions or metrics in the
+  Frozen-Qwen cache.
+- Do not access the test cache before the frozen threshold-transfer artifact
+  and complete scientific configuration have passed their gates.
 - Do not call different difficulty levels an identical protocol.
 - Do not add another encoder, router, Gemini branch, anomaly detector, or model
   sweep unless a named mainline research question cannot be answered otherwise.

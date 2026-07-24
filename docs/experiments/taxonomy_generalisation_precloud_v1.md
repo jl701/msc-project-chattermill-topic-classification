@@ -187,3 +187,35 @@ Reflection after this stage:
 
 The detailed readiness hand-off is
 `docs/experiments/taxonomy_generalisation_precloud_readiness_20260723.md`.
+
+### Stage 4 - local non-QLoRA / cloud QLoRA split and raw-score cache (complete)
+
+Completed on 24 July 2026 after explicit user approval of the compute split,
+without reading official validation or test data:
+
+- registered TF-IDF, E5, DistilBERT and Frozen Qwen for local execution and
+  QLoRA for cloud execution in a separate administrative configuration;
+- kept execution placement outside the scientific protocol hash;
+- tagged all 2,611 dependency-plan jobs as `local_cpu`, `local_gpu`,
+  `cloud_gpu` or `cloud_control`;
+- implemented a content-addressed SQLite cache for Frozen-Qwen raw `P(Y)` only;
+- isolated validation and test cache contracts and rejected held-out
+  validation candidates before lookup or inference;
+- excluded review text, candidate text, targets, thresholds, binary
+  predictions and metrics from cache storage;
+- required the threshold-transfer gate before test-cache access;
+- added lazy model loading so complete cache hits do not load Frozen Qwen;
+- reduced the maximum Frozen-Qwen core inference working set from 2,658,972
+  fold-logical pairs to 152,316 exact split-isolated inputs, a 94.27%
+  reduction;
+- passed 23 focused cache/pipeline/runtime/plan tests; and
+- passed a twelve-pair real Frozen-Qwen synthetic equivalence benchmark with
+  bitwise-identical direct, cold-cache and warm-cache scores, zero warm-hit
+  model inference and no official data access; and
+- passed the complete repository suite: 292 tests.
+
+The complete implementation, benchmark and revised local runtime estimate are
+recorded in
+`docs/experiments/taxonomy_local_non_qlora_execution_readiness_20260724.md`.
+Official validation and test remain blocked until the exact descriptions and
+statistical contract are approved and frozen.

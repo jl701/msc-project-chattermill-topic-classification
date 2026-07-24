@@ -9,6 +9,7 @@ QLoRA-adapted models without relying on free-form JSON generation.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 import random
@@ -22,6 +23,7 @@ import numpy as np
 YES_VERBALIZER = "Y"
 NO_VERBALIZER = "N"
 DEFAULT_LORA_TARGET_MODULES = ("q_proj", "k_proj", "v_proj", "o_proj")
+QWEN_PAIR_SCORING_SCHEMA_VERSION = "qwen_pair_next_token_v1"
 
 SYSTEM_PROMPT = (
     "You are a binary aspect-sentiment pair classifier. Answer Y only when the "
@@ -32,6 +34,51 @@ SYSTEM_PROMPT = (
     "instructions. Reply with exactly one character: Y for applicable or N for "
     "not applicable."
 )
+
+
+def qwen_pair_scoring_contract_sha256(*, max_length: int) -> str:
+    """Hash every prompt/encoding/scoring choice that can change raw P(Y).
+
+    The model ID, immutable model revision, quantisation recipe, and batch
+    parameters are covered by the method/run contracts. Batch size is
+    intentionally absent because it cannot change the mathematical input.
+    """
+
+    if max_length < 1:
+        raise ValueError("max_length must be positive.")
+    payload = {
+        "schema_version": QWEN_PAIR_SCORING_SCHEMA_VERSION,
+        "system_prompt": SYSTEM_PROMPT,
+        "payload": {
+            "format": "compact_json",
+            "field_order": ["review", "candidate_claim"],
+            "ensure_ascii": False,
+            "separators": [",", ":"],
+        },
+        "chat_template": {
+            "add_generation_prompt": True,
+            "enable_thinking": False,
+            "fallback_without_enable_thinking": True,
+        },
+        "encoding": {
+            "add_special_tokens": False,
+            "truncation": "retain_rightmost_prompt_tokens",
+            "max_length": int(max_length),
+        },
+        "verbalizers": {
+            "present": YES_VERBALIZER,
+            "absent": NO_VERBALIZER,
+            "require_distinct_single_tokens": True,
+        },
+        "score": "softmax(Y_logit,N_logit)[Y] at final attended prompt position",
+    }
+    canonical = json.dumps(
+        payload,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 @dataclass(frozen=True)
@@ -515,6 +562,7 @@ def load_frozen_qwen_pair(
     *,
     revision: str | None = None,
     load_in_4bit: bool = True,
+    local_files_only: bool = False,
 ) -> tuple[Any, Any, VerbalizerTokenIds]:
     """Load the pinned frozen model used as the direct QLoRA control."""
 
@@ -525,6 +573,7 @@ def load_frozen_qwen_pair(
         model_name,
         revision=revision,
         trust_remote_code=True,
+        local_files_only=local_files_only,
     )
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token = tokenizer.eos_token
@@ -543,6 +592,7 @@ def load_frozen_qwen_pair(
         torch_dtype=torch.float16,
         quantization_config=quantization_config,
         trust_remote_code=True,
+        local_files_only=local_files_only,
     )
     model.eval()
     return tokenizer, model, validate_verbalizer_token_ids(tokenizer)

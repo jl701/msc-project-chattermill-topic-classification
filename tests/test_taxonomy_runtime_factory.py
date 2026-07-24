@@ -17,6 +17,7 @@ from msc_project.experiments.taxonomy_checkpoints import TrainingContract
 from msc_project.experiments.taxonomy_execution import canonical_sha256
 from msc_project.experiments.taxonomy_methods import resolve_method_spec
 from msc_project.experiments.taxonomy_runtime_factory import (
+    LazyLoadedPairProbabilityRuntime,
     create_runtime_for_training,
     load_runtime_checkpoint,
     save_frozen_registry_checkpoint,
@@ -139,3 +140,34 @@ def test_frozen_checkpoint_does_not_load_or_fit_the_model(tmp_path: Path) -> Non
                 resolve_method_spec("strict_train_only_tfidf").starting_recipe
             ),
         )
+
+
+def test_lazy_runtime_skips_model_load_until_first_cache_miss() -> None:
+    loads = []
+
+    class FakeRuntime:
+        method_id = "frozen_qwen_candidate_pair"
+
+        def score(self, pair_manifest):
+            return np.full(len(pair_manifest), 0.25)
+
+        def close(self):
+            loads.append("closed")
+
+    def loader():
+        loads.append("loaded")
+        return FakeRuntime()
+
+    runtime = LazyLoadedPairProbabilityRuntime(
+        "frozen_qwen_candidate_pair",
+        loader,
+    )
+    assert runtime.model_loaded is False
+    runtime.close()
+    assert loads == []
+    observed = runtime.score(manifest().drop(columns="target"))
+    assert runtime.model_loaded is True
+    assert np.all(observed == 0.25)
+    assert loads == ["loaded"]
+    runtime.close()
+    assert loads == ["loaded", "closed"]

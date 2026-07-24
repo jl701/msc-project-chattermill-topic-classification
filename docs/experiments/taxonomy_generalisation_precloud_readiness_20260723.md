@@ -1,5 +1,11 @@
 # Taxonomy-Generalisation Pre-Cloud Readiness Report — 23 July 2026
 
+> Historical readiness snapshot. The scientific protocol remains current, but
+> the execution placement, Frozen-Qwen workload and local/cloud time estimates
+> in Sections 11-12 were superseded on 24 July 2026 by
+> `docs/experiments/taxonomy_local_non_qlora_execution_readiness_20260724.md`.
+> TF-IDF, E5, DistilBERT and cached Frozen Qwen are now local; QLoRA is cloud.
+
 ## Executive conclusion
 
 The pre-cloud implementation for the approved dissertation mainline is

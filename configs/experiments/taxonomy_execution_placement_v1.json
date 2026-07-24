@@ -1,0 +1,73 @@
+{
+  "execution_id": "taxonomy_execution_placement_v1",
+  "status": "approved_before_local_execution",
+  "approved_at": "2026-07-24T00:00:00+01:00",
+  "scope": "Administrative compute placement and lossless inference caching only. This resource is deliberately excluded from the scientific protocol hash.",
+  "placement": {
+    "strict_train_only_tfidf": {
+      "training": "local_cpu",
+      "scoring": "local_cpu",
+      "selection_and_analysis": "local_cpu"
+    },
+    "e5_base_v2": {
+      "training": "local_cpu",
+      "scoring": "local_gpu",
+      "selection_and_analysis": "local_cpu"
+    },
+    "distilbert_review_candidate_cross_encoder": {
+      "training": "local_gpu",
+      "scoring": "local_gpu",
+      "selection_and_analysis": "local_cpu"
+    },
+    "frozen_qwen_candidate_pair": {
+      "training": "local_cpu",
+      "scoring": "local_gpu",
+      "selection_and_analysis": "local_cpu"
+    },
+    "qwen_candidate_pair_qlora": {
+      "training": "cloud_gpu",
+      "scoring": "cloud_gpu",
+      "selection_and_analysis": "cloud_control"
+    }
+  },
+  "frozen_qwen_raw_score_cache": {
+    "enabled": true,
+    "method_id": "frozen_qwen_candidate_pair",
+    "schema_version": "frozen_qwen_raw_score_cache_v1",
+    "storage": "sqlite",
+    "split_isolation": true,
+    "validation_scope": "strict seen-aspect calibration inputs only",
+    "test_gate": "the frozen threshold-transfer artifact must be loaded before any test-cache lookup or model inference",
+    "key_fields": [
+      "exact review text",
+      "exact rendered candidate claim",
+      "candidate aspect",
+      "candidate sentiment",
+      "representation variant"
+    ],
+    "contract_fields": [
+      "scientific protocol hash",
+      "method specification hash",
+      "method registry hash",
+      "model ID and immutable revision",
+      "scientific parameter hash",
+      "prompt and next-token scoring contract hash",
+      "official split"
+    ],
+    "stored_payload": "input SHA-256 and float64 raw P(Y) only",
+    "forbidden_payload": [
+      "review text",
+      "gold target",
+      "threshold",
+      "binary prediction",
+      "test metric"
+    ],
+    "correctness_rule": "cache miss and cache hit must produce exactly the same raw score artifact; the existing run-contract artifacts remain the scientific source of truth",
+    "failure_rule": "fail closed on an incompatible contract, malformed probability, held-out validation candidate, or failed SQLite integrity check"
+  },
+  "execution_gates": {
+    "local_synthetic_and_cache_equivalence_checks": "approved",
+    "official_validation": "blocked_until_description_and_statistics_resources_are_approved_and_frozen",
+    "official_test": "blocked_until_every_method configuration, threshold rule, comparison family, and statistical rule are frozen"
+  }
+}

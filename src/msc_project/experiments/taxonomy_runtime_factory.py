@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from dataclasses import replace
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
 
 import pandas as pd
 
@@ -35,6 +35,43 @@ from msc_project.llm.qwen_pair_classifier import (
     load_saved_qwen_pair_adapter,
     train_qwen_pair_adapter,
 )
+
+
+class LazyLoadedPairProbabilityRuntime:
+    """Load an immutable scorer only when a cache miss actually needs it."""
+
+    def __init__(
+        self,
+        method_id: str,
+        loader: Callable[[], PairProbabilityRuntime],
+    ) -> None:
+        self.method_id = method_id
+        self._loader = loader
+        self._runtime: PairProbabilityRuntime | None = None
+
+    @property
+    def model_loaded(self) -> bool:
+        return self._runtime is not None
+
+    def _get(self) -> PairProbabilityRuntime:
+        if self._runtime is None:
+            runtime = self._loader()
+            if runtime.method_id != self.method_id:
+                runtime.close()
+                raise ValueError("Lazy runtime loader returned the wrong method.")
+            self._runtime = runtime
+        return self._runtime
+
+    def fit(self, _train_manifest: pd.DataFrame) -> "LazyLoadedPairProbabilityRuntime":
+        raise RuntimeError("A lazy scoring runtime cannot be fitted.")
+
+    def score(self, pair_manifest: pd.DataFrame):
+        return self._get().score(pair_manifest)
+
+    def close(self) -> None:
+        if self._runtime is not None:
+            self._runtime.close()
+            self._runtime = None
 
 
 def create_runtime_for_training(
@@ -75,6 +112,7 @@ def create_runtime_for_training(
             spec.model_id,
             revision=spec.model_revision,
             load_in_4bit=bool(parameters["load_in_4bit"]),
+            local_files_only=local_files_only,
         )
         return QwenPairRuntime(
             method_id=method_id,
@@ -236,9 +274,21 @@ def load_runtime_checkpoint(
     seed: int,
     device: Any,
     local_files_only: bool = False,
+    lazy_frozen_qwen: bool = False,
 ) -> PairProbabilityRuntime:
     validate_checkpoint(checkpoint_dir, contract)
     spec = resolve_method_spec(method_id)
+    if method_id == "frozen_qwen_candidate_pair" and lazy_frozen_qwen:
+        return LazyLoadedPairProbabilityRuntime(
+            method_id,
+            lambda: create_runtime_for_training(
+                method_id,
+                parameters,
+                seed=seed,
+                device=device,
+                local_files_only=local_files_only,
+            ),
+        )
     if method_id == "strict_train_only_tfidf":
         import joblib
 

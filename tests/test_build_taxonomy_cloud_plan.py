@@ -29,6 +29,25 @@ def test_cloud_plan_is_blocked_complete_and_compute_deduplicated() -> None:
         compute["unique_pair_scores"]["frozen_qwen_plus_qlora_total"]
         == 8_095_956
     )
+    assert plan["job_counts_by_executor"] == {
+        "cloud_control": 230,
+        "cloud_gpu": 294,
+        "local_cpu": 1733,
+        "local_gpu": 354,
+    }
+    scores = compute["unique_pair_scores"]
+    assert scores["frozen_qwen_uncached_core_total"] == 2_658_972
+    assert scores["frozen_qwen_cached_unique_validation_inputs"] == 38_052
+    assert scores["frozen_qwen_cached_unique_test_inputs"] == 114_264
+    assert scores["frozen_qwen_cached_unique_total_inputs"] == 152_316
+    assert scores["frozen_qwen_cache_inference_reduction_fraction"] > 0.94
+    assert {
+        value["executor"]
+        for value in plan["jobs"]
+        if "--method" in value["argv"]
+        and value["argv"][value["argv"].index("--method") + 1]
+        == "qwen_candidate_pair_qlora"
+    } == {"cloud_gpu", "cloud_control"}
 
     jobs = plan["jobs"]
     formal_l2_validation_scores = [

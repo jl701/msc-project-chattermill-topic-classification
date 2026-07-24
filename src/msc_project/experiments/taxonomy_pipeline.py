@@ -8,6 +8,10 @@ from typing import Mapping, Sequence
 
 import pandas as pd
 
+from msc_project.experiments.frozen_raw_score_cache import (
+    FrozenRawScoreCache,
+    score_frozen_qwen_with_cache,
+)
 from msc_project.experiments.taxonomy_execution import (
     RunContract,
     build_score_artifact,
@@ -289,6 +293,7 @@ def score_prepared_shard(
     *,
     shard_index: int,
     resume: bool,
+    raw_score_cache: FrozenRawScoreCache | None = None,
 ) -> tuple[pd.DataFrame, str]:
     if runtime.method_id != contract.method_id:
         raise ValueError("Runtime method_id differs from the run contract.")
@@ -314,7 +319,14 @@ def score_prepared_shard(
     )
     if shard.empty:
         raise ValueError("Requested score shard contains no review clusters.")
-    scores = runtime.score(shard)
+    if raw_score_cache is None:
+        scores = runtime.score(shard)
+    else:
+        scores, _ = score_frozen_qwen_with_cache(
+            runtime,
+            shard,
+            raw_score_cache,
+        )
     artifact = build_score_artifact(
         shard,
         scores,
@@ -338,6 +350,7 @@ def score_prepared_conditions_shard(
     *,
     shard_index: int,
     resume: bool,
+    raw_score_cache: FrozenRawScoreCache | None = None,
 ) -> tuple[dict[str, pd.DataFrame], dict[str, str], int]:
     """Score each unique rendered claim once, then project to matched conditions."""
 
@@ -417,7 +430,16 @@ def score_prepared_conditions_shard(
     if (text_counts > 1).any():
         raise ValueError("A row_uid maps to different review text across conditions.")
     union = union.drop_duplicates(score_key, keep="first").reset_index(drop=True)
-    scores = runtime.score(union)
+    if raw_score_cache is None:
+        scores = runtime.score(union)
+        model_scored_count = int(len(union))
+    else:
+        scores, cache_stats = score_frozen_qwen_with_cache(
+            runtime,
+            union,
+            raw_score_cache,
+        )
+        model_scored_count = cache_stats.model_scored_unique_inputs
     score_lookup = {
         tuple(row[column] for column in score_key): float(score)
         for row, score in zip(union.to_dict(orient="records"), scores)
@@ -441,7 +463,7 @@ def score_prepared_conditions_shard(
         )
         artifacts[condition] = artifact
         states[condition] = "scored"
-    return artifacts, states, int(len(union))
+    return artifacts, states, model_scored_count
 
 
 def unique_rendered_claim_count(

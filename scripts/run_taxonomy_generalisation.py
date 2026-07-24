@@ -43,6 +43,11 @@ from msc_project.experiments.taxonomy_execution import (
     score_shard_paths,
     validate_score_shard,
 )
+from msc_project.experiments.frozen_raw_score_cache import (
+    FrozenRawScoreCache,
+    build_frozen_raw_score_cache_contract,
+    frozen_raw_score_cache_path,
+)
 from msc_project.experiments.taxonomy_methods import (
     METHOD_IDS,
     resolve_method_spec,
@@ -321,6 +326,9 @@ def run(args: argparse.Namespace) -> dict[str, object]:
             seed=args.seed,
             device=device,
             local_files_only=args.local_files_only,
+            lazy_frozen_qwen=(
+                args.method == "frozen_qwen_candidate_pair"
+            ),
         )
 
     score_contracts = {
@@ -368,62 +376,94 @@ def run(args: argparse.Namespace) -> dict[str, object]:
                 scientific_parameters_sha256=parameters_sha256,
                 training_contract_sha256=train_contract.contract_sha256,
             )
-        for value in prepared:
-            contract = score_contracts[value.condition]
-            if args.phase == "score-test":
-                ledger.claim(contract)
+        raw_score_cache = None
         results = []
         unique_pairs_scored = 0
-        for shard_index in shard_indices:
-            # Strict validation never scores held-out candidates or labels.
-            if calibration_prepared is None:
-                artifacts, states, scored_count = score_prepared_conditions_shard(
-                    prepared,
-                    runtime,
-                    score_contracts,
-                    args.output_root,
-                    shard_index=shard_index,
-                    resume=args.resume,
+        cache_summary = None
+        try:
+            for value in prepared:
+                contract = score_contracts[value.condition]
+                if args.phase == "score-test":
+                    ledger.claim(contract)
+            if args.method == "frozen_qwen_candidate_pair":
+                cache_run_contract = (
+                    calibration_contract
+                    if calibration_contract is not None
+                    else next(iter(score_contracts.values()))
                 )
-                unique_pairs_scored += scored_count
-                results.extend(
-                    {
-                        "condition": value.condition,
-                        "shard_index": shard_index,
-                        "state": states[value.condition],
-                        "rows": int(len(artifacts[value.condition])),
-                        "score_contract_sha256": score_contracts[
-                            value.condition
-                        ].contract_sha256,
-                    }
-                    for value in prepared
+                assert cache_run_contract is not None
+                cache_contract = build_frozen_raw_score_cache_contract(
+                    cache_run_contract,
+                    parameters,
                 )
-            if calibration_prepared is not None:
-                assert calibration_contract is not None
-                calibration_artifact, calibration_state = score_prepared_shard(
-                    calibration_prepared,
-                    runtime,
-                    calibration_contract,
-                    args.output_root,
-                    shard_index=shard_index,
-                    resume=args.resume,
+                raw_score_cache = FrozenRawScoreCache(
+                    frozen_raw_score_cache_path(
+                        args.output_root,
+                        cache_contract,
+                    ),
+                    cache_contract,
                 )
-                results.append(
-                    {
-                        "condition": "seen-calibration",
-                        "shard_index": shard_index,
-                        "state": calibration_state,
-                        "rows": int(len(calibration_artifact)),
-                        "score_contract_sha256": calibration_contract.contract_sha256,
-                    }
+            for shard_index in shard_indices:
+                # Strict validation never scores held-out candidates or labels.
+                if calibration_prepared is None:
+                    artifacts, states, scored_count = score_prepared_conditions_shard(
+                        prepared,
+                        runtime,
+                        score_contracts,
+                        args.output_root,
+                        shard_index=shard_index,
+                        resume=args.resume,
+                        raw_score_cache=raw_score_cache,
+                    )
+                    unique_pairs_scored += scored_count
+                    results.extend(
+                        {
+                            "condition": value.condition,
+                            "shard_index": shard_index,
+                            "state": states[value.condition],
+                            "rows": int(len(artifacts[value.condition])),
+                            "score_contract_sha256": score_contracts[
+                                value.condition
+                            ].contract_sha256,
+                        }
+                        for value in prepared
+                    )
+                if calibration_prepared is not None:
+                    assert calibration_contract is not None
+                    calibration_artifact, calibration_state = score_prepared_shard(
+                        calibration_prepared,
+                        runtime,
+                        calibration_contract,
+                        args.output_root,
+                        shard_index=shard_index,
+                        resume=args.resume,
+                        raw_score_cache=raw_score_cache,
+                    )
+                    results.append(
+                        {
+                            "condition": "seen-calibration",
+                            "shard_index": shard_index,
+                            "state": calibration_state,
+                            "rows": int(len(calibration_artifact)),
+                            "score_contract_sha256": calibration_contract.contract_sha256,
+                        }
+                    )
+                    if calibration_state == "scored":
+                        unique_pairs_scored += len(calibration_artifact)
+            if raw_score_cache is not None:
+                cache_summary = raw_score_cache.session_summary()
+                unique_pairs_scored = int(
+                    cache_summary["model_scored_unique_inputs"]
                 )
-                if calibration_state == "scored":
-                    unique_pairs_scored += len(calibration_artifact)
-        runtime.close()
+        finally:
+            if raw_score_cache is not None:
+                raw_score_cache.close()
+            runtime.close()
         return {
             "event": args.phase,
             "checkpoint_dir": str(checkpoint_dir),
             "unique_pairs_scored": unique_pairs_scored,
+            "raw_score_cache": cache_summary,
             "results": results,
         }
 

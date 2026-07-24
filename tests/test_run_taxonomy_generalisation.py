@@ -269,3 +269,98 @@ def test_l1_validation_scores_seen_calibration_not_heldout_targets(
     assert set(artifact["calibration_aspects"]) == set(fold.seen_aspects)
     assert not set(artifact["calibration_aspects"]) & set(fold.heldout_aspects)
     assert len(set(artifact["validation_score_contracts"].values())) == 1
+
+
+def test_test_threshold_gate_precedes_frozen_cache_access(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    fold = MODULE.resolve_fold("L2", "l2-a01")
+    seen = fold.seen_aspects[0]
+    heldout = fold.heldout_aspects[0]
+    frame = pd.DataFrame(
+        [
+            {
+                "id": 1,
+                "original_split": "train",
+                "row_uid": "train:1",
+                "text": "synthetic training row",
+                "labels": [(seen, "positive")],
+            },
+            {
+                "id": 2,
+                "original_split": "test",
+                "row_uid": "test:2",
+                "text": "synthetic test row",
+                "labels": [(heldout, "negative")],
+            },
+        ]
+    )
+    selection = fixed_registered_selection("frozen_qwen_candidate_pair")
+    selection["source_summaries"] = []
+    selection_path = tmp_path / "frozen.json"
+    selection_path.write_text(json.dumps(selection), encoding="utf-8")
+
+    class FakeRuntime:
+        method_id = "frozen_qwen_candidate_pair"
+
+        def score(self, pair_manifest):
+            return np.full(len(pair_manifest), 0.25)
+
+        def close(self):
+            return None
+
+    events = []
+    real_cache = MODULE.FrozenRawScoreCache
+
+    def cache_factory(*args, **kwargs):
+        events.append("cache-open")
+        return real_cache(*args, **kwargs)
+
+    def threshold_gate(*args, **kwargs):
+        events.append("threshold-loaded")
+        return object()
+
+    def load_runtime(*args, **kwargs):
+        assert kwargs["lazy_frozen_qwen"] is True
+        return FakeRuntime()
+
+    monkeypatch.setattr(MODULE, "assert_formal_run_gates", lambda *_: None)
+    monkeypatch.setattr(
+        MODULE,
+        "load_official_fabsa_splits",
+        lambda *_: frame.copy(),
+    )
+    monkeypatch.setattr(
+        MODULE,
+        "load_runtime_checkpoint",
+        load_runtime,
+    )
+    monkeypatch.setattr(
+        MODULE,
+        "load_threshold_transfer_artifact",
+        threshold_gate,
+    )
+    monkeypatch.setattr(MODULE, "FrozenRawScoreCache", cache_factory)
+    args = MODULE.argparse.Namespace(
+        method="frozen_qwen_candidate_pair",
+        level="L2",
+        fold_id=fold.fold_id,
+        condition=[],
+        purpose="final",
+        phase="score-test",
+        candidate_id=None,
+        parameter_selection=selection_path,
+        data_dir=tmp_path / "unused",
+        output_root=tmp_path / "output",
+        seed=13,
+        shard_count=1,
+        shard_index=0,
+        all_shards=True,
+        resume=True,
+        local_files_only=True,
+    )
+    result = MODULE.run(args)
+    assert events[:2] == ["threshold-loaded", "cache-open"]
+    assert result["raw_score_cache"]["split"] == "test"
+    assert result["unique_pairs_scored"] == 12 * 3

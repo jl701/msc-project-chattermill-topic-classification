@@ -31,12 +31,58 @@ DEFAULT_OUTPUT_ROOT = Path(
     "outputs/experimental/taxonomy_generalisation_formal_v1"
 )
 DEFAULT_SELECTION_DIR = DEFAULT_OUTPUT_ROOT / "_parameter_selections"
+EXECUTION_PLACEMENT_PATH = (
+    PROJECT_ROOT
+    / "configs"
+    / "experiments"
+    / "taxonomy_execution_placement_v1.json"
+)
 DEFAULT_SHARD_COUNT = 8
 OFFICIAL_ROWS = {"validation": 1057, "test": 1587}
 
 
 def _posix(path: Path) -> str:
     return path.as_posix()
+
+
+def load_execution_placement(path: Path | None = None) -> dict[str, object]:
+    source = path or EXECUTION_PLACEMENT_PATH
+    value = json.loads(source.read_text(encoding="utf-8"))
+    if value.get("execution_id") != "taxonomy_execution_placement_v1":
+        raise ValueError("Unexpected taxonomy execution placement ID.")
+    if value.get("status") != "approved_before_local_execution":
+        raise ValueError("Taxonomy execution placement is not approved.")
+    placement = value.get("placement")
+    if not isinstance(placement, dict) or set(placement) != set(METHOD_IDS):
+        raise ValueError("Execution placement must cover all five methods.")
+    cache = value.get("frozen_qwen_raw_score_cache")
+    if not isinstance(cache, dict) or cache.get("enabled") is not True:
+        raise ValueError("Approved execution plan must enable frozen-Qwen caching.")
+    return value
+
+
+def _argument_value(argv: list[str], flag: str) -> str | None:
+    try:
+        return argv[argv.index(flag) + 1]
+    except (ValueError, IndexError):
+        return None
+
+
+def _executor_for_job(
+    job: dict[str, object],
+    placement: dict[str, object],
+) -> str:
+    argv = list(job["argv"])
+    method_id = _argument_value(argv, "--method")
+    if method_id is None:
+        return "local_cpu"
+    method_placement = placement[method_id]
+    phase = _argument_value(argv, "--phase")
+    if phase == "train":
+        return str(method_placement["training"])
+    if phase in {"score-validation", "score-test"}:
+        return str(method_placement["scoring"])
+    return str(method_placement["selection_and_analysis"])
 
 
 def _training_scope_representatives() -> dict[str, object]:
@@ -135,6 +181,7 @@ def build_plan(
         raise ValueError("shard_count must be positive.")
     resource = load_minimal_descriptions(require_approved=False)
     config = load_precloud_config()
+    execution = load_execution_placement()
     jobs: list[dict[str, object]] = []
     selection_jobs: dict[tuple[str, str], str] = {}
     core_representatives = _training_scope_representatives()
@@ -534,6 +581,15 @@ def build_plan(
         )
         for method_id in METHOD_IDS
     }
+    placement = execution["placement"]
+    for job in jobs:
+        job["executor"] = _executor_for_job(job, placement)
+    executor_counts = Counter(str(job["executor"]) for job in jobs)
+    frozen_cache_validation_inputs = OFFICIAL_ROWS["validation"] * 12 * 3
+    frozen_cache_test_inputs = OFFICIAL_ROWS["test"] * 12 * 3 * 2
+    frozen_cache_total_inputs = (
+        frozen_cache_validation_inputs + frozen_cache_test_inputs
+    )
 
     return {
         "schema_version": "taxonomy_cloud_execution_plan_v1",
@@ -554,6 +610,8 @@ def build_plan(
         "shard_count": shard_count,
         "jobs_total": len(jobs),
         "job_counts_by_stage": dict(sorted(stage_counts.items())),
+        "job_counts_by_executor": dict(sorted(executor_counts.items())),
+        "execution_placement_id": execution["execution_id"],
         "primary_analysis_job": primary_analysis,
         "compute_summary": {
             "registered_tuning_training_runs": tunable_training_runs,
@@ -594,6 +652,15 @@ def build_plan(
                     + sum(tuning_pairs.values())
                     - sum(selected_tuning_scores_reused.values())
                 ),
+                "frozen_qwen_uncached_core_total": core_per_method,
+                "frozen_qwen_cached_unique_validation_inputs": (
+                    frozen_cache_validation_inputs
+                ),
+                "frozen_qwen_cached_unique_test_inputs": frozen_cache_test_inputs,
+                "frozen_qwen_cached_unique_total_inputs": frozen_cache_total_inputs,
+                "frozen_qwen_cache_inference_reduction_fraction": (
+                    1.0 - frozen_cache_total_inputs / core_per_method
+                ),
             },
             "scoring_optimisations": [
                 "L3 scores 42 unique rendered claims per review instead of 144 logical condition claims.",
@@ -602,6 +669,7 @@ def build_plan(
                 "The L1 calibration score artifacts are reused by L2 threshold selection.",
                 "Nested per-scope tuning checkpoints and seen-calibration scores are reused by the final seed-13 protocol.",
                 "All shards are processed after one model load while remaining individually resumable.",
+                "Frozen Qwen reuses split-isolated raw P(Y) across folds only when the exact input and immutable scoring contract match.",
             ],
         },
         "jobs": jobs,
