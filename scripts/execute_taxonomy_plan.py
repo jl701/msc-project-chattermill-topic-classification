@@ -116,6 +116,49 @@ def select_jobs(
     return jobs
 
 
+def select_jobs_through_target(
+    jobs: Sequence[dict[str, object]],
+    *,
+    target_job_id: str,
+) -> list[dict[str, object]]:
+    """Return the immutable plan prefix ending at ``target_job_id``.
+
+    Unlike ``--stop-after``, this boundary is stable across resumed
+    invocations: completed jobs are skipped, but no work after the named target
+    can enter the execution scope.
+    """
+
+    target_index = next(
+        (
+            index
+            for index, job in enumerate(jobs)
+            if str(job["job_id"]) == target_job_id
+        ),
+        None,
+    )
+    if target_index is None:
+        raise ValueError(
+            "The requested stop-after job is outside the selected method and "
+            f"split scope: {target_job_id}"
+        )
+    selected = list(jobs[: target_index + 1])
+    selected_ids = {str(job["job_id"]) for job in selected}
+    unresolved = {
+        str(dependency)
+        for job in selected
+        for dependency in job["depends_on"]
+        if str(dependency) not in selected_ids
+    }
+    if unresolved:
+        raise ValueError(
+            "The target prefix omits required dependencies, so the plan is not "
+            f"dependency ordered: {sorted(unresolved)[:5]}"
+        )
+    if str(selected[-1]["job_id"]) != target_job_id:
+        raise AssertionError("Target-bounded selection did not end at its target.")
+    return selected
+
+
 def default_state_path(
     plan: dict[str, object],
     plan_path: Path,
@@ -389,7 +432,15 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--state-path", type=Path)
     parser.add_argument("--dry-run", action="store_true")
-    parser.add_argument("--stop-after", type=int)
+    stop_group = parser.add_mutually_exclusive_group()
+    stop_group.add_argument("--stop-after", type=int)
+    stop_group.add_argument(
+        "--stop-after-job-id",
+        help=(
+            "Execute only the immutable plan prefix through this job ID. This "
+            "is the preferred resumable batch boundary."
+        ),
+    )
     parser.add_argument(
         "--max-workers",
         type=int,
@@ -424,6 +475,11 @@ def main() -> int:
         methods=methods,
         include_official_test=args.include_official_test,
     )
+    if args.stop_after_job_id is not None:
+        jobs = select_jobs_through_target(
+            jobs,
+            target_job_id=args.stop_after_job_id,
+        )
     plan_sha256 = _sha256(plan_path)
     state_path = (
         args.state_path.resolve()
@@ -454,6 +510,7 @@ def main() -> int:
                 "state_path": state_path.as_posix(),
                 "dry_run": args.dry_run,
                 "max_workers": args.max_workers,
+                "stop_after_job_id": args.stop_after_job_id,
             }
         ),
         flush=True,

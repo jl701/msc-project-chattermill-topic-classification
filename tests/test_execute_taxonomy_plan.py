@@ -88,6 +88,107 @@ def test_method_filter_cannot_omit_an_internal_dependency() -> None:
         MODULE.select_jobs(plan, methods=["strict_train_only_tfidf"])
 
 
+def test_target_boundary_selects_an_immutable_dependency_complete_prefix() -> None:
+    jobs = [
+        {
+            "job_id": "scope-a-train",
+            "stage": "tuning-train",
+            "depends_on": [],
+        },
+        {
+            "job_id": "scope-a-select",
+            "stage": "parameter-selection",
+            "depends_on": ["scope-a-train"],
+        },
+        {
+            "job_id": "scope-b-train",
+            "stage": "tuning-train",
+            "depends_on": [],
+        },
+    ]
+    selected = MODULE.select_jobs_through_target(
+        jobs,
+        target_job_id="scope-a-select",
+    )
+    assert [job["job_id"] for job in selected] == [
+        "scope-a-train",
+        "scope-a-select",
+    ]
+
+
+def test_target_boundary_rejects_a_target_outside_the_guarded_scope() -> None:
+    jobs = MODULE.select_jobs(_plan(), methods=["e5_base_v2"])
+    with pytest.raises(ValueError, match="outside the selected method"):
+        MODULE.select_jobs_through_target(
+            jobs,
+            target_job_id="test-a",
+        )
+
+
+def test_target_boundary_is_stable_when_resuming(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    observed: list[str] = []
+
+    def fake_run(argv: list[str], **_: object) -> SimpleNamespace:
+        observed.append(Path(argv[1]).stem)
+        return SimpleNamespace(returncode=0)
+
+    monkeypatch.setattr(MODULE.subprocess, "run", fake_run)
+    jobs = [
+        {
+            "job_id": "scope-a-train",
+            "stage": "tuning-train",
+            "depends_on": [],
+            "official_splits_opened": ["train"],
+            "argv": ["python", "scope-a-train.py"],
+            "executor": "local_gpu",
+        },
+        {
+            "job_id": "scope-a-select",
+            "stage": "parameter-selection",
+            "depends_on": ["scope-a-train"],
+            "official_splits_opened": ["validation"],
+            "argv": ["python", "scope-a-select.py"],
+            "executor": "local_cpu",
+        },
+        {
+            "job_id": "scope-b-train",
+            "stage": "tuning-train",
+            "depends_on": [],
+            "official_splits_opened": ["train"],
+            "argv": ["python", "scope-b-train.py"],
+            "executor": "local_gpu",
+        },
+    ]
+    bounded = MODULE.select_jobs_through_target(
+        jobs,
+        target_job_id="scope-a-select",
+    )
+    state = MODULE._empty_state(
+        plan_path=tmp_path / "plan.json",
+        plan_sha256="plan",
+        methods=("qwen_candidate_pair_qlora",),
+        include_official_test=False,
+    )
+    state["completed_job_ids"] = ["scope-a-train"]
+    assert (
+        MODULE.execute_jobs(
+            bounded,
+            state=state,
+            state_path=tmp_path / "state.json",
+            dry_run=False,
+            stop_after=None,
+        )
+        == 0
+    )
+    assert observed == ["scope-a-select"]
+    assert state["completed_job_ids"] == [
+        "scope-a-train",
+        "scope-a-select",
+    ]
+
+
 def test_state_contract_rejects_a_different_plan_hash(tmp_path: Path) -> None:
     state_path = tmp_path / "state.json"
     state = MODULE._empty_state(

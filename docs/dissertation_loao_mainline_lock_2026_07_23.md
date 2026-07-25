@@ -542,6 +542,9 @@ must be marked as pilots, not completion.
 - [x] Freeze a cloud dependency lock and implement a resumable first-scope
   QLoRA telemetry gate that records wall time, sampled peak GPU memory,
   scoring throughput and artifact size without enabling official test.
+- [x] Implement and test an immutable target-job boundary for resumed local
+  QLoRA batches; pre-register the V1 a01--a04 boundary and keep official test
+  excluded.
 
 ### D. Complete strict Level 1
 
