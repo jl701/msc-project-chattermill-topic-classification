@@ -266,14 +266,15 @@ Completed in this stage:
   data; and
 - [x] recalculate Frozen-Qwen/local planning workload.
 
-Still deliberately blocked:
+Current execution checklist:
 
-- [ ] approve and freeze the exact twelve minimal descriptions;
+- [x] approve and freeze the exact twelve minimal descriptions;
 - [x] approve and freeze the statistical/primary-comparison contract
   (approved by the user on 24 July 2026);
-- [ ] run official seen-only nested validation selection for TF-IDF and
+- [x] run official seen-only nested validation selection for TF-IDF and
   DistilBERT;
-- [ ] run official local TF-IDF, E5, DistilBERT and Frozen-Qwen stages;
+- [x] run and integrity-audit the official train/validation stages for local
+  TF-IDF, E5, DistilBERT and Frozen Qwen while keeping official test sealed;
 - [ ] run the first measured cloud QLoRA tuning scope;
 - [ ] freeze every method configuration and threshold rule;
 - [ ] perform the single authorised formal test pass; and

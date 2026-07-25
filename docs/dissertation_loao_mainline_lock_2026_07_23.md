@@ -43,6 +43,22 @@ pre-registration and revised protocol hashes are recorded in
 This secondary comparison does not alter the primary `NN/DN/ND/DD` crossover
 or the `L1-D -> L2-D -> L3-DD -> L4-D` difficulty curve.
 
+On 25 July 2026 all four local methods completed their guarded official
+train/validation work with the official test still sealed. Strict TF-IDF,
+E5-base-v2, DistilBERT and Frozen Qwen completed `1,262/1,262`, `93/93`,
+`326/326` and `93/93` registered jobs respectively, all with zero failures.
+Their authoritative completion records are:
+
+- `docs/experiments/taxonomy_tfidf_validation_completion_20260725.md`;
+- `docs/experiments/taxonomy_e5_validation_completion_20260724.md`;
+- `docs/experiments/taxonomy_distilbert_validation_completion_20260725.md`;
+  and
+- `docs/experiments/taxonomy_frozen_qwen_validation_completion_20260725.md`.
+
+The next incomplete gate is the first measured cloud QLoRA tuning/runtime
+scope. No formal test pass or cross-level result claim is authorised before
+QLoRA selection and every method/threshold rule are frozen.
+
 ## Working title and central question
 
 Working title:
@@ -541,7 +557,8 @@ must be marked as pilots, not completion.
   selection for all 26 shared outer training scopes.
 - [x] Complete and integrity-audit the fixed E5 train/validation threshold
   transfers.
-- [ ] Complete DistilBERT nested train/validation selection.
+- [x] Complete and integrity-audit DistilBERT nested train/validation
+  selection across all 26 outer training scopes.
 - [x] Complete the Frozen Qwen validation/runtime gate and verify the exact
   split-isolated raw-score cache on all official validation scopes.
 - [ ] Complete nested seen-only parameter selection for every unique training
