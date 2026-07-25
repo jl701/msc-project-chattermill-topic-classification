@@ -4,6 +4,24 @@ Last updated: 2026-07-25
 
 This file is a compact evidence ledger for dissertation/report drafting. Detailed experiment records remain in `docs/`.
 
+## 2026-07-25 - Frozen Qwen Official Validation Complete
+
+- Guarded through-validation plan: 93/93 jobs, zero failures.
+- Frozen control: Qwen3-4B-Instruct-2507 revision
+  `cdbee75f17c01a7cc42f958dc650907174af0554`; no task-specific fit.
+- Artifacts: 26 checkpoint contracts, 27 validation score contracts,
+  216 score shards with 216 matching manifests, and 39 threshold transfers.
+- Exact validation cache: 37,512 unique inputs for 887,880 logical requests;
+  95.7751% of repeated forward passes avoided with no score approximation.
+- Total executor wall time: 1 h 13 min 10.93 s.
+- All folds selected threshold `0.999999940395`; 2,842 cached probabilities
+  are exactly 1.0. FP32 softmax is already used, so this is retained and
+  documented as frozen-Qwen probability saturation rather than changed after
+  validation.
+- No official-test artifact, cache, or ledger use was created.
+- Validation-only completion record:
+  `docs/experiments/taxonomy_frozen_qwen_validation_completion_20260725.md`.
+
 ## 2026-07-25 - Strict TF-IDF Official Validation Complete
 
 - Guarded through-validation plan: 1,262/1,262 jobs, zero failures.

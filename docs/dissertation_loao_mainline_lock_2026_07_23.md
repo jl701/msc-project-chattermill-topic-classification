@@ -542,7 +542,8 @@ must be marked as pilots, not completion.
 - [x] Complete and integrity-audit the fixed E5 train/validation threshold
   transfers.
 - [ ] Complete DistilBERT nested train/validation selection.
-- [ ] Complete the Frozen Qwen validation/runtime gate.
+- [x] Complete the Frozen Qwen validation/runtime gate and verify the exact
+  split-isolated raw-score cache on all official validation scopes.
 - [ ] Complete nested seen-only parameter selection for every unique training
   scope.
 - [ ] Run strict TF-IDF, E5, and DistilBERT on all twelve folds.
