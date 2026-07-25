@@ -539,6 +539,9 @@ must be marked as pilots, not completion.
   inputs after adding `RR`.
 - [x] Pass a bounded real-model cache-equivalence benchmark using synthetic
   reviews only.
+- [x] Freeze a cloud dependency lock and implement a resumable first-scope
+  QLoRA telemetry gate that records wall time, sampled peak GPU memory,
+  scoring throughput and artifact size without enabling official test.
 
 ### D. Complete strict Level 1
 
