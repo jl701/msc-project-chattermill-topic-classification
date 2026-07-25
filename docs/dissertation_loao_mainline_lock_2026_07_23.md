@@ -570,9 +570,9 @@ must be marked as pilots, not completion.
 - [ ] Complete nested seen-only parameter selection for every unique training
   scope.
 - [ ] Run strict TF-IDF, E5, and DistilBERT on all twelve folds.
-- [ ] Run Frozen Qwen and QLoRA validation/runtime gates under the same outer
+- [x] Run Frozen Qwen and QLoRA validation/runtime gates under the same outer
   protocol.
-- [ ] Pass the registered quality/runtime gate before full Qwen/QLoRA scoring.
+- [x] Pass the registered quality/runtime gate before full Qwen/QLoRA scoring.
 - [ ] Complete all admitted twelve-fold evaluations.
 - [ ] Report overall, seen, unseen, harmonic-mean, exact-match, presence, and
   sentiment results.

@@ -54,7 +54,7 @@ telemetry remain ignored under `outputs/`.
 - [x] Passed a real cached-model QLoRA smoke covering 4-bit training,
   checkpoint reload, all `NN/DN/ND/DD/RR` renderings, sharding and resume.
 - [x] Verified that the smoke reported `official_data_read: false`.
-- [ ] Complete and audit the first measured a01 tuning scope.
+- [x] Complete and audit the first measured a01 tuning scope.
 - [ ] Complete V1 through the a04 parameter-selection target.
 
 The smoke output root is:
@@ -87,6 +87,54 @@ atomic execution state and skipped; no a05 job can enter the selected prefix.
 The first a01 scope is initially run through the registered telemetry gate so
 that actual training time, validation throughput, peak sampled GPU memory and
 artifact size are measured before the remaining V1 jobs continue.
+
+## First measured a01 gate result
+
+The a01 gate completed at `2026-07-25T22:55:43.706694+00:00`. This is
+seen-validation model selection evidence, not an official-test result.
+
+| Item | Observed value |
+| --- | ---: |
+| Completed / expected jobs | 10 / 10 |
+| Failed jobs | 0 |
+| Total measured wall time | 18,004.63 s (5.00 h) |
+| Three training jobs | 8,154.08 s |
+| Three validation-scoring jobs | 9,796.48 s |
+| Training pairs | 12,288 |
+| Validation score pairs | 104,643 |
+| Scoring throughput | 10.6817 pairs/s |
+| Peak sampled GPU memory | 7,534 MiB |
+| Three checkpoint trees | 83,172,226 bytes |
+| Score CSVs | 28,480,311 bytes |
+
+The frozen selection rule chose candidate `qwen_candidate_pair_qlora-003`,
+whose registered learning rate is `1e-5`:
+
+- seen-validation pair micro-F1: `0.5546095840`;
+- pair samples F1: `0.4688080972`;
+- pair micro precision / recall: `0.4884318766 / 0.6415306697`;
+- presence F1: `0.9083245522`;
+- transferred threshold: `0.810467272997`; and
+- presence false-positive rows per 100: `0.5676442763`.
+
+The registered candidates ranked monotonically by seen-validation pair
+micro-F1 in this scope: `2e-6` gave `0.4912812737`, `5e-6` gave
+`0.5223470662`, and `1e-5` gave `0.5546095840`. The registered grid is not
+expanded after observing this result.
+
+The post-run integrity audit found:
+
+- three checkpoint manifests and 24 validation score-shard manifests;
+- zero checkpoint or score-CSV hash mismatches;
+- exactly 104,643 persisted score rows;
+- zero non-finite or out-of-range probabilities;
+- one frozen scientific protocol hash across every score shard;
+- only `validation`, `L2`, `l2-a01`, and `seen-calibration` contracts; and
+- zero test contracts.
+
+The runtime, memory, resume and validation-quality gate therefore passed. V1
+may continue through the pre-registered a04 boundary without changing the
+scientific protocol or opening test.
 
 ## Monitoring and stop rules
 
