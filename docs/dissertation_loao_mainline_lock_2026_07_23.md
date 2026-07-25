@@ -537,6 +537,12 @@ must be marked as pilots, not completion.
 
 ### E. Run Level 2 generalized single-unseen LOAO
 
+- [x] Complete and integrity-audit strict TF-IDF nested train/validation
+  selection for all 26 shared outer training scopes.
+- [x] Complete and integrity-audit the fixed E5 train/validation threshold
+  transfers.
+- [ ] Complete DistilBERT nested train/validation selection.
+- [ ] Complete the Frozen Qwen validation/runtime gate.
 - [ ] Complete nested seen-only parameter selection for every unique training
   scope.
 - [ ] Run strict TF-IDF, E5, and DistilBERT on all twelve folds.

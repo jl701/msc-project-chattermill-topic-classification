@@ -1,8 +1,24 @@
 # Report Notes
 
-Last updated: 2026-07-24
+Last updated: 2026-07-25
 
 This file is a compact evidence ledger for dissertation/report drafting. Detailed experiment records remain in `docs/`.
+
+## 2026-07-25 - Strict TF-IDF Official Validation Complete
+
+- Guarded through-validation plan: 1,262/1,262 jobs, zero failures.
+- Nested search: 15 pre-registered candidates in each of 26 outer training
+  scopes; no adaptive expansion.
+- Artifacts: 390 checkpoint contracts, 390 tuning summaries, 26 frozen
+  parameter selections, 391 validation score contracts, 3,128 score shards
+  with 3,128 matching manifests, and 39 threshold transfers.
+- The full checkpoint and score audit found zero missing files or SHA-256
+  mismatches.
+- Level 3 threshold contracts contain `NN/DN/ND/DD/RR` with one shared
+  seen-only threshold.
+- No official-test artifact or ledger use was created.
+- Validation-only completion record:
+  `docs/experiments/taxonomy_tfidf_validation_completion_20260725.md`.
 
 ## 2026-07-24 - Description Freeze and Level 3 Rich-Guidance Extension
 
