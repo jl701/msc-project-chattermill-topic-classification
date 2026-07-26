@@ -55,7 +55,7 @@ telemetry remain ignored under `outputs/`.
   checkpoint reload, all `NN/DN/ND/DD/RR` renderings, sharding and resume.
 - [x] Verified that the smoke reported `official_data_read: false`.
 - [x] Complete and audit the first measured a01 tuning scope.
-- [ ] Complete V1 through the a04 parameter-selection target.
+- [x] Complete V1 through the a04 parameter-selection target.
 
 The smoke output root is:
 
@@ -135,6 +135,64 @@ The post-run integrity audit found:
 The runtime, memory, resume and validation-quality gate therefore passed. V1
 may continue through the pre-registered a04 boundary without changing the
 scientific protocol or opening test.
+
+## V1 completion
+
+V1 completed at `2026-07-26T13:34:20.025816+00:00`, exactly at
+`select-tuned-qwen_candidate_pair_qlora-heldout-a04`. The executor did not
+enter a05.
+
+The complete batch ran for approximately 19.65 wall-clock hours from the first
+measured a01 job, including the a01 audit, documentation and transition before
+a02. Its reusable artifacts are:
+
+- 40 completed dependency-plan jobs and zero failures;
+- 12 checkpoint manifests covering four scopes and three candidates per scope;
+- 96 validation score-shard manifests;
+- 418,572 persisted validation scores;
+- 332,688,905 bytes across the 12 checkpoint trees; and
+- 114,455,906 bytes across the score CSVs and manifests.
+
+The frozen seen-validation selection rule chose the registered `1e-5`
+candidate in all four scopes:
+
+| Scope | Selected LR | Pair micro-F1 | Pair samples F1 | Precision | Presence FP rows / 100 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| heldout-a01 | `1e-5` | 0.554610 | 0.468808 | 0.488432 | 0.567644 |
+| heldout-a02 | `1e-5` | 0.559423 | 0.475442 | 0.500000 | 0.094607 |
+| heldout-a03 | `1e-5` | 0.542201 | 0.395489 | 0.533555 | 5.581835 |
+| heldout-a04 | `1e-5` | 0.560661 | 0.476238 | 0.506368 | 0.189215 |
+
+These are tuning results on seen-aspect validation data. They are not held-out
+aspect results and are not official-test evidence.
+
+The V1 close-out audit recomputed every recorded file hash and inspected every
+score:
+
+- 120 checkpoint files, zero missing files or hash mismatches;
+- 96 score CSVs, zero missing files or hash mismatches;
+- 418,572 scores, zero non-finite or out-of-range values;
+- one scientific protocol SHA-256 across the batch;
+- exactly the `l2-a01` through `l2-a04` seen-calibration folds; and
+- zero test contracts.
+
+V1 therefore passed its batch gate. V2 may proceed through the immutable a08
+target without changing the candidate grid or selection rule.
+
+## Batch progression
+
+- [x] V0: target-bounded executor, complete tests and real QLoRA smoke.
+- [x] V1: single-aspect scopes a01--a04.
+- [ ] V2: single-aspect scopes a05--a08.
+- [ ] V3: single-aspect scopes a09--a12.
+- [ ] V4: cyclic pairs a01-a02 through a04-a05.
+- [ ] V5: cyclic pairs a05-a06 through a08-a09.
+- [ ] V6: cyclic pairs a09-a10 through a12-a01.
+- [ ] V7: Company-brand and Staff-support group scopes.
+- [ ] V8: seed-13 formal validation reuse and threshold transfers.
+- [ ] V9: Level 1 seed-23 robustness.
+- [ ] V10: Level 1 seed-42 robustness.
+- [ ] G: validation freeze, leakage audit and user review before test.
 
 ## Monitoring and stop rules
 

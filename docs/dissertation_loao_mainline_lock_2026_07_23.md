@@ -573,6 +573,8 @@ must be marked as pilots, not completion.
 - [x] Run Frozen Qwen and QLoRA validation/runtime gates under the same outer
   protocol.
 - [x] Pass the registered quality/runtime gate before full Qwen/QLoRA scoring.
+- [x] Complete and integrity-audit the first local QLoRA batch through the
+  heldout-a04 selection boundary without opening official test.
 - [ ] Complete all admitted twelve-fold evaluations.
 - [ ] Report overall, seen, unseen, harmonic-mean, exact-match, presence, and
   sentiment results.
