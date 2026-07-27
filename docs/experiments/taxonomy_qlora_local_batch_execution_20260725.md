@@ -179,11 +179,68 @@ score:
 V1 therefore passed its batch gate. V2 may proceed through the immutable a08
 target without changing the candidate grid or selection rule.
 
+## V2 completion
+
+V2 completed at `2026-07-27T09:14:56.957496+00:00`, exactly at
+`select-tuned-qwen_candidate_pair_qlora-heldout-a08`. The executor did not
+enter a09. The measured interval from the start of the first a05 training job
+to the final a08 parameter selection was approximately 19.43 wall-clock hours.
+The twelve recorded model fits account for 29,963.21 seconds (8.32 hours);
+the remaining interval comprises validation scoring, model reloads, threshold
+selection and executor overhead.
+
+The reusable V2 artifacts are:
+
+- 40 newly completed dependency-plan jobs, bringing the cumulative state to
+  80 completed jobs with zero failures;
+- 12 checkpoint manifests covering a05--a08 and three registered candidates
+  per scope;
+- 96 validation score-shard manifests;
+- 418,572 persisted validation scores;
+- 332,688,902 bytes across the 12 checkpoint trees; and
+- 114,288,796 bytes across the score CSVs and manifests.
+
+The frozen seen-validation selection rule again chose the registered `1e-5`
+candidate in all four scopes:
+
+| Scope | Selected LR | Threshold | Pair micro-F1 | Pair samples F1 | Precision | Recall | Presence F1 | Presence FP rows / 100 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| heldout-a05 | `1e-5` | 0.721732 | 0.545054 | 0.472630 | 0.474829 | 0.639655 | 0.912752 | 1.040681 |
+| heldout-a06 | `1e-5` | 0.780000 | 0.576791 | 0.450009 | 0.507709 | 0.667632 | 0.852958 | 10.217597 |
+| heldout-a07 | `1e-5` | 0.780000 | 0.528597 | 0.424136 | 0.487507 | 0.577252 | 0.861050 | 4.824976 |
+| heldout-a08 | `1e-5` | 0.770000 | 0.545370 | 0.473049 | 0.457534 | 0.674942 | 0.916109 | 2.649007 |
+
+These values are seen-aspect validation selection evidence. They do not score
+the held-out aspect and are not official-test results. Candidate 003 was
+selected by the pre-registered rule; the candidate grid was not expanded.
+
+The V2 close-out audit recomputed both the raw CSV hashes and the canonical
+pair/score hashes for every score shard, as well as every recorded checkpoint
+file hash. It found:
+
+- 120 checkpoint files, zero missing files or hash mismatches;
+- 96 score CSVs, zero missing files, CSV-hash mismatches, pair-identity
+  mismatches, or score-hash mismatches;
+- 418,572 scores, zero non-finite or out-of-range values;
+- all 12 complete eight-shard score contracts;
+- one scientific protocol SHA-256 across the batch;
+- exactly the `l2-a05` through `l2-a08` seen-calibration validation folds;
+- an empty running ledger, an empty failure ledger and an intact resumable
+  state at the exact a08 boundary; and
+- zero test contracts.
+
+GPU monitoring throughout V2 showed no hardware or software thermal
+slowdown. Validation scoring repeatedly used nearly all available memory but
+completed without an out-of-memory failure or corrupted resume state. V2
+therefore passed its batch gate. The dry-run audit for V3 selects exactly 120
+cumulative validation-only jobs, skips the 80 completed jobs, begins at a09
+and stops exactly at the a12 parameter selection.
+
 ## Batch progression
 
 - [x] V0: target-bounded executor, complete tests and real QLoRA smoke.
 - [x] V1: single-aspect scopes a01--a04.
-- [ ] V2: single-aspect scopes a05--a08.
+- [x] V2: single-aspect scopes a05--a08.
 - [ ] V3: single-aspect scopes a09--a12.
 - [ ] V4: cyclic pairs a01-a02 through a04-a05.
 - [ ] V5: cyclic pairs a05-a06 through a08-a09.
