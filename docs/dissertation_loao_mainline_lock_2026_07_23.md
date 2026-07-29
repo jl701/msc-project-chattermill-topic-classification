@@ -58,13 +58,14 @@ Their authoritative completion records are:
 The user subsequently approved local, resumable QLoRA execution in measured
 one-to-two-day batches. This changes only executor placement and supersedes
 the earlier cloud-only placement decision; it does not change the scientific
-protocol. By 28 July 2026, all a01--a12 QLoRA seen-validation selection scopes
-had completed as three integrity-audited batches: 120 cumulative jobs, zero
-failures and zero test contracts. The authoritative execution record is
+protocol. By 29 July 2026, all a01--a12 single-aspect QLoRA seen-validation
+selection scopes and the first four cyclic-pair scopes had completed as four
+integrity-audited batches: 160 cumulative jobs, zero failures and zero test
+contracts. The authoritative execution record is
 `docs/experiments/taxonomy_qlora_local_batch_execution_20260725.md`.
 
-The next incomplete QLoRA gate is V4, covering cyclic pairs a01-a02 through
-a04-a05 and stopping at the immutable a04-a05 parameter-selection boundary.
+The next incomplete QLoRA gate is V5, covering cyclic pairs a05-a06 through
+a08-a09 and stopping at the immutable a08-a09 parameter-selection boundary.
 No formal test pass or cross-level result claim is authorised before all
 admitted validation selection and every method/threshold rule are frozen.
 
@@ -588,6 +589,9 @@ must be marked as pilots, not completion.
   heldout-a08 selection boundary without opening official test.
 - [x] Complete and integrity-audit the third local QLoRA batch through the
   heldout-a12 selection boundary without opening official test.
+- [x] Complete and integrity-audit the fourth local QLoRA batch through the
+  heldout-a04-a05 cyclic-pair selection boundary without opening official
+  test.
 - [ ] Complete all admitted twelve-fold evaluations.
 - [ ] Report overall, seen, unseen, harmonic-mean, exact-match, presence, and
   sentiment results.

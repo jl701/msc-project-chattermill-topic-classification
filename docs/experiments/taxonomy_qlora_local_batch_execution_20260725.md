@@ -296,13 +296,81 @@ prediction collapse. V3 therefore passed its batch gate. V4 may proceed only
 through the immutable `heldout-a04-a05` cyclic-pair parameter-selection target,
 with official test still sealed.
 
+## V4 completion
+
+V4 completed at `2026-07-29T05:23:11.438203+00:00`, exactly at
+`select-tuned-qwen_candidate_pair_qlora-heldout-a04-a05`. The executor did not
+enter a05-a06. The measured interval from the start of the first a01-a02
+training job to the final a04-a05 parameter selection was approximately 24.04
+wall-clock hours. This interval includes a safe pause after an unrelated GPU
+process caused abnormal scoring throughput. The twelve recorded model fits
+account for 30,271.43 seconds (8.41 hours); the remaining interval comprises
+the pause, validation scoring, model reloads, threshold selection and executor
+overhead.
+
+The reusable V4 artifacts are:
+
+- 40 newly completed dependency-plan jobs, bringing the cumulative state to
+  160 completed jobs with zero failures;
+- 12 checkpoint manifests covering a01-a02 through a04-a05 and three
+  registered candidates per scope;
+- 96 validation score-shard manifests;
+- 380,520 persisted validation scores;
+- 332,688,949 bytes across the 12 checkpoint trees; and
+- 105,739,547 bytes across the score CSVs and manifests.
+
+The frozen seen-validation selection rule again chose the registered `1e-5`
+candidate in all four scopes:
+
+| Scope | Selected LR | Threshold | Pair micro-F1 | Pair samples F1 | Precision | Recall | Presence F1 | Presence FP rows / 100 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| heldout-a01-a02 | `1e-5` | 0.810467 | 0.568154 | 0.483160 | 0.490956 | 0.674157 | 0.911193 | 0.756859 |
+| heldout-a02-a03 | `1e-5` | 0.857757 | 0.574080 | 0.422043 | 0.542913 | 0.609044 | 0.830995 | 6.527909 |
+| heldout-a03-a04 | `1e-5` | 0.837609 | 0.566097 | 0.424365 | 0.518240 | 0.623693 | 0.848048 | 6.622517 |
+| heldout-a04-a05 | `1e-5` | 0.800680 | 0.561675 | 0.479918 | 0.491068 | 0.655995 | 0.903394 | 1.135289 |
+
+These values are seen-aspect validation selection evidence. They do not score
+either held-out aspect and are not official-test results. Candidate 003 was
+selected by the pre-registered rule in every scope; the candidate grid was not
+expanded.
+
+The V4 close-out audit used round-trip CSV parsing and recomputed every raw
+CSV, canonical pair-identity, canonical score, run-contract and checkpoint
+file hash. It found:
+
+- 120 checkpoint files, zero missing files or hash mismatches;
+- 96 score CSVs, zero missing files, CSV-hash mismatches, pair-identity
+  mismatches, score-hash mismatches or contract-hash mismatches;
+- 380,520 scores, zero non-finite or out-of-range values and no duplicate pair
+  identities within a shard;
+- all 12 complete eight-shard score contracts;
+- one frozen scientific protocol SHA-256 across the batch;
+- exactly the `l3-a01-a02` through `l3-a04-a05` seen-calibration validation
+  folds;
+- an empty running ledger, an empty failure ledger and an intact resumable
+  state at the exact a04-a05 boundary; and
+- zero test contracts.
+
+The contention event produced no failure, out-of-memory condition or partial
+score shard. The executor reconciled the stale running marker on restart and
+resumed from the complete, hash-verified checkpoint. Subsequent artifact
+growth and throughput were normal. GPU monitoring showed no hardware or
+software thermal slowdown, and the completed batch contained no non-finite
+score, corrupted resume state or abnormal prediction collapse.
+
+V4 therefore passed its batch gate. The V5 dry-run selects exactly 200
+cumulative validation-only jobs, skips the 160 completed jobs, begins at
+a05-a06 and stops exactly at
+`select-tuned-qwen_candidate_pair_qlora-heldout-a08-a09`. V5 may proceed only
+through that immutable boundary, with official test still sealed.
+
 ## Batch progression
 
 - [x] V0: target-bounded executor, complete tests and real QLoRA smoke.
 - [x] V1: single-aspect scopes a01--a04.
 - [x] V2: single-aspect scopes a05--a08.
 - [x] V3: single-aspect scopes a09--a12.
-- [ ] V4: cyclic pairs a01-a02 through a04-a05.
+- [x] V4: cyclic pairs a01-a02 through a04-a05.
 - [ ] V5: cyclic pairs a05-a06 through a08-a09.
 - [ ] V6: cyclic pairs a09-a10 through a12-a01.
 - [ ] V7: Company-brand and Staff-support group scopes.
