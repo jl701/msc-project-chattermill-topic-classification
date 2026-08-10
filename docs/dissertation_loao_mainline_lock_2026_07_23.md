@@ -58,14 +58,18 @@ Their authoritative completion records are:
 The user subsequently approved local, resumable QLoRA execution in measured
 one-to-two-day batches. This changes only executor placement and supersedes
 the earlier cloud-only placement decision; it does not change the scientific
-protocol. By 30 July 2026, all a01--a12 single-aspect QLoRA seen-validation
-selection scopes and the first eight cyclic-pair scopes had completed as five
-integrity-audited batches: 200 cumulative jobs, zero failures and zero test
-contracts. The authoritative execution record is
+protocol. By 31 July 2026, all a01--a12 single-aspect QLoRA seen-validation
+selection scopes and all twelve cyclic-pair scopes had completed as six
+integrity-audited batches: 240 cumulative jobs, zero failures and zero test
+contracts. The V6 close-out audit was independently repeated on 10 August
+2026. The authoritative execution record is
 `docs/experiments/taxonomy_qlora_local_batch_execution_20260725.md`.
 
-The next incomplete QLoRA gate is V6, covering cyclic pairs a09-a10 through
-a12-a01 and stopping at the immutable a12-a01 parameter-selection boundary.
+The next incomplete QLoRA gate is V7, covering the Company-brand and
+Staff-support Level 4 group scopes and stopping at the immutable
+`select-tuned-qwen_candidate_pair_qlora-heldout-a08-a09-a10` parameter-selection
+boundary. The pre-supervisor execution classification is recorded in
+`docs/experiments/taxonomy_pre_supervisor_validation_gate_20260810.md`.
 No formal test pass or cross-level result claim is authorised before all
 admitted validation selection and every method/threshold rule are frozen.
 
