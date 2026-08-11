@@ -2,7 +2,7 @@
 
 Date: 2026-08-10
 
-Status: V7 audited complete; V8 authorised for local validation-only execution.
+Status: V8 audited complete; V9 authorised for local validation-only execution.
 
 ## Purpose
 
@@ -22,12 +22,13 @@ open-set discovery task rather than the registered pair-scoring task.
 
 - TF-IDF, E5, DistilBERT and Frozen Qwen have completed all registered
   validation-only work with zero failed jobs.
-- QLoRA V1--V7 have completed 260 of 398 through-validation jobs with zero
+- QLoRA V1--V8 have completed 326 of 398 through-validation jobs with zero
   failed jobs.
-- QLoRA V7 covers the `l4-g01` and `l4-g02` group scopes. Its checkpoint and
-  score-shard hashes, finite-score checks, parameter selections, resume state,
-  non-collapse checks and zero-test-contract condition passed the 2026-08-11
-  close-out audit.
+- QLoRA V8 revalidated 26 selected seed-13 checkpoint contracts, completed the
+  missing `l4-g03` seen-calibration score, and transferred all 39 registered
+  thresholds. Its checkpoint, score-shard and threshold hashes, finite-score
+  checks, resume state, non-collapse checks and zero-test-contract condition
+  passed the 2026-08-12 close-out audit.
 - No completed QLoRA selection batch rendered or scored a held-out target
   candidate. Selection used training data and seen-aspect validation only.
 
@@ -121,3 +122,35 @@ V8 may validate/reuse registered training artifacts and perform seen-only
 calibration. It must not score any held-out `NN`, `DN`, `ND`, `DD` or `RR`
 condition and does not resolve the pending Level 3 candidate-information
 decision.
+
+## V8 completion and V9 registered launch
+
+V8 completed at the exact registered boundary with 326 cumulative jobs, zero
+failures and zero test contracts. The audit verified 26 resumed checkpoint
+contracts (260 files), one complete eight-shard validation score contract
+(31,710 finite scores), and 39 hash-valid threshold-transfer artifacts. It
+found no duplicate pairs, prediction collapse, resume residue, hard error,
+thermal slowdown or official-test access. The formal `l4-g03` seen-validation
+threshold is `0.746127575636`.
+
+The V9 dry-run selects 362 cumulative jobs, skips all 326 completed jobs and
+leaves exactly 36 Level 1 seed-23 validation-only jobs. It must stop at:
+
+`formal-qwen_candidate_pair_qlora-seed0023-l1-a12-select-threshold`
+
+The pending work comprises 12 registered seed-23 fits, 12 seen-calibration
+validation scorings and 12 threshold transfers. V9 must use the following
+target-bounded command without `--include-official-test`:
+
+```powershell
+python scripts/execute_taxonomy_plan.py `
+  --plan outputs/experimental/taxonomy_hybrid_execution_plan_v2_20260724.json `
+  --method qwen_candidate_pair_qlora `
+  --stop-after-job-id formal-qwen_candidate_pair_qlora-seed0023-l1-a12-select-threshold `
+  --max-workers 1
+```
+
+V9 changes only the pre-registered robustness seed. It uses frozen Level 1
+training folds and seen-only validation calibration, does not evaluate any
+held-out Level 3 candidate representation, and does not resolve or depend on
+the pending supervisor decision.

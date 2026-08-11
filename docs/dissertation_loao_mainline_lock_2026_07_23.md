@@ -65,12 +65,12 @@ contracts. The V6 close-out audit was independently repeated on 10 August
 2026. The authoritative execution record is
 `docs/experiments/taxonomy_qlora_local_batch_execution_20260725.md`.
 
-V7 subsequently completed and passed its integrity audit at 260 cumulative
-validation-only jobs with zero failures and zero test contracts. The next
-incomplete QLoRA gate is V8, covering seed-13 selected-checkpoint reuse, the
-single missing `l4-g03` seen-calibration score and all registered seed-13
-threshold transfers. It stops at the immutable
-`formal-qwen_candidate_pair_qlora-seed0013-l4-g03-select-threshold` boundary.
+V7 and V8 subsequently completed and passed their integrity audits. The
+through-validation state is now 326 cumulative jobs with zero failures and
+zero test contracts. The next incomplete QLoRA gate is V9, covering the 12
+pre-registered Level 1 seed-23 robustness fits, their seen-calibration scores
+and threshold transfers. It stops at the immutable
+`formal-qwen_candidate_pair_qlora-seed0023-l1-a12-select-threshold` boundary.
 The pre-supervisor execution classification is recorded in
 `docs/experiments/taxonomy_pre_supervisor_validation_gate_20260810.md`.
 No formal test pass or cross-level result claim is authorised before all

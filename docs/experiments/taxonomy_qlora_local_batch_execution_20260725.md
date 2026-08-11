@@ -553,6 +553,39 @@ seed-13 checkpoint validations/reuses, one missing `l4-g03` seen-calibration
 validation scoring job, and 39 threshold transfers. All 26 selected checkpoint
 contracts are already present and hash-valid.
 
+## V8 completion
+
+V8 completed at `2026-08-11T16:58:52.714495+00:00`, exactly at
+`formal-qwen_candidate_pair_qlora-seed0013-l4-g03-select-threshold`. The
+executor did not enter the seed-23 robustness schedule. The measured interval
+from launch at `2026-08-11T15:55:01.573610+00:00` to the final threshold
+transfer was approximately 1.06 wall-clock hours.
+
+The 66 V8 jobs reused and revalidated 26 selected seed-13 checkpoint
+contracts, scored the one missing `l4-g03` seen-calibration contract in eight
+shards, and wrote 39 formal threshold-transfer artifacts. Reuse avoided new
+training while verifying 260 checkpoint files (720,826,024 bytes). The new
+score contract contains 31,710 validation pairs across eight complete shards
+(8,661,806 CSV bytes) and produced 790 distinct finite scores spanning
+`0.0000021908` to `0.9996485710`. The formal Level 4 group-three threshold is
+`0.746127575636`; all 39 thresholds remain seen-aspect validation selections,
+not held-out or official-test measurements.
+
+The 2026-08-12 close-out audit recomputed every checkpoint-file, score CSV,
+pair-identity, score and threshold-artifact hash. It found zero failed or
+running jobs, zero missing shards, zero non-finite or out-of-range scores,
+zero duplicate pair identities, zero collapsed score or threshold conditions,
+zero resume residue, zero hard-error terms, zero thermal-slowdown records and
+zero test contracts. Only the `train` and `validation` splits were opened.
+V8 therefore passed its batch gate.
+
+The V9 dry-run selects 362 cumulative validation-only jobs, skips all 326
+completed jobs and leaves exactly 36 pending jobs: 12 seed-23 Level 1 fits, 12
+seen-calibration scorings and 12 threshold transfers. It stops at
+`formal-qwen_candidate_pair_qlora-seed0023-l1-a12-select-threshold` without
+enabling official test. Based on the earlier single-aspect batches, the local
+runtime expectation is approximately 19--20 wall-clock hours.
+
 ## Batch progression
 
 - [x] V0: target-bounded executor, complete tests and real QLoRA smoke.
@@ -563,7 +596,7 @@ contracts are already present and hash-valid.
 - [x] V5: cyclic pairs a05-a06 through a08-a09.
 - [x] V6: cyclic pairs a09-a10 through a12-a01.
 - [x] V7: Company-brand and Staff-support group scopes.
-- [ ] V8: seed-13 formal validation reuse and threshold transfers.
+- [x] V8: seed-13 formal validation reuse and threshold transfers.
 - [ ] V9: Level 1 seed-23 robustness.
 - [ ] V10: Level 1 seed-42 robustness.
 - [ ] G: validation freeze, leakage audit and user review before test.
