@@ -2,7 +2,7 @@
 
 Date: 2026-08-10
 
-Status: V6 audited complete; V7 authorised for local validation-only execution.
+Status: V7 audited complete; V8 authorised for local validation-only execution.
 
 ## Purpose
 
@@ -22,11 +22,12 @@ open-set discovery task rather than the registered pair-scoring task.
 
 - TF-IDF, E5, DistilBERT and Frozen Qwen have completed all registered
   validation-only work with zero failed jobs.
-- QLoRA V1--V6 have completed 240 of 398 through-validation jobs with zero
+- QLoRA V1--V7 have completed 260 of 398 through-validation jobs with zero
   failed jobs.
-- QLoRA V6 covers cyclic scopes a09-a10 through a12-a01. Its checkpoint and
-  score-shard hashes, finite-score checks, parameter selections, resume state
-  and zero-test-contract condition passed the 2026-08-10 close-out audit.
+- QLoRA V7 covers the `l4-g01` and `l4-g02` group scopes. Its checkpoint and
+  score-shard hashes, finite-score checks, parameter selections, resume state,
+  non-collapse checks and zero-test-contract condition passed the 2026-08-11
+  close-out audit.
 - No completed QLoRA selection batch rendered or scored a held-out target
   candidate. Selection used training data and seen-aspect validation only.
 
@@ -88,3 +89,35 @@ The batch is resumable and must stop at the exact target above. On the local
 RTX 5050 Laptop GPU, the telemetry-based expectation is approximately 9--10
 hours for six fits, six validation scorings, six threshold selections and two
 parameter selections.
+
+## V7 completion and V8 registered launch
+
+V7 completed at the registered boundary with 260 cumulative completed jobs,
+zero failures and no official-test contract. The integrity audit verified six
+checkpoint manifests (60 files), 48 score-shard manifests (171,234 finite
+validation scores), two parameter selections, complete eight-shard contracts,
+all declared hashes, an empty running ledger and no resume residue. Both group
+scopes selected the pre-registered `1e-5` candidate from seen-only validation.
+
+The V8 dry-run selects 326 cumulative jobs, skips all 260 completed jobs and
+leaves exactly 66 pending validation-only jobs. It must stop at:
+
+`formal-qwen_candidate_pair_qlora-seed0013-l4-g03-select-threshold`
+
+The pending work consists of 26 selected seed-13 checkpoint reuse validations,
+one required `l4-g03` seen-calibration validation scoring job and 39 threshold
+transfers. All 26 selected checkpoint contracts already exist. V8 must use the
+following target-bounded command without `--include-official-test`:
+
+```powershell
+python scripts/execute_taxonomy_plan.py `
+  --plan outputs/experimental/taxonomy_hybrid_execution_plan_v2_20260724.json `
+  --method qwen_candidate_pair_qlora `
+  --stop-after-job-id formal-qwen_candidate_pair_qlora-seed0013-l4-g03-select-threshold `
+  --max-workers 1
+```
+
+V8 may validate/reuse registered training artifacts and perform seen-only
+calibration. It must not score any held-out `NN`, `DN`, `ND`, `DD` or `RR`
+condition and does not resolve the pending Level 3 candidate-information
+decision.

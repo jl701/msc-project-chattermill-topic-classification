@@ -490,6 +490,69 @@ jobs, starts at `l4-g01`, and stops at
 `select-tuned-qwen_candidate_pair_qlora-heldout-a08-a09-a10` without enabling
 official test.
 
+## V7 completion
+
+V7 completed at `2026-08-11T04:28:05.730758+00:00`, exactly at
+`select-tuned-qwen_candidate_pair_qlora-heldout-a08-a09-a10`. The executor did
+not enter the seed-13 formal-reuse schedule. The measured interval from launch
+at `2026-08-10T19:39:34.931729+00:00` to the final parameter selection was
+approximately 8.81 wall-clock hours. The six recorded model fits account for
+15,181.25 seconds (4.22 hours); the remainder comprises validation scoring,
+model reloads, threshold selection and executor overhead.
+
+The reusable V7 artifacts are:
+
+- 20 newly completed dependency-plan jobs, bringing the cumulative state to
+  260 completed jobs with zero failures;
+- six checkpoint manifests covering `l4-g01` and `l4-g02`, with three
+  registered candidates per scope;
+- 48 validation score-shard manifests forming six complete eight-shard
+  contracts;
+- 171,234 persisted validation scores;
+- 166,344,499 bytes across the six checkpoint trees; and
+- 47,125,681 bytes across the score CSVs and manifests.
+
+The frozen seen-validation rule selected registered candidate
+`qwen_candidate_pair_qlora-003` (`learning_rate=1e-5`) in both scopes:
+
+| Scope | Threshold | Pair micro-F1 | Pair samples F1 | Precision | Recall | Presence F1 | Presence FP rows / 100 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| heldout-a02-a03-a04 | 0.872337 | 0.570160 | 0.413979 | 0.528481 | 0.618977 | 0.835273 | 6.622517 |
+| heldout-a08-a09-a10 | 0.715413 | 0.552638 | 0.470073 | 0.474305 | 0.661964 | 0.905208 | 2.932829 |
+
+These are seen-aspect validation-selection measurements. They do not score a
+held-out group or constitute official-test results. The candidate grid was not
+expanded and no result-dependent protocol change occurred.
+
+The 2026-08-11 close-out audit reconstructed all six checkpoint contracts and
+six run contracts, round-trip parsed every score CSV, and recomputed every
+checkpoint-file, raw CSV, canonical pair-identity and canonical score hash. It
+found:
+
+- 60 checkpoint files and 48 score CSVs with zero missing files or hash
+  mismatches;
+- zero contract-hash mismatches and all six eight-shard score contracts
+  complete;
+- zero duplicate pair identities, non-finite values or out-of-range scores;
+- zero collapsed score contracts, with 607--1,109 distinct scores per
+  contract;
+- both parameter selections present with finite metrics and all six source
+  summaries present;
+- one frozen scientific protocol SHA-256 across the batch;
+- an empty running ledger, an empty failure ledger, no temporary resume
+  residue and an intact resumable state at the exact V7 boundary; and
+- zero test contracts.
+
+The V7 log contains no out-of-memory error, traceback, resume conflict,
+non-finite-score report or thermal-slowdown event. V7 therefore passed its
+batch gate. The V8 dry-run selects exactly 326 cumulative validation-only
+jobs, skips the 260 completed jobs and stops at
+`formal-qwen_candidate_pair_qlora-seed0013-l4-g03-select-threshold` without
+enabling official test. Its 66 pending jobs comprise 26 content-addressed
+seed-13 checkpoint validations/reuses, one missing `l4-g03` seen-calibration
+validation scoring job, and 39 threshold transfers. All 26 selected checkpoint
+contracts are already present and hash-valid.
+
 ## Batch progression
 
 - [x] V0: target-bounded executor, complete tests and real QLoRA smoke.
@@ -499,7 +562,7 @@ official test.
 - [x] V4: cyclic pairs a01-a02 through a04-a05.
 - [x] V5: cyclic pairs a05-a06 through a08-a09.
 - [x] V6: cyclic pairs a09-a10 through a12-a01.
-- [ ] V7: Company-brand and Staff-support group scopes.
+- [x] V7: Company-brand and Staff-support group scopes.
 - [ ] V8: seed-13 formal validation reuse and threshold transfers.
 - [ ] V9: Level 1 seed-23 robustness.
 - [ ] V10: Level 1 seed-42 robustness.
