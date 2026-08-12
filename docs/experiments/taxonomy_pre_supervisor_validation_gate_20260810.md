@@ -154,3 +154,33 @@ V9 changes only the pre-registered robustness seed. It uses frozen Level 1
 training folds and seen-only validation calibration, does not evaluate any
 held-out Level 3 candidate representation, and does not resolve or depend on
 the pending supervisor decision.
+
+## V9 completion and V10 registered launch
+
+V9 completed at its exact registered boundary with 362 cumulative jobs, zero
+failures and zero test contracts. Its 19.64-hour run produced 12 hash-valid
+seed-23 checkpoint contracts, 12 complete eight-shard seen-calibration score
+contracts containing 418,572 finite validation scores, and 12 hash-valid
+threshold-transfer artifacts. The close-out audit found no missing shards,
+non-finite or out-of-range scores, duplicate pair identities, predictive
+collapse, resume residue, hard-error terms, monitoring alert or thermal
+slowdown. Only `train` and `validation` were opened.
+
+The V10 dry-run selects 398 cumulative validation-only jobs, skips all 362
+completed jobs and leaves exactly 36 Level 1 seed-42 jobs. It must stop at:
+
+`formal-qwen_candidate_pair_qlora-seed0042-l1-a12-select-threshold`
+
+The pending work comprises 12 registered seed-42 fits, 12 seen-calibration
+validation scorings and 12 threshold transfers. The registered command is:
+
+```powershell
+python scripts/execute_taxonomy_plan.py `
+  --plan outputs/experimental/taxonomy_hybrid_execution_plan_v2_20260724.json `
+  --method qwen_candidate_pair_qlora `
+  --stop-after-job-id formal-qwen_candidate_pair_qlora-seed0042-l1-a12-select-threshold `
+  --max-workers 1
+```
+
+`--include-official-test` remains absent. V10 changes only the robustness seed
+and does not inspect or score a held-out Level 3 representation.

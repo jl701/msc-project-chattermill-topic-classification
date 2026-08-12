@@ -65,12 +65,14 @@ contracts. The V6 close-out audit was independently repeated on 10 August
 2026. The authoritative execution record is
 `docs/experiments/taxonomy_qlora_local_batch_execution_20260725.md`.
 
-V7 and V8 subsequently completed and passed their integrity audits. The
-through-validation state is now 326 cumulative jobs with zero failures and
-zero test contracts. The next incomplete QLoRA gate is V9, covering the 12
-pre-registered Level 1 seed-23 robustness fits, their seen-calibration scores
-and threshold transfers. It stops at the immutable
-`formal-qwen_candidate_pair_qlora-seed0023-l1-a12-select-threshold` boundary.
+V7, V8 and V9 subsequently completed and passed their integrity audits. The
+through-validation state is now 362 cumulative jobs with zero failures and
+zero test contracts. V9 completed the 12 pre-registered Level 1 seed-23
+robustness fits, their 12 complete seen-calibration score contracts and 12
+threshold transfers. The next incomplete QLoRA gate is V10, which repeats
+only that registered Level 1 robustness schedule at seed 42 and stops at the
+immutable
+`formal-qwen_candidate_pair_qlora-seed0042-l1-a12-select-threshold` boundary.
 The pre-supervisor execution classification is recorded in
 `docs/experiments/taxonomy_pre_supervisor_validation_gate_20260810.md`.
 No formal test pass or cross-level result claim is authorised before all
@@ -584,7 +586,7 @@ must be marked as pilots, not completion.
   selection across all 26 outer training scopes.
 - [x] Complete the Frozen Qwen validation/runtime gate and verify the exact
   split-isolated raw-score cache on all official validation scopes.
-- [ ] Complete nested seen-only parameter selection for every unique training
+- [x] Complete nested seen-only parameter selection for every unique training
   scope.
 - [ ] Run strict TF-IDF, E5, and DistilBERT on all twelve folds.
 - [x] Run Frozen Qwen and QLoRA validation/runtime gates under the same outer
@@ -602,6 +604,10 @@ must be marked as pilots, not completion.
 - [x] Complete and integrity-audit the fifth local QLoRA batch through the
   heldout-a08-a09 cyclic-pair selection boundary without opening official
   test.
+- [x] Complete and integrity-audit the seed-23 Level 1 robustness batch
+  without opening official test.
+- [ ] Complete and integrity-audit the seed-42 Level 1 robustness batch
+  without opening official test.
 - [ ] Complete all admitted twelve-fold evaluations.
 - [ ] Report overall, seen, unseen, harmonic-mean, exact-match, presence, and
   sentiment results.
@@ -615,7 +621,7 @@ must be marked as pilots, not completion.
   seen/unseen membership for the ten-plus-two split.
 - [x] Verify that `NN`, `DN`, `ND`, `DD`, and `RR` reuse the exact same trained
   model, rows, pair identities, thresholds, and metrics.
-- [ ] Complete nested seen-only selection and validation/runtime gates for all
+- [x] Complete nested seen-only selection and validation/runtime gates for all
   admitted core methods.
 - [ ] Run all admitted models on the full registered pair schedule.
 - [ ] Report within-aspect description effects, described-candidate bias,
@@ -646,7 +652,7 @@ must be marked as pilots, not completion.
 - [x] Pre-register bootstrap unit, interval method, bootstrap count and seed,
   primary contrasts, sign-flip rule, multiplicity handling, and permitted
   wording.
-- [ ] Use seed 13 for nested per-training-scope configuration selection.
+- [x] Use seed 13 for nested per-training-scope configuration selection.
 - [ ] Use seed 13 for the initial complete Level 2, Level 3, and Level 4 runs.
 - [ ] Add seeds 23 and 42 only for the final matched Level 1 QLoRA endpoints.
 - [ ] Aggregate the matched Level 1 seed-by-aspect results and report paired

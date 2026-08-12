@@ -586,6 +586,48 @@ seen-calibration scorings and 12 threshold transfers. It stops at
 enabling official test. Based on the earlier single-aspect batches, the local
 runtime expectation is approximately 19--20 wall-clock hours.
 
+## V9 completion and V10 registered launch
+
+V9 completed at `2026-08-12T19:21:39.577110+00:00`, exactly at
+`formal-qwen_candidate_pair_qlora-seed0023-l1-a12-select-threshold`. The
+measured interval from launch at `2026-08-11T23:43:25.167572+00:00` was
+70,694.41 seconds, or approximately 19.64 wall-clock hours. The executor did
+not enter the seed-42 schedule and never enabled official test.
+
+The close-out audit revalidated all 12 seed-23 checkpoint contracts and their
+120 declared files (332,688,908 bytes). It also verified 12 complete
+eight-shard seen-calibration score contracts: 96 score manifests and 418,572
+finite validation scores, with every CSV, score, pair-identity and contract
+hash matching. All 12 threshold-transfer artifacts passed their self-hash and
+checkpoint/score-reference checks; their transferred thresholds span
+`0.721732348204` to `0.865213662386`.
+
+The audit found zero failures, missing shards, non-finite or out-of-range
+scores, duplicate pair identities, collapsed score or threshold conditions,
+resume residue, hard-error terms, monitoring alerts, thermal-slowdown records
+and test contracts. Only the `train` and `validation` splits were opened. V9
+therefore passed its batch gate.
+
+The V10 dry-run selects 398 cumulative validation-only jobs, skips all 362
+completed jobs and leaves exactly 36 pending jobs: 12 seed-42 Level 1 fits, 12
+seen-calibration scorings and 12 threshold transfers. It must stop at:
+
+`formal-qwen_candidate_pair_qlora-seed0042-l1-a12-select-threshold`
+
+The target-bounded V10 command is:
+
+```powershell
+python scripts/execute_taxonomy_plan.py `
+  --plan outputs/experimental/taxonomy_hybrid_execution_plan_v2_20260724.json `
+  --method qwen_candidate_pair_qlora `
+  --stop-after-job-id formal-qwen_candidate_pair_qlora-seed0042-l1-a12-select-threshold `
+  --max-workers 1
+```
+
+The command deliberately omits `--include-official-test`. V10 changes only
+the pre-registered robustness seed and remains independent of the unresolved
+Level 3 held-out representation decision.
+
 ## Batch progression
 
 - [x] V0: target-bounded executor, complete tests and real QLoRA smoke.
@@ -597,7 +639,7 @@ runtime expectation is approximately 19--20 wall-clock hours.
 - [x] V6: cyclic pairs a09-a10 through a12-a01.
 - [x] V7: Company-brand and Staff-support group scopes.
 - [x] V8: seed-13 formal validation reuse and threshold transfers.
-- [ ] V9: Level 1 seed-23 robustness.
+- [x] V9: Level 1 seed-23 robustness.
 - [ ] V10: Level 1 seed-42 robustness.
 - [ ] G: validation freeze, leakage audit and user review before test.
 
