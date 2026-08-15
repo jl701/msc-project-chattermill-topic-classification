@@ -628,6 +628,39 @@ The command deliberately omits `--include-official-test`. V10 changes only
 the pre-registered robustness seed and remains independent of the unresolved
 Level 3 held-out representation decision.
 
+## V10 planned-restart interruption and registered resume
+
+V10 started at `2026-08-12T23:06:27+00:00`. It completed the four registered
+seed-42 training jobs for `heldout-a01` through `heldout-a04`, bringing the
+cumulative through-validation state to 366 completed jobs with zero failures.
+The next `heldout-a05` training job was in flight when Windows Update initiated
+a planned operating-system restart at `2026-08-13 03:32` Europe/London time.
+This was a host restart rather than a pipeline, model or CUDA failure. The last
+pre-restart monitor record reported normal execution, no alerts, no thermal
+slowdown and no official-test access.
+
+The 2026-08-15 resume pre-flight found one stale `heldout-a05` entry in the
+running ledger, as expected after process termination, but no failed-job entry.
+It recomputed the SHA-256 hashes of all 40 files declared by the four completed
+checkpoint manifests and found zero missing files or mismatches. No
+`heldout-a05` checkpoint directory, temporary file, partial file or lock file
+was present. The executor clears the stale running ledger at the start of a
+real resumed invocation; completed jobs remain protected by the state ledger.
+
+The repeated target-bounded dry-run selects 398 cumulative validation-only
+jobs, skips the 366 completed jobs and leaves exactly 32 pending jobs: eight
+seed-42 fits (`heldout-a05` through `heldout-a12`), 12 seen-calibration
+validation scorings and 12 threshold transfers. The first pending job is
+`formal-qwen_candidate_pair_qlora-seed0042-heldout-a05-train` and the immutable
+final boundary remains:
+
+`formal-qwen_candidate_pair_qlora-seed0042-l1-a12-select-threshold`
+
+The registered resume uses the unchanged V10 command above. Its generated
+training, validation-scoring and threshold-selection commands retain their
+existing `--resume` flags. `--include-official-test` remains absent, and the
+30-minute read-only monitor is renewed for the resumed process.
+
 ## Batch progression
 
 - [x] V0: target-bounded executor, complete tests and real QLoRA smoke.
