@@ -685,9 +685,24 @@ At `2026-08-16T12:04:19+00:00`, a reversible scheduling test changed only the
 current worker priority from `Normal` to `High`. A 45-second before/after
 comparison increased mean GPU utilisation from 18.9% to 92.6% (median 15% to
 93%) without restarting the fold. The executor was then also assigned `High`
-priority so that subsequent workers inherit the recovered scheduling class.
-A further 15-second sample measured 91% mean utilisation (82--97%), 47.1 W mean
-GPU power, 70.1 C mean temperature and zero thermal events.
+priority. A further 15-second sample measured 91% mean utilisation (82--97%),
+47.1 W mean GPU power, 70.1 C mean temperature and zero thermal events.
+
+The next `a11` worker demonstrated that child priority inheritance was not
+reliable on this Windows host: although the executor remained `High`, the new
+worker started at `Normal` and mean GPU utilisation fell to 16.4%. A separate
+host-only priority guard was therefore registered as
+`MscProject_Enforce_QLoRA_V10_HighPriority`. It runs once per minute, matches
+only the exact seed-42 V10 executor and workers, and raises any matched
+`Normal` process to `High`. It writes a local JSONL audit trail and
+automatically disables itself if the failure ledger becomes non-empty,
+official-test mode becomes enabled, or the cumulative validation state reaches
+398 jobs. The existing scientific monitor remains read-only.
+
+The guard's first automatic invocation completed with task result zero. It
+verified both executor and `a11` worker at `High`; a 20-second recovery sample
+measured 93.6% mean utilisation (85--99%), 46.3 W mean power and zero thermal
+events. A subsequent live sample measured 93% utilisation.
 
 This intervention changes host scheduling only. It does not alter data,
 sampling, seeds, model weights, optimiser settings, thresholds, official split
