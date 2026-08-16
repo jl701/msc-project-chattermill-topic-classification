@@ -661,6 +661,40 @@ training, validation-scoring and threshold-selection commands retain their
 existing `--resume` flags. `--include-official-test` remains absent, and the
 30-minute read-only monitor is renewed for the resumed process.
 
+### V10 post-restart host-scheduling recovery
+
+The resumed process initially suffered a host-level throughput regression.
+This was not a scientific-configuration change: seed-23 and seed-42 runs share
+the same scientific-parameter SHA-256
+`88586c6bd81030ff782773cd282731baf3d2153e018f445d4ceb29846d0bbf85`,
+method-spec SHA-256
+`74a709892d511764c0b501620e7b202e7e80191d37aab374573bb381fd9285f4`,
+model revision, batch size, accumulation schedule and QLoRA recipe. Matching
+folds `a01`--`a04` also retained their normal approximately 42-minute training
+time before the host restart.
+
+After the restart, the read-only monitors measured 21.2% mean GPU utilisation,
+compared with 93.4% for V9 and 86.2% for the pre-restart part of V10. Completed
+folds `a06`--`a09` took 4.29--4.55 times their matching seed-23 durations.
+Windows was already using the Best performance AC overlay; the CPU was not
+frequency-capped, GPU clocks remained high, and no thermal or hardware
+slowdown was active. The Python executor and worker nevertheless had the
+default `Normal` Windows process priority after the update restart.
+
+At `2026-08-16T12:04:19+00:00`, a reversible scheduling test changed only the
+current worker priority from `Normal` to `High`. A 45-second before/after
+comparison increased mean GPU utilisation from 18.9% to 92.6% (median 15% to
+93%) without restarting the fold. The executor was then also assigned `High`
+priority so that subsequent workers inherit the recovered scheduling class.
+A further 15-second sample measured 91% mean utilisation (82--97%), 47.1 W mean
+GPU power, 70.1 C mean temperature and zero thermal events.
+
+This intervention changes host scheduling only. It does not alter data,
+sampling, seeds, model weights, optimiser settings, thresholds, official split
+access or any registered scientific parameter. The in-flight `a10` fold
+continued from its existing state; no completed result was discarded or
+rerun. The formal-test gate remains closed.
+
 ## Batch progression
 
 - [x] V0: target-bounded executor, complete tests and real QLoRA smoke.
