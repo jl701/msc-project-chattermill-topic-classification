@@ -24,6 +24,55 @@ from msc_project.experiments.taxonomy_tuning import (
 )
 
 
+class FakeKernel32:
+    def __init__(self) -> None:
+        self.calls: list[tuple[int, int]] = []
+
+    def GetCurrentProcess(self) -> int:
+        return 123
+
+    def SetPriorityClass(self, handle: int, priority_class: int) -> int:
+        self.calls.append((handle, priority_class))
+        return 1
+
+
+def test_windows_qlora_worker_defaults_to_high_priority() -> None:
+    kernel32 = FakeKernel32()
+    evidence = MODULE.configure_windows_process_priority(
+        "qwen_candidate_pair_qlora",
+        platform_name="win32",
+        kernel32=kernel32,
+    )
+    assert evidence["effective"] == "high"
+    assert evidence["applied"] is True
+    assert kernel32.calls == [(123, 0x00000080)]
+
+
+def test_automatic_priority_leaves_other_methods_unchanged() -> None:
+    kernel32 = FakeKernel32()
+    evidence = MODULE.configure_windows_process_priority(
+        "distilbert_review_candidate_cross_encoder",
+        platform_name="win32",
+        kernel32=kernel32,
+    )
+    assert evidence["effective"] == "unchanged"
+    assert evidence["applied"] is False
+    assert kernel32.calls == []
+
+
+def test_explicit_normal_priority_is_an_opt_out() -> None:
+    kernel32 = FakeKernel32()
+    evidence = MODULE.configure_windows_process_priority(
+        "qwen_candidate_pair_qlora",
+        "normal",
+        platform_name="win32",
+        kernel32=kernel32,
+    )
+    assert evidence["effective"] == "normal"
+    assert evidence["applied"] is True
+    assert kernel32.calls == [(123, 0x00000020)]
+
+
 def test_parameter_resolution_accepts_only_registered_candidates() -> None:
     parameters, digest = MODULE.resolve_parameters(
         "strict_train_only_tfidf",

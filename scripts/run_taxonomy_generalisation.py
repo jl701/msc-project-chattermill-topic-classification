@@ -93,6 +93,68 @@ PHASES = (
     "analyse-test",
 )
 
+WINDOWS_PROCESS_PRIORITY_CLASSES = {
+    "normal": 0x00000020,
+    "above-normal": 0x00008000,
+    "high": 0x00000080,
+}
+
+
+def configure_windows_process_priority(
+    method_id: str,
+    requested: str = "auto",
+    *,
+    platform_name: str | None = None,
+    kernel32: object | None = None,
+) -> dict[str, object]:
+    """Apply the opt-out Windows priority policy for QLoRA workers.
+
+    ``auto`` leaves every other method and non-Windows host unchanged, while
+    QLoRA workers on Windows select ``HIGH_PRIORITY_CLASS`` before model or
+    dataset loading begins.  The explicit choices remain available for
+    diagnostics and for hosts where interactive responsiveness matters more
+    than training throughput.
+    """
+
+    if requested not in {"auto", *WINDOWS_PROCESS_PRIORITY_CLASSES}:
+        raise ValueError(f"Unknown Windows process priority: {requested!r}.")
+    platform_value = platform_name or sys.platform
+    effective = None
+    if requested == "auto" and method_id == "qwen_candidate_pair_qlora":
+        effective = "high"
+    elif requested != "auto":
+        effective = requested
+    evidence: dict[str, object] = {
+        "event": "windows_process_priority",
+        "method_id": method_id,
+        "requested": requested,
+        "effective": effective or "unchanged",
+        "platform": platform_value,
+        "applied": False,
+    }
+    if platform_value != "win32" or effective is None:
+        return evidence
+
+    if kernel32 is None:
+        import ctypes
+        from ctypes import wintypes
+
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel32.GetCurrentProcess.restype = wintypes.HANDLE
+        kernel32.SetPriorityClass.argtypes = [wintypes.HANDLE, wintypes.DWORD]
+        kernel32.SetPriorityClass.restype = wintypes.BOOL
+    process_handle = kernel32.GetCurrentProcess()  # type: ignore[attr-defined]
+    applied = kernel32.SetPriorityClass(  # type: ignore[attr-defined]
+        process_handle,
+        WINDOWS_PROCESS_PRIORITY_CLASSES[effective],
+    )
+    if not applied:
+        import ctypes
+
+        raise ctypes.WinError(ctypes.get_last_error())
+    evidence["applied"] = True
+    return evidence
+
 
 def _write_json_new(path: Path, value: Mapping[str, object]) -> None:
     if path.exists():
@@ -735,11 +797,26 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--local-files-only", action="store_true")
+    parser.add_argument(
+        "--windows-process-priority",
+        choices=("auto", *WINDOWS_PROCESS_PRIORITY_CLASSES),
+        default="auto",
+        help=(
+            "Windows worker priority. 'auto' (default) uses High for QLoRA "
+            "and leaves every other method or operating system unchanged."
+        ),
+    )
     return parser.parse_args()
 
 
 def main() -> None:
-    result = run(parse_args())
+    args = parse_args()
+    priority_evidence = configure_windows_process_priority(
+        args.method,
+        args.windows_process_priority,
+    )
+    print(json.dumps(priority_evidence, ensure_ascii=False), flush=True)
+    result = run(args)
     print(json.dumps(result, ensure_ascii=False, default=str), flush=True)
 
 

@@ -704,6 +704,34 @@ verified both executor and `a11` worker at `High`; a 20-second recovery sample
 measured 93.6% mean utilisation (85--99%), 46.3 W mean power and zero thermal
 events. A subsequent live sample measured 93% utilisation.
 
+The once-per-minute guard caused an unwanted visible PowerShell window on this
+desktop host, so it was replaced on 2026-08-16 by a code-level worker policy.
+`run_taxonomy_generalisation.py` now resolves its new
+`--windows-process-priority auto` default to `High` only when the method is
+`qwen_candidate_pair_qlora` and the host is Windows. The priority is applied by
+the worker itself before data or model loading, so every subsequently spawned
+V10 worker reads the policy without restarting the already-running executor.
+Other methods and non-Windows hosts remain unchanged. An explicit
+`--windows-process-priority normal` provides an opt-out for interactive or
+shared hosts. The scheduled guard was then removed; the in-flight worker
+retained its already-applied `High` priority.
+
+The accepted operational trade-offs are higher CPU scheduling preference,
+power consumption, fan noise, and potentially reduced responsiveness for
+other normal-priority applications while a QLoRA worker is CPU-bound. This
+policy still changes host scheduling only: it does not alter any scientific
+parameter or official-split gate. Each worker emits a
+`windows_process_priority` JSON event recording the requested, effective and
+applied setting.
+
+Validation used a mocked Win32 unit contract plus a real disposable Windows
+process probe. The focused executor, runner and runtime-factory suite passed
+26 tests, and the native probe reported `effective=high` and `applied=true`.
+After removal of the scheduled task, the in-flight `a11` worker remained
+`High`; the plan state still showed 372 completed jobs, zero failed jobs and
+`include_official_test=false`. A live GPU check measured 100% utilisation,
+73 C and 39.75 W with neither hardware nor software thermal slowdown active.
+
 This intervention changes host scheduling only. It does not alter data,
 sampling, seeds, model weights, optimiser settings, thresholds, official split
 access or any registered scientific parameter. The in-flight `a10` fold
