@@ -30,6 +30,16 @@ class DecoderThresholdSelection:
     sweep: pd.DataFrame
 
 
+@dataclass(frozen=True)
+class MultiSentimentThresholdSelection:
+    aspect_threshold: float
+    sentiment_threshold: float | None
+    selection_metrics: dict[str, float]
+    candidates_evaluated: int
+    sentiment_thresholds_evaluated: int
+    decoder: str
+
+
 _TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
 _GENERIC_ASPECT_TOKENS = frozenset(
     {
@@ -559,6 +569,366 @@ def two_stage_prediction_mask(
         ],
         index=scored_grid.index,
         dtype=bool,
+    )
+
+
+def _ordered_two_stage_groups(
+    scored_grid: pd.DataFrame,
+) -> tuple[pd.DataFrame, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Return deterministic review-aspect arrays for multi-label decoding."""
+
+    two_stage_candidates(scored_grid)
+    sentiment_order = {
+        sentiment: index for index, sentiment in enumerate(CANDIDATE_SENTIMENTS)
+    }
+    ordered = scored_grid.copy()
+    ordered["_position"] = np.arange(len(ordered), dtype=np.int64)
+    ordered["_sentiment_order"] = ordered["candidate_sentiment"].map(
+        sentiment_order
+    )
+    ordered = ordered.sort_values(
+        ["row_uid", "candidate_aspect", "_sentiment_order"], kind="stable"
+    ).reset_index(drop=True)
+    width = len(CANDIDATE_SENTIMENTS)
+    if len(ordered) % width:
+        raise ValueError("Two-stage grid cannot be reshaped into sentiment groups.")
+    aspect_matrix = ordered["aspect_score"].to_numpy(dtype=float).reshape(-1, width)
+    if not np.all(aspect_matrix == aspect_matrix[:, :1]):
+        raise ValueError("Aspect scores differ inside a review-aspect group.")
+    aspect_scores = aspect_matrix[:, 0]
+    sentiment_scores = ordered["sentiment_score"].to_numpy(dtype=float).reshape(
+        -1, width
+    )
+    targets = ordered["target"].to_numpy(dtype=int).reshape(-1, width).astype(bool)
+    positions = ordered["_position"].to_numpy(dtype=np.int64).reshape(-1, width)
+    return ordered, aspect_scores, sentiment_scores, targets, positions
+
+
+def multi_sentiment_prediction_mask(
+    scored_grid: pd.DataFrame,
+    *,
+    aspect_threshold: float,
+    sentiment_threshold: float,
+) -> pd.Series:
+    """Threshold sentiments with an argmax fallback for selected aspects."""
+
+    (
+        _,
+        aspect_scores,
+        sentiment_scores,
+        _,
+        positions,
+    ) = _ordered_two_stage_groups(scored_grid)
+    sentiment_mask = sentiment_scores >= float(sentiment_threshold)
+    empty = ~sentiment_mask.any(axis=1)
+    if empty.any():
+        fallback = np.argmax(sentiment_scores[empty], axis=1)
+        sentiment_mask[empty] = False
+        sentiment_mask[np.flatnonzero(empty), fallback] = True
+    sentiment_mask &= (aspect_scores >= float(aspect_threshold))[:, None]
+    output = np.zeros(len(scored_grid), dtype=bool)
+    output[positions.reshape(-1)] = sentiment_mask.reshape(-1)
+    return pd.Series(output, index=scored_grid.index, dtype=bool)
+
+
+def top_k_sentiment_prediction_mask(
+    scored_grid: pd.DataFrame,
+    *,
+    aspect_threshold: float,
+    top_k: int,
+) -> pd.Series:
+    """Emit a fixed number of highest-scoring sentiments per selected aspect."""
+
+    if not 1 <= int(top_k) <= len(CANDIDATE_SENTIMENTS):
+        raise ValueError("top_k must be between one and the sentiment count.")
+    (
+        _,
+        aspect_scores,
+        sentiment_scores,
+        _,
+        positions,
+    ) = _ordered_two_stage_groups(scored_grid)
+    sentiment_mask = np.zeros_like(sentiment_scores, dtype=bool)
+    order = np.argsort(-sentiment_scores, axis=1, kind="stable")[:, : int(top_k)]
+    rows = np.repeat(np.arange(len(sentiment_scores)), int(top_k))
+    sentiment_mask[rows, order.reshape(-1)] = True
+    sentiment_mask &= (aspect_scores >= float(aspect_threshold))[:, None]
+    output = np.zeros(len(scored_grid), dtype=bool)
+    output[positions.reshape(-1)] = sentiment_mask.reshape(-1)
+    return pd.Series(output, index=scored_grid.index, dtype=bool)
+
+
+def _select_aspect_threshold_for_group_outputs(
+    *,
+    aspect_scores: np.ndarray,
+    predicted_per_group: np.ndarray,
+    true_positive_per_group: np.ndarray,
+    row_indices: np.ndarray,
+    gold_by_row: np.ndarray,
+) -> tuple[dict[str, float], int]:
+    """Exact aspect-threshold sweep for already-decoded sentiment outputs."""
+
+    order = np.argsort(-aspect_scores, kind="stable")
+    sorted_scores = aspect_scores[order]
+    sorted_predicted = predicted_per_group[order]
+    sorted_true_positive = true_positive_per_group[order]
+    sorted_rows = row_indices[order]
+    thresholds = sorted(strict_threshold_candidates(aspect_scores), reverse=True)
+    total_gold = int(gold_by_row.sum())
+
+    # Every registered threshold selects a prefix of the same descending
+    # aspect-score order.  Compute the primary sufficient statistics once;
+    # evaluating every prefix in Python made the joint sentiment/aspect sweep
+    # unnecessarily slow without changing a single candidate or tie-break.
+    prefix_lengths = np.searchsorted(
+        -sorted_scores,
+        -np.asarray(thresholds, dtype=float),
+        side="right",
+    )
+    cumulative_predicted = np.concatenate(
+        [np.asarray([0], dtype=np.int64), np.cumsum(sorted_predicted)]
+    )
+    cumulative_true_positive = np.concatenate(
+        [np.asarray([0], dtype=np.int64), np.cumsum(sorted_true_positive)]
+    )
+    cumulative_multi = np.concatenate(
+        [
+            np.asarray([0], dtype=np.int64),
+            np.cumsum(sorted_predicted > 1, dtype=np.int64),
+        ]
+    )
+    predicted_counts = cumulative_predicted[prefix_lengths]
+    true_positive_counts = cumulative_true_positive[prefix_lengths]
+    false_positive_counts = predicted_counts - true_positive_counts
+    false_negative_counts = total_gold - true_positive_counts
+    denominators = (
+        2 * true_positive_counts + false_positive_counts + false_negative_counts
+    )
+    micro_f1 = np.divide(
+        2.0 * true_positive_counts,
+        denominators,
+        out=np.zeros(len(thresholds), dtype=float),
+        where=denominators != 0,
+    )
+    precision = np.divide(
+        true_positive_counts,
+        predicted_counts,
+        out=np.zeros(len(thresholds), dtype=float),
+        where=predicted_counts != 0,
+    )
+    sentiments_per_aspect = np.divide(
+        predicted_counts,
+        prefix_lengths,
+        out=np.zeros(len(thresholds), dtype=float),
+        where=prefix_lengths != 0,
+    )
+    multi_rate = np.divide(
+        cumulative_multi[prefix_lengths],
+        prefix_lengths,
+        out=np.zeros(len(thresholds), dtype=float),
+        where=prefix_lengths != 0,
+    )
+
+    first_group_for_row = np.zeros(len(sorted_rows), dtype=bool)
+    seen_rows: set[int] = set()
+    for position, row_index in enumerate(sorted_rows):
+        row_value = int(row_index)
+        if row_value not in seen_rows:
+            first_group_for_row[position] = True
+            seen_rows.add(row_value)
+    false_positive_row_entry = first_group_for_row & (gold_by_row[sorted_rows] == 0)
+    cumulative_false_positive_rows = np.concatenate(
+        [
+            np.asarray([0], dtype=np.int64),
+            np.cumsum(false_positive_row_entry, dtype=np.int64),
+        ]
+    )
+    false_positive_rows_per_100 = (
+        cumulative_false_positive_rows[prefix_lengths] * 100.0 / len(gold_by_row)
+    )
+
+    # Samples F1 is only the second tie-break.  The primary micro-F1 maximum
+    # normally leaves one or a handful of prefixes, so calculate the row-level
+    # statistic exactly only for those candidates instead of for every group
+    # insertion at every sentiment threshold.
+    primary_indices = np.flatnonzero(micro_f1 == micro_f1.max())
+    best: dict[str, float] | None = None
+    best_rank: tuple[float, ...] | None = None
+    for candidate_index in primary_indices:
+        prefix_length = int(prefix_lengths[candidate_index])
+        predicted_by_row = np.bincount(
+            sorted_rows[:prefix_length],
+            weights=sorted_predicted[:prefix_length],
+            minlength=len(gold_by_row),
+        )
+        true_positive_by_row = np.bincount(
+            sorted_rows[:prefix_length],
+            weights=sorted_true_positive[:prefix_length],
+            minlength=len(gold_by_row),
+        )
+        samples_denominator = gold_by_row + predicted_by_row
+        samples_f1 = float(
+            np.divide(
+                2.0 * true_positive_by_row,
+                samples_denominator,
+                out=np.zeros(len(gold_by_row), dtype=float),
+                where=samples_denominator != 0,
+            ).mean()
+        )
+        record = {
+            "aspect_threshold": float(thresholds[candidate_index]),
+            "pair_micro_f1": float(micro_f1[candidate_index]),
+            "pair_samples_f1": float(samples_f1),
+            "pair_micro_precision": float(precision[candidate_index]),
+            "presence_false_positive_rows_per_100": float(
+                false_positive_rows_per_100[candidate_index]
+            ),
+            "sentiments_per_selected_aspect": float(
+                sentiments_per_aspect[candidate_index]
+            ),
+            "multi_sentiment_selected_aspect_rate": float(
+                multi_rate[candidate_index]
+            ),
+        }
+        rank = (
+            record["pair_micro_f1"],
+            record["pair_samples_f1"],
+            record["pair_micro_precision"],
+            -record["presence_false_positive_rows_per_100"],
+            -record["sentiments_per_selected_aspect"],
+            record["aspect_threshold"],
+        )
+        if best_rank is None or rank > best_rank:
+            best_rank = rank
+            best = record
+    if best is None:
+        raise ValueError("Aspect threshold selection produced no candidates.")
+    return best, len(thresholds)
+
+
+def select_multi_sentiment_thresholds(
+    scored_grid: pd.DataFrame,
+    *,
+    sentiment_quantiles: int = 65,
+) -> MultiSentimentThresholdSelection:
+    """Jointly select aspect and multi-sentiment thresholds on seen evidence."""
+
+    if int(sentiment_quantiles) < 2:
+        raise ValueError("At least two sentiment quantiles are required.")
+    (
+        ordered,
+        aspect_scores,
+        sentiment_scores,
+        targets,
+        _,
+    ) = _ordered_two_stage_groups(scored_grid)
+    width = len(CANDIDATE_SENTIMENTS)
+    group_rows = ordered["row_uid"].astype(str).to_numpy()[::width]
+    unique_rows, row_indices = np.unique(group_rows, return_inverse=True)
+    gold_by_row = np.bincount(
+        row_indices,
+        weights=targets.sum(axis=1),
+        minlength=len(unique_rows),
+    ).astype(np.int64)
+    probabilities = np.linspace(0.0, 1.0, int(sentiment_quantiles))
+    thresholds = np.unique(np.quantile(sentiment_scores.reshape(-1), probabilities))
+    thresholds = np.append(
+        thresholds,
+        np.nextafter(float(sentiment_scores.max()), float("inf")),
+    )
+    best: MultiSentimentThresholdSelection | None = None
+    best_rank: tuple[float, ...] | None = None
+    candidates_evaluated = 0
+    for sentiment_threshold in thresholds:
+        selected = sentiment_scores >= float(sentiment_threshold)
+        empty = ~selected.any(axis=1)
+        if empty.any():
+            fallback = np.argmax(sentiment_scores[empty], axis=1)
+            selected[empty] = False
+            selected[np.flatnonzero(empty), fallback] = True
+        predicted_per_group = selected.sum(axis=1).astype(np.int64)
+        true_positive_per_group = (selected & targets).sum(axis=1).astype(np.int64)
+        record, aspect_candidates = _select_aspect_threshold_for_group_outputs(
+            aspect_scores=aspect_scores,
+            predicted_per_group=predicted_per_group,
+            true_positive_per_group=true_positive_per_group,
+            row_indices=row_indices,
+            gold_by_row=gold_by_row,
+        )
+        candidates_evaluated += aspect_candidates
+        rank = (
+            record["pair_micro_f1"],
+            record["pair_samples_f1"],
+            record["pair_micro_precision"],
+            -record["presence_false_positive_rows_per_100"],
+            -record["sentiments_per_selected_aspect"],
+            record["aspect_threshold"],
+            float(sentiment_threshold),
+        )
+        if best_rank is None or rank > best_rank:
+            best_rank = rank
+            best = MultiSentimentThresholdSelection(
+                aspect_threshold=float(record["aspect_threshold"]),
+                sentiment_threshold=float(sentiment_threshold),
+                selection_metrics=record,
+                candidates_evaluated=candidates_evaluated,
+                sentiment_thresholds_evaluated=len(thresholds),
+                decoder="threshold_plus_argmax_fallback",
+            )
+    if best is None:
+        raise ValueError("Multi-sentiment threshold selection failed.")
+    return MultiSentimentThresholdSelection(
+        aspect_threshold=best.aspect_threshold,
+        sentiment_threshold=best.sentiment_threshold,
+        selection_metrics=best.selection_metrics,
+        candidates_evaluated=candidates_evaluated,
+        sentiment_thresholds_evaluated=len(thresholds),
+        decoder=best.decoder,
+    )
+
+
+def select_top_k_aspect_threshold(
+    scored_grid: pd.DataFrame,
+    *,
+    top_k: int,
+) -> MultiSentimentThresholdSelection:
+    """Select an aspect threshold for a fixed top-k sentiment decoder."""
+
+    if not 1 <= int(top_k) <= len(CANDIDATE_SENTIMENTS):
+        raise ValueError("top_k must be between one and the sentiment count.")
+    (
+        ordered,
+        aspect_scores,
+        sentiment_scores,
+        targets,
+        _,
+    ) = _ordered_two_stage_groups(scored_grid)
+    width = len(CANDIDATE_SENTIMENTS)
+    group_rows = ordered["row_uid"].astype(str).to_numpy()[::width]
+    unique_rows, row_indices = np.unique(group_rows, return_inverse=True)
+    gold_by_row = np.bincount(
+        row_indices,
+        weights=targets.sum(axis=1),
+        minlength=len(unique_rows),
+    ).astype(np.int64)
+    selected = np.zeros_like(sentiment_scores, dtype=bool)
+    order = np.argsort(-sentiment_scores, axis=1, kind="stable")[:, : int(top_k)]
+    rows = np.repeat(np.arange(len(sentiment_scores)), int(top_k))
+    selected[rows, order.reshape(-1)] = True
+    record, candidates = _select_aspect_threshold_for_group_outputs(
+        aspect_scores=aspect_scores,
+        predicted_per_group=selected.sum(axis=1).astype(np.int64),
+        true_positive_per_group=(selected & targets).sum(axis=1).astype(np.int64),
+        row_indices=row_indices,
+        gold_by_row=gold_by_row,
+    )
+    return MultiSentimentThresholdSelection(
+        aspect_threshold=float(record["aspect_threshold"]),
+        sentiment_threshold=None,
+        selection_metrics=record,
+        candidates_evaluated=candidates,
+        sentiment_thresholds_evaluated=0,
+        decoder=f"top_{int(top_k)}",
     )
 
 

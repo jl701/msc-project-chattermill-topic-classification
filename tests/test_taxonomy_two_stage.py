@@ -8,7 +8,11 @@ from msc_project.experiments.taxonomy_two_stage import (
     crossfit_decoder_comparison,
     hierarchical_candidates,
     hierarchical_prediction_mask,
+    multi_sentiment_prediction_mask,
+    select_multi_sentiment_thresholds,
+    select_top_k_aspect_threshold,
     select_two_stage_threshold,
+    top_k_sentiment_prediction_mask,
     two_stage_candidates,
     two_stage_prediction_mask,
 )
@@ -83,6 +87,69 @@ def test_true_two_stage_uses_independent_aspect_and_sentiment_scores() -> None:
     assert int(mask.sum()) <= frame[
         ["row_uid", "candidate_aspect"]
     ].drop_duplicates().shape[0]
+
+
+def test_multi_sentiment_decoder_uses_threshold_and_argmax_fallback() -> None:
+    frame = _grid(2)
+    frame["aspect_score"] = 0.9
+    frame["sentiment_score"] = [0.8, 0.1, 0.7, 0.2, 0.3, 0.4] * 2
+    multi = multi_sentiment_prediction_mask(
+        frame,
+        aspect_threshold=0.5,
+        sentiment_threshold=0.6,
+    )
+    counts = frame.loc[multi].groupby(["row_uid", "candidate_aspect"]).size()
+    assert int(counts.max()) == 2
+    fallback = multi_sentiment_prediction_mask(
+        frame,
+        aspect_threshold=0.5,
+        sentiment_threshold=2.0,
+    )
+    fallback_counts = frame.loc[fallback].groupby(
+        ["row_uid", "candidate_aspect"]
+    ).size()
+    assert fallback_counts.eq(1).all()
+
+
+def test_multi_sentiment_selection_can_recover_two_gold_sentiments() -> None:
+    frame = _grid(20)
+    frame["aspect_score"] = 0.9
+    frame["target"] = 0
+    frame["sentiment_score"] = 0.05
+    for (uid, aspect), indices in frame.groupby(
+        ["row_uid", "candidate_aspect"], sort=False
+    ).groups.items():
+        positions = list(indices)
+        frame.loc[positions[0], ["target", "sentiment_score"]] = [1, 0.9]
+        frame.loc[positions[2], ["target", "sentiment_score"]] = [1, 0.8]
+    selected = select_multi_sentiment_thresholds(frame, sentiment_quantiles=9)
+    control = select_two_stage_threshold(frame)
+    assert selected.sentiment_threshold is not None
+    assert selected.selection_metrics["pair_micro_f1"] >= float(
+        control.sweep["pair_micro_f1"].max()
+    )
+    mask = multi_sentiment_prediction_mask(
+        frame,
+        aspect_threshold=selected.aspect_threshold,
+        sentiment_threshold=selected.sentiment_threshold,
+    )
+    assert int(mask.sum()) == int(frame["target"].sum())
+
+
+def test_fixed_top_two_decoder_emits_two_sentiments_per_selected_aspect() -> None:
+    frame = _grid(5)
+    frame["aspect_score"] = frame.groupby(
+        ["row_uid", "candidate_aspect"]
+    )["score"].transform("max")
+    frame["sentiment_score"] = frame["score"]
+    selected = select_top_k_aspect_threshold(frame, top_k=2)
+    mask = top_k_sentiment_prediction_mask(
+        frame,
+        aspect_threshold=selected.aspect_threshold,
+        top_k=2,
+    )
+    counts = frame.loc[mask].groupby(["row_uid", "candidate_aspect"]).size()
+    assert counts.eq(2).all()
 
 
 def test_two_stage_grid_variants_and_score_join() -> None:
