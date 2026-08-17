@@ -68,7 +68,9 @@ The accepted modelling contract is therefore:
 5. retain argmax as a constrained ablation and the empirical F1 winner.
 
 This structural choice prioritises fidelity to the dataset rather than claiming
-a score gain. Because v2 was designed after inspecting v1 validation evidence,
+a score gain. It is now the frozen default sentiment decoder for subsequent
+two-stage experiments. Because v2 was designed after inspecting v1 validation
+evidence,
 it is sequential development evidence, not independent confirmation. No rule
 will be changed further using these held-out results. Any later official-test
 evaluation must use the now-frozen choice once the wider method suite is ready.

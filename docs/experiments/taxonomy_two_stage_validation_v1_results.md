@@ -116,11 +116,12 @@ report are safe to track.
 
 ## Decision
 
-The supervisor's proposed factorisation is technically viable and useful, but
-its benefit is method-dependent. The strongest current result is the genuine
-two-stage frozen-Qwen pipeline, particularly when a held-out description is
-available. The next scientifically clean step, if a direct replacement claim
-is needed, is a matched held-out one-stage versus two-stage comparison under an
-unchanged representation and selection protocol. The separately approved
-unknown-aspect anomaly-detection study remains deferred and is not mixed into
-these conclusions.
+The supervisor's proposed factorisation is technically viable and useful. The
+strongest result in this initial study is the genuine two-stage frozen-Qwen
+pipeline, particularly when a held-out description is available. The requested
+matched held-out one-stage versus two-stage comparison was subsequently frozen
+and completed for TF-IDF and E5 under an unchanged representation and selection
+protocol. Both fast methods improve under factorisation; the full result is in
+`docs/experiments/taxonomy_matched_one_vs_two_stage_validation_v1_results.md`.
+The separately approved unknown-aspect anomaly-detection study remains deferred
+and is not mixed into these conclusions.

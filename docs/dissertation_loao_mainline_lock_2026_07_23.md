@@ -609,6 +609,13 @@ must be marked as pilots, not completion.
   without opening official test.
 - [x] Complete and integrity-audit the seed-42 Level 1 robustness batch
   without opening official test.
+- [x] Complete and integrity-audit the supervisor-requested matched
+  validation-only one-stage versus true two-stage comparison for TF-IDF and
+  E5 across all twelve Level 2 folds, using identical validation rows and
+  name-plus-description candidates without opening official test.
+- [x] Freeze uncapped multi-label aspect output plus capped-two conditional
+  sentiment output as the default two-stage structure; retain argmax as a
+  diagnostic and the 36 independent pairs as an architecture control.
 - [ ] Complete all admitted twelve-fold evaluations.
 - [ ] Report overall, seen, unseen, harmonic-mean, exact-match, presence, and
   sentiment results.

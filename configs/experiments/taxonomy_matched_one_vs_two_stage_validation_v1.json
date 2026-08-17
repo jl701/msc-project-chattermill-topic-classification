@@ -1,0 +1,62 @@
+{
+  "protocol_id": "taxonomy_matched_one_vs_two_stage_validation_v1",
+  "status": "preregistered_before_execution",
+  "registered_at": "2026-08-17",
+  "objective": "Compare the original independent aspect-sentiment pair formulation with a true aspect-first formulation under a matched Level 2 validation contract.",
+  "provenance": "Sequential architecture comparison requested after supervisor discussion; capped-two sentiment decoding was frozen as the default before this run.",
+  "methods": [
+    "strict_train_only_tfidf",
+    "e5_base_v2"
+  ],
+  "data_contract": {
+    "allowed_splits": [
+      "train",
+      "validation"
+    ],
+    "include_official_test": false,
+    "level": "L2",
+    "folds": "all twelve registered single-held-out-aspect folds",
+    "training_filter": "remove every official training row containing the fold's held-out aspect",
+    "validation_rows": "the same complete official validation row set for both architectures in every fold",
+    "representation": "name_and_description for every seen and held-out aspect in both architectures",
+    "threshold_selection": "architecture-specific thresholds selected only on seen-aspect validation labels using the same end-to-end pair micro-F1 objective and deterministic tie-breaks",
+    "evaluation_partition": "held-out-aspect validation only",
+    "seed": 13
+  },
+  "one_stage": {
+    "task": "independently score all 36 aspect-sentiment candidates per review",
+    "tfidf_training": "the original deterministic 4096-pair budget and negative-sampling contract, with candidate text rerendered to name_and_description before fitting",
+    "decoder": "emit every pair whose independent score reaches the seen-validation-selected pair threshold"
+  },
+  "two_stage": {
+    "aspect_task": "independently score presence for all 12 aspects per review",
+    "sentiment_task": "score three sentiments conditionally for each aspect",
+    "aspect_decoder": "emit every aspect whose presence score reaches the seen-validation-selected aspect threshold; aspect output is uncapped",
+    "primary_sentiment_decoder": "always emit top-1 sentiment and add the runner-up only when it reaches a second-sentiment threshold selected on seen-aspect validation; never emit a third sentiment",
+    "diagnostic_sentiment_decoder": "top-1 sentiment argmax for each selected aspect"
+  },
+  "comparisons": {
+    "primary": "one_stage_independent_pairs versus two_stage_capped_two",
+    "diagnostic": "one_stage_independent_pairs versus two_stage_argmax, and two_stage_capped_two versus two_stage_argmax"
+  },
+  "primary_metric": "held-out pair micro-F1, unweighted mean across the twelve folds",
+  "secondary_metrics": [
+    "held-out pair micro precision and recall",
+    "held-out aspect micro-F1",
+    "fold wins ties losses",
+    "sentiments emitted per selected aspect",
+    "two-sentiment gold-label recall"
+  ],
+  "output_root": "outputs/experimental/taxonomy_matched_one_vs_two_stage_validation_v1",
+  "stopping_rules": [
+    "official test access",
+    "held-out validation labels entering any parameter or threshold selection",
+    "candidate representation mismatch between architectures",
+    "validation row identity mismatch between architectures",
+    "non-finite score",
+    "more than two sentiments emitted for one selected aspect in the primary two-stage decoder",
+    "fold identity or resume conflict",
+    "incomplete score or result hashes"
+  ],
+  "reporting_rule": "Report every method and decoder, including negative results, as sequential validation evidence; do not use held-out outcomes to change this protocol."
+}

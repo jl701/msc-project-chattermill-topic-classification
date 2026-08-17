@@ -4022,3 +4022,73 @@ selection, or boundary change and reproduced the same values.
 
 Full protocol, commands, limitations, and tracked exports are recorded in
 `docs/experiments/loao_strict_tfidf_aspect_qwen_router_v1.md`.
+
+## 2026-08-17: Matched one-stage versus true two-stage validation
+
+### Objective and frozen design
+
+Following the supervisor discussion, directly compare the original 36
+independent aspect-sentiment decisions with a true aspect-first architecture.
+The comparison was preregistered in
+`configs/experiments/taxonomy_matched_one_vs_two_stage_validation_v1.json`
+before execution.
+
+- Methods: strict train-only TF-IDF and frozen E5-base-v2.
+- Data: official train and validation only; official test remained sealed.
+- Folds: the same twelve registered Level 2 single-held-out-aspect folds.
+- Evaluation: the same 1,057 validation rows and 36 aspect-sentiment candidates
+  per review for both architectures.
+- Representation: aspect name plus approved minimal description everywhere.
+- Selection: architecture-specific thresholds selected only from seen-aspect
+  validation labels with the same end-to-end pair-F1 objective and tie-breaks.
+- Primary two-stage decoder: uncapped aspect selection followed by capped-two
+  sentiment output. Argmax was retained as a diagnostic.
+
+### Commands
+
+```powershell
+C:\Users\10537\miniconda3\python.exe scripts/run_taxonomy_matched_one_vs_two_stage_validation.py --method e5_base_v2 --local-files-only
+C:\Users\10537\miniconda3\python.exe scripts/run_taxonomy_matched_one_vs_two_stage_validation.py --method strict_train_only_tfidf
+C:\Users\10537\miniconda3\python.exe scripts/audit_taxonomy_matched_one_vs_two_stage_validation.py --write outputs/experimental/taxonomy_matched_one_vs_two_stage_validation_v1/audit.json
+```
+
+Focused pre-run tests passed `13/13`. E5 fold execution took 16.6 seconds after
+model loading; TF-IDF fold execution took 1,170.2 seconds on CPU. Training-fold
+sizes ranged from 4,330 to 7,810 reviews; every fold used all 1,057 validation
+reviews.
+
+### Results
+
+| Method | One-stage pair F1 | Two-stage capped-two F1 | Delta | Wins / ties / losses |
+|---|---:|---:|---:|---:|
+| TF-IDF | 0.2196 | **0.2773** | **+0.0577** | 11 / 0 / 1 |
+| E5-base-v2 | 0.1860 | **0.2222** | **+0.0362** | 9 / 0 / 3 |
+
+The argmax diagnostic reached 0.2780 for TF-IDF and 0.2246 for E5. The small
+0.0008 and 0.0024 gaps between argmax and capped-two show that the principal
+improvement comes from factorising aspect detection and sentiment, not from the
+sentiment-cardinality rule. Capped-two remains the adopted default because it
+matches the observed one-or-two-sentiment annotation structure.
+
+The one-stage controls had much lower precision and could emit all three
+sentiments for one aspect. The two-stage primary output never emitted more than
+two sentiments and preserved exactly the same aspect decisions as its argmax
+diagnostic.
+
+### Audit and decision
+
+- Completed folds: 24 / 24; decoder rows: 72 / 72.
+- Failures, non-finite values, resume conflicts, official-test artifacts, and
+  test contracts: all zero.
+- Every fold records validation-row, pair-identity, representation, training,
+  and score SHA-256 evidence.
+- Independent audit records SHA-256 values for 28 result artifacts.
+- Protocol SHA-256:
+  `9788502d6bdce86a389c1584b67b18a5be85762279d0b203c78cc531b034387c`.
+
+Adopt the true two-stage architecture for subsequent fast-method experiments,
+with capped-two as the primary sentiment decoder. Retain the 36-pair system as
+the matched architecture control and argmax as a constrained diagnostic. This
+is sequential validation evidence and does not authorise official-test access.
+Full results and limitations are in
+`docs/experiments/taxonomy_matched_one_vs_two_stage_validation_v1_results.md`.
