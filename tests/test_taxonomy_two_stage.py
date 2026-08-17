@@ -5,11 +5,13 @@ import pandas as pd
 
 from msc_project.data.fabsa import format_pair_label
 from msc_project.experiments.taxonomy_two_stage import (
+    capped_two_sentiment_prediction_mask,
     crossfit_decoder_comparison,
     hierarchical_candidates,
     hierarchical_prediction_mask,
     multi_sentiment_prediction_mask,
     select_multi_sentiment_thresholds,
+    select_second_sentiment_threshold,
     select_top_k_aspect_threshold,
     select_two_stage_threshold,
     top_k_sentiment_prediction_mask,
@@ -150,6 +152,47 @@ def test_fixed_top_two_decoder_emits_two_sentiments_per_selected_aspect() -> Non
     )
     counts = frame.loc[mask].groupby(["row_uid", "candidate_aspect"]).size()
     assert counts.eq(2).all()
+
+
+def test_capped_two_decoder_never_emits_a_third_sentiment() -> None:
+    frame = _grid(2)
+    frame["aspect_score"] = 0.9
+    frame["sentiment_score"] = [0.9, 0.8, 0.7, 0.6, 0.5, 0.4] * 2
+    mask = capped_two_sentiment_prediction_mask(
+        frame,
+        aspect_threshold=0.5,
+        second_sentiment_threshold=0.45,
+    )
+    counts = frame.loc[mask].groupby(["row_uid", "candidate_aspect"]).size()
+    assert counts.between(1, 2).all()
+    assert int(counts.max()) == 2
+
+
+def test_second_sentiment_selection_freezes_aspect_threshold_and_nests_argmax() -> None:
+    frame = _grid(20)
+    frame["aspect_score"] = 0.9
+    frame["target"] = 0
+    frame["sentiment_score"] = 0.05
+    for indices in frame.groupby(
+        ["row_uid", "candidate_aspect"], sort=False
+    ).groups.values():
+        positions = list(indices)
+        frame.loc[positions[0], ["target", "sentiment_score"]] = [1, 0.9]
+        frame.loc[positions[2], ["target", "sentiment_score"]] = [1, 0.8]
+    aspect_threshold = 0.5
+    selected = select_second_sentiment_threshold(
+        frame,
+        aspect_threshold=aspect_threshold,
+    )
+    assert selected.aspect_threshold == aspect_threshold
+    mask = capped_two_sentiment_prediction_mask(
+        frame,
+        aspect_threshold=aspect_threshold,
+        second_sentiment_threshold=selected.second_sentiment_threshold,
+    )
+    counts = frame.loc[mask].groupby(["row_uid", "candidate_aspect"]).size()
+    assert counts.eq(2).all()
+    assert int(mask.sum()) == int(frame["target"].sum())
 
 
 def test_two_stage_grid_variants_and_score_join() -> None:

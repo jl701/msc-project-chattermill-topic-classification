@@ -40,6 +40,15 @@ class MultiSentimentThresholdSelection:
     decoder: str
 
 
+@dataclass(frozen=True)
+class SecondSentimentThresholdSelection:
+    aspect_threshold: float
+    second_sentiment_threshold: float
+    selection_metrics: dict[str, float]
+    candidates_evaluated: int
+    decoder: str
+
+
 _TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
 _GENERIC_ASPECT_TOKENS = frozenset(
     {
@@ -930,6 +939,181 @@ def select_top_k_aspect_threshold(
         sentiment_thresholds_evaluated=0,
         decoder=f"top_{int(top_k)}",
     )
+
+
+def capped_two_sentiment_prediction_mask(
+    scored_grid: pd.DataFrame,
+    *,
+    aspect_threshold: float,
+    second_sentiment_threshold: float,
+) -> pd.Series:
+    """Always emit top one and conditionally add the runner-up sentiment."""
+
+    (
+        _,
+        aspect_scores,
+        sentiment_scores,
+        _,
+        positions,
+    ) = _ordered_two_stage_groups(scored_grid)
+    selected_aspects = aspect_scores >= float(aspect_threshold)
+    rank_order = np.argsort(-sentiment_scores, axis=1, kind="stable")
+    sentiment_mask = np.zeros_like(sentiment_scores, dtype=bool)
+    selected_rows = np.flatnonzero(selected_aspects)
+    sentiment_mask[selected_rows, rank_order[selected_rows, 0]] = True
+    runner_up_scores = sentiment_scores[
+        np.arange(len(sentiment_scores)), rank_order[:, 1]
+    ]
+    doubled_rows = np.flatnonzero(
+        selected_aspects
+        & (runner_up_scores >= float(second_sentiment_threshold))
+    )
+    sentiment_mask[doubled_rows, rank_order[doubled_rows, 1]] = True
+    output = np.zeros(len(scored_grid), dtype=bool)
+    output[positions.reshape(-1)] = sentiment_mask.reshape(-1)
+    return pd.Series(output, index=scored_grid.index, dtype=bool)
+
+
+def select_second_sentiment_threshold(
+    scored_grid: pd.DataFrame,
+    *,
+    aspect_threshold: float,
+) -> SecondSentimentThresholdSelection:
+    """Select only the runner-up threshold with aspect decisions frozen."""
+
+    if not np.isfinite(float(aspect_threshold)):
+        raise ValueError("Aspect threshold must be finite.")
+    (
+        ordered,
+        aspect_scores,
+        sentiment_scores,
+        targets,
+        _,
+    ) = _ordered_two_stage_groups(scored_grid)
+    width = len(CANDIDATE_SENTIMENTS)
+    group_rows = ordered["row_uid"].astype(str).to_numpy()[::width]
+    unique_rows, row_indices = np.unique(group_rows, return_inverse=True)
+    gold_by_row = np.bincount(
+        row_indices,
+        weights=targets.sum(axis=1),
+        minlength=len(unique_rows),
+    ).astype(np.int64)
+
+    selected_aspects = aspect_scores >= float(aspect_threshold)
+    selected_groups = np.flatnonzero(selected_aspects)
+    if not len(selected_groups):
+        raise ValueError("Frozen aspect threshold selected no seen aspect instances.")
+    rank_order = np.argsort(-sentiment_scores, axis=1, kind="stable")
+    top_indices = rank_order[selected_groups, 0]
+    runner_up_indices = rank_order[selected_groups, 1]
+    selected_rows = row_indices[selected_groups]
+    runner_up_scores = sentiment_scores[selected_groups, runner_up_indices]
+    runner_up_targets = targets[selected_groups, runner_up_indices]
+
+    predicted_by_row = np.bincount(
+        selected_rows,
+        minlength=len(unique_rows),
+    ).astype(np.int64)
+    top_targets = targets[selected_groups, top_indices].astype(np.int64)
+    true_positive_by_row = np.bincount(
+        selected_rows,
+        weights=top_targets,
+        minlength=len(unique_rows),
+    ).astype(np.int64)
+    predicted_count = int(predicted_by_row.sum())
+    true_positive_count = int(true_positive_by_row.sum())
+    total_gold = int(gold_by_row.sum())
+    samples_denominator = gold_by_row + predicted_by_row
+    samples_f1_sum = float(
+        np.divide(
+            2.0 * true_positive_by_row,
+            samples_denominator,
+            out=np.zeros(len(unique_rows), dtype=float),
+            where=samples_denominator != 0,
+        ).sum()
+    )
+
+    order = np.argsort(-runner_up_scores, kind="stable")
+    sorted_scores = runner_up_scores[order]
+    sorted_rows = selected_rows[order]
+    sorted_targets = runner_up_targets[order]
+    thresholds = strict_threshold_candidates(runner_up_scores)
+    thresholds.append(np.nextafter(float(runner_up_scores.max()), float("inf")))
+    thresholds = sorted({float(value) for value in thresholds}, reverse=True)
+    pointer = 0
+    second_count = 0
+    best: SecondSentimentThresholdSelection | None = None
+    best_rank: tuple[float, ...] | None = None
+    for threshold in thresholds:
+        while pointer < len(sorted_scores) and sorted_scores[pointer] >= threshold:
+            row_index = int(sorted_rows[pointer])
+            old_predicted = int(predicted_by_row[row_index])
+            old_true_positive = int(true_positive_by_row[row_index])
+            gold_count = int(gold_by_row[row_index])
+            old_denominator = gold_count + old_predicted
+            old_samples_f1 = (
+                2.0 * old_true_positive / old_denominator
+                if old_denominator
+                else 0.0
+            )
+            predicted_by_row[row_index] += 1
+            predicted_count += 1
+            second_count += 1
+            if bool(sorted_targets[pointer]):
+                true_positive_by_row[row_index] += 1
+                true_positive_count += 1
+            new_denominator = gold_count + int(predicted_by_row[row_index])
+            new_samples_f1 = (
+                2.0 * int(true_positive_by_row[row_index]) / new_denominator
+                if new_denominator
+                else 0.0
+            )
+            samples_f1_sum += new_samples_f1 - old_samples_f1
+            pointer += 1
+
+        false_positive_count = predicted_count - true_positive_count
+        false_negative_count = total_gold - true_positive_count
+        denominator = (
+            2 * true_positive_count
+            + false_positive_count
+            + false_negative_count
+        )
+        record = {
+            "aspect_threshold": float(aspect_threshold),
+            "second_sentiment_threshold": float(threshold),
+            "pair_micro_f1": (
+                2.0 * true_positive_count / denominator if denominator else 0.0
+            ),
+            "pair_samples_f1": float(samples_f1_sum / len(unique_rows)),
+            "pair_micro_precision": (
+                true_positive_count / predicted_count if predicted_count else 0.0
+            ),
+            "sentiments_per_selected_aspect": float(
+                predicted_count / len(selected_groups)
+            ),
+            "second_sentiment_selected_aspect_rate": float(
+                second_count / len(selected_groups)
+            ),
+        }
+        rank = (
+            record["pair_micro_f1"],
+            record["pair_samples_f1"],
+            record["pair_micro_precision"],
+            -record["second_sentiment_selected_aspect_rate"],
+            record["second_sentiment_threshold"],
+        )
+        if best_rank is None or rank > best_rank:
+            best_rank = rank
+            best = SecondSentimentThresholdSelection(
+                aspect_threshold=float(aspect_threshold),
+                second_sentiment_threshold=float(threshold),
+                selection_metrics=record,
+                candidates_evaluated=len(thresholds),
+                decoder="top_one_plus_thresholded_runner_up",
+            )
+    if best is None:
+        raise ValueError("Second-sentiment threshold selection failed.")
+    return best
 
 
 def conditional_sentiment_metrics(scored_grid: pd.DataFrame) -> dict[str, float]:

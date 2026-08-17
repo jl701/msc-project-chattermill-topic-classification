@@ -89,6 +89,10 @@ remove the joint aspect-threshold calibration effect observed for TF-IDF. It
 should be preregistered as a separate follow-up rather than selected from these
 held-out results.
 
+That sequential follow-up was subsequently frozen and completed as
+`taxonomy_capped_two_sentiment_validation_v2`; its result is recorded in
+`docs/experiments/taxonomy_capped_two_sentiment_validation_v2_results.md`.
+
 ## Audit
 
 - Methods: 2; completed folds: 24 / 24; failed folds: 0.
