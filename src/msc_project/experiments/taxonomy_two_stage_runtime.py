@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from collections.abc import Mapping, Sequence
 
 import numpy as np
@@ -14,12 +15,14 @@ from msc_project.baselines.unified_pair_scorers import (
 from msc_project.data.fabsa import format_pair_label
 from msc_project.experiments.taxonomy_two_stage import TfidfAspectPresenceScorer
 from msc_project.experiments.unified_candidate_pairs import CANDIDATE_SENTIMENTS
+from msc_project.llm.qwen_two_stage_classifier import TwoStageDemonstration
 
 
 REPRESENTATION_VARIANTS = (
     "name_and_description",
     "name_only",
     "description_only",
+    "rich",
 )
 
 
@@ -27,6 +30,13 @@ def _minimal_aspects(resource: Mapping[str, object]) -> Mapping[str, object]:
     value = resource.get("minimal_aspects", resource.get("aspects"))
     if not isinstance(value, Mapping):
         raise ValueError("Description resource has no minimal aspect mapping.")
+    return value
+
+
+def _rich_aspects(resource: Mapping[str, object]) -> Mapping[str, object]:
+    value = resource.get("rich_aspects")
+    if not isinstance(value, Mapping):
+        raise ValueError("Description resource has no rich aspect mapping.")
     return value
 
 
@@ -45,6 +55,19 @@ def render_aspect_candidate(
         return f"Aspect: {aspect}. Definition: {description}"
     if variant == "name_only":
         return f"Aspect: {aspect}."
+    if variant == "rich":
+        raw_card = _rich_aspects(resource).get(aspect)
+        if not isinstance(raw_card, Mapping):
+            raise ValueError(f"Missing rich aspect card: {aspect!r}.")
+        aliases = raw_card.get("aliases")
+        if not isinstance(aliases, list) or not aliases:
+            raise ValueError(f"Rich aspect aliases are invalid: {aspect!r}.")
+        return (
+            f"Aspect: {aspect}. Definition: {raw_card['definition']} "
+            f"Aliases: {'; '.join(str(value) for value in aliases)}. "
+            f"Inclusion boundary: {raw_card['inclusion_boundary']} "
+            f"Contrastive boundary: {raw_card['contrastive_boundary']}"
+        )
     return f"Aspect definition: {description}"
 
 
@@ -76,6 +99,145 @@ def representation_map(
         )
         for aspect in aspects
     }
+
+
+def _stable_demo_key(
+    *,
+    seed: int,
+    stage: str,
+    answer: str,
+    row_uid: str,
+    aspect: str,
+) -> str:
+    value = f"{seed}|{stage}|{answer}|{row_uid}|{aspect}"
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+def _select_distinct_aspects(
+    candidates: Sequence[TwoStageDemonstration],
+    *,
+    count: int,
+    seed: int,
+    stage: str,
+    answer: str,
+) -> list[TwoStageDemonstration]:
+    ordered = sorted(
+        candidates,
+        key=lambda value: (
+            _stable_demo_key(
+                seed=seed,
+                stage=stage,
+                answer=answer,
+                row_uid=value.row_uid,
+                aspect=value.candidate_aspect,
+            ),
+            value.row_uid,
+            value.candidate_aspect,
+        ),
+    )
+    selected: list[TwoStageDemonstration] = []
+    used_aspects: set[str] = set()
+    for value in ordered:
+        if value.candidate_aspect in used_aspects:
+            continue
+        selected.append(value)
+        used_aspects.add(value.candidate_aspect)
+        if len(selected) == count:
+            return selected
+    for value in ordered:
+        if value in selected:
+            continue
+        selected.append(value)
+        if len(selected) == count:
+            return selected
+    raise ValueError(
+        f"Insufficient eligible {stage} demonstrations for answer {answer!r}."
+    )
+
+
+def select_qwen_two_stage_demonstrations(
+    train_rows: pd.DataFrame,
+    seen_aspects: Sequence[str],
+    resource: Mapping[str, object],
+    *,
+    seed: int = 13,
+) -> dict[str, tuple[TwoStageDemonstration, ...]]:
+    """Select fixed cross-aspect examples using train-only stable hashes."""
+
+    aspects = tuple(str(value) for value in seen_aspects)
+    if not aspects or len(aspects) != len(set(aspects)):
+        raise ValueError("Seen aspects must be non-empty and unique.")
+    if train_rows.empty or {"row_uid", "text"} - set(train_rows.columns):
+        raise ValueError("Training rows lack the fields required for demonstrations.")
+    variants = {aspect: "name_and_description" for aspect in aspects}
+    aspect_grid = build_aspect_grid(train_rows, aspects, variants, resource)
+    stage_1: dict[str, list[TwoStageDemonstration]] = {"Y": [], "N": []}
+    for row in aspect_grid.itertuples(index=False):
+        answer = "Y" if int(row.target) == 1 else "N"
+        stage_1[answer].append(
+            TwoStageDemonstration(
+                row_uid=str(row.row_uid),
+                candidate_aspect=str(row.candidate_aspect),
+                review_text=str(row.text),
+                aspect_candidate=str(row.candidate_text),
+                answer=answer,
+            )
+        )
+    selected_aspect = tuple(
+        _select_distinct_aspects(
+            stage_1[answer],
+            count=2,
+            seed=seed,
+            stage="aspect",
+            answer=answer,
+        )[index]
+        for answer in ("Y", "N")
+        for index in range(2)
+    )
+
+    answer_for_sentiment = {"negative": "A", "neutral": "B", "positive": "C"}
+    stage_2: dict[str, list[TwoStageDemonstration]] = {
+        answer: [] for answer in answer_for_sentiment.values()
+    }
+    for row in train_rows.itertuples(index=False):
+        labels = tuple(
+            (str(aspect), str(sentiment))
+            for aspect, sentiment in _row_labels(pd.Series(row._asdict()))
+            if str(aspect) in variants
+        )
+        sentiments_by_aspect: dict[str, list[str]] = {}
+        for aspect, sentiment in labels:
+            sentiments_by_aspect.setdefault(aspect, []).append(sentiment)
+        for aspect, sentiments in sentiments_by_aspect.items():
+            unique_sentiments = tuple(dict.fromkeys(sentiments))
+            if len(unique_sentiments) != 1:
+                continue
+            sentiment = unique_sentiments[0]
+            if sentiment not in answer_for_sentiment:
+                continue
+            answer = answer_for_sentiment[sentiment]
+            stage_2[answer].append(
+                TwoStageDemonstration(
+                    row_uid=str(row.row_uid),
+                    candidate_aspect=aspect,
+                    review_text="" if pd.isna(row.text) else str(row.text),
+                    aspect_candidate=render_aspect_candidate(
+                        aspect, "name_and_description", resource
+                    ),
+                    answer=answer,
+                )
+            )
+    selected_sentiment = tuple(
+        _select_distinct_aspects(
+            stage_2[answer],
+            count=1,
+            seed=seed,
+            stage="sentiment",
+            answer=answer,
+        )[0]
+        for answer in ("A", "B", "C")
+    )
+    return {"aspect": selected_aspect, "sentiment": selected_sentiment}
 
 
 def _row_labels(row: pd.Series) -> tuple[tuple[str, str], ...]:

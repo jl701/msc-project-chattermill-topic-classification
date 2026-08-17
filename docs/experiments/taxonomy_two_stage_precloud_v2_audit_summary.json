@@ -1,0 +1,43 @@
+{
+  "schema_version": "taxonomy_two_stage_precloud_v2_tracked_audit_summary_v1",
+  "status": "pass",
+  "date": "2026-08-17",
+  "official_splits_opened": [
+    "train",
+    "validation"
+  ],
+  "official_test_artifact_count": 0,
+  "test_contract_count": 0,
+  "failure_count": 0,
+  "unique_training_scopes": 26,
+  "fold_condition_records": 261,
+  "full_pytest_passed": 363,
+  "augmented_qwen_zero_shot_cache": {
+    "rows": 100032,
+    "aspect_rows": 50016,
+    "sentiment_rows": 50016,
+    "sha256": "08d276ac8915a929c3849dc92a54130df53a9835a8f0b36a0040ee7dbfad9db3",
+    "non_finite_rows": 0,
+    "conflicting_keys": 0
+  },
+  "real_model_smokes": {
+    "distilbert_true_two_stage": {
+      "status": "pass",
+      "elapsed_seconds": 1.5543997999920975,
+      "cuda_peak_memory_bytes": 1908527104
+    },
+    "frozen_qwen_few_shot": {
+      "status": "pass",
+      "elapsed_seconds": 11.613338600000134,
+      "cuda_peak_memory_bytes": 3152056832
+    },
+    "qwen_true_two_stage_qlora": {
+      "status": "pass",
+      "elapsed_seconds": 16.910425599984592,
+      "cuda_peak_memory_bytes": 4223285760
+    }
+  },
+  "next_authorised_boundary": "measured single-scope cloud benchmark gate only",
+  "full_cloud_validation_release": "blocked_until_measured_gate_passes",
+  "official_test_release": "blocked"
+}

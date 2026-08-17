@@ -1,0 +1,158 @@
+{
+  "gate_id": "taxonomy_two_stage_cloud_gate_v1",
+  "status": "preregistered_before_cloud_execution",
+  "registered_at": "2026-08-17T00:00:00+01:00",
+  "parent_protocol_id": "taxonomy_two_stage_precloud_v2",
+  "purpose": "Admit only the measured cloud benchmark for the genuine two-stage validation suite after every local prerequisite has passed.",
+  "data_contract": {
+    "allowed_splits": [
+      "train",
+      "validation"
+    ],
+    "include_official_test": false,
+    "upload_whitelist": {
+      "train.csv": "3ffcc7407cc8077fe9efc5ca06532847589a59464ea929d7f23d1f732b9efc7c",
+      "validation.csv": "3a32afda9c4ba1d59e76ee8fcfb480011c7178d8201d0025b254a40c2f81203c"
+    },
+    "forbidden_uploads": [
+      "test.csv",
+      "any test-derived manifest",
+      "any test-derived score, prediction, label, metric or threshold"
+    ],
+    "heldout_validation_role": "evaluation_only",
+    "selection_population": "seen-aspect validation evidence inside the exact outer training scope"
+  },
+  "required_local_artifacts": [
+    "outputs/experimental/taxonomy_two_stage_precloud_v2/reuse_audit.json",
+    "outputs/experimental/taxonomy_two_stage_precloud_v2/training_manifest_audit.json",
+    "outputs/experimental/taxonomy_two_stage_precloud_v2/artifact_audit.json",
+    "outputs/experimental/taxonomy_two_stage_precloud_v2/smoke/distilbert_true_two_stage.json",
+    "outputs/experimental/taxonomy_two_stage_precloud_v2/smoke/frozen_qwen_few_shot.json",
+    "outputs/experimental/taxonomy_two_stage_precloud_v2/smoke/qwen_true_two_stage_qlora.json"
+  ],
+  "required_source_files": [
+    "configs/experiments/taxonomy_two_stage_precloud_v2.json",
+    "requirements-taxonomy-cloud.txt",
+    "scripts/smoke_taxonomy_two_stage_distilbert.py",
+    "scripts/smoke_taxonomy_two_stage_qwen_few_shot.py",
+    "scripts/smoke_taxonomy_two_stage_qwen_qlora.py",
+    "src/msc_project/experiments/taxonomy_two_stage.py",
+    "src/msc_project/experiments/taxonomy_two_stage_runtime.py",
+    "src/msc_project/experiments/taxonomy_two_stage_training.py",
+    "src/msc_project/experiments/taxonomy_two_stage_distilbert.py",
+    "src/msc_project/llm/qwen_pair_classifier.py",
+    "src/msc_project/llm/qwen_two_stage_classifier.py"
+  ],
+  "benchmark_gate": {
+    "scope": "one registered single-aspect outer scope only",
+    "fold_id": "l2-a01",
+    "formal_result": false,
+    "commands": [
+      [
+        "python",
+        "scripts/smoke_taxonomy_two_stage_qwen_few_shot.py",
+        "--fold-id",
+        "l2-a01",
+        "--output",
+        "outputs/experimental/taxonomy_two_stage_cloud_v1/gate/frozen_qwen_few_shot.json"
+      ],
+      [
+        "python",
+        "scripts/smoke_taxonomy_two_stage_distilbert.py",
+        "--fold-id",
+        "l2-a01",
+        "--output",
+        "outputs/experimental/taxonomy_two_stage_cloud_v1/gate/distilbert_true_two_stage.json"
+      ],
+      [
+        "python",
+        "scripts/smoke_taxonomy_two_stage_qwen_qlora.py",
+        "--fold-id",
+        "l2-a01",
+        "--output",
+        "outputs/experimental/taxonomy_two_stage_cloud_v1/gate/qwen_true_two_stage_qlora.json"
+      ]
+    ],
+    "admission_criteria": [
+      "all three commands exit zero",
+      "all losses and probabilities are finite",
+      "no OOM",
+      "no repeated thermal throttling",
+      "no prediction collapse",
+      "test-contract count remains zero",
+      "observed throughput and peak memory are recorded before the full schedule is released"
+    ]
+  },
+  "full_validation_schedule_after_gate": {
+    "release_status": "blocked_until_measured_gate_passes",
+    "order": [
+      "Frozen Qwen few-shot full validation-only suite",
+      "DistilBERT genuine two-stage learning-rate selection and full validation-only suite",
+      "matched one-stage controls only where the exact-reuse auditor rejects reuse",
+      "QLoRA one-scope L2 measured gate",
+      "QLoRA remaining L2 scopes",
+      "QLoRA L1, L3 and L4"
+    ],
+    "levels": {
+      "L1": {
+        "folds": 12,
+        "conditions": [
+          "N",
+          "D"
+        ]
+      },
+      "L2": {
+        "folds": 12,
+        "conditions": [
+          "D"
+        ]
+      },
+      "L3": {
+        "folds": 12,
+        "conditions": [
+          "NN",
+          "DN",
+          "ND",
+          "DD",
+          "RR"
+        ]
+      },
+      "L4": {
+        "folds": 3,
+        "conditions": [
+          "D"
+        ]
+      }
+    },
+    "unique_training_scopes": 26,
+    "distilbert_learning_rates": [
+      0.00002,
+      0.00003,
+      0.00005
+    ],
+    "qlora_learning_rates": [
+      0.000002,
+      0.000005,
+      0.00001
+    ],
+    "selection_tie_breakers": [
+      "higher seen-validation end-to-end pair micro-F1",
+      "higher seen-validation pair samples-F1",
+      "higher seen-validation precision",
+      "lower learning rate"
+    ]
+  },
+  "stop_conditions": [
+    "any official-test access or test contract",
+    "held-out validation labels used for demonstrations thresholds or hyperparameters",
+    "hash-incompatible resume or reuse",
+    "missing checkpoint or score shard",
+    "non-finite loss or score",
+    "duplicate training identity",
+    "third sentiment emitted for one aspect",
+    "unexpected prediction collapse",
+    "OOM",
+    "repeated thermal throttling",
+    "L3 checkpoint demonstration threshold or seen-score mismatch across conditions"
+  ]
+}

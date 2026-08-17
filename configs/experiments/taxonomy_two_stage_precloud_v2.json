@@ -1,0 +1,275 @@
+{
+  "protocol_id": "taxonomy_two_stage_precloud_v2",
+  "status": "preregistered_before_new_execution",
+  "registered_at": "2026-08-17T00:00:00+01:00",
+  "base_commit": "a99f41b8971a90cde25b2cebce0ce62c88bd4cd9",
+  "objective": "Complete and audit every local prerequisite for a genuine aspect-first then sentiment taxonomy-generalisation suite before expensive online-GPU execution.",
+  "parent_protocols": [
+    "taxonomy_generalisation_precloud_v1",
+    "taxonomy_two_stage_validation_v1",
+    "taxonomy_capped_two_sentiment_validation_v2",
+    "taxonomy_matched_one_vs_two_stage_validation_v1"
+  ],
+  "sealed_data_contract": {
+    "allowed_splits": [
+      "train",
+      "validation"
+    ],
+    "forbidden_split": "test",
+    "include_official_test": false,
+    "cloud_upload_must_exclude": [
+      "test.csv",
+      "any test-derived manifest",
+      "any test-derived label or score artifact"
+    ],
+    "target_validation_use": "evaluation only",
+    "selection_population": "seen-aspect validation labels within the exact outer training scope only",
+    "selection_objective": "end-to-end pair micro-F1",
+    "seed": 13
+  },
+  "exact_input_hashes": {
+    "train_csv_sha256": "3ffcc7407cc8077fe9efc5ca06532847589a59464ea929d7f23d1f732b9efc7c",
+    "validation_csv_sha256": "3a32afda9c4ba1d59e76ee8fcfb480011c7178d8201d0025b254a40c2f81203c",
+    "minimal_description_file_sha256": "8f72951f436bd6af606dd7d07ec249f406ce6b7d6ae690817978da5430c92106",
+    "rich_guidance_file_sha256": "649ad01b32e931dcaba5339bebb50bfdd270928900cfa38d1bbccbeaec7d3f31",
+    "completed_l2_qwen_zero_shot_cache_sha256": "32d0b82e417803dec5a7cdc620f4c7e947b133adfda43992a8cc4491562506dc",
+    "completed_l2_qwen_zero_shot_prompt_contract_sha256": "ed6eff449c4396e46ce11c17875997772feced1ac2701e82092a4c66e1ba162b",
+    "completed_l2_qwen_zero_shot_cache_rows": 75024
+  },
+  "architecture": {
+    "stage_1": {
+      "task": "candidate aspect presence",
+      "output": "one finite presence probability per review-candidate-aspect",
+      "decoder": "select every candidate aspect meeting the seen-only aspect threshold",
+      "maximum_aspects_per_review": null,
+      "top_k_fallback": false
+    },
+    "stage_2": {
+      "task": "sentiment conditional on a selected candidate aspect",
+      "labels": [
+        "negative",
+        "neutral",
+        "positive"
+      ],
+      "execution": "score only stage-1-selected aspects in the deployed pipeline",
+      "evaluation_cache_permission": "all sentiment scores may be computed before threshold selection only to permit deterministic validation and oracle-gated diagnostics",
+      "primary_decoder": "always emit top-1 sentiment and emit the runner-up only if its score meets a separately selected seen-only threshold",
+      "maximum_sentiments_per_aspect": 2,
+      "third_sentiment_permitted": false,
+      "argmax_role": "diagnostic control"
+    },
+    "thresholds": {
+      "aspect": "selected first on seen-aspect validation evidence",
+      "runner_up_sentiment": "selected second with the aspect threshold frozen, on the same seen-only population",
+      "sharing": "one aspect threshold and one runner-up threshold per method and outer training scope; shared across every representation condition belonging to that scope"
+    },
+    "one_stage_role": "matched architecture control only; never relabel one-stage checkpoints or scores as genuine two-stage artifacts"
+  },
+  "levels": {
+    "L1": {
+      "heldout": "one aspect",
+      "evaluation_candidates": "the supplied held-out aspect only",
+      "conditions": [
+        "N",
+        "D"
+      ]
+    },
+    "L2": {
+      "heldout": "one aspect",
+      "evaluation_candidates": "all twelve aspects",
+      "conditions": [
+        "D"
+      ]
+    },
+    "L3": {
+      "heldout": "two cyclic aspects A and B",
+      "training": "train exactly once per ten-seen-aspect scope using name plus minimal description",
+      "seen_candidate_representation": "name_and_description in every condition",
+      "conditions": {
+        "NN": {
+          "A": "name_only",
+          "B": "name_only"
+        },
+        "DN": {
+          "A": "name_and_description",
+          "B": "name_only"
+        },
+        "ND": {
+          "A": "name_only",
+          "B": "name_and_description"
+        },
+        "DD": {
+          "A": "name_and_description",
+          "B": "name_and_description"
+        },
+        "RR": {
+          "A": "rich_aspect_guidance",
+          "B": "rich_aspect_guidance"
+        }
+      },
+      "invariants": [
+        "same checkpoint or frozen model across NN DN ND DD RR",
+        "same deterministic few-shot demonstrations across NN DN ND DD RR",
+        "same validation row identities across NN DN ND DD RR",
+        "same aspect and runner-up thresholds across NN DN ND DD RR",
+        "seen-candidate rendered prompts and raw scores are hash-identical across NN DN ND DD RR",
+        "both stages receive the same candidate representation within a condition",
+        "rich guidance contains aspect information only and never supplies candidate sentiment"
+      ]
+    },
+    "L4": {
+      "heldout": "one registered semantic parent group",
+      "evaluation_candidates": "all twelve aspects",
+      "conditions": [
+        "D"
+      ]
+    }
+  },
+  "frozen_qwen_arms": {
+    "zero_shot": {
+      "prompt_schema": "qwen_true_two_stage_next_token_v1",
+      "max_length": 384,
+      "aspect_verbalizers": [
+        "Y",
+        "N"
+      ],
+      "sentiment_verbalizers": {
+        "A": "negative",
+        "B": "neutral",
+        "C": "positive"
+      }
+    },
+    "few_shot": {
+      "prompt_schema": "qwen_true_two_stage_few_shot_next_token_v1",
+      "max_length": 1024,
+      "selection": "stable SHA-256 order from the exact outer train fold; no retrieval and no result-guided selection",
+      "cross_aspect_only": true,
+      "heldout_aspect_demonstrations_permitted": false,
+      "demonstration_representation": "name plus minimal description",
+      "stage_1_demonstrations": {
+        "count": 4,
+        "labels": {
+          "Y": 2,
+          "N": 2
+        }
+      },
+      "stage_2_demonstrations": {
+        "count": 3,
+        "labels": {
+          "negative": 1,
+          "neutral": 1,
+          "positive": 1
+        },
+        "eligibility": "gold-present review-aspect instances with exactly one gold sentiment"
+      },
+      "sharing": "same demonstrations for every query and L3 condition inside one outer training scope",
+      "truncation": "preserve system instruction, all demonstration labels and query candidate; truncate review fields deterministically from the right only after segment-aware budgeting",
+      "cache": "separate from zero-shot with exact rendered-prompt hashes"
+    }
+  },
+  "trainable_two_stage_methods": {
+    "distilbert_review_candidate_cross_encoder": {
+      "training": "new genuine two-stage training; old pair checkpoints are control-only",
+      "structure": "two task-specific sequence classifiers initialized from the exact same pinned DistilBERT base revision: a binary aspect-presence classifier and a three-class conditional-sentiment classifier",
+      "checkpointing": "separate aspect and sentiment checkpoint hashes bound into one outer-scope two-stage checkpoint contract",
+      "hyperparameter_selection": "nested seen-only per exact outer training scope"
+    },
+    "qwen_candidate_pair_qlora": {
+      "training": "new genuine two-stage QLoRA training; old pair adapters are control-only",
+      "adapter": "one shared adapter per outer training scope with explicit aspect_presence and sentiment task prompts",
+      "training_example_budget": 4096,
+      "stage_1_budget": 2048,
+      "stage_2_budget": 2048,
+      "stage_1_balance": "equal Y and N",
+      "stage_2_balance": "deterministic class-balanced allocation subject to observed support, with no duplicated identity",
+      "learning_rate_grid": [
+        0.000002,
+        0.000005,
+        0.00001
+      ],
+      "grid_reuse_rule": "the search range is reused but no historical selected learning rate is transferred",
+      "hyperparameter_selection": "nested seen-only per exact outer training scope"
+    }
+  },
+  "reuse_policy": {
+    "default": "reject",
+    "required_exact_fields": [
+      "data file hashes",
+      "split row identities and pair identities",
+      "outer fold and training filter",
+      "model revision and tokenizer revision",
+      "checkpoint or adapter file hashes",
+      "candidate resource hashes and rendered representation",
+      "task stage",
+      "exact rendered prompt hash",
+      "maximum length and truncation policy",
+      "verbalizers and quantisation",
+      "raw score semantics",
+      "selection population objective and tie breakers",
+      "test-access ledger"
+    ],
+    "classifications": {
+      "REUSE_EXACT": [
+        "completed matched L2 TF-IDF true-two-stage scores and results",
+        "completed matched L2 E5 true-two-stage scores and results",
+        "completed L2 Frozen-Qwen zero-shot raw cache only after file and prompt-contract hash verification",
+        "registered folds and approved description resources only after hash verification"
+      ],
+      "CONTROL_ONLY": [
+        "all historical independent 36-pair results",
+        "all historical DistilBERT pair checkpoints",
+        "all historical QLoRA pair adapters"
+      ],
+      "PENDING_EXACT_AUDIT": [
+        "zero-shot Frozen-Qwen prompts outside the completed L2 cache",
+        "historical checkpoints used solely for matched one-stage controls"
+      ],
+      "NO_REUSE": [
+        "any historical threshold across a changed architecture prompt or selection population",
+        "zero-shot scores for a few-shot arm",
+        "historical pair checkpoints or adapters as genuine two-stage models"
+      ]
+    }
+  },
+  "local_before_cloud": [
+    "validate this preregistration and strict reuse policy",
+    "implement deterministic few-shot demonstration selection and prompt hashing",
+    "implement stage-aware L3 aspect-card rendering and invariants",
+    "implement genuine two-stage training data and runtime contracts for DistilBERT and QLoRA",
+    "run focused and full unit tests",
+    "run synthetic real-model smoke tests where pinned weights are locally available",
+    "audit and reuse completed TF-IDF E5 and Frozen-Qwen L2 artifacts only when exact",
+    "run remaining cheap TF-IDF and E5 validation-only Levels 1 3 and 4",
+    "re-decode exact cached Frozen-Qwen zero-shot scores and compute only demonstrably missing zero-shot prompts",
+    "build and validate a test-free cloud manifest and benchmark gate"
+  ],
+  "online_gpu_order": [
+    "benchmark gate with frozen Qwen few-shot and one tiny trainable two-stage smoke",
+    "Frozen-Qwen few-shot full validation-only suite",
+    "DistilBERT genuine two-stage full validation-only suite",
+    "matched one-stage controls only where exact historical reuse was rejected",
+    "QLoRA one-scope L2 gate",
+    "QLoRA remaining L2 scopes",
+    "QLoRA Levels 1 3 and 4 after L2 audit"
+  ],
+  "separate_deferred_study": {
+    "study_id": "U1_unnamed_unknown_aspect_detection_and_sentiment",
+    "status": "deferred_not_level_5",
+    "scope": "detect that an unspecified unknown aspect may be present without receiving its name or description, then optionally estimate sentiment",
+    "must_not_enter_mainline": true
+  },
+  "stop_conditions": [
+    "any official test access",
+    "held-out labels entering training demonstration selection or threshold selection",
+    "hash-incompatible reuse",
+    "missing checkpoint or score shard",
+    "non-finite score",
+    "resume identity conflict",
+    "duplicate training identity",
+    "third sentiment emitted for one aspect",
+    "unexpected prediction collapse",
+    "OOM",
+    "repeated thermal throttling",
+    "seen-candidate hash mismatch across L3 conditions"
+  ]
+}

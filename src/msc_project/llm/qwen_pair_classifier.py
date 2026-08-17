@@ -467,6 +467,34 @@ def train_qwen_pair_adapter(
     epoch_callback: Callable[[int, dict[str, object], Any, Any], None] | None = None,
 ) -> list[dict[str, object]]:
     """Train an attached QLoRA adapter and expose deterministic epoch checkpoints."""
+    cfg = config or QwenPairTrainingConfig()
+    pairs = list(training_pairs)
+    if not pairs:
+        raise ValueError("QLoRA training requires at least one candidate pair.")
+    items = training_items_from_pairs(
+        tokenizer,
+        pairs,
+        max_length=cfg.max_length,
+        verbalizer_ids=verbalizer_ids,
+    )
+    return train_qwen_encoded_adapter(
+        model,
+        tokenizer,
+        items,
+        cfg,
+        epoch_callback=epoch_callback,
+    )
+
+
+def train_qwen_encoded_adapter(
+    model: Any,
+    tokenizer: Any,
+    encoded_items: Sequence[dict[str, list[int]]],
+    config: QwenPairTrainingConfig | None = None,
+    *,
+    epoch_callback: Callable[[int, dict[str, object], Any, Any], None] | None = None,
+) -> list[dict[str, object]]:
+    """Train one attached adapter from pre-encoded single-token task examples."""
 
     import torch
     from torch.utils.data import DataLoader
@@ -477,15 +505,18 @@ def train_qwen_pair_adapter(
         raise ValueError("Batch size, accumulation steps, and epochs must be positive.")
     if cfg.learning_rate <= 0 or not 0 <= cfg.warmup_ratio < 1:
         raise ValueError("QLoRA learning rate and warmup ratio are invalid.")
-    pairs = list(training_pairs)
-    if not pairs:
-        raise ValueError("QLoRA training requires at least one candidate pair.")
-    items = training_items_from_pairs(
-        tokenizer,
-        pairs,
-        max_length=cfg.max_length,
-        verbalizer_ids=verbalizer_ids,
-    )
+    items = list(encoded_items)
+    if not items:
+        raise ValueError("QLoRA training requires at least one encoded example.")
+    for item in items:
+        if set(item) != {"input_ids", "attention_mask", "labels"}:
+            raise ValueError("Encoded QLoRA examples have an unexpected schema.")
+        lengths = {len(item[key]) for key in item}
+        if len(lengths) != 1 or not next(iter(lengths)):
+            raise ValueError("Encoded QLoRA example lengths are invalid.")
+        supervised = [value for value in item["labels"] if int(value) != -100]
+        if len(supervised) != 1 or supervised[0] != item["input_ids"][-1]:
+            raise ValueError("Each encoded QLoRA example must supervise one final token.")
     set_qwen_pair_seed(cfg.seed)
     generator = torch.Generator()
     generator.manual_seed(cfg.seed)
@@ -631,6 +662,7 @@ def load_qwen_pair_qlora(
     config: QwenPairQLoRAConfig | None = None,
     *,
     revision: str | None = None,
+    local_files_only: bool = False,
 ) -> tuple[Any, Any, VerbalizerTokenIds]:
     """Load a 4-bit Qwen causal LM and attach the unified r=4 QLoRA adapter."""
 
@@ -643,6 +675,7 @@ def load_qwen_pair_qlora(
         model_name,
         revision=revision,
         trust_remote_code=True,
+        local_files_only=local_files_only,
     )
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token = tokenizer.eos_token
@@ -663,6 +696,7 @@ def load_qwen_pair_qlora(
         torch_dtype=torch.float16,
         quantization_config=quantization_config,
         trust_remote_code=True,
+        local_files_only=local_files_only,
     )
     model.config.use_cache = False
     if cfg.load_in_4bit:

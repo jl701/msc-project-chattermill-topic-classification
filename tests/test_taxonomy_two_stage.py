@@ -23,6 +23,7 @@ from msc_project.experiments.taxonomy_two_stage_runtime import (
     build_sentiment_grid,
     join_two_stage_scores,
     render_aspect_candidate,
+    select_qwen_two_stage_demonstrations,
 )
 from msc_project.experiments.unified_candidate_pairs import CANDIDATE_SENTIMENTS
 
@@ -228,3 +229,49 @@ def test_two_stage_grid_variants_and_score_join() -> None:
     assert len(aspect_grid) == 2
     assert len(sentiment_grid) == 6
     assert scored["aspect_score"].notna().all()
+
+
+def test_rich_aspect_card_is_stage_aware_and_has_no_sentiment_answer() -> None:
+    resource = {
+        "minimal_aspects": {"Parent: Alpha": "Alpha definition."},
+        "rich_aspects": {
+            "Parent: Alpha": {
+                "definition": "Alpha definition.",
+                "aliases": ["alpha one", "alpha two", "alpha three"],
+                "inclusion_boundary": "Include alpha topics.",
+                "contrastive_boundary": "Exclude beta topics.",
+            }
+        },
+    }
+    rendered = render_aspect_candidate("Parent: Alpha", "rich", resource)
+    assert "Aliases:" in rendered
+    assert "Inclusion boundary:" in rendered
+    assert "Contrastive boundary:" in rendered
+    assert "Candidate sentiment" not in rendered
+    assert all(value not in rendered for value in CANDIDATE_SENTIMENTS)
+
+
+def test_few_shot_demonstrations_are_train_only_balanced_and_reproducible() -> None:
+    aspects = ("Parent: Alpha", "Parent: Beta", "Parent: Gamma")
+    resource = {
+        "minimal_aspects": {aspect: f"Definition for {aspect}." for aspect in aspects}
+    }
+    rows = pd.DataFrame(
+        {
+            "row_uid": [f"train:{index}" for index in range(9)],
+            "text": [f"review text {index}" for index in range(9)],
+            "supervision_labels": [
+                [(aspects[index % 3], CANDIDATE_SENTIMENTS[index % 3])]
+                for index in range(9)
+            ],
+        }
+    )
+    first = select_qwen_two_stage_demonstrations(rows, aspects, resource, seed=13)
+    second = select_qwen_two_stage_demonstrations(
+        rows.sample(frac=1.0, random_state=99), aspects, resource, seed=13
+    )
+    assert first == second
+    assert [value.answer for value in first["aspect"]] == ["Y", "Y", "N", "N"]
+    assert [value.answer for value in first["sentiment"]] == ["A", "B", "C"]
+    assert all(value.row_uid.startswith("train:") for values in first.values() for value in values)
+    assert all(value.candidate_aspect in aspects for values in first.values() for value in values)

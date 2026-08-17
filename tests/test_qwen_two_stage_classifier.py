@@ -8,6 +8,12 @@ import torch
 
 from msc_project.llm.qwen_two_stage_classifier import (
     SentimentVerbalizerTokenIds,
+    TwoStageDemonstration,
+    demonstrations_sha256,
+    encode_two_stage_training_example,
+    qwen_two_stage_contract_sha256,
+    qwen_two_stage_few_shot_contract_sha256,
+    render_two_stage_few_shot_prompt,
     render_two_stage_prompt,
     restricted_probabilities_from_logits,
     score_two_stage_prompts,
@@ -113,3 +119,103 @@ def test_missing_prompt_positions_are_unique_and_stable() -> None:
     assert unique_missing_positions(
         ["cached", "new-a", "new-a", "new-b", "cached"], {"cached"}
     ) == [1, 3]
+
+
+def _demonstrations(mode: str) -> tuple[TwoStageDemonstration, ...]:
+    answers = ("Y", "Y", "N", "N") if mode == "aspect" else ("A", "B", "C")
+    return tuple(
+        TwoStageDemonstration(
+            row_uid=f"train:{index}",
+            candidate_aspect=f"Aspect {index}",
+            review_text=f"example review {index}",
+            aspect_candidate=f"Aspect: Aspect {index}. Definition: definition {index}",
+            answer=answer,
+        )
+        for index, answer in enumerate(answers)
+    )
+
+
+def test_few_shot_prompt_has_locked_role_and_answer_sequence() -> None:
+    tokenizer = FakeTokenizer()
+    demonstrations = _demonstrations("aspect")
+    render_two_stage_few_shot_prompt(
+        tokenizer,
+        "query review",
+        "Aspect: query.",
+        mode="aspect",
+        demonstrations=demonstrations,
+    )
+    assert [message["role"] for message in tokenizer.last_messages] == [
+        "system",
+        "user",
+        "assistant",
+        "user",
+        "assistant",
+        "user",
+        "assistant",
+        "user",
+        "assistant",
+        "user",
+    ]
+    assert [
+        message["content"]
+        for message in tokenizer.last_messages
+        if message["role"] == "assistant"
+    ] == ["Y", "Y", "N", "N"]
+    assert json.loads(tokenizer.last_messages[-1]["content"])["aspect_candidate"] == (
+        "Aspect: query."
+    )
+
+
+def test_few_shot_contract_and_manifest_are_separate_from_zero_shot() -> None:
+    demonstrations = _demonstrations("sentiment")
+    assert qwen_two_stage_few_shot_contract_sha256(max_length=1024) != (
+        qwen_two_stage_contract_sha256(max_length=1024)
+    )
+    assert demonstrations_sha256(demonstrations) == demonstrations_sha256(
+        tuple(demonstrations)
+    )
+    assert demonstrations_sha256(demonstrations) != demonstrations_sha256(
+        tuple(reversed(demonstrations))
+    )
+
+
+def test_few_shot_scoring_uses_segment_aware_budget() -> None:
+    tokenizer = FakeTokenizer()
+    model = FixedModel()
+    probabilities = score_two_stage_prompts(
+        model,
+        tokenizer,
+        ["query " * 50],
+        ["Aspect: query."],
+        mode="sentiment",
+        max_length=100,
+        batch_size=1,
+        demonstrations=_demonstrations("sentiment"),
+    )
+    assert probabilities.shape == (1, 3)
+    assert int(probabilities.argmax(axis=1)[0]) == 2
+
+
+def test_two_stage_training_example_supervises_one_task_specific_token() -> None:
+    tokenizer = FakeTokenizer()
+    aspect = encode_two_stage_training_example(
+        tokenizer,
+        "review",
+        "Aspect: alpha.",
+        mode="aspect",
+        answer="N",
+        max_length=32,
+    )
+    sentiment = encode_two_stage_training_example(
+        tokenizer,
+        "review",
+        "Aspect: alpha.",
+        mode="sentiment",
+        answer="B",
+        max_length=32,
+    )
+    assert [value for value in aspect["labels"] if value != -100] == [8]
+    assert aspect["input_ids"][-1] == 8
+    assert [value for value in sentiment["labels"] if value != -100] == [11]
+    assert sentiment["input_ids"][-1] == 11
