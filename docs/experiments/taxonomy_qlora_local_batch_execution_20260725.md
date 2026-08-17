@@ -2,7 +2,8 @@
 
 Date: 2026-07-25
 
-Status: launched after user approval; official test remains sealed.
+Status: validation complete and integrity-audited through V10; Gate G handoff
+recorded and official test remains sealed.
 
 ## Purpose
 
@@ -738,6 +739,30 @@ access or any registered scientific parameter. The in-flight `a10` fold
 continued from its existing state; no completed result was discarded or
 rerun. The formal-test gate remains closed.
 
+## V10 completion and Gate G handoff
+
+V10 completed at `2026-08-17T02:05:36.344234+00:00`, exactly at
+`formal-qwen_candidate_pair_qlora-seed0042-l1-a12-select-threshold`. The final
+through-validation state contains 398 completed jobs, zero failed jobs, zero
+running jobs and `include_official_test=false`; the executor and worker exited
+normally and released the GPU.
+
+The close-out audit revalidated all 12 seed-42 checkpoint contracts and their
+120 declared files (332,662,176 bytes). It also verified 12 complete
+eight-shard seen-calibration score contracts: 96 score manifests and 418,572
+finite validation scores (114,261,373 CSV bytes), with every CSV, score,
+pair-identity and run-contract hash matching. Scores span
+`0.000002813018` to `0.999343574047`, with 1,365 values distinct at 12 decimal
+places, zero duplicate pairs and zero collapsed score contracts.
+
+All 12 seed-42 threshold-transfer artifacts passed their self-hash and
+checkpoint/score-reference checks. Their thresholds span `0.734874993563` to
+`0.841814547777` across nine distinct values. The audit found zero resume
+residue, non-finite summaries, test contracts, monitoring alerts or thermal
+slowdown records. V10 therefore passed its batch gate. Gate G now owns the
+validation freeze and leakage review; it does not itself authorise official
+test access.
+
 ## Batch progression
 
 - [x] V0: target-bounded executor, complete tests and real QLoRA smoke.
@@ -750,8 +775,9 @@ rerun. The formal-test gate remains closed.
 - [x] V7: Company-brand and Staff-support group scopes.
 - [x] V8: seed-13 formal validation reuse and threshold transfers.
 - [x] V9: Level 1 seed-23 robustness.
-- [ ] V10: Level 1 seed-42 robustness.
-- [ ] G: validation freeze, leakage audit and user review before test.
+- [x] V10: Level 1 seed-42 robustness.
+- [ ] G: validation freeze, leakage audit and user review before test
+  (technical pre-freeze passed; Level 3 representation decision pending).
 
 ## Monitoring and stop rules
 

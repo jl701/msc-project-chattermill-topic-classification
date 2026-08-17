@@ -2,7 +2,8 @@
 
 Date: 2026-08-10
 
-Status: V8 audited complete; V9 authorised for local validation-only execution.
+Status: V10 audited complete; Gate G technical pre-freeze started and official
+test remains sealed.
 
 ## Purpose
 
@@ -184,3 +185,21 @@ python scripts/execute_taxonomy_plan.py `
 
 `--include-official-test` remains absent. V10 changes only the robustness seed
 and does not inspect or score a held-out Level 3 representation.
+
+## V10 completion and post-supervisor Gate G status
+
+V10 completed at its immutable boundary on 17 August 2026 with 398 cumulative
+QLoRA through-validation jobs, zero failures, zero running jobs and zero test
+contracts. Its close-out audit verified 12 seed-42 checkpoints (120 declared
+files), 96 complete score shards containing 418,572 finite validation scores,
+12 threshold transfers, all declared hashes, no duplicate pairs, no collapsed
+score contract, no resume residue and no thermal-slowdown record.
+
+All five admitted methods are now technically complete through validation.
+The Gate G inventory and hash anchor are recorded in
+`taxonomy_validation_freeze_gate_20260817.md`. That review found no test score
+artifact, test summary or test-use claim. However, the repository still
+records the Level 3 name-only representation question as pending supervisor
+feedback. Therefore the technical pre-freeze passes, while the scientific
+freeze and official-test opening remain withheld until that decision is
+written into a versioned protocol.

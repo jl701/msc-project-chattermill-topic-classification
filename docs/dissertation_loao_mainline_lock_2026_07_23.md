@@ -65,16 +65,17 @@ contracts. The V6 close-out audit was independently repeated on 10 August
 2026. The authoritative execution record is
 `docs/experiments/taxonomy_qlora_local_batch_execution_20260725.md`.
 
-V7, V8 and V9 subsequently completed and passed their integrity audits. The
-through-validation state is now 362 cumulative jobs with zero failures and
-zero test contracts. V9 completed the 12 pre-registered Level 1 seed-23
-robustness fits, their 12 complete seen-calibration score contracts and 12
-threshold transfers. The next incomplete QLoRA gate is V10, which repeats
-only that registered Level 1 robustness schedule at seed 42 and stops at the
-immutable
+V7, V8, V9 and V10 subsequently completed and passed their integrity audits.
+The through-validation state is now 398 cumulative jobs with zero failures and
+zero test contracts. V9 and V10 completed the pre-registered Level 1 seed-23
+and seed-42 robustness fits, their complete seen-calibration score contracts
+and threshold transfers. V10 stopped exactly at the immutable
 `formal-qwen_candidate_pair_qlora-seed0042-l1-a12-select-threshold` boundary.
 The pre-supervisor execution classification is recorded in
 `docs/experiments/taxonomy_pre_supervisor_validation_gate_20260810.md`.
+The post-validation technical freeze and remaining Level 3 decision are
+recorded in
+`docs/experiments/taxonomy_validation_freeze_gate_20260817.md`.
 No formal test pass or cross-level result claim is authorised before all
 admitted validation selection and every method/threshold rule are frozen.
 
@@ -606,7 +607,7 @@ must be marked as pilots, not completion.
   test.
 - [x] Complete and integrity-audit the seed-23 Level 1 robustness batch
   without opening official test.
-- [ ] Complete and integrity-audit the seed-42 Level 1 robustness batch
+- [x] Complete and integrity-audit the seed-42 Level 1 robustness batch
   without opening official test.
 - [ ] Complete all admitted twelve-fold evaluations.
 - [ ] Report overall, seen, unseen, harmonic-mean, exact-match, presence, and
