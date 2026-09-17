@@ -1,0 +1,178 @@
+{
+  "schema_version": "taxonomy_description_to_classifier_weight_transfer_config_v1",
+  "protocol_id": "taxonomy_description_to_classifier_weight_transfer_v1",
+  "status": "preregistered_design_pending_implementation",
+  "registered_at": "2026-08-20T00:00:00+01:00",
+  "thesis_location": "Level 2 single-unseen LOAO additional classical zero-shot transfer method",
+  "objective": "Test whether classifier parameters for one unseen aspect can be synthesised from the relationship between the eleven seen-aspect description embeddings and their independently learned logistic-regression aspect-presence weights.",
+  "interpretation": {
+    "primary": "description-to-classifier parameter transfer for unseen aspect presence",
+    "not_claimed": [
+      "a new general-purpose meta-learning algorithm",
+      "target-labelled calibration",
+      "direct generation of an unseen aspect-specific sentiment classifier",
+      "evidence that descriptions are sufficient without comparison to simpler transfer baselines"
+    ]
+  },
+  "data_contract": {
+    "outer_protocol": "twelve single-unseen LOAO folds",
+    "training_strategy": "example_filtered",
+    "allowed_splits": [
+      "train",
+      "validation"
+    ],
+    "include_official_test": false,
+    "test_contract_count": 0,
+    "target_aspect_labels_allowed_for_selection": false,
+    "seen_aspect_validation_labels_allowed_for_selection": true,
+    "same_rows_as_level_2_mainline": true
+  },
+  "stage_1": {
+    "target": "binary aspect presence",
+    "review_representation": {
+      "base": "strict train-only word-plus-character TF-IDF",
+      "vocabulary_fit": "outer-fold filtered train reviews only",
+      "word_ngram_range": [
+        1,
+        2
+      ],
+      "character_analyser": "char_wb",
+      "character_ngram_range": [
+        3,
+        5
+      ],
+      "minimum_document_frequency": 2,
+      "maximum_word_features": 30000,
+      "maximum_character_features": 30000,
+      "sublinear_term_frequency": true,
+      "projection": "TruncatedSVD followed by feature standardisation",
+      "svd_algorithm": "randomized",
+      "svd_seed": 13,
+      "svd_components_grid": [
+        8,
+        16,
+        32,
+        64
+      ]
+    },
+    "seen_aspect_classifiers": {
+      "count_per_outer_fold": 11,
+      "model": "independent balanced binary logistic regression",
+      "solver": "liblinear",
+      "c_grid": [
+        0.1,
+        1.0,
+        10.0
+      ],
+      "max_iter": 2000,
+      "seed": 13,
+      "parameter_vector": "standardised latent-space coefficients plus intercept"
+    },
+    "description_representation": {
+      "encoder": "intfloat/e5-base-v2",
+      "frozen": true,
+      "normalisation": "L2",
+      "training_descriptor": "canonical aspect name plus frozen minimal definition",
+      "target_variants": [
+        "name_only",
+        "name_and_minimal_description",
+        "rich_guidance"
+      ],
+      "same_generator_and_threshold_across_target_variants": true
+    },
+    "primary_generator": {
+      "model": "centred linear-kernel ridge regression from description embedding to logistic-regression parameter vector",
+      "ridge_alpha_grid": [
+        0.0001,
+        0.001,
+        0.01,
+        0.1,
+        1.0,
+        10.0,
+        100.0
+      ],
+      "output_constraint": "predicted parameter vector remains in the affine span of seen classifier parameters",
+      "neural_hypernetwork_allowed": false
+    },
+    "mandatory_transfer_baselines": [
+      {
+        "id": "mean_seen_weight",
+        "definition": "description-agnostic mean of the eleven seen classifier parameter vectors"
+      },
+      {
+        "id": "nearest_description_weight",
+        "definition": "copy the classifier parameters of the seen aspect with highest cosine description similarity"
+      },
+      {
+        "id": "cosine_barycentric_weight",
+        "definition": "cosine-softmax weighted average of seen classifier parameter vectors",
+        "temperature_grid": [
+          0.05,
+          0.1,
+          0.2,
+          0.5,
+          1.0
+        ]
+      }
+    ],
+    "selection": {
+      "scheme": "leave-one-seen-aspect-out pseudo-unseen meta-validation inside each outer fold",
+      "units": 11,
+      "description": "For each outer-seen aspect, exclude its learned weight from the generator, synthesise it from the other ten seen aspects, and score only that pseudo-unseen aspect on official validation rows. Pool the eleven pseudo-unseen predictions to select the registered hyperparameters and presence threshold.",
+      "primary_metric": "seen-only pseudo-unseen aspect presence F1",
+      "secondary_metrics": [
+        "average precision",
+        "precision",
+        "recall",
+        "parameter-direction cosine reconstruction"
+      ],
+      "tie_break": [
+        "higher average precision",
+        "lower model complexity",
+        "stronger regularisation",
+        "lexicographic configuration id"
+      ]
+    }
+  },
+  "stage_2": {
+    "policy": "reuse the exact registered Level 2 aspect-conditioned sentiment component and capped-two decoder",
+    "new_unseen_sentiment_weight_generator": false,
+    "purpose": "isolate the effect of synthesising the unseen aspect-presence classifier"
+  },
+  "reporting": {
+    "primary": [
+      "held-out aspect presence F1",
+      "held-out aspect average precision",
+      "end-to-end unseen pair micro-F1",
+      "overall pair micro-F1"
+    ],
+    "required": [
+      "all twelve aspect-fold results",
+      "paired description-minus-name-only deltas",
+      "primary generator versus every mandatory transfer baseline",
+      "prediction-set size and false-positive rows per 100",
+      "runtime and peak memory",
+      "non-finite score count",
+      "test-contract count"
+    ],
+    "oracle_diagnostic": "After all choices are frozen, an all-seen Level 1 logistic classifier may be compared with the synthesised weight for diagnostic distance only; its target weight or labels must never select this Level 2 method."
+  },
+  "stop_conditions": [
+    "any official-test access",
+    "target-aspect labels, target classifier weights or target outcomes used for selection",
+    "TF-IDF or SVD fit on rows excluded by the outer fold",
+    "description resource changed after target results are inspected",
+    "non-finite classifier parameters or probabilities",
+    "missing or duplicate review-candidate identities",
+    "resume, configuration or artifact-hash conflict"
+  ],
+  "execution_order": [
+    "implement deterministic manifests and unit tests",
+    "run a synthetic recovery test where descriptor-to-weight structure is known",
+    "run one real validation-only outer-fold smoke",
+    "audit target-label isolation and pseudo-unseen selection",
+    "run all twelve Level 2 validation folds on CPU or local GPU",
+    "compare with strict TF-IDF, E5 and the Level 2 main method roster",
+    "decide thesis正文 versus appendix placement from validation evidence without opening official test"
+  ]
+}

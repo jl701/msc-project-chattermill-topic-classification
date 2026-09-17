@@ -1,0 +1,176 @@
+{
+  "allowed_splits": [
+    "train",
+    "validation"
+  ],
+  "audit_payload_sha256": "a7e489209b661b1dec4964c6aa11d46fb932e292adbd4964390c0cf4fe66ee46",
+  "campaign_states": {
+    "frozen_qwen_few_shot": {
+      "completed_count": 15,
+      "failure_count": 0,
+      "planned_count": 15,
+      "test_contract_count": 0,
+      "updated_at": "2026-08-21T18:59:34.164445+00:00"
+    },
+    "worker-distil-frozen": {
+      "completed_count": 75,
+      "failure_count": 0,
+      "planned_count": 75,
+      "test_contract_count": 0,
+      "updated_at": "2026-08-21T06:11:16.350486+00:00"
+    },
+    "worker-qlora-a": {
+      "completed_count": 40,
+      "failure_count": 0,
+      "planned_count": 40,
+      "test_contract_count": 0,
+      "updated_at": "2026-08-21T10:21:59.763834+00:00"
+    },
+    "worker-qlora-b": {
+      "completed_count": 35,
+      "failure_count": 0,
+      "planned_count": 35,
+      "test_contract_count": 0,
+      "updated_at": "2026-08-21T19:03:52.532959+00:00"
+    }
+  },
+  "checkpoints": {
+    "internal_file_count": 900,
+    "manifest_count": 90,
+    "manifest_count_by_method": {
+      "distilbert_review_candidate_cross_encoder": 45,
+      "qwen_candidate_pair_qlora": 45
+    }
+  },
+  "deployed_commit": "aa84212976a652d62cfca31ed8bf0516a216c485",
+  "expected_result_count": 81,
+  "failure_count": 0,
+  "include_official_test": false,
+  "maximum_sentiments_per_aspect": 2,
+  "non_finite_value_count": 0,
+  "official_test_opened": false,
+  "protocol_id": "taxonomy_two_stage_formal_v2",
+  "result_count_per_method": 27,
+  "results_and_scores": {
+    "minimum_unique_aspect_score_count_per_result": 587,
+    "minimum_unique_sentiment_score_count_per_result": 7305,
+    "prediction_collapse_checks": {
+      "distilbert_review_candidate_cross_encoder/L2/D": {
+        "fold_count": 12,
+        "heldout_aspect_predicted_label_count": 685,
+        "heldout_max_aspect_label_count": 12684,
+        "heldout_positive_row_count": 1846,
+        "status": "non_empty_and_non_saturated"
+      },
+      "distilbert_review_candidate_cross_encoder/L2/N": {
+        "fold_count": 12,
+        "heldout_aspect_predicted_label_count": 1144,
+        "heldout_max_aspect_label_count": 12684,
+        "heldout_positive_row_count": 1846,
+        "status": "non_empty_and_non_saturated"
+      },
+      "distilbert_review_candidate_cross_encoder/L4/D": {
+        "fold_count": 3,
+        "heldout_aspect_predicted_label_count": 822,
+        "heldout_max_aspect_label_count": 8456,
+        "heldout_positive_row_count": 782,
+        "status": "non_empty_and_non_saturated"
+      },
+      "frozen_qwen_few_shot/L2/D": {
+        "fold_count": 12,
+        "heldout_aspect_predicted_label_count": 2250,
+        "heldout_max_aspect_label_count": 12684,
+        "heldout_positive_row_count": 1846,
+        "status": "non_empty_and_non_saturated"
+      },
+      "frozen_qwen_few_shot/L2/N": {
+        "fold_count": 12,
+        "heldout_aspect_predicted_label_count": 1742,
+        "heldout_max_aspect_label_count": 12684,
+        "heldout_positive_row_count": 1846,
+        "status": "non_empty_and_non_saturated"
+      },
+      "frozen_qwen_few_shot/L4/D": {
+        "fold_count": 3,
+        "heldout_aspect_predicted_label_count": 1103,
+        "heldout_max_aspect_label_count": 8456,
+        "heldout_positive_row_count": 782,
+        "status": "non_empty_and_non_saturated"
+      },
+      "qwen_candidate_pair_qlora/L2/D": {
+        "fold_count": 12,
+        "heldout_aspect_predicted_label_count": 1987,
+        "heldout_max_aspect_label_count": 12684,
+        "heldout_positive_row_count": 1846,
+        "status": "non_empty_and_non_saturated"
+      },
+      "qwen_candidate_pair_qlora/L2/N": {
+        "fold_count": 12,
+        "heldout_aspect_predicted_label_count": 1191,
+        "heldout_max_aspect_label_count": 12684,
+        "heldout_positive_row_count": 1846,
+        "status": "non_empty_and_non_saturated"
+      },
+      "qwen_candidate_pair_qlora/L4/D": {
+        "fold_count": 3,
+        "heldout_aspect_predicted_label_count": 1394,
+        "heldout_max_aspect_label_count": 8456,
+        "heldout_positive_row_count": 782,
+        "status": "non_empty_and_non_saturated"
+      }
+    },
+    "result_count": 81,
+    "score_row_count": 3082212,
+    "score_shard_count": 648
+  },
+  "resume_conflict_count": 0,
+  "schema_version": "taxonomy_post_supervisor_formal_v2_local_audit_v1",
+  "selections": {
+    "selection_count": 45,
+    "selection_count_by_method": {
+      "distilbert_review_candidate_cross_encoder": 15,
+      "frozen_qwen_few_shot": 15,
+      "qwen_candidate_pair_qlora": 15
+    }
+  },
+  "source_backup_root": "C:\\Msc_DSML\\Msc_Project\\cloud_backups\\taxonomy_two_stage_formal_v2_r2",
+  "status": "pass",
+  "synchronization": {
+    "receipt_count_by_worker": {
+      "worker-distil-frozen": 1364,
+      "worker-qlora-a": 223,
+      "worker-qlora-b": 202
+    },
+    "receipt_count_total": 1789,
+    "workers": {
+      "worker-distil-frozen": {
+        "duplicate_same_hash_record_count": 0,
+        "file_record_count": 2869,
+        "receipt_count": 1364,
+        "unique_verified_file_count": 2869
+      },
+      "worker-qlora-a": {
+        "duplicate_same_hash_record_count": 0,
+        "file_record_count": 600,
+        "receipt_count": 223,
+        "unique_verified_file_count": 600
+      },
+      "worker-qlora-b": {
+        "duplicate_same_hash_record_count": 0,
+        "file_record_count": 538,
+        "receipt_count": 202,
+        "unique_verified_file_count": 538
+      }
+    }
+  },
+  "table_sha256": {
+    "experiment_level_model_comparison.csv": "b547958d2d39d4d02376c840d09ed135839f5cfd3248370e46afb9643085841e",
+    "formal_fold_results.csv": "e02fd17367dda4bf724adb81399209e3e95c9963d60259fefa2e53c6e065077f",
+    "formal_l2_paired_description_effects.csv": "27da2688e9f64c59ae628d632bd96077641a4cb162a5b61e2c0f3788c5bfd552",
+    "formal_l2_stage_view_summary.csv": "7142b465231a77f8b48661dbdb7087d8e309d064191206476ba7299f3ec8de21",
+    "formal_l4_group_results.csv": "33b968a301f46ab92ed8f42101d51aabf4fbddadb1b3951335d52aa978f98465",
+    "formal_model_condition_summary.csv": "a56ad3e7ab259d28af396adcf5ee623decad32faefe0ea935fefa6be86ed9b09",
+    "formal_paired_model_effects.csv": "785301fead89ee7968937e738e649db15103fe26a9dbf1db3a222602199cb2c4"
+  },
+  "test_contract_count": 0
+}

@@ -4,6 +4,11 @@ import argparse
 import json
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import torch
+    from msc_project.baselines.transformer_sentiment import TransformerAspectSentimentConfig
 
 import pandas as pd
 

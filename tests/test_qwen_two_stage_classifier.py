@@ -197,6 +197,50 @@ def test_few_shot_scoring_uses_segment_aware_budget() -> None:
     assert int(probabilities.argmax(axis=1)[0]) == 2
 
 
+def test_few_shot_scoring_accepts_per_prompt_demonstrations() -> None:
+    tokenizer = FakeTokenizer()
+    model = FixedModel()
+    first = _demonstrations("aspect")
+    second = tuple(
+        TwoStageDemonstration(
+            row_uid=f"other:{index}",
+            candidate_aspect=value.candidate_aspect,
+            review_text=value.review_text,
+            aspect_candidate=value.aspect_candidate,
+            answer=value.answer,
+        )
+        for index, value in enumerate(first)
+    )
+    probabilities = score_two_stage_prompts(
+        model,
+        tokenizer,
+        ["first query", "second query"],
+        ["Aspect: first.", "Aspect: second."],
+        mode="aspect",
+        max_length=100,
+        batch_size=2,
+        demonstration_sets=[first, second],
+    )
+    assert probabilities.shape == (2, 2)
+
+
+def test_few_shot_scoring_rejects_conflicting_demo_modes() -> None:
+    try:
+        score_two_stage_prompts(
+            FixedModel(),
+            FakeTokenizer(),
+            ["query"],
+            ["Aspect: query."],
+            mode="aspect",
+            demonstrations=_demonstrations("aspect"),
+            demonstration_sets=[_demonstrations("aspect")],
+        )
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("Conflicting shared and per-prompt demos were accepted.")
+
+
 def test_two_stage_training_example_supervises_one_task_specific_token() -> None:
     tokenizer = FakeTokenizer()
     aspect = encode_two_stage_training_example(

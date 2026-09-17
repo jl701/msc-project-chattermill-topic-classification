@@ -1,0 +1,1125 @@
+{
+  "allowed_splits": [
+    "train",
+    "validation"
+  ],
+  "exact_reproduced_fold_results": 48,
+  "failure_count": 0,
+  "include_official_test": false,
+  "local_row_evidence_file_count": 96,
+  "local_row_evidence_sha256": {
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\description_conditioned_weight_transfer_kernel_ridge\\l2-a01\\D.csv": "941738b3615bc86c13b21e8765707f4edb84477c9cc2e394db82a0d80810d605",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\description_conditioned_weight_transfer_kernel_ridge\\l2-a01\\N.csv": "4688a76e1767ce798da479cd26b70d23909dd3b303f5cadbeea0f4918f40e102",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\description_conditioned_weight_transfer_kernel_ridge\\l2-a02\\D.csv": "55d9dfb1348226ffc447732e6205147ded16eeed207b9c01236ba5246cd4ea75",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\description_conditioned_weight_transfer_kernel_ridge\\l2-a02\\N.csv": "517eb62cb1d17ff09d51aa5541a10ed336de320d5647685cad60fb3a9571eab9",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\description_conditioned_weight_transfer_kernel_ridge\\l2-a03\\D.csv": "48d22db6ae9ef74968d8fd8deb74d19677a0b55788cf841b474ae1755f9b2a01",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\description_conditioned_weight_transfer_kernel_ridge\\l2-a03\\N.csv": "624c06b28b66d00d9dc63e0bf77ffd61b44c0f9fd3896f0edf3a5abffbff2ebf",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\description_conditioned_weight_transfer_kernel_ridge\\l2-a04\\D.csv": "4026d237e01160b8bbd8a116a199d667afd48ab4bab1528801063f68b3464c6b",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\description_conditioned_weight_transfer_kernel_ridge\\l2-a04\\N.csv": "34752e842a8708abf5e94723527c7718c302724d9932559044de9cac14966d25",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\description_conditioned_weight_transfer_kernel_ridge\\l2-a05\\D.csv": "8aeeb084f67a3864a8ab5fddeaf4f96276b79fa02e1027f10b5af2571c9f8ab3",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\description_conditioned_weight_transfer_kernel_ridge\\l2-a05\\N.csv": "9edf56ace846a6010435114c3d065c311158484dd4f2f2fba212bd20fe8cf04f",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\description_conditioned_weight_transfer_kernel_ridge\\l2-a06\\D.csv": "52d3fa3011a5577f97d270b0747055115ab8b944c93fec3da1c01ab5dcc38ed0",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\description_conditioned_weight_transfer_kernel_ridge\\l2-a06\\N.csv": "99e501933f2af73fea310962951f6087c67f0c0e652cca0067c855eb417b5b08",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\description_conditioned_weight_transfer_kernel_ridge\\l2-a07\\D.csv": "4c0fac4bd462a4836758c450eb6556cafd388f82e00f61dd97b6a72fc724ca94",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\description_conditioned_weight_transfer_kernel_ridge\\l2-a07\\N.csv": "d9a27fbdba1d177d214d562c024de9336f6fbcc5bc73090d2c9e948cecd34e3a",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\description_conditioned_weight_transfer_kernel_ridge\\l2-a08\\D.csv": "46f16a5990b9d84e5c96fee1c383a37ca7d851e643ef4f913129fdae19e23593",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\description_conditioned_weight_transfer_kernel_ridge\\l2-a08\\N.csv": "ee69ec7534e9a24c55a3378732a56d1b60bfdae14ec60da8ea6ec7d4f98e5d3c",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\description_conditioned_weight_transfer_kernel_ridge\\l2-a09\\D.csv": "2d3059fe1515a3ec32f914f0fb5f8495f6d284382222f63c19bc9c5265675166",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\description_conditioned_weight_transfer_kernel_ridge\\l2-a09\\N.csv": "cf9ec480dd913d1d45738fd98c7d29e739b783f96d422112371f4b8e08c165c2",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\description_conditioned_weight_transfer_kernel_ridge\\l2-a10\\D.csv": "299d3c58041779322e3eb32f105f0a576c38c828c2d63699f72abb906912b718",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\description_conditioned_weight_transfer_kernel_ridge\\l2-a10\\N.csv": "a952852d08e82be029be90a2774d4f68c4c8cd483a5763d66dd5b73561a4bcba",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\description_conditioned_weight_transfer_kernel_ridge\\l2-a11\\D.csv": "0c4de3eccb0f31a8b657db9f35314a24b802dc4612d02a84cfd45f0d70847ffe",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\description_conditioned_weight_transfer_kernel_ridge\\l2-a11\\N.csv": "ad2f3b61cb69bb09e44ca79d6ef28cfa9fb8626d26bdbe88ef48fd897817e2ee",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\description_conditioned_weight_transfer_kernel_ridge\\l2-a12\\D.csv": "605693cdd8fabbb4d0648e1b64656ad0a6f11d04a3cb5761f4b5c6a12969151d",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\description_conditioned_weight_transfer_kernel_ridge\\l2-a12\\N.csv": "4094fbef25a71bb51bf1311c9f21841fae331deb87e53ebc3439630ac22c3339",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\e5_base_v2\\l2-a01\\D.csv": "03318640db7af16ebfb1831e44b18ff9d3bfd91dca01fbd79ec1000b11b2b4ba",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\e5_base_v2\\l2-a01\\N.csv": "062745719b847145b928735fd906d8c4fcd38fc00289d521c5c1b4ebb37407c4",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\e5_base_v2\\l2-a02\\D.csv": "4611cee13e07e44d64a997f5229d9b29a0c8ab68fa19cbbd8993253560049514",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\e5_base_v2\\l2-a02\\N.csv": "230d2d226f63641e51b4b82f25dea760baa93a521a6c52dedbaa7678216be1ab",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\e5_base_v2\\l2-a03\\D.csv": "4cee3ae84e44fcae464039e9ac80bfe28c716a3355d123d8d46d4f0056cc2ff3",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\e5_base_v2\\l2-a03\\N.csv": "ed45a667b58a4f75c5180c07000731c49d9f251f006a4c05de23e608abda7162",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\e5_base_v2\\l2-a04\\D.csv": "4902d396528e46226179bf071ceb10146d30e1748a5df5da3648af8527c044f8",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\e5_base_v2\\l2-a04\\N.csv": "ce659d31aa6106e290f2dffc73a6c8e3642a3b49ddf0a876ec51d950b0cc2218",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\e5_base_v2\\l2-a05\\D.csv": "a3c9ab072f30e6e7a3c33932e707b28ed44dd776685c3dfc74b6c0936207e370",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\e5_base_v2\\l2-a05\\N.csv": "ff9838f7604c74c2d4267782ca8ab97a7ad1c721149cb614a48921aa477a1a2e",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\e5_base_v2\\l2-a06\\D.csv": "c14d9eec12e14d92c3e801f3881912117b39985462fac053929e528b4b18c2f6",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\e5_base_v2\\l2-a06\\N.csv": "a6cd52bc0f7d2be93092fc937befa2ccb5f9fc1b9bb3c999bd91424031e3ee8b",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\e5_base_v2\\l2-a07\\D.csv": "ec9d1b0a04be388b0879933aff003838837f2ec316015cfaff070f51d7d4ced3",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\e5_base_v2\\l2-a07\\N.csv": "2ea74711cacba5a2bc135994d36c47fff071dd1e3a6ec4185503d40072062c80",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\e5_base_v2\\l2-a08\\D.csv": "3de5ddd74ec6ff6be3ca939467072124c84b6eae13e793822020712c9848205a",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\e5_base_v2\\l2-a08\\N.csv": "66b5c5af6e24320d3ef39c3b66cda1903f2364398a055dbf53367af3baa2c214",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\e5_base_v2\\l2-a09\\D.csv": "dd543afcd64130bfdcafac0751ff3048ef02a6d621f579b30d8ee19766720ba0",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\e5_base_v2\\l2-a09\\N.csv": "13987102a051871c92b581c177a271ee96c9de0474639c916ef4865e584fb5ab",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\e5_base_v2\\l2-a10\\D.csv": "a5772926fdb72f9f07d13639ecf2009e4f9c7400706a5ce402cebe948e8d9a01",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\e5_base_v2\\l2-a10\\N.csv": "65bb1fdf9117e80486b5bf27b4b6062d705423a8037542900df61c5c4f219419",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\e5_base_v2\\l2-a11\\D.csv": "bccae0db93c3ff3aefc6807779fd3762857e90b07058e0ad816b18b2d8cfe050",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\e5_base_v2\\l2-a11\\N.csv": "d6fc97f377795484db42a6e83ceed0f79bb334ac73467aaf9ec2bebdf20687ed",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\e5_base_v2\\l2-a12\\D.csv": "13de3fe40bc204c89effdd0f16b61491ec45641939f1857009efca526a3eb87b",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\e5_base_v2\\l2-a12\\N.csv": "3cb837ab8ecaa36d9f1c4067cf2cc33a7b9b748d166d68c4cac4603d128bab72",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\frozen_qwen_candidate_pair\\l2-a01\\D.csv": "53cd1546d1636a5b0b51debc8cbf5a9de4dde58604d9a084b88fdf0b907e597d",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\frozen_qwen_candidate_pair\\l2-a01\\N.csv": "0c49bc2722100c72903c197f8b1e71efc70cd9a2158c2506cbeb8bc81b118773",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\frozen_qwen_candidate_pair\\l2-a02\\D.csv": "fce47542a1d3dfe1b61b8b9d077b5be5156db84963dc67055537a5df0046794d",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\frozen_qwen_candidate_pair\\l2-a02\\N.csv": "84d246c879eaea78ba928a9366a57e47f56aca2d3a57cff2b22e41f4611da0d8",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\frozen_qwen_candidate_pair\\l2-a03\\D.csv": "8d2debdb147f927b37e0bfe41e980178f31ce6ad71edbcca5bdab92bbc625b58",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\frozen_qwen_candidate_pair\\l2-a03\\N.csv": "f4b1180dbaaab0caf4d8887274dad438669028be92de32665c7898de1a8fce35",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\frozen_qwen_candidate_pair\\l2-a04\\D.csv": "78bff82202845325dee92ce46f411e5529f352250fbc6323a2d5e0a7b0abcc8f",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\frozen_qwen_candidate_pair\\l2-a04\\N.csv": "fc49f3ac0954bfd5ad01124c77c960a424c1ee23ffc389d5b52c9d9cffee832a",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\frozen_qwen_candidate_pair\\l2-a05\\D.csv": "cdae71f0c960f990e16275f8c58d395bd55ac69947a9494e280cc7eb49259f17",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\frozen_qwen_candidate_pair\\l2-a05\\N.csv": "46b4fa0ca1cf7f597103903c7adef46faab1f75d550c1dba9acaecdf1ae04e39",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\frozen_qwen_candidate_pair\\l2-a06\\D.csv": "a6cbc27ec49b247cb321d5435930cf0c72f6c8f6b0b0145c82267e4ba88fe918",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\frozen_qwen_candidate_pair\\l2-a06\\N.csv": "3f7281b286bf2953d51775030ce1bcbd2f3c0dee63e7fd03424ae8d4496a13ee",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\frozen_qwen_candidate_pair\\l2-a07\\D.csv": "9fe73dcf3dd460854e960c110ae4a70b61653506617d8dfa3a87a9b890967de2",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\frozen_qwen_candidate_pair\\l2-a07\\N.csv": "502c3e8e2ab47fd639ef65a60033f9e74401a18dab8f01a3f3e0d62f6c52b6ef",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\frozen_qwen_candidate_pair\\l2-a08\\D.csv": "d93115556653353dcd5cd4725eecbaad1b6d151d17dcfda3cd5b49f4d6ad53ed",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\frozen_qwen_candidate_pair\\l2-a08\\N.csv": "64d7259128cbb118a8f9899a992e91bf2690a47c61c17c0c55a1dbe659478442",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\frozen_qwen_candidate_pair\\l2-a09\\D.csv": "dd09dd73785326fdd30158b26f542ee24b9b70c264561847969583188cdbf5a3",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\frozen_qwen_candidate_pair\\l2-a09\\N.csv": "ab2aa5cd076380c9b207d268f1e08fb02a6fa15d0569b3734d299742474a6bcc",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\frozen_qwen_candidate_pair\\l2-a10\\D.csv": "9bb105ffd4414cdde10a6fceaefa5c1ba65cab720a7068bef2325793559545b6",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\frozen_qwen_candidate_pair\\l2-a10\\N.csv": "3cb71a8722c4345b9a67c261183f0904d4a32f9c278c8ee3b2c1fb129c704c1d",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\frozen_qwen_candidate_pair\\l2-a11\\D.csv": "2e9b9432fb81f42ec7b15888b4eee8eee7aafea785b4c485513d725a2814356b",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\frozen_qwen_candidate_pair\\l2-a11\\N.csv": "80746fe757ee3db00003bb1dc41fccc8b15113de82997368c02309157967615f",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\frozen_qwen_candidate_pair\\l2-a12\\D.csv": "bd348448733a5f15ef6e176237d1bf226ce345ab082e178e248d8105cbf02e3f",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\frozen_qwen_candidate_pair\\l2-a12\\N.csv": "8e36164b2a51f44a78959ea7166c5f8f45a84b1eb409d02173c18f951289c4da",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\strict_train_only_tfidf\\l2-a01\\D.csv": "48b68dc9fbcb3251bcab2d9e16d86cbdb2287560eb9595ebcd7c8453288a0ad7",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\strict_train_only_tfidf\\l2-a01\\N.csv": "895c98940ae7a3014dbcbdccddec14bba1cd3f336114e728b6511db8bd145d05",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\strict_train_only_tfidf\\l2-a02\\D.csv": "289a7fd2f3f5effc7b0b3228016af7caaaefbca5323cb253e4ab119085284077",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\strict_train_only_tfidf\\l2-a02\\N.csv": "34504f45e866ec7505ed854a1c58a44fdf63719c3caeff0125bfe88c7572feaa",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\strict_train_only_tfidf\\l2-a03\\D.csv": "444fdfb1f83ebd107730ed2ce44ed0104cbddd0d153ce8e01ed862cd81c49608",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\strict_train_only_tfidf\\l2-a03\\N.csv": "596dc6bc4f20d4033740b21e440273d397c67a44b7ba07bb495cbda4edc73236",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\strict_train_only_tfidf\\l2-a04\\D.csv": "f1c758055bb05ff8fc949125966fcaf82dec4f2cdbf216d86d5bd3959a22ebe2",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\strict_train_only_tfidf\\l2-a04\\N.csv": "a8f219a242fc5674036fe23310b52ceb1c56f948de33ba04c104a256c83adab2",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\strict_train_only_tfidf\\l2-a05\\D.csv": "6fc84d2fd5414a99aa849f6ae2c9b8f53edd4e49c97f9395d89fb0391527efa1",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\strict_train_only_tfidf\\l2-a05\\N.csv": "c23525ecb7094a6d90f60f9052d2c13fc5d8aaf8ca79d13ad15cef2faf376616",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\strict_train_only_tfidf\\l2-a06\\D.csv": "6474900d2d524983dbb91dc405b3021bfe08d0e369b4a003cd9a77ef1333bd4f",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\strict_train_only_tfidf\\l2-a06\\N.csv": "e8044690bbb135f418cb2a241e16a1e7237db49878e0816fd134abde65925b6e",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\strict_train_only_tfidf\\l2-a07\\D.csv": "4099bc0b59b685ee35214239897b8508b3e0a85faf20374cb6e9289af0f7b2da",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\strict_train_only_tfidf\\l2-a07\\N.csv": "ba8e26f1a028cf8682547c57eeb32e6c94e7083a4eca87c022ec66290eb2d29c",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\strict_train_only_tfidf\\l2-a08\\D.csv": "b6fecea2109051e7dbfcea022e70744c39cbbd23557e5f380e7c7640a978db71",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\strict_train_only_tfidf\\l2-a08\\N.csv": "a6f7dc331ecac07100391230d73faf982f9cebe4127ddbaa01c770e64e75dcb5",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\strict_train_only_tfidf\\l2-a09\\D.csv": "af2331e91dad96680c476c91ae410eaf71c13ce059787f2b5291e1f117ff3baf",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\strict_train_only_tfidf\\l2-a09\\N.csv": "b2f66ae84ccb676d42c535a2d74d9dd570b408a170ea3b896cd1d448369f5b77",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\strict_train_only_tfidf\\l2-a10\\D.csv": "c9a75a0a23971763dd04e6e3e010c09cf1f5abad7190954a8bc94e625a803fe2",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\strict_train_only_tfidf\\l2-a10\\N.csv": "02c4960be6cfd2177349696b341f09bb86b34ea223e9e98c18b90afe586b2110",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\strict_train_only_tfidf\\l2-a11\\D.csv": "8f650336b9515cefb926e5795b5bc898bc2cbc09eebe758399dbf5d6989ba76d",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\strict_train_only_tfidf\\l2-a11\\N.csv": "c5011d996e8d889c7638d4975da5bd7d182babdec9b4beffb2ad3717c444fd83",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\strict_train_only_tfidf\\l2-a12\\D.csv": "1ab432ac05c57c9cd8e7f7b391cbda50328391453a8dec63255472dc4fa496c0",
+    "C:\\Msc_DSML\\Msc_Project\\msc-project-chattermill-topic-classification-mainline-integration\\outputs\\experimental\\taxonomy_scientific_freeze_v1\\local_row_evidence\\strict_train_only_tfidf\\l2-a12\\N.csv": "db43b5570ecb073ce0d157fd54e6dc016b69337b762bd6c59fc2539e504b2898"
+  },
+  "non_finite_value_count": 0,
+  "official_test_opened": false,
+  "prediction_collapse_checks": {
+    "description_conditioned_weight_transfer_kernel_ridge/l2-a01/D.csv": {
+      "heldout_gold_pair_count": 81,
+      "heldout_predicted_pair_count": 782,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "description_conditioned_weight_transfer_kernel_ridge/l2-a01/N.csv": {
+      "heldout_gold_pair_count": 81,
+      "heldout_predicted_pair_count": 851,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "description_conditioned_weight_transfer_kernel_ridge/l2-a02/D.csv": {
+      "heldout_gold_pair_count": 86,
+      "heldout_predicted_pair_count": 971,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "description_conditioned_weight_transfer_kernel_ridge/l2-a02/N.csv": {
+      "heldout_gold_pair_count": 86,
+      "heldout_predicted_pair_count": 1007,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "description_conditioned_weight_transfer_kernel_ridge/l2-a03/D.csv": {
+      "heldout_gold_pair_count": 401,
+      "heldout_predicted_pair_count": 625,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "description_conditioned_weight_transfer_kernel_ridge/l2-a03/N.csv": {
+      "heldout_gold_pair_count": 401,
+      "heldout_predicted_pair_count": 648,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "description_conditioned_weight_transfer_kernel_ridge/l2-a04/D.csv": {
+      "heldout_gold_pair_count": 22,
+      "heldout_predicted_pair_count": 937,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "description_conditioned_weight_transfer_kernel_ridge/l2-a04/N.csv": {
+      "heldout_gold_pair_count": 22,
+      "heldout_predicted_pair_count": 1036,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "description_conditioned_weight_transfer_kernel_ridge/l2-a05/D.csv": {
+      "heldout_gold_pair_count": 118,
+      "heldout_predicted_pair_count": 692,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "description_conditioned_weight_transfer_kernel_ridge/l2-a05/N.csv": {
+      "heldout_gold_pair_count": 118,
+      "heldout_predicted_pair_count": 773,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "description_conditioned_weight_transfer_kernel_ridge/l2-a06/D.csv": {
+      "heldout_gold_pair_count": 477,
+      "heldout_predicted_pair_count": 645,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "description_conditioned_weight_transfer_kernel_ridge/l2-a06/N.csv": {
+      "heldout_gold_pair_count": 477,
+      "heldout_predicted_pair_count": 685,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "description_conditioned_weight_transfer_kernel_ridge/l2-a07/D.csv": {
+      "heldout_gold_pair_count": 337,
+      "heldout_predicted_pair_count": 734,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "description_conditioned_weight_transfer_kernel_ridge/l2-a07/N.csv": {
+      "heldout_gold_pair_count": 337,
+      "heldout_predicted_pair_count": 798,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "description_conditioned_weight_transfer_kernel_ridge/l2-a08/D.csv": {
+      "heldout_gold_pair_count": 126,
+      "heldout_predicted_pair_count": 475,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "description_conditioned_weight_transfer_kernel_ridge/l2-a08/N.csv": {
+      "heldout_gold_pair_count": 126,
+      "heldout_predicted_pair_count": 458,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "description_conditioned_weight_transfer_kernel_ridge/l2-a09/D.csv": {
+      "heldout_gold_pair_count": 13,
+      "heldout_predicted_pair_count": 463,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "description_conditioned_weight_transfer_kernel_ridge/l2-a09/N.csv": {
+      "heldout_gold_pair_count": 13,
+      "heldout_predicted_pair_count": 477,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "description_conditioned_weight_transfer_kernel_ridge/l2-a10/D.csv": {
+      "heldout_gold_pair_count": 18,
+      "heldout_predicted_pair_count": 574,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "description_conditioned_weight_transfer_kernel_ridge/l2-a10/N.csv": {
+      "heldout_gold_pair_count": 18,
+      "heldout_predicted_pair_count": 575,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "description_conditioned_weight_transfer_kernel_ridge/l2-a11/D.csv": {
+      "heldout_gold_pair_count": 51,
+      "heldout_predicted_pair_count": 933,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "description_conditioned_weight_transfer_kernel_ridge/l2-a11/N.csv": {
+      "heldout_gold_pair_count": 51,
+      "heldout_predicted_pair_count": 974,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "description_conditioned_weight_transfer_kernel_ridge/l2-a12/D.csv": {
+      "heldout_gold_pair_count": 128,
+      "heldout_predicted_pair_count": 976,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "description_conditioned_weight_transfer_kernel_ridge/l2-a12/N.csv": {
+      "heldout_gold_pair_count": 128,
+      "heldout_predicted_pair_count": 998,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "e5_base_v2/l2-a01/D.csv": {
+      "heldout_gold_pair_count": 81,
+      "heldout_predicted_pair_count": 171,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "e5_base_v2/l2-a01/N.csv": {
+      "heldout_gold_pair_count": 81,
+      "heldout_predicted_pair_count": 161,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "e5_base_v2/l2-a02/D.csv": {
+      "heldout_gold_pair_count": 86,
+      "heldout_predicted_pair_count": 57,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "e5_base_v2/l2-a02/N.csv": {
+      "heldout_gold_pair_count": 86,
+      "heldout_predicted_pair_count": 232,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "e5_base_v2/l2-a03/D.csv": {
+      "heldout_gold_pair_count": 401,
+      "heldout_predicted_pair_count": 93,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "e5_base_v2/l2-a03/N.csv": {
+      "heldout_gold_pair_count": 401,
+      "heldout_predicted_pair_count": 194,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "e5_base_v2/l2-a04/D.csv": {
+      "heldout_gold_pair_count": 22,
+      "heldout_predicted_pair_count": 235,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "e5_base_v2/l2-a04/N.csv": {
+      "heldout_gold_pair_count": 22,
+      "heldout_predicted_pair_count": 383,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "e5_base_v2/l2-a05/D.csv": {
+      "heldout_gold_pair_count": 118,
+      "heldout_predicted_pair_count": 230,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "e5_base_v2/l2-a05/N.csv": {
+      "heldout_gold_pair_count": 118,
+      "heldout_predicted_pair_count": 177,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "e5_base_v2/l2-a06/D.csv": {
+      "heldout_gold_pair_count": 477,
+      "heldout_predicted_pair_count": 410,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "e5_base_v2/l2-a06/N.csv": {
+      "heldout_gold_pair_count": 477,
+      "heldout_predicted_pair_count": 504,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "e5_base_v2/l2-a07/D.csv": {
+      "heldout_gold_pair_count": 337,
+      "heldout_predicted_pair_count": 580,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "e5_base_v2/l2-a07/N.csv": {
+      "heldout_gold_pair_count": 337,
+      "heldout_predicted_pair_count": 575,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "e5_base_v2/l2-a08/D.csv": {
+      "heldout_gold_pair_count": 126,
+      "heldout_predicted_pair_count": 41,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "e5_base_v2/l2-a08/N.csv": {
+      "heldout_gold_pair_count": 126,
+      "heldout_predicted_pair_count": 41,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "e5_base_v2/l2-a09/D.csv": {
+      "heldout_gold_pair_count": 13,
+      "heldout_predicted_pair_count": 164,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "e5_base_v2/l2-a09/N.csv": {
+      "heldout_gold_pair_count": 13,
+      "heldout_predicted_pair_count": 219,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "e5_base_v2/l2-a10/D.csv": {
+      "heldout_gold_pair_count": 18,
+      "heldout_predicted_pair_count": 103,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "e5_base_v2/l2-a10/N.csv": {
+      "heldout_gold_pair_count": 18,
+      "heldout_predicted_pair_count": 261,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "e5_base_v2/l2-a11/D.csv": {
+      "heldout_gold_pair_count": 51,
+      "heldout_predicted_pair_count": 155,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "e5_base_v2/l2-a11/N.csv": {
+      "heldout_gold_pair_count": 51,
+      "heldout_predicted_pair_count": 203,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "e5_base_v2/l2-a12/D.csv": {
+      "heldout_gold_pair_count": 128,
+      "heldout_predicted_pair_count": 221,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "e5_base_v2/l2-a12/N.csv": {
+      "heldout_gold_pair_count": 128,
+      "heldout_predicted_pair_count": 214,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "frozen_qwen_candidate_pair/l2-a01/D.csv": {
+      "heldout_gold_pair_count": 81,
+      "heldout_predicted_pair_count": 129,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "frozen_qwen_candidate_pair/l2-a01/N.csv": {
+      "heldout_gold_pair_count": 81,
+      "heldout_predicted_pair_count": 110,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "frozen_qwen_candidate_pair/l2-a02/D.csv": {
+      "heldout_gold_pair_count": 86,
+      "heldout_predicted_pair_count": 100,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "frozen_qwen_candidate_pair/l2-a02/N.csv": {
+      "heldout_gold_pair_count": 86,
+      "heldout_predicted_pair_count": 1,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "frozen_qwen_candidate_pair/l2-a03/D.csv": {
+      "heldout_gold_pair_count": 401,
+      "heldout_predicted_pair_count": 631,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "frozen_qwen_candidate_pair/l2-a03/N.csv": {
+      "heldout_gold_pair_count": 401,
+      "heldout_predicted_pair_count": 213,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "frozen_qwen_candidate_pair/l2-a04/D.csv": {
+      "heldout_gold_pair_count": 22,
+      "heldout_predicted_pair_count": 202,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "frozen_qwen_candidate_pair/l2-a04/N.csv": {
+      "heldout_gold_pair_count": 22,
+      "heldout_predicted_pair_count": 22,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "frozen_qwen_candidate_pair/l2-a05/D.csv": {
+      "heldout_gold_pair_count": 118,
+      "heldout_predicted_pair_count": 145,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "frozen_qwen_candidate_pair/l2-a05/N.csv": {
+      "heldout_gold_pair_count": 118,
+      "heldout_predicted_pair_count": 89,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "frozen_qwen_candidate_pair/l2-a06/D.csv": {
+      "heldout_gold_pair_count": 477,
+      "heldout_predicted_pair_count": 294,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "frozen_qwen_candidate_pair/l2-a06/N.csv": {
+      "heldout_gold_pair_count": 477,
+      "heldout_predicted_pair_count": 152,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "frozen_qwen_candidate_pair/l2-a07/D.csv": {
+      "heldout_gold_pair_count": 337,
+      "heldout_predicted_pair_count": 422,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "frozen_qwen_candidate_pair/l2-a07/N.csv": {
+      "heldout_gold_pair_count": 337,
+      "heldout_predicted_pair_count": 352,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "frozen_qwen_candidate_pair/l2-a08/D.csv": {
+      "heldout_gold_pair_count": 126,
+      "heldout_predicted_pair_count": 128,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "frozen_qwen_candidate_pair/l2-a08/N.csv": {
+      "heldout_gold_pair_count": 126,
+      "heldout_predicted_pair_count": 77,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "frozen_qwen_candidate_pair/l2-a09/D.csv": {
+      "heldout_gold_pair_count": 13,
+      "heldout_predicted_pair_count": 35,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "frozen_qwen_candidate_pair/l2-a09/N.csv": {
+      "heldout_gold_pair_count": 13,
+      "heldout_predicted_pair_count": 18,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "frozen_qwen_candidate_pair/l2-a10/D.csv": {
+      "heldout_gold_pair_count": 18,
+      "heldout_predicted_pair_count": 95,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "frozen_qwen_candidate_pair/l2-a10/N.csv": {
+      "heldout_gold_pair_count": 18,
+      "heldout_predicted_pair_count": 41,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "frozen_qwen_candidate_pair/l2-a11/D.csv": {
+      "heldout_gold_pair_count": 51,
+      "heldout_predicted_pair_count": 143,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "frozen_qwen_candidate_pair/l2-a11/N.csv": {
+      "heldout_gold_pair_count": 51,
+      "heldout_predicted_pair_count": 110,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "frozen_qwen_candidate_pair/l2-a12/D.csv": {
+      "heldout_gold_pair_count": 128,
+      "heldout_predicted_pair_count": 219,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "frozen_qwen_candidate_pair/l2-a12/N.csv": {
+      "heldout_gold_pair_count": 128,
+      "heldout_predicted_pair_count": 187,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "strict_train_only_tfidf/l2-a01/D.csv": {
+      "heldout_gold_pair_count": 81,
+      "heldout_predicted_pair_count": 155,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "strict_train_only_tfidf/l2-a01/N.csv": {
+      "heldout_gold_pair_count": 81,
+      "heldout_predicted_pair_count": 78,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "strict_train_only_tfidf/l2-a02/D.csv": {
+      "heldout_gold_pair_count": 86,
+      "heldout_predicted_pair_count": 101,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "strict_train_only_tfidf/l2-a02/N.csv": {
+      "heldout_gold_pair_count": 86,
+      "heldout_predicted_pair_count": 26,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "strict_train_only_tfidf/l2-a03/D.csv": {
+      "heldout_gold_pair_count": 401,
+      "heldout_predicted_pair_count": 175,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "strict_train_only_tfidf/l2-a03/N.csv": {
+      "heldout_gold_pair_count": 401,
+      "heldout_predicted_pair_count": 36,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "strict_train_only_tfidf/l2-a04/D.csv": {
+      "heldout_gold_pair_count": 22,
+      "heldout_predicted_pair_count": 77,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "strict_train_only_tfidf/l2-a04/N.csv": {
+      "heldout_gold_pair_count": 22,
+      "heldout_predicted_pair_count": 42,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "strict_train_only_tfidf/l2-a05/D.csv": {
+      "heldout_gold_pair_count": 118,
+      "heldout_predicted_pair_count": 141,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "strict_train_only_tfidf/l2-a05/N.csv": {
+      "heldout_gold_pair_count": 118,
+      "heldout_predicted_pair_count": 13,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "strict_train_only_tfidf/l2-a06/D.csv": {
+      "heldout_gold_pair_count": 477,
+      "heldout_predicted_pair_count": 353,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "strict_train_only_tfidf/l2-a06/N.csv": {
+      "heldout_gold_pair_count": 477,
+      "heldout_predicted_pair_count": 317,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "strict_train_only_tfidf/l2-a07/D.csv": {
+      "heldout_gold_pair_count": 337,
+      "heldout_predicted_pair_count": 382,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "strict_train_only_tfidf/l2-a07/N.csv": {
+      "heldout_gold_pair_count": 337,
+      "heldout_predicted_pair_count": 259,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "strict_train_only_tfidf/l2-a08/D.csv": {
+      "heldout_gold_pair_count": 126,
+      "heldout_predicted_pair_count": 68,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "strict_train_only_tfidf/l2-a08/N.csv": {
+      "heldout_gold_pair_count": 126,
+      "heldout_predicted_pair_count": 20,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "strict_train_only_tfidf/l2-a09/D.csv": {
+      "heldout_gold_pair_count": 13,
+      "heldout_predicted_pair_count": 142,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "strict_train_only_tfidf/l2-a09/N.csv": {
+      "heldout_gold_pair_count": 13,
+      "heldout_predicted_pair_count": 34,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "strict_train_only_tfidf/l2-a10/D.csv": {
+      "heldout_gold_pair_count": 18,
+      "heldout_predicted_pair_count": 109,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "strict_train_only_tfidf/l2-a10/N.csv": {
+      "heldout_gold_pair_count": 18,
+      "heldout_predicted_pair_count": 54,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "strict_train_only_tfidf/l2-a11/D.csv": {
+      "heldout_gold_pair_count": 51,
+      "heldout_predicted_pair_count": 77,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "strict_train_only_tfidf/l2-a11/N.csv": {
+      "heldout_gold_pair_count": 51,
+      "heldout_predicted_pair_count": 32,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "strict_train_only_tfidf/l2-a12/D.csv": {
+      "heldout_gold_pair_count": 128,
+      "heldout_predicted_pair_count": 198,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    },
+    "strict_train_only_tfidf/l2-a12/N.csv": {
+      "heldout_gold_pair_count": 128,
+      "heldout_predicted_pair_count": 95,
+      "maximum_decoder_pair_count": 2114,
+      "status": "non_empty_and_non_saturated",
+      "validation_reviews": 1057
+    }
+  },
+  "records": [
+    {
+      "fold_id": "l2-a01",
+      "method_id": "strict_train_only_tfidf",
+      "original_sha256": "208c7b5fb92e7950ec341fc9f55d4c35a8ac5395f20d1d468606b719dc4221fd",
+      "replay_sha256": "e0e037fe156c2f1ad0690c61a3928ff193e322affe37a4cd7f801f2f4154f542",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a02",
+      "method_id": "strict_train_only_tfidf",
+      "original_sha256": "530b03a58e46111c7ebfa549d9fa0a9c9330502a7bee19eee0a6bf3cc12c2600",
+      "replay_sha256": "6da4d567660f0d8f7b049b34638d7d805964ebc59d918b5bda032ff74ceab8e0",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a03",
+      "method_id": "strict_train_only_tfidf",
+      "original_sha256": "ffa722c224345f64eaed657f51914d09f4affc1ebd1d271d2ee9e62d17369184",
+      "replay_sha256": "e7e7a44f17b2993d615770cd43805fbeed4942cac143b428bc593a8b6e678d46",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a04",
+      "method_id": "strict_train_only_tfidf",
+      "original_sha256": "702e55cb592f303813910a5570e43d53d07faa24cd86095de6259ff964bc8217",
+      "replay_sha256": "2601815feed3175c7ee3fd4ee6c7889aadb5724b2cb6e673b0157ba341c137b2",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a05",
+      "method_id": "strict_train_only_tfidf",
+      "original_sha256": "87859185d7518fd99d0deb101398f4625eba7f536be05ab91ad891be810eed9a",
+      "replay_sha256": "af0668e0b453e0192fc6df1d14562ab8a336f586746f98cbd0873a7c34137c62",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a06",
+      "method_id": "strict_train_only_tfidf",
+      "original_sha256": "bcab3b353c7fd22b6eee1046ae7df45f2327db6296609cca27550919d7c850e8",
+      "replay_sha256": "29e3c1d0692941914576b88fccbeaac3995ac446d388e279af8dda9dfc16d315",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a07",
+      "method_id": "strict_train_only_tfidf",
+      "original_sha256": "bb0fe35c17601b61f19359d4309a56ac85de2290973e108b483d82e92c510311",
+      "replay_sha256": "1a2bfd8757487d0708cb8b5289354ce4e0149791db80ba6ecb43ad66aa131736",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a08",
+      "method_id": "strict_train_only_tfidf",
+      "original_sha256": "0baa9ec650e6967e32bf6d76e70453faa50f3f67f5c7c675155b10f0cd8a8732",
+      "replay_sha256": "a3116c7f8635ff10ba8caac8ffade1f0f183fc111e6880546ca9d9b722d3749d",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a09",
+      "method_id": "strict_train_only_tfidf",
+      "original_sha256": "cd4c82246d02b72afcc330e9923b7a386ce13e516edea88c14e63d399eb693ea",
+      "replay_sha256": "c3defd38a6339a16edd40e46f0117edcf7a9bc3ee4e010b8f41a95600ba635d3",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a10",
+      "method_id": "strict_train_only_tfidf",
+      "original_sha256": "a6e7242645163254b4795e945e36649a23517df3383d4b2e1659eef6ca8eb91b",
+      "replay_sha256": "6c9ad4d2e3beee57258da4748a680bc85ff2c909010601698ee1457c15c52837",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a11",
+      "method_id": "strict_train_only_tfidf",
+      "original_sha256": "fac9ad05b2c152500214d33975bf3faba3f1d85ec259fb07b682ebd0aeaf45c3",
+      "replay_sha256": "4bf3a44e4f348a8fc434f7b275788f5aa7d21f565423ae1caf2cec3a9d5db287",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a12",
+      "method_id": "strict_train_only_tfidf",
+      "original_sha256": "e6f01e9425464ac11082d119a0b3fe209d5df26f9100b5c1266b6d45c238a04f",
+      "replay_sha256": "da179490f4f8a5ae1e4334272bde42d015240ff608c1afaa591b3bb88dbdcd1f",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a01",
+      "method_id": "e5_base_v2",
+      "original_sha256": "7a88794d71b9588bd8aeed380b56ff30ba88636e9c0cd47d6da2ab3c934b033b",
+      "replay_sha256": "809afc55f8a38749309314b64e8c396c50142233da6fcbd361badbeddd321768",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a02",
+      "method_id": "e5_base_v2",
+      "original_sha256": "927ee3515006acc226a2808e7f745fd64a68e4785b89f72fc37ce8f932151e21",
+      "replay_sha256": "19a75c9437258670b9bfa7487d4ff43e2464b8fa0d256325060135c3dd45be34",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a03",
+      "method_id": "e5_base_v2",
+      "original_sha256": "8ddf32bf47c3d80e8e0a02f6e6f41c8a90a70f933963c44edef8adc84b376d79",
+      "replay_sha256": "61fd6f6ecc7f5238ed32ed8562180e4b0797c0314cafe30f2de1cd1678abb670",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a04",
+      "method_id": "e5_base_v2",
+      "original_sha256": "11f41be8cd657e2569a58024f2963528f030c3ac5330d741fc2b620b7a16ac32",
+      "replay_sha256": "9c2ab33e33c50efd7d162cceca163062577ec7665052397fed1bcb4660088ecf",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a05",
+      "method_id": "e5_base_v2",
+      "original_sha256": "7c89c0a1368b37e27fafd8bd7c2385ee0fd62abf03647895a94427a6d01472ee",
+      "replay_sha256": "aa7f2f2786449120f26cb4c8b21f2863026bf24c6d59466dc7d94c5e1a830b31",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a06",
+      "method_id": "e5_base_v2",
+      "original_sha256": "c194a046368eba6c392a13fc9ade9065ff3567b140907f717a8ab26037f35884",
+      "replay_sha256": "e71f23a8a902faea01408e6e22c82a0b5ed8c446af7e721e7e454cb79e80b9dd",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a07",
+      "method_id": "e5_base_v2",
+      "original_sha256": "ec5ae774b8f82115e85523f9859d20b6f7a03945dd46fd1d4b82d827ed1d5fb4",
+      "replay_sha256": "cd05e8ba4875d0d867f82570508c7e6ae9f9e3631924eabf077cd6939c0a06e5",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a08",
+      "method_id": "e5_base_v2",
+      "original_sha256": "d12a7ca333794584961980be88f342d02b44d107114218d50c5a0c69510a1a41",
+      "replay_sha256": "6726b133f173850aea49fc616fffd3ade1ab39ee738697492b4a25f9d91488a4",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a09",
+      "method_id": "e5_base_v2",
+      "original_sha256": "07c9f566ce6513dd6d56216750adbb87925099ca42cb06cb6e38283828ab0d77",
+      "replay_sha256": "9614b5c6b70a4393435e6e00815e60e5bc40a7e462353bffdcb748c040a95861",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a10",
+      "method_id": "e5_base_v2",
+      "original_sha256": "0997accaeb8b521d7e09b05258c0f504170096c8e12da9d47289a0551a94155f",
+      "replay_sha256": "7f5e89d6c269ae975e2eb8ef4779a910b773170e1ea7a60fc5c4ad33e3a14c8a",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a11",
+      "method_id": "e5_base_v2",
+      "original_sha256": "6d666bf5b4aafa9007cf2c3be8b0a8adba14fa3321ec8b924ce4e628f794aba7",
+      "replay_sha256": "ba3d19d254c536431d76043172ea6ce2993a971814093f1b97e2db8f02c62684",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a12",
+      "method_id": "e5_base_v2",
+      "original_sha256": "fe7a53bf3871996ff7afb22da17ca7bf47b9ef4e8450148ddaa80a36e1bd1226",
+      "replay_sha256": "bcd656776071d9afb8330b9be2848670d5bc6ae8ff7e37c17abe08f5920a0740",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a01",
+      "method_id": "frozen_qwen_candidate_pair",
+      "original_sha256": "b54aa6ad8122d2ccff874da9c27a71ae3bfcabfe7eb6183ba28c5317ad25105d",
+      "replay_sha256": "f880aeedc3147cf7e13c341649b4e33d0f29175400f674ffeab35469191b6b2d",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a02",
+      "method_id": "frozen_qwen_candidate_pair",
+      "original_sha256": "36fd888ae9efdd7e2071b3f7dd7d394cc06662f90dc218df87bc234ceadee456",
+      "replay_sha256": "427f7c7016decda51c42dfbd0989e14e19c5bd812e0f494236bc5f4d07d5830e",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a03",
+      "method_id": "frozen_qwen_candidate_pair",
+      "original_sha256": "336a005f932c95191732d554208ef646f81c436c5d17d1eec6a2d568d627a61e",
+      "replay_sha256": "6d6f7e002dfa932c81312e8f9cde70bb49e991f0eff6f3c53e50de2823c685a4",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a04",
+      "method_id": "frozen_qwen_candidate_pair",
+      "original_sha256": "924a1b15bb4ac0b8eacba28618846122623061b59a5e8124285eb176aba4e517",
+      "replay_sha256": "3a198dda47a4faf59947a1f0285e5556bf4cc6cd692765be07e945c74ef02215",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a05",
+      "method_id": "frozen_qwen_candidate_pair",
+      "original_sha256": "b066de6b0b207f0be26b560baca64c45ce17a14fb170a2aac54bbe7bec21dc2f",
+      "replay_sha256": "ec33e079437019fc6055c1e0900911e833a423652cba73393aa85a97d0f27990",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a06",
+      "method_id": "frozen_qwen_candidate_pair",
+      "original_sha256": "bf26478a3ced78f464bf30bfcb83efa6e6cce62ab2f061d531504d86a6bd9cae",
+      "replay_sha256": "dd987119fce731c0bcecd47f2aace8cd6238ad58972253ed48cbdd43cd8b89b4",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a07",
+      "method_id": "frozen_qwen_candidate_pair",
+      "original_sha256": "443b296566ee873bb52acfe7672091528027f4086138497254fd99fb054e7312",
+      "replay_sha256": "ddb9b36cda265d0c300c1ba12b770f08dc08ddac2080a0eaa6c8de72e6571278",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a08",
+      "method_id": "frozen_qwen_candidate_pair",
+      "original_sha256": "ff70d79d4dfc58d7b7a84a492db855d0ed929a7a7d7218a81e00e223b3f72b40",
+      "replay_sha256": "cdeb922a25488cc767dc0692e70d908840f1be16c371eb6b7debe1579b42565b",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a09",
+      "method_id": "frozen_qwen_candidate_pair",
+      "original_sha256": "004ef9c186a40722501852c338a154406876e40b107a8b5146c738419fd9ad7a",
+      "replay_sha256": "3c1b02e2ee29c143df683a9117585d56693b584314cb09bcf695c2cdb8110d74",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a10",
+      "method_id": "frozen_qwen_candidate_pair",
+      "original_sha256": "bef6bdaecf28886c55158b039fab1ba3d1d57d53c3f9c490e851c35ece184583",
+      "replay_sha256": "283af486f0f7db350cdd2950012258ed8fe8280cfe963384e5d10588505c5adc",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a11",
+      "method_id": "frozen_qwen_candidate_pair",
+      "original_sha256": "ff9163189c50f11b2851a1e22e94d7df217d1fe3055f7f9700191dc0e776bac5",
+      "replay_sha256": "9d8f4fb9a7179658f767fa5769c87e3951d4acb3ffce046121d1e63fd74adc4d",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a12",
+      "method_id": "frozen_qwen_candidate_pair",
+      "original_sha256": "9123d04fd69a3639b2383e0b9647cc5a8c5d4861ed377e94e9bff14204aab8c7",
+      "replay_sha256": "4136faffea82a29329312f7203a4c03231169ac01e28b83a46534d80f0863d55",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a01",
+      "method_id": "description_conditioned_weight_transfer_kernel_ridge",
+      "original_sha256": "ce236fa3757977d6f20af08809743088e1a0fbd96802586c4e36baa11ae8a0ad",
+      "replay_sha256": "74a1ecd59c347912bd2266c1730363b2a199324a0de8a338af61f6bf9d5462fe",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a02",
+      "method_id": "description_conditioned_weight_transfer_kernel_ridge",
+      "original_sha256": "16ffc990b2edee4b4e948aee3d5bcd7fba8df03b47ffcf33c409be01d5219bd4",
+      "replay_sha256": "700fd472e98e919536c9595603c85b6e75da75f891577916b01b8f08db447386",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a03",
+      "method_id": "description_conditioned_weight_transfer_kernel_ridge",
+      "original_sha256": "bb2ac9ab75ec3f99d0aefdceef96188d570455829fa7b626242dcbe11fbf994b",
+      "replay_sha256": "7fe89d94568fbd811b19ff5fa908f14a198dd318321ae22196b6e54628170a50",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a04",
+      "method_id": "description_conditioned_weight_transfer_kernel_ridge",
+      "original_sha256": "bf1cb403094dcc433074556634c740b65ae667d23f741cd4368e3d92a57c7d35",
+      "replay_sha256": "4d026b315d52385c76ed0738be9413e504cf9f3243dbc2b9f084c6a9e0bea66a",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a05",
+      "method_id": "description_conditioned_weight_transfer_kernel_ridge",
+      "original_sha256": "8e4bba8848473601b0b25b7998afc6c3796f47936309bb62bffe136f2d8e5425",
+      "replay_sha256": "e4675eb13773f0a6fda7738f434d6d4c7563fdb7023c08afe7602945e328817b",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a06",
+      "method_id": "description_conditioned_weight_transfer_kernel_ridge",
+      "original_sha256": "c20476a368f03ed611172525305e8c9d2302b28872275f65bd86627785020dc9",
+      "replay_sha256": "6d95d6c91da5013c3d11b8ab90e7ba32c771abefe1c6bbcba4b94ab1249a60f1",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a07",
+      "method_id": "description_conditioned_weight_transfer_kernel_ridge",
+      "original_sha256": "de273bf2d06ba24191ce54041de8e9feb1735a043b393a78dac88e1979c36135",
+      "replay_sha256": "3cc0555c512df73f14fb0a727e5e5b32f70fd98f3adbdf689f1821b507eebbf1",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a08",
+      "method_id": "description_conditioned_weight_transfer_kernel_ridge",
+      "original_sha256": "f9715ea00073d341e86d3e1e91c4364340bd70c0f6bdb66ba4db90ecaf000cdb",
+      "replay_sha256": "7490df7b6bb8f79db41da76dcf5bdbcfe101a6fade4acbb09f229bb042f1dc2f",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a09",
+      "method_id": "description_conditioned_weight_transfer_kernel_ridge",
+      "original_sha256": "5f4123b962d44cb6f8a8ea5bb75acbc26711497bd1db16ef15c46c595e43956e",
+      "replay_sha256": "9234a30a98d04158f907870d985d5f6ac6981fd90db4654433a0a30cdf0c4cd1",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a10",
+      "method_id": "description_conditioned_weight_transfer_kernel_ridge",
+      "original_sha256": "4f81b17f91f5c28f2333f0e3f3dc6af3baeefbc1aeaf9b4df5adcf5a24f10b3a",
+      "replay_sha256": "b6946fe53230b7c01765f4f588a33bc66451000b5c35bd7509cdeebf57b0a1f5",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a11",
+      "method_id": "description_conditioned_weight_transfer_kernel_ridge",
+      "original_sha256": "837e9d2b4413315d0d26182c20e58c00fdbdf16b9336314ea8544fc0c386dfeb",
+      "replay_sha256": "d48553907603ff842a84a8b602caecbcb9fb22e13c1880e8a44a3e313f377d59",
+      "status": "exact_result_reproduced"
+    },
+    {
+      "fold_id": "l2-a12",
+      "method_id": "description_conditioned_weight_transfer_kernel_ridge",
+      "original_sha256": "5b2c6ed322e9c547b33eebbfa4aed2ceb89a61a7d33251f1adad2509da73a4e5",
+      "replay_sha256": "f7f526805491f152727ba45dd09725ca009151a779130609499bf1a84c9a0ab6",
+      "status": "exact_result_reproduced"
+    }
+  ],
+  "schema_version": "taxonomy_scientific_freeze_local_replay_audit_v1",
+  "status": "pass",
+  "test_contract_count": 0
+}

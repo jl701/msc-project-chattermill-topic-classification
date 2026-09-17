@@ -308,7 +308,14 @@ def _heldout_variants(fold: TaxonomyFold, condition: str) -> dict[str, str]:
             aspect: marker_variants[marker]
             for aspect, marker in zip(fold.heldout_aspects, condition)
         }
-    variant = "minimal" if condition == "D" else "name_only"
+    marker_variants = {
+        "N": "name_only",
+        "D": "minimal",
+        "R": "rich",
+    }
+    if condition not in marker_variants:
+        raise ValueError(f"Unsupported held-out representation marker: {condition!r}.")
+    variant = marker_variants[condition]
     return {aspect: variant for aspect in fold.heldout_aspects}
 
 

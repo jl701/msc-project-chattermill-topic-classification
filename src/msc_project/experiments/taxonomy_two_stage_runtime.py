@@ -8,10 +8,6 @@ from collections.abc import Mapping, Sequence
 import numpy as np
 import pandas as pd
 
-from msc_project.baselines.unified_pair_scorers import (
-    UnifiedTfidfPairConfig,
-    UnifiedTfidfPairScorer,
-)
 from msc_project.data.fabsa import format_pair_label
 from msc_project.experiments.taxonomy_two_stage import TfidfAspectPresenceScorer
 from msc_project.experiments.unified_candidate_pairs import CANDIDATE_SENTIMENTS
@@ -23,6 +19,7 @@ REPRESENTATION_VARIANTS = (
     "name_only",
     "description_only",
     "rich",
+    "rich_positive",
 )
 
 
@@ -55,19 +52,21 @@ def render_aspect_candidate(
         return f"Aspect: {aspect}. Definition: {description}"
     if variant == "name_only":
         return f"Aspect: {aspect}."
-    if variant == "rich":
+    if variant in {"rich", "rich_positive"}:
         raw_card = _rich_aspects(resource).get(aspect)
         if not isinstance(raw_card, Mapping):
             raise ValueError(f"Missing rich aspect card: {aspect!r}.")
         aliases = raw_card.get("aliases")
         if not isinstance(aliases, list) or not aliases:
             raise ValueError(f"Rich aspect aliases are invalid: {aspect!r}.")
-        return (
+        positive = (
             f"Aspect: {aspect}. Definition: {raw_card['definition']} "
             f"Aliases: {'; '.join(str(value) for value in aliases)}. "
-            f"Inclusion boundary: {raw_card['inclusion_boundary']} "
-            f"Contrastive boundary: {raw_card['contrastive_boundary']}"
+            f"Inclusion boundary: {raw_card['inclusion_boundary']}"
         )
+        if variant == "rich_positive":
+            return positive
+        return f"{positive} Contrastive boundary: {raw_card['contrastive_boundary']}"
     return f"Aspect definition: {description}"
 
 
@@ -349,6 +348,12 @@ class TfidfTrueTwoStageRuntime:
 
     def __init__(self, *, seed: int = 13) -> None:
         self.aspect_scorer = TfidfAspectPresenceScorer(seed=seed)
+        # Grid construction and prompt rendering do not need neural dependencies.
+        from msc_project.baselines.candidate_tfidf import (
+            UnifiedTfidfPairConfig,
+            UnifiedTfidfPairScorer,
+        )
+
         self.sentiment_scorer = UnifiedTfidfPairScorer(
             UnifiedTfidfPairConfig(
                 classifier_c=1.0,

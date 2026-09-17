@@ -7,6 +7,7 @@ from msc_project.data.fabsa import format_pair_label
 from msc_project.experiments.taxonomy_two_stage import (
     capped_two_sentiment_prediction_mask,
     crossfit_decoder_comparison,
+    evaluate_prediction_mask,
     hierarchical_candidates,
     hierarchical_prediction_mask,
     multi_sentiment_prediction_mask,
@@ -169,6 +170,18 @@ def test_capped_two_decoder_never_emits_a_third_sentiment() -> None:
     assert int(counts.max()) == 2
 
 
+def test_prediction_metrics_accept_native_two_stage_scores_without_legacy_score() -> None:
+    frame = _grid(2).drop(columns="score")
+    frame["aspect_score"] = np.where(frame["target"].eq(1), 0.9, 0.1)
+    frame["sentiment_score"] = np.where(frame["target"].eq(1), 0.9, 0.1)
+    metrics = evaluate_prediction_mask(
+        frame,
+        frame["target"].eq(1),
+        aspects=ASPECTS,
+    )
+    assert metrics["pair_micro_f1"] == 1.0
+
+
 def test_second_sentiment_selection_freezes_aspect_threshold_and_nests_argmax() -> None:
     frame = _grid(20)
     frame["aspect_score"] = 0.9
@@ -248,6 +261,25 @@ def test_rich_aspect_card_is_stage_aware_and_has_no_sentiment_answer() -> None:
     assert "Inclusion boundary:" in rendered
     assert "Contrastive boundary:" in rendered
     assert "Candidate sentiment" not in rendered
+
+
+def test_positive_rich_aspect_card_omits_contrastive_boundary() -> None:
+    resource = {
+        "minimal_aspects": {"Parent: Alpha": "Alpha definition."},
+        "rich_aspects": {
+            "Parent: Alpha": {
+                "definition": "Alpha definition.",
+                "aliases": ["alpha one", "alpha two", "alpha three"],
+                "inclusion_boundary": "Include alpha topics.",
+                "contrastive_boundary": "Exclude beta topics.",
+            }
+        },
+    }
+    rendered = render_aspect_candidate("Parent: Alpha", "rich_positive", resource)
+    assert "Aliases:" in rendered
+    assert "Inclusion boundary:" in rendered
+    assert "Contrastive boundary:" not in rendered
+    assert "Exclude beta topics" not in rendered
     assert all(value not in rendered for value in CANDIDATE_SENTIMENTS)
 
 

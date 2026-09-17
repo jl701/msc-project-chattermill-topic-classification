@@ -1,0 +1,61 @@
+{
+  "audit_payload_sha256": "9a3abdfceb037cc13eaf19a5ef4be943869b87b22201db4d99c7564fc3c531cb",
+  "confirmatory_h1_superiority": true,
+  "confirmatory_h2_gate_passed": true,
+  "confirmatory_h2_superiority": true,
+  "execution_commit": "6a0b42df370d40c3b93eff3867fb8909af9539b8",
+  "failure_count": 0,
+  "integrity": {
+    "diagnostic_rows": 201,
+    "empty_prediction_metric_row_count": 1,
+    "expected_diagnostic_rows": 201,
+    "expected_registered_metric_rows": 603,
+    "negative_count_value_count": 0,
+    "non_finite_diagnostic_value_count": 0,
+    "non_finite_metric_value_count": 0,
+    "prediction_collapse_count": 0,
+    "registered_metric_rows": 603,
+    "saturated_prediction_metric_row_count": 0,
+    "score_bundle_count": 105,
+    "score_manifest_or_file_integrity_failure_count": 0,
+    "score_manifest_payload_failure_count": 0,
+    "status": "pass",
+    "third_sentiment_violation_count": 0
+  },
+  "outcomes_revealed_once": true,
+  "post_test_tuning_permitted": false,
+  "protocol_id": "taxonomy_two_stage_final_test_v1",
+  "public_output_sha256s": {
+    "confirmatory_results": "1c516bce50d4c11db68b84ac8c27265f6df88466031003520d763cb07290674e",
+    "l2_confirmatory_fold_results": "59bccc5eaac2232c1ec04bdc4911a71d7f1aa7d72c13a523f53a3aa132e168bd",
+    "l2_description_effects": "66995e893e074a2277ce50ed551ef21ec1b9494119b4af35b026055307983a7e",
+    "l2_model_condition_summary": "9bea621ae8e6119095528e063e80d7400929dec85a5618556119ef4ada46a63d",
+    "l2_stage_diagnostics": "a9eab4560347b8fdb48b84884de39e1bbf0d25011c9edb193bfac7e548d2a58a",
+    "l4_group_results": "b489bcd5268c7abac21f0c32c37872b6f6b9e10f9e6c8d363629f536480909a5",
+    "validation_test_comparison": "7457f847404670c930e714b58499ea710ea4a2c5db43023aba9e15353b3ac148"
+  },
+  "raw_review_text_in_public_outputs": false,
+  "schema_version": "taxonomy_final_test_post_reveal_audit_v1",
+  "scientific_failure_modes": {
+    "empty_partition_prediction_records": [
+      {
+        "condition": "N",
+        "fold_id": "l2-a02",
+        "gold_pair_count": 121,
+        "level": "L2",
+        "method_id": "frozen_qwen_candidate_pair",
+        "partition": "heldout"
+      }
+    ],
+    "interpretation": "Partition-local empty predictions are reported as scientific failure modes, not infrastructure failures, when the complete registered score bundle passes its non-collapse contract."
+  },
+  "single_reveal_manifest_sha256": "e861af7229c53a41a47fe5623553774a83d9f5173031bb507019dd49110698f5",
+  "single_reveal_outputs": {
+    "all_registered_metrics.csv": "4db0d322ddc323fcc25250e436beeb3d865978770560e93ffb3b64bd63e5853e",
+    "analysis_manifest.json": "e861af7229c53a41a47fe5623553774a83d9f5173031bb507019dd49110698f5",
+    "confirmatory_hypotheses.json": "94e37f16d5a80c138566e2436012547cc056aa5e8cf50b32f0c0015ca7afdd24",
+    "diagnostic_metrics.csv": "cd98e0e9d0df93be75d4d82bc7e35d8c8d5db625762e31c2f10187851b5e49ea",
+    "heldout_prediction_sets.jsonl": "28430a5bcc1fe493f8e9e61850778527fb00f08b1358f8da00c56ab1cf16a79d",
+    "primary_headline.csv": "94b4513ae55c796e2ce4fc4e6d53f39f07890d32f481f5b8da12b42dddd23c84"
+  }
+}

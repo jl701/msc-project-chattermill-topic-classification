@@ -1,0 +1,79 @@
+{
+  "gate_id": "taxonomy_two_stage_4090_hardware_gate_v1",
+  "recorded_at": "2026-08-17T22:35:27+01:00",
+  "formal_result": false,
+  "formal_validation_released": false,
+  "official_test_opened": false,
+  "test_contract_count": 0,
+  "failure_count": 0,
+  "runtime_source_commit": "0c57911afd356b1794cce4e01452141f2b649e1a",
+  "qualified_host": {
+    "provider": "Runpod",
+    "cloud_type": "Secure Cloud",
+    "location": "EU-RO-1",
+    "pod_id": "zotpukvqqkcb05",
+    "pod_name": "fabsa-two-stage-4090-gate-l2-a01",
+    "gpu": "NVIDIA GeForce RTX 4090",
+    "vram_mib": 24564,
+    "observed_total_price_usd_per_hour": 0.75,
+    "state_after_gate": "stopped"
+  },
+  "hardware_qualification": {
+    "status": "pass_with_frozen_batch_selection",
+    "real_model_smokes_passed": [
+      "frozen_qwen_few_shot",
+      "distilbert_true_two_stage",
+      "qwen_true_two_stage_qlora"
+    ],
+    "representative_throughput_audit_status": "pass",
+    "sustained_soak_audit_status": "pass",
+    "selected_scoring_batch_sizes": {
+      "frozen_qwen_few_shot": 6,
+      "qlora": 8
+    },
+    "batch_8_frozen_note": "Batch 8 was stable during the 602-second soak but was 0.30% slower than batch 6 in the registered short benchmark, so batch 6 is frozen as the throughput-optimal formal setting.",
+    "formal_scientific_inputs_changed": false
+  },
+  "representative_benchmark": {
+    "frozen_qwen_prompts_per_second_batch_6": 26.61106371747323,
+    "frozen_qwen_prompts_per_second_batch_8": 26.530273887445187,
+    "qlora_prompts_per_second_batch_8": 57.32711937108574,
+    "qlora_training_examples_per_second": 5.562192183691083,
+    "distilbert_training_examples_per_second": 176.80911045647082,
+    "distilbert_scoring_prompts_per_second": 1159.6473522899469,
+    "maximum_cuda_peak_memory_bytes": 4782119424,
+    "audit_sha256": "7e147618d437c8ebb722c2a1349a269ae4033dcca9f52f5501deea3d82caf859"
+  },
+  "sustained_soak": {
+    "frozen_seconds": 602.057,
+    "frozen_prompts": 15744,
+    "frozen_prompts_per_second": 26.150341096249996,
+    "qlora_training_examples": 4096,
+    "qlora_training_seconds": 731.854,
+    "qlora_training_examples_per_second": 5.596747265034464,
+    "qlora_train_loss": 1.0524995875079597,
+    "telemetry_samples": 789,
+    "maximum_temperature_c": 74.0,
+    "maximum_power_w": 451.91,
+    "maximum_memory_used_mib": 6930.0,
+    "software_thermal_slowdown_samples": 0,
+    "hardware_thermal_slowdown_samples": 0,
+    "hardware_slowdown_samples": 0,
+    "hardware_power_brake_samples": 0,
+    "software_power_cap_samples_informational": 292,
+    "audit_sha256": "b8c946ceff8187ec763ff367e602620c675fc63f56fb1a36f538dae623976a37"
+  },
+  "community_cloud_inventory_check": {
+    "checked_at": "2026-08-17T22:34:00+01:00",
+    "catalogue_price_usd_per_gpu_hour": 0.34,
+    "catalogue_displayed_available": true,
+    "successful_provision": false,
+    "provision_attempts": 2,
+    "failure_message": "This machine does not have the resources to deploy your pod. Please try a different machine",
+    "qualification_status": "not_qualified"
+  },
+  "reuse_boundary": {
+    "current_default": "Use a Secure Cloud RTX 4090 with the pinned environment and selected batches; perform the startup identity, hash, CUDA and telemetry checks before resuming formal work.",
+    "requires_new_gate": "A newly provisioned Community Cloud host, a different GPU model, a different container or CUDA stack, or any OOM, thermal, non-finite, collapse or resume anomaly requires requalification before formal results are accepted."
+  }
+}

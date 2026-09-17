@@ -1,0 +1,107 @@
+{
+  "schema_version": "taxonomy_two_stage_global_router_validation_v1",
+  "protocol_id": "taxonomy_two_stage_formal_v2",
+  "study_id": "taxonomy_two_stage_global_router_validation_v1",
+  "created_at": "2026-08-23",
+  "evaluation_partition": "validation_only",
+  "official_test_permitted": false,
+  "include_official_test": false,
+  "test_contract_count": 0,
+  "level": "L2",
+  "selection_condition": "D",
+  "transfer_conditions": [
+    "D",
+    "N"
+  ],
+  "folds": [
+    "l2-a01",
+    "l2-a02",
+    "l2-a03",
+    "l2-a04",
+    "l2-a05",
+    "l2-a06",
+    "l2-a07",
+    "l2-a08",
+    "l2-a09",
+    "l2-a10",
+    "l2-a11",
+    "l2-a12"
+  ],
+  "router_input_methods": [
+    "distilbert_review_candidate_cross_encoder",
+    "frozen_qwen_few_shot",
+    "qwen_candidate_pair_qlora"
+  ],
+  "comparison_methods": [
+    "strict_train_only_tfidf",
+    "e5_base_v2",
+    "description_conditioned_weight_transfer_kernel_ridge",
+    "distilbert_review_candidate_cross_encoder",
+    "frozen_qwen_candidate_pair",
+    "frozen_qwen_few_shot",
+    "qwen_candidate_pair_qlora"
+  ],
+  "router_family": "global_asymmetric_threshold_distance_hard_router",
+  "routing_unit": "review_candidate_aspect",
+  "ordered_pair_search": true,
+  "candidate_pair_count": 6,
+  "normalisation": "piecewise_linear_component_threshold_to_0.5",
+  "canonical_score_rule": {
+    "method_id": "qwen_candidate_pair_qlora",
+    "condition": "D",
+    "folds": [
+      "l2-a07",
+      "l2-a12"
+    ],
+    "rule": "replace_seen_candidate_D_scores_with_same_fold_N_scores_and_preserve_all_heldout_D_scores_bitwise"
+  },
+  "rescue_and_confirmation_bands": [
+    -1.0,
+    0.025,
+    0.05,
+    0.075,
+    0.1,
+    0.15,
+    0.2,
+    0.3,
+    0.5
+  ],
+  "policy_count_per_ordered_pair": 81,
+  "total_policy_count": 486,
+  "component_decoder": "top_one_plus_thresholded_runner_up",
+  "maximum_sentiments_per_selected_aspect": 2,
+  "selection_objective": [
+    "mean_D_heldout_pair_micro_f1",
+    "mean_D_overall_pair_micro_f1",
+    "lower_D_route_rate",
+    "lexical_policy_id"
+  ],
+  "crossfit": {
+    "unit": "heldout_aspect_fold",
+    "folds": 12,
+    "selection_folds_per_iteration": 11,
+    "evaluation_folds_per_iteration": 1,
+    "selection_condition": "D"
+  },
+  "final_router_rule": "select_once_on_all_12_D_validation_folds_then_freeze",
+  "n_condition_rule": "apply_the_exact_D_selected_pair_direction_and_bands_without_retuning",
+  "primary_metric": "aspect_balanced_mean_heldout_pair_micro_f1",
+  "secondary_metrics": [
+    "aspect_balanced_mean_overall_pair_micro_f1",
+    "pooled_heldout_pair_micro_f1",
+    "pooled_overall_pair_micro_f1",
+    "heldout_pair_micro_precision",
+    "heldout_pair_micro_recall",
+    "heldout_presence_f1",
+    "route_rate"
+  ],
+  "success_rule": "cross_fitted_D_heldout_pair_micro_f1_must_exceed_both_selected_components_and_the_current_best_single_system_D_value",
+  "forbidden": [
+    "official_test_access",
+    "condition_specific_router_retuning",
+    "heldout_aspect_specific_router_parameters",
+    "third_sentiment_output",
+    "outcome_features_at_inference",
+    "test_driven_policy_additions"
+  ]
+}

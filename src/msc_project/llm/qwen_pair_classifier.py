@@ -634,6 +634,7 @@ def load_saved_qwen_pair_adapter(
     adapter_dir: Any,
     *,
     revision: str | None = None,
+    local_files_only: bool = False,
 ) -> tuple[Any, Any, VerbalizerTokenIds]:
     """Load an immutable saved adapter on the same pinned frozen base model."""
 
@@ -643,6 +644,7 @@ def load_saved_qwen_pair_adapter(
         model_name,
         revision=revision,
         load_in_4bit=True,
+        local_files_only=local_files_only,
     )
     model = PeftModel.from_pretrained(
         base_model,

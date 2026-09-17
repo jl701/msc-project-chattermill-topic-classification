@@ -1,57 +1,49 @@
-# GitHub Upload Scope
+# Public repository boundary
 
-This note records what is safe to commit and push to the project GitHub repository at the current stage.
+This repository is public and linked from the author's CV. Its current tree is
+therefore curated as a research-software portfolio, not as a mirror of the
+author's complete local workspace.
 
-## Safe To Commit
+## Included
 
-The following files are project code, tests, configuration, or non-sensitive documentation and are safe to upload:
+- reusable source code and experiment entry points;
+- synthetic test fixtures and offline checks;
+- registered configurations and aggregate result tables;
+- methods, limitations, evidence roles and reproducibility guidance;
+- historical scientific records needed to interpret reported results.
 
-- `.gitignore`
-- `README.md`
-- `PROJECT_OVERVIEW.md`
-- `START_NEW_CHAT_PROMPT.md`
-- `requirements.txt`
-- `requirements-llm.txt`
-- `src/`
-- `scripts/`
-- `tests/`
-- `docs/`
+Aggregate evidence supports inspection of the reported claims. It does not make
+the repository a self-contained reproduction bundle for every trained model.
 
-The documentation includes aggregated metrics and protocol notes only. It does not include raw private data, credentials, model checkpoints, or confidential customer text.
+## Excluded
 
-## Do Not Commit
+- raw review text and private or unpublished annotations;
+- row-level predictions, score shards and official-label vaults;
+- model weights, adapters, checkpoints, caches and cloud backups;
+- API tokens, SSH keys, credentials, live endpoints and billing receipts;
+- supervisor messages, meeting/email drafts and agent handoff prompts;
+- working dissertation sources, draft PDFs and private editorial reviews;
+- absolute author-machine paths when they are not essential historical facts.
 
-Do not commit:
+These materials remain outside Git or are ignored locally. Removing a file from
+the current tree does not erase an earlier Git object. If a real credential or
+confidential dataset is ever committed, rotate or contain it first, then use a
+reviewed history-rewrite procedure rather than relying on a normal deletion.
 
-- `outputs/`
-- `data/raw/`
-- `data/interim/`
-- `data/processed/`
-- `data/internal/`
-- `artifacts/`
-- `models/`
-- `checkpoints/`
-- `runs/`
-- `wandb/`
-- `.env` or `.env.*`
-- Any local API keys, credentials, private Chattermill material, raw model outputs containing confidential text, or large downloaded model files.
+Some immutable historical manifests name non-public inputs that were present
+when an audit ran. A recorded path or hash is provenance, not evidence that the
+underlying private artifact is distributed in the current tree.
 
-These paths are covered by `.gitignore` where possible. Before pushing, run:
+## Before every public push
 
-```powershell
-git status --short --ignored
-```
+1. Review `git status --short` and `git diff --cached` file by file.
+2. Run `python scripts/check_quality.py --test`.
+3. Run `python scripts/audit_repository.py --output NEW_JSON_PATH` and inspect
+   every credential-pattern candidate without printing the candidate value.
+4. Confirm no raw text, private correspondence, machine identity or active
+   infrastructure address was added.
+5. Confirm result tables are aggregate evidence and their evidential role is
+   stated accurately.
 
-and confirm that only source, tests, and documentation are staged.
-
-## Current Recommended Commit Scope
-
-The current recommended GitHub upload is a single initial commit containing:
-
-- Reproducible FABSA loaders, split builders, metrics, and baseline scripts.
-- Closed-topic, held-out-organisation, and held-out-aspect evaluation documentation.
-- DistilBERT, classical, label-aware, and Qwen smoke-test tooling.
-- Unit tests for data loading, splits, metrics, label-aware helpers, Qwen formatting, and error analysis.
-- Project handoff notes and Git hygiene notes.
-
-Experiment outputs and generated Qwen SFT/evaluation JSONL files should remain local and regenerated when needed.
+GitHub secret scanning and push protection complement this review. They do not
+replace it and cannot detect every form of confidential research material.

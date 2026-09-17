@@ -364,3 +364,64 @@ class DistilBertTrueTwoStageRuntime:
             encoding="utf-8",
             newline="\n",
         )
+
+    @classmethod
+    def from_pretrained(
+        cls,
+        checkpoint_dir: Path,
+        *,
+        device: Any,
+        local_files_only: bool = True,
+    ) -> "DistilBertTrueTwoStageRuntime":
+        """Load only an exact, self-describing two-head checkpoint."""
+
+        from transformers import AutoModelForSequenceClassification, AutoTokenizer
+
+        contract_path = checkpoint_dir / "contract.json"
+        if not contract_path.is_file():
+            raise FileNotFoundError(contract_path)
+        payload = json.loads(contract_path.read_text(encoding="utf-8"))
+        if payload.get("schema_version") != "taxonomy_two_stage_distilbert_checkpoint_v1":
+            raise ValueError("Unexpected DistilBERT two-stage checkpoint schema.")
+        raw_config = payload.get("config")
+        if not isinstance(raw_config, dict):
+            raise ValueError("DistilBERT two-stage checkpoint lacks its config.")
+        config = TwoStageDistilBertConfig(**raw_config)
+        if payload.get("contract_sha256") != config.contract_sha256:
+            raise ValueError("DistilBERT checkpoint config hash mismatch.")
+        tokenizer = AutoTokenizer.from_pretrained(
+            checkpoint_dir / "tokenizer", local_files_only=local_files_only
+        )
+        aspect_model = AutoModelForSequenceClassification.from_pretrained(
+            checkpoint_dir / "aspect_presence", local_files_only=local_files_only
+        )
+        sentiment_model = AutoModelForSequenceClassification.from_pretrained(
+            checkpoint_dir / "sentiment", local_files_only=local_files_only
+        )
+        runtime = cls(
+            config,
+            device=device,
+            local_files_only=local_files_only,
+            tokenizer=tokenizer,
+            aspect_model=aspect_model,
+            sentiment_model=sentiment_model,
+        )
+        history = payload.get("history", {})
+        if not isinstance(history, dict):
+            raise ValueError("DistilBERT checkpoint history must be an object.")
+        runtime.history = history
+        return runtime
+
+    def close(self) -> None:
+        try:
+            import torch
+
+            for model in (self.aspect_model, self.sentiment_model):
+                if model is not None:
+                    model.to("cpu")
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+        finally:
+            self.aspect_model = None
+            self.sentiment_model = None
+            self.tokenizer = None

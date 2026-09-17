@@ -1,0 +1,164 @@
+{
+  "schema_version": "taxonomy_rich_description_interface_study_config_v1",
+  "protocol_id": "taxonomy_rich_description_interface_study_v1",
+  "status": "preregistered_before_full_execution_after_smoke_amendment",
+  "registered_at": "2026-08-20T00:00:00+01:00",
+  "objective": "Select exactly one leakage-safe rich-description interface for the Level 2 thesis mainline while keeping all alternative design exploration in the appendix.",
+  "research_question": "Which bounded interface for the same frozen label-side semantic fields best transfers to a pseudo-unseen aspect without increasing false-positive collapse?",
+  "thesis_role": {
+    "main_text": "One frozen R condition only, compared with N and D in Level 2.",
+    "appendix": "All candidate interfaces, development folds, negative results, diagnostics and selection evidence.",
+    "not_a_new_level": true
+  },
+  "data_contract": {
+    "allowed_splits_for_development": [
+      "train"
+    ],
+    "formal_validation_use_during_development": false,
+    "include_official_test": false,
+    "test_contract_count": 0,
+    "train_csv_sha256": "3ffcc7407cc8077fe9efc5ca06532847589a59464ea929d7f23d1f732b9efc7c",
+    "row_partition": {
+      "folds": 3,
+      "seed": 20260820,
+      "rule": "sha256(seed, row_uid) modulo 3",
+      "fit_rows": "two partitions",
+      "development_evaluation_rows": "one partition"
+    },
+    "pseudo_unseen_contract": "Rotate each of the twelve aspects as pseudo-unseen. Remove every fit row containing that aspect, train or fit only with the other eleven aspects, select the operating threshold on seen-aspect development rows, and use pseudo-unseen labels for evaluation only."
+  },
+  "resources": {
+    "minimal": {
+      "path": "configs/experiments/fabsa_aspect_descriptions_minimal_v2.json",
+      "content_sha256": "fc93cf27efdb64ad335f39f4a0dbdbd3dad13b1aae5de0010280931867af7d4c"
+    },
+    "rich_v1": {
+      "path": "configs/experiments/fabsa_aspect_rich_taxonomy_guidance_v1.json",
+      "content_sha256": "289ba3238cb6772f9bfda98eb73ac8a1108ba4b2bb3d23eecf72826881f415b9",
+      "mutation": "prohibited",
+      "allowed_fields": [
+        "canonical_name",
+        "definition",
+        "aliases",
+        "inclusion_boundary",
+        "contrastive_boundary"
+      ],
+      "sentiment_in_stage_1": false
+    }
+  },
+  "candidate_interfaces": {
+    "D": {
+      "label": "minimal definition",
+      "positive_prototypes": "canonical name plus exact minimal definition",
+      "eligible_as_final_rich": false
+    },
+    "R1_concat": {
+      "label": "existing naive rich concatenation",
+      "positive_prototypes": "name, definition, aliases, inclusion and contrastive boundary concatenated",
+      "eligible_as_final_rich": true
+    },
+    "R2_positive_concat": {
+      "label": "positive-only rich concatenation",
+      "positive_prototypes": "name, definition, aliases and inclusion concatenated",
+      "eligible_as_final_rich": true
+    },
+    "R3_prototype_max": {
+      "label": "separate positive prototypes with maximum aggregation",
+      "positive_prototypes": "name-plus-definition, each alias, and inclusion boundary scored separately",
+      "aggregation": "maximum",
+      "eligible_as_final_rich": true
+    },
+    "R4_prototype_top2": {
+      "label": "separate positive prototypes with top-two mean aggregation",
+      "positive_prototypes": "name-plus-definition, each alias, and inclusion boundary scored separately",
+      "aggregation": "mean of the two highest similarities",
+      "eligible_as_final_rich": true
+    },
+    "R5_contrastive_top2": {
+      "label": "top-two positive aggregation with a separate exclusion penalty",
+      "positive_prototypes": "same as R4_prototype_top2",
+      "negative_prototype": "contrastive boundary only",
+      "formula": "positive_top2_mean - lambda * max(0, exclusion_similarity - positive_top2_mean)",
+      "lambda_grid": [
+        0.1,
+        0.25,
+        0.5
+      ],
+      "eligible_as_final_rich": true
+    }
+  },
+  "development_methods": {
+    "tfidf_field_similarity": {
+      "word_ngrams": [
+        1,
+        2
+      ],
+      "character_ngrams": [
+        3,
+        5
+      ],
+      "field_similarity": "mean of word and character cosine",
+      "fit_corpus": "fit-partition review text plus seen-aspect field text only"
+    },
+    "e5_base_v2_field_similarity": {
+      "model": "intfloat/e5-base-v2",
+      "pooling": "registered frozen encoder",
+      "field_similarity": "normalised cosine",
+      "local_files_only": true
+    }
+  },
+  "selection": {
+    "threshold_population": "seen-aspect rows in the development evaluation partition only",
+    "threshold_objective": "aspect-presence micro-F1, with higher threshold then lexical ordering as deterministic ties",
+    "primary_metric": "pseudo-unseen aspect-presence average precision",
+    "secondary_metrics": [
+      "pseudo-unseen aspect-presence F1",
+      "false-positive rows per 100",
+      "positive minus negative score separation"
+    ],
+    "rich_candidate_ranking": "largest unweighted mean AP delta versus D over method by pseudo-unseen-aspect by row-partition records",
+    "stability_reporting": "report per-method deltas and the count of twelve aspects with positive mean delta",
+    "near_tie_rule": "If candidates differ by no more than 0.005 mean AP, select the simpler interface using R2_positive_concat, R4_prototype_top2, R3_prototype_max, R5_contrastive_top2, R1_concat as the simplicity order.",
+    "single_resource_rule": "Select one rich interface globally; no per-model or per-aspect rich selection.",
+    "formal_confirmation_gate": "Freeze the winning interface, lambda if applicable, code contract and hashes before any official-validation confirmation."
+  },
+  "stage_contract": {
+    "development_target": "Stage 1 aspect presence only",
+    "formal_selected_rich": "The selected structured rich interface changes Stage 1 only; Stage 2 keeps the frozen canonical name plus minimal definition so the rich comparison isolates aspect detection.",
+    "maximum_sentiments_per_aspect": 2,
+    "aspect_top_k_fallback": false
+  },
+  "execution_order": [
+    "resource and overlap audit",
+    "unit tests",
+    "one-aspect one-partition smoke for both methods",
+    "complete 12 by 3 pseudo-unseen development study",
+    "freeze exactly one rich interface",
+    "one validation-only TF-IDF and E5 confirmation",
+    "regenerate formal cloud plan and live-host gates"
+  ],
+  "smoke_amendments": [
+    {
+      "recorded_at": "2026-08-20T00:00:00+01:00",
+      "scope": "before complete pseudo-unseen execution",
+      "observation": "The original absolute exclusion subtraction shifted the E5 score scale below the shared D threshold and produced a zero-prediction smoke result.",
+      "change": "Use a scale-preserving contrastive penalty only when exclusion similarity exceeds the positive top-two score.",
+      "selection_evidence_used": false,
+      "formal_validation_used": false,
+      "official_test_used": false
+    }
+  ],
+  "stop_conditions": [
+    "any validation or official-test access during development",
+    "any target-label use in descriptor authorship",
+    "any non-finite similarity or metric",
+    "held-out descriptor text entering a TF-IDF fit corpus",
+    "per-model or per-aspect rich-interface selection",
+    "resource or resume hash conflict",
+    "unexpected prediction collapse"
+  ],
+  "commit_policy": {
+    "tracked": "configuration, code, tests, aggregate summaries, non-sensitive appendix tables and documentation",
+    "local_only": "review text, row-level predictions, model caches, checkpoints and large artifacts"
+  }
+}

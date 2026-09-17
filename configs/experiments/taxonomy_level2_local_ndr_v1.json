@@ -1,0 +1,77 @@
+{
+  "schema_version": "taxonomy_level2_local_ndr_config_v1",
+  "protocol_id": "taxonomy_level2_local_ndr_v1",
+  "status": "preregistered_before_execution",
+  "registered_at": "2026-08-20T00:00:00+01:00",
+  "objective": "Produce one exact N/D/R Level 2 validation bundle and both L2-S and L2-E views for every cheap local method.",
+  "parent_protocol": "taxonomy_post_supervisor_execution_plan_v1",
+  "data_contract": {
+    "allowed_splits": [
+      "train",
+      "validation"
+    ],
+    "include_official_test": false,
+    "test_contract_count": 0,
+    "train_csv_sha256": "3ffcc7407cc8077fe9efc5ca06532847589a59464ea929d7f23d1f732b9efc7c",
+    "validation_csv_sha256": "3a32afda9c4ba1d59e76ee8fcfb480011c7178d8201d0025b254a40c2f81203c",
+    "target_validation_use": "evaluation only",
+    "threshold_selection": "seen-aspect validation only"
+  },
+  "folds": {
+    "level": "L2",
+    "count": 12,
+    "training_strategy": "example_filtered",
+    "heldout_aspects_per_fold": 1,
+    "evaluation_candidates": "all twelve aspects on every validation review"
+  },
+  "conditions": {
+    "N": "held-out canonical name only",
+    "D": "held-out canonical name plus frozen minimal definition",
+    "R": "held-out pre-registered rich guidance"
+  },
+  "condition_invariants": [
+    "same training evidence and model within a fold",
+    "same seen candidates rendered as name plus minimal definition",
+    "same validation rows and candidate identities",
+    "same aspect threshold and runner-up sentiment threshold",
+    "same capped-two decoder"
+  ],
+  "methods": [
+    "strict_train_only_tfidf",
+    "e5_base_v2",
+    "frozen_qwen_candidate_pair"
+  ],
+  "frozen_qwen_cache": {
+    "mode": "read_only_exact_no_inference",
+    "path": "outputs/experimental/taxonomy_two_stage_precloud_v2/qwen_zero_shot_rich_seed/study_c/frozen_qwen_candidate_pair/raw_cache/prompt_scores.jsonl",
+    "sha256": "08d276ac8915a929c3849dc92a54130df53a9835a8f0b36a0040ee7dbfad9db3",
+    "expected_contract_sha256": "ed6eff449c4396e46ce11c17875997772feced1ac2701e82092a4c66e1ba162b",
+    "cache_miss_count": 0,
+    "new_inference_count": 0
+  },
+  "selection": {
+    "seen_candidate_representation": "name_and_description",
+    "aspect_threshold": "exact seen-only two-stage threshold sweep",
+    "second_sentiment_threshold": "selected second with aspect threshold frozen",
+    "aspect_top_k_fallback": false,
+    "maximum_sentiments_per_aspect": 2
+  },
+  "result_views": {
+    "L2_S": [
+      "held-out aspect presence precision recall F1 and average precision",
+      "held-out positive-row candidate rank and reciprocal rank",
+      "oracle-aspect-gated sentiment metrics"
+    ],
+    "L2_E": "full twelve-candidate capped-two end-to-end metrics"
+  },
+  "output_root": "outputs/experimental/taxonomy_post_supervisor_local_v1/level2_local_ndr",
+  "stop_conditions": [
+    "any official-test access",
+    "target labels used for threshold or method selection",
+    "cache miss or new Frozen-Qwen inference",
+    "seen score change across N D R",
+    "non-finite score",
+    "third sentiment",
+    "resume or artifact hash conflict"
+  ]
+}

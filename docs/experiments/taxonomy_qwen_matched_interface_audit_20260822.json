@@ -1,0 +1,47 @@
+{
+  "allowed_claim": "A descriptive comparison of two systems sharing base model, revision, prompt/verbalizer contract, maximum length and four-bit loading boundary.",
+  "checks": {
+    "frozen_cache_read_only_exact": true,
+    "qlora_checkpoint_test_contract_zero": true,
+    "same_four_bit_boundary": true,
+    "same_max_length": true,
+    "same_model_id": true,
+    "same_model_revision": true,
+    "same_prompt_contract_across_stages_cache_and_all_qlora_checkpoints": true,
+    "same_task_format_registry": true
+  },
+  "created_at_utc": "2026-08-22T01:04:39.843000+00:00",
+  "failure_count": 0,
+  "forbidden_claim": "The score difference is a causal estimate of the LoRA adapter alone.",
+  "include_official_test": false,
+  "known_non_adapter_differences": {
+    "frozen_eval_batch_size": 6,
+    "qlora_eval_batch_size": 8,
+    "thresholds": "Each system selects its own seen-validation aspect and runner-up thresholds.",
+    "training": "QLoRA receives outer-scope supervised adaptation; frozen Qwen does not."
+  },
+  "matched_interface": {
+    "aspect_verbalizers": [
+      "Y",
+      "N"
+    ],
+    "load_in_4bit": true,
+    "max_length": 384,
+    "model_id": "Qwen/Qwen3-4B-Instruct-2507",
+    "model_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+    "prompt_contract_sha256": "ed6eff449c4396e46ce11c17875997772feced1ac2701e82092a4c66e1ba162b",
+    "qlora_checkpoint_manifests_checked": 45,
+    "qlora_contract_files_checked": 45,
+    "sentiment_verbalizers": {
+      "A": "negative",
+      "B": "neutral",
+      "C": "positive"
+    }
+  },
+  "non_finite_value_count": 0,
+  "official_test_opened": false,
+  "resume_conflict_count": 0,
+  "schema_version": "taxonomy_qwen_matched_interface_audit_v1",
+  "status": "pass",
+  "test_contract_count": 0
+}

@@ -1,0 +1,4 @@
+method_id,method,review_rows,gold_presence_rows,predicted_presence_rows,true_absence_rows,missed_aspect_rows,spurious_aspect_rows,correct_sentiment_set_rows,wrong_sentiment_set_rows,gold_multi_sentiment_rows,predicted_multi_sentiment_rows,multi_sentiment_exact_rows,multi_sentiment_mismatch_rows,heldout_pair_tp,heldout_pair_fp,heldout_pair_fn,missed_aspect_rate_among_gold_positive,wrong_sentiment_rate_among_detected_gold_positive
+frozen_qwen_few_shot_stage1__qlora_stage2,Fixed stage-wise composition,19044,2791,3371,14842,831,1411,1780,180,21,16,0,21,1805,1582,1007,0.2977427445360086,0.09183673469387756
+frozen_qwen_few_shot,Frozen Qwen few-shot,19044,2791,3371,14842,831,1411,1731,229,21,31,0,21,1751,1651,1061,0.2977427445360086,0.11683673469387755
+qwen_candidate_pair_qlora,QLoRA,19044,2791,2969,14860,1215,1393,1502,74,21,19,0,21,1513,1475,1299,0.4353278394840559,0.046954314720812185

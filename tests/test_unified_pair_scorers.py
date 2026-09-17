@@ -151,6 +151,20 @@ class UnifiedPairScorersTest(unittest.TestCase):
         self.assertAlmostEqual(features[0, 4], 1.0 / 13.0)
         self.assertAlmostEqual(features[0, 5], 2.0 / 8.0)
 
+    def test_tfidf_evaluation_metadata_does_not_change_features_or_scores(self) -> None:
+        scorer = UnifiedTfidfPairScorer().fit(pair_manifest())
+        first = pair_manifest().drop(columns="target").copy()
+        second = first.copy()
+        first["negative_type"] = "eval_candidate"
+        second["negative_type"] = "different_metadata_value"
+
+        np.testing.assert_array_equal(
+            scorer.transform_features(first), scorer.transform_features(second)
+        )
+        np.testing.assert_array_equal(
+            scorer.score_manifest(first), scorer.score_manifest(second)
+        )
+
     def test_tfidf_feature_ablation_changes_only_registered_columns(self) -> None:
         manifest = pair_manifest()
         all_features = UnifiedTfidfPairScorer(

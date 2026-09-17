@@ -1,0 +1,177 @@
+{
+  "provenance": "Pre-edit TF-IDF implementation on synthetic records. Numeric tolerance accounts for library versions.",
+  "records": [
+    {
+      "row_uid": "0",
+      "text": "App was great and easy",
+      "candidate_text": "App positive",
+      "candidate_aspect": "App",
+      "candidate_sentiment": "positive",
+      "negative_type": "synthetic",
+      "target": 1
+    },
+    {
+      "row_uid": "0",
+      "text": "App was great and easy",
+      "candidate_text": "Staff positive",
+      "candidate_aspect": "Staff",
+      "candidate_sentiment": "positive",
+      "negative_type": "synthetic",
+      "target": 0
+    },
+    {
+      "row_uid": "1",
+      "text": "Staff were rude and slow",
+      "candidate_text": "App negative",
+      "candidate_aspect": "App",
+      "candidate_sentiment": "negative",
+      "negative_type": "synthetic",
+      "target": 0
+    },
+    {
+      "row_uid": "1",
+      "text": "Staff were rude and slow",
+      "candidate_text": "Staff negative",
+      "candidate_aspect": "Staff",
+      "candidate_sentiment": "negative",
+      "negative_type": "synthetic",
+      "target": 1
+    },
+    {
+      "row_uid": "2",
+      "text": "App had a terrible problem",
+      "candidate_text": "App negative",
+      "candidate_aspect": "App",
+      "candidate_sentiment": "negative",
+      "negative_type": "synthetic",
+      "target": 1
+    },
+    {
+      "row_uid": "2",
+      "text": "App had a terrible problem",
+      "candidate_text": "Staff negative",
+      "candidate_aspect": "Staff",
+      "candidate_sentiment": "negative",
+      "negative_type": "synthetic",
+      "target": 0
+    },
+    {
+      "row_uid": "3",
+      "text": "Staff were friendly and helpful",
+      "candidate_text": "App positive",
+      "candidate_aspect": "App",
+      "candidate_sentiment": "positive",
+      "negative_type": "synthetic",
+      "target": 0
+    },
+    {
+      "row_uid": "3",
+      "text": "Staff were friendly and helpful",
+      "candidate_text": "Staff positive",
+      "candidate_aspect": "Staff",
+      "candidate_sentiment": "positive",
+      "negative_type": "synthetic",
+      "target": 1
+    }
+  ],
+  "features": [
+    [
+      0.08022701424731572,
+      0.06621960544277987,
+      1.0,
+      0.5,
+      0.15384615384615385,
+      0.4
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.15384615384615385,
+      0.4
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.16666666666666666,
+      0.4
+    ],
+    [
+      0.08393805027494708,
+      0.14435729986191925,
+      1.0,
+      0.5,
+      0.16666666666666666,
+      0.4
+    ],
+    [
+      0.08905565507956338,
+      0.05351024317533812,
+      1.0,
+      0.5,
+      0.16666666666666666,
+      0.4
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.16666666666666666,
+      0.4
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.15384615384615385,
+      0.4
+    ],
+    [
+      0.08393805027494708,
+      0.11153536299202986,
+      1.0,
+      0.5,
+      0.15384615384615385,
+      0.4
+    ]
+  ],
+  "probabilities": [
+    [
+      0.10567635415145937,
+      0.8943236458485406
+    ],
+    [
+      0.916665930443906,
+      0.08333406955609396
+    ],
+    [
+      0.9184616256587868,
+      0.0815383743412133
+    ],
+    [
+      0.05110705502483204,
+      0.948892944975168
+    ],
+    [
+      0.10641715329511992,
+      0.8935828467048801
+    ],
+    [
+      0.9184616256587868,
+      0.0815383743412133
+    ],
+    [
+      0.916665930443906,
+      0.08333406955609396
+    ],
+    [
+      0.06726366163760988,
+      0.9327363383623901
+    ]
+  ]
+}

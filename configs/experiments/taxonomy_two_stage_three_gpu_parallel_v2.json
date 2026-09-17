@@ -1,0 +1,111 @@
+{
+  "schema_version": "taxonomy_post_supervisor_parallel_plan_v2",
+  "protocol_id": "taxonomy_two_stage_formal_v2",
+  "status": "preregistered_before_parallel_execution",
+  "registered_at": "2026-08-20T00:00:00+01:00",
+  "objective": "Execute only the mandatory Level 2 N/D and Level 4 D validation workload on three independently qualified RTX 4090 workers after the rich-description gate rejected cloud expansion of R.",
+  "allowed_splits": [
+    "train",
+    "validation"
+  ],
+  "include_official_test": false,
+  "test_contract_count": 0,
+  "supersedes": "taxonomy_two_stage_three_gpu_parallel_v1",
+  "old_manifest_authorised": false,
+  "merge_policy": {
+    "scope_assignment": "each method and training scope belongs to exactly one worker",
+    "scope_dependency_boundary": "all three learning-rate candidates, selection and selected scoring remain on the same worker",
+    "shared_mutable_state": false,
+    "acceptance": "exact manifest and SHA-256 verification with no missing or duplicate scope",
+    "result_operation": "verified union only"
+  },
+  "workers": [
+    {
+      "worker_id": "worker-qlora-a",
+      "role": "trainable",
+      "method_id": "qwen_candidate_pair_qlora",
+      "training_scope_ids": [
+        "heldout-a01",
+        "heldout-a03",
+        "heldout-a05",
+        "heldout-a07",
+        "heldout-a09",
+        "heldout-a11",
+        "heldout-a02-a03-a04",
+        "heldout-a11-a12"
+      ]
+    },
+    {
+      "worker_id": "worker-qlora-b",
+      "role": "trainable",
+      "method_id": "qwen_candidate_pair_qlora",
+      "training_scope_ids": [
+        "heldout-a02",
+        "heldout-a04",
+        "heldout-a06",
+        "heldout-a08",
+        "heldout-a10",
+        "heldout-a12",
+        "heldout-a08-a09-a10"
+      ]
+    },
+    {
+      "worker_id": "worker-distil-frozen",
+      "role": "trainable_and_frozen",
+      "method_id": "distilbert_review_candidate_cross_encoder",
+      "training_scope_ids": [
+        "heldout-a01",
+        "heldout-a02",
+        "heldout-a03",
+        "heldout-a04",
+        "heldout-a05",
+        "heldout-a06",
+        "heldout-a07",
+        "heldout-a08",
+        "heldout-a09",
+        "heldout-a10",
+        "heldout-a11",
+        "heldout-a12",
+        "heldout-a02-a03-a04",
+        "heldout-a08-a09-a10",
+        "heldout-a11-a12"
+      ],
+      "frozen_qwen_few_shot_scope_ids": [
+        "heldout-a01",
+        "heldout-a02",
+        "heldout-a02-a03-a04",
+        "heldout-a03",
+        "heldout-a04",
+        "heldout-a05",
+        "heldout-a06",
+        "heldout-a07",
+        "heldout-a08",
+        "heldout-a08-a09-a10",
+        "heldout-a09",
+        "heldout-a10",
+        "heldout-a11",
+        "heldout-a11-a12",
+        "heldout-a12"
+      ]
+    }
+  ],
+  "worker_hardware": {
+    "provider": "Runpod",
+    "cloud_type": "Secure Cloud",
+    "gpu": "NVIDIA GeForce RTX 4090",
+    "qualification": "each physical worker must independently pass the final-commit startup, telemetry, storage and replication gates"
+  },
+  "stop_conditions": [
+    "official-test access or any test contract",
+    "missing duplicated or overlapping worker scope",
+    "worker plan or output-root resume conflict",
+    "checkpoint cache score-shard or artifact-unit hash mismatch",
+    "non-finite loss or probability",
+    "unexpected prediction collapse",
+    "third sentiment emitted for an aspect",
+    "OOM",
+    "repeated thermal or hardware slowdown",
+    "verified local replication failure",
+    "active unneeded cloud resource or unbounded billing"
+  ]
+}

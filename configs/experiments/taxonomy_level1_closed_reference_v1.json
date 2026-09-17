@@ -1,0 +1,81 @@
+{
+  "schema_version": "taxonomy_level1_closed_reference_config_v1",
+  "protocol_id": "taxonomy_level1_closed_reference_v1",
+  "status": "preregistered_before_execution",
+  "registered_at": "2026-08-20T00:00:00+01:00",
+  "objective": "Measure the conventional closed-taxonomy validation reference before any aspect is held out.",
+  "data_contract": {
+    "allowed_splits": [
+      "train",
+      "validation"
+    ],
+    "include_official_test": false,
+    "test_contract_count": 0,
+    "train_csv_sha256": "3ffcc7407cc8077fe9efc5ca06532847589a59464ea929d7f23d1f732b9efc7c",
+    "validation_csv_sha256": "3a32afda9c4ba1d59e76ee8fcfb480011c7178d8201d0025b254a40c2f81203c",
+    "training_taxonomy": "all twelve aspects",
+    "evaluation_taxonomy": "all twelve aspects",
+    "validation_role": "development selection and validation-only reporting; official test remains sealed"
+  },
+  "labels": {
+    "task": "36 independent aspect-sentiment labels",
+    "aspect_count": 12,
+    "sentiments": [
+      "negative",
+      "neutral",
+      "positive"
+    ]
+  },
+  "model": {
+    "features": {
+      "type": "word_plus_character_tfidf_feature_union",
+      "word_analyzer": "word",
+      "word_ngram_range": [
+        1,
+        2
+      ],
+      "character_analyzer": "char_wb",
+      "character_ngram_range": [
+        3,
+        5
+      ],
+      "min_df": 2,
+      "word_max_features": 30000,
+      "character_max_features": 30000,
+      "sublinear_tf": true,
+      "fit_population": "train review text only"
+    },
+    "classifier": "one-vs-rest balanced logistic regression",
+    "solver": "liblinear",
+    "c_grid": [
+      0.5,
+      1.0,
+      2.0,
+      4.0
+    ],
+    "max_iter": 2000,
+    "seed": 13
+  },
+  "selection": {
+    "population": "validation rows with all 36 labels",
+    "decoder": "independent label thresholding without ensure-one or top-k fallback",
+    "threshold_candidates": "all exact probability cut points",
+    "primary_metric": "pair_micro_f1",
+    "tie_break": [
+      "pair_samples_f1",
+      "pair_micro_precision",
+      "lower false-positive-row rate",
+      "stronger regularisation",
+      "higher threshold",
+      "lexicographic configuration id"
+    ]
+  },
+  "output_root": "outputs/experimental/taxonomy_level1_closed_reference_v1",
+  "stop_conditions": [
+    "any official-test access",
+    "non-finite probability",
+    "missing or duplicate review-label identity",
+    "unexpected label count",
+    "configuration or artifact hash conflict"
+  ]
+}

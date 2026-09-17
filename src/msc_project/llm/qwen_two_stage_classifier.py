@@ -548,6 +548,7 @@ def score_two_stage_prompts(
     aspect_verbalizer_ids: VerbalizerTokenIds | None = None,
     sentiment_verbalizer_ids: SentimentVerbalizerTokenIds | None = None,
     demonstrations: Sequence[TwoStageDemonstration] | None = None,
+    demonstration_sets: Sequence[Sequence[TwoStageDemonstration]] | None = None,
 ) -> np.ndarray:
     if len(reviews) != len(aspect_candidates):
         raise ValueError("Reviews and aspect candidates must have equal length.")
@@ -563,7 +564,13 @@ def score_two_stage_prompts(
         token_ids = sentiment.ordered()
     else:
         raise ValueError(f"Unknown Qwen two-stage mode: {mode!r}.")
-    if demonstrations is None:
+    if demonstrations is not None and demonstration_sets is not None:
+        raise ValueError(
+            "Provide either one shared demonstration set or per-prompt sets, not both."
+        )
+    if demonstration_sets is not None and len(demonstration_sets) != len(reviews):
+        raise ValueError("Per-prompt demonstration sets must align with the prompts.")
+    if demonstrations is None and demonstration_sets is None:
         items = [
             encode_two_stage_prompt(
                 tokenizer,
@@ -574,7 +581,7 @@ def score_two_stage_prompts(
             )
             for review, candidate in zip(reviews, aspect_candidates)
         ]
-    else:
+    elif demonstrations is not None:
         items = [
             _encode_segment_aware_few_shot_prompt(
                 tokenizer,
@@ -585,6 +592,21 @@ def score_two_stage_prompts(
                 max_length=max_length,
             )
             for review, candidate in zip(reviews, aspect_candidates)
+        ]
+    else:
+        assert demonstration_sets is not None
+        items = [
+            _encode_segment_aware_few_shot_prompt(
+                tokenizer,
+                str(review),
+                str(candidate),
+                mode=mode,
+                demonstrations=prompt_demonstrations,
+                max_length=max_length,
+            )
+            for review, candidate, prompt_demonstrations in zip(
+                reviews, aspect_candidates, demonstration_sets
+            )
         ]
     collator = CandidatePairBatchCollator(tokenizer, padding_side="right")
     batches: list[np.ndarray] = []

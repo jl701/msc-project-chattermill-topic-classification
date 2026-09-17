@@ -1,0 +1,114 @@
+{
+  "schema_version": "taxonomy_two_stage_stage_hybrid_calibration_v1",
+  "protocol_id": "taxonomy_two_stage_formal_v2",
+  "study_id": "taxonomy_two_stage_stage_hybrid_calibration_v1",
+  "created_at": "2026-08-23",
+  "formal_execution_commit": "aa84212976a652d62cfca31ed8bf0516a216c485",
+  "analysis_parent_commit": "c079636563500d233adc150e8df5f40da219e647",
+  "evaluation_partition": "validation_only",
+  "official_test_permitted": false,
+  "include_official_test": false,
+  "test_contract_count": 0,
+  "level": "L2",
+  "primary_condition": "D",
+  "unchanged_transfer_condition": "N",
+  "folds": [
+    "l2-a01",
+    "l2-a02",
+    "l2-a03",
+    "l2-a04",
+    "l2-a05",
+    "l2-a06",
+    "l2-a07",
+    "l2-a08",
+    "l2-a09",
+    "l2-a10",
+    "l2-a11",
+    "l2-a12"
+  ],
+  "input_methods": [
+    "frozen_qwen_few_shot",
+    "qwen_candidate_pair_qlora"
+  ],
+  "direction_1_stage_hybrid": {
+    "primary_method_id": "frozen_qwen_few_shot_stage1__qlora_stage2",
+    "stage_1": "frozen_qwen_few_shot_aspect_score_and_frozen_fold_threshold",
+    "stage_2": "qwen_candidate_pair_qlora_sentiment_scores_and_frozen_fold_runner_up_threshold",
+    "reverse_control_method_id": "qlora_stage1__frozen_qwen_few_shot_stage2",
+    "reverse_stage_1": "qwen_candidate_pair_qlora_aspect_score_and_frozen_fold_threshold",
+    "reverse_stage_2": "frozen_qwen_few_shot_sentiment_scores_and_frozen_fold_runner_up_threshold",
+    "parameter_selection": "none_recombine_only",
+    "decoder": "top_one_plus_thresholded_runner_up",
+    "maximum_sentiments_per_selected_aspect": 2
+  },
+  "direction_2_qlora_relative_calibrator": {
+    "method_id": "qwen_candidate_pair_qlora_relative_calibrator_v1",
+    "model_family": "global_two_feature_logistic_regression",
+    "features": [
+      "clipped_logit_absolute_qlora_aspect_probability",
+      "absolute_logit_minus_within_review_median_other_aspect_logit"
+    ],
+    "probability_clip_epsilon": 1e-06,
+    "standardise_features": true,
+    "penalty": "l2",
+    "C": 1.0,
+    "class_weight": "balanced",
+    "solver": "lbfgs",
+    "max_iter": 1000,
+    "random_seed": 13,
+    "outer_unit": "heldout_aspect_fold",
+    "training_aspects": "same_outer_fold_seen_aspects_only",
+    "selection_condition": "D_only",
+    "review_crossfit_folds": 5,
+    "review_crossfit_assignment": "sha256(seed_pipe_row_uid)_first_8_bytes_mod_5",
+    "training_reviews": "all_review_blocks_except_current_evaluation_block",
+    "evaluation_reviews": "current_review_block_only",
+    "threshold_grid_start": 0.0,
+    "threshold_grid_stop": 1.0,
+    "threshold_grid_step": 0.01,
+    "threshold_selection_objective": [
+      "seen_pair_micro_f1",
+      "seen_presence_f1",
+      "lower_seen_aspect_call_rate",
+      "higher_threshold"
+    ],
+    "sentiment_component": "unchanged_threshold_aligned_qlora_stage_2",
+    "cross_fitted_estimate": "primary",
+    "all_validation_fit": "descriptive_diagnostic_only",
+    "n_condition_rule": "apply_each_D_fitted_scaler_logistic_model_and_threshold_to_N_without_refit"
+  },
+  "primary_metric": "aspect_balanced_mean_heldout_pair_micro_f1",
+  "secondary_metrics": [
+    "aspect_balanced_mean_overall_pair_micro_f1",
+    "pooled_heldout_pair_micro_f1",
+    "heldout_pair_micro_precision",
+    "heldout_pair_micro_recall",
+    "heldout_presence_f1",
+    "heldout_presence_average_precision",
+    "oracle_gated_sentiment_set_micro_f1",
+    "aspect_call_rate"
+  ],
+  "uncertainty": {
+    "unit": "row_uid_review_cluster",
+    "synchronised_draws": 20000,
+    "seed": 13,
+    "interval": "percentile_95"
+  },
+  "promotion_rules": {
+    "stage_hybrid": "D_heldout_pair_f1_exceeds_both_source_systems_and_pairwise_bootstrap_interval_is_reported",
+    "relative_calibrator": "cross_fitted_D_heldout_pair_f1_exceeds_uncalibrated_qlora_and_pairwise_bootstrap_interval_is_reported"
+  },
+  "forbidden": [
+    "official_test_access",
+    "heldout_aspect_labels_in_calibrator_training_or_threshold_selection",
+    "same_review_labels_across_calibrator_train_and_crossfit_evaluation",
+    "N_specific_refitting_or_threshold_selection",
+    "third_sentiment_output",
+    "outcome_driven_feature_or_model_family_expansion",
+    "qlora_retraining",
+    "runpod_launch"
+  ],
+  "local_output_directory": "outputs/experimental/taxonomy_two_stage_stage_hybrid_calibration_v1",
+  "committed_aggregate_directory": "docs/thesis_figure_data/taxonomy_two_stage_stage_hybrid_calibration_v1",
+  "raw_scores_and_checkpoints_committed": false
+}

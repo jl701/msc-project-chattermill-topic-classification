@@ -1,0 +1,2 @@
+method,validation_reviews,pair_micro_f1,pair_macro_f1,aspect_micro_f1,selected_c,selected_threshold,selection_and_evaluation_boundary,interpretation
+word+character TF-IDF OvR logistic regression,1057,0.7050776111549593,0.4650189919926249,0.7594660855352765,4.0,0.544508595979,validation_all_36_labels,closed-taxonomy development reference; not an unbiased generalisation-loss estimate

@@ -1,0 +1,95 @@
+{
+  "schema_version": "taxonomy_rich_description_selected_interface_config_v1",
+  "interface_id": "taxonomy_rich_description_selected_interface_v1",
+  "status": "development_selected_and_validation_confirmed_no_cloud_expansion",
+  "frozen_at": "2026-08-20T00:00:00+01:00",
+  "parent_protocol": "taxonomy_rich_description_interface_study_v1",
+  "mainline_condition": "R",
+  "selected_development_interface": "R2_positive_concat",
+  "selection_scope": "one global rich interface shared by every model and held-out aspect",
+  "resource": {
+    "path": "configs/experiments/fabsa_aspect_rich_taxonomy_guidance_v1.json",
+    "content_sha256": "289ba3238cb6772f9bfda98eb73ac8a1108ba4b2bb3d23eecf72826881f415b9",
+    "file_sha256": "649ad01b32e931dcaba5339bebb50bfdd270928900cfa38d1bbccbeaec7d3f31",
+    "mutation": "prohibited"
+  },
+  "stage_1_rendering": {
+    "template": "Aspect: {canonical_name}. Definition: {minimal_definition} Aliases: {semicolon_joined_aliases}. Inclusion boundary: {inclusion_boundary}",
+    "included_fields": [
+      "canonical_name",
+      "minimal_definition",
+      "aliases",
+      "inclusion_boundary"
+    ],
+    "excluded_fields": [
+      "contrastive_boundary",
+      "candidate_sentiment"
+    ],
+    "representation_variant": "rich_positive"
+  },
+  "stage_2_rendering": {
+    "template": "Aspect: {canonical_name}. Definition: {minimal_definition} Candidate sentiment: {candidate_sentiment}.",
+    "representation_variant": "name_and_description",
+    "reason": "Keep Stage 2 fixed so the rich comparison isolates unseen-aspect presence detection."
+  },
+  "development_evidence": {
+    "allowed_split": "train only",
+    "completed_pseudo_folds": 72,
+    "interfaces_per_record": 8,
+    "selection_summary_sha256": "c1801fb962a2cd868a0b1183343892749bb71c3e993c5730f6815623ffd23d6f",
+    "selected_mean_ap_delta_vs_D_across_methods": 0.0019648215986703644,
+    "tfidf": {
+      "D_average_precision": 0.45302083319826786,
+      "R_average_precision": 0.46442613839366476,
+      "delta": 0.011405305195396898,
+      "improved_aspects": 8,
+      "worsened_aspects": 4
+    },
+    "e5": {
+      "D_average_precision": 0.3384946793745701,
+      "R_average_precision": 0.33101901737651396,
+      "delta": -0.00747566199805616,
+      "improved_aspects": 6,
+      "worsened_aspects": 6
+    },
+    "interpretation": "Selected as the strongest eligible rich interface under the registered global rule, not as evidence that it clearly outperforms D."
+  },
+  "implementation_freeze": {
+    "study_config_file_sha256": "1512f9fb9e2da09840cc18ad10e6c04aa407496bb79ea416e7fd79d1f42409ef",
+    "study_module_file_sha256": "1b2847f1ae0f216c305e8ed9845ae04a557f8ba1374e7db96eb2daf2003cc12d",
+    "study_runner_file_sha256": "6189bd5b74c3a96fffd1f12889a945474876bc46c809270682092ed0a29304eb"
+  },
+  "formal_confirmation": {
+    "allowed_split": "validation",
+    "methods": [
+      "strict_train_only_tfidf",
+      "e5_base_v2"
+    ],
+    "folds": 12,
+    "comparisons": [
+      "R_minus_D aspect-presence average precision",
+      "R_minus_D aspect-presence F1",
+      "R_minus_D end-to-end held-out pair micro-F1"
+    ],
+    "interface_revision_after_confirmation": false,
+    "official_test": "sealed",
+    "completed": true,
+    "decision": "retain one controlled local R ablation but do not expand R to expensive cloud methods",
+    "strict_train_only_tfidf": {
+      "summary_sha256": "07e8590ed2d6629918961f427e657023197c1db62a77331f9fa5450027776dba",
+      "R_minus_D_presence_average_precision": -0.009104616990650146,
+      "R_minus_D_presence_f1": -0.04050943271229588,
+      "R_minus_D_heldout_pair_micro_f1": -0.029352154014961756,
+      "R_minus_D_false_positive_rows_per_100": 4.619993692841375
+    },
+    "e5_base_v2": {
+      "summary_sha256": "0d9ccd5b2714981cffa5ab0293490d4dd9de51a6efdd2ce6d4592e79bad57b0c",
+      "R_minus_D_presence_average_precision": -0.011447999293709337,
+      "R_minus_D_presence_f1": -0.014363198451744523,
+      "R_minus_D_heldout_pair_micro_f1": -0.010226700515891203,
+      "R_minus_D_false_positive_rows_per_100": 1.9394512771996222
+    },
+    "evidence_audit_sha256": "921e9a1578f5f88c5966601780261a3f3fea466fbd25359d60aef8663f09c8c1"
+  },
+  "cloud_expansion_gate": "Closed: both confirmation methods worsened held-out pair F1, presence AP and presence F1 while increasing false positives; expensive methods receive N/D only."
+}

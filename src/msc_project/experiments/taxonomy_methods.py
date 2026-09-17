@@ -6,7 +6,7 @@ import hashlib
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Mapping, Protocol, Sequence
+from typing import TYPE_CHECKING, Any, Callable, Mapping, Protocol, Sequence
 
 import numpy as np
 import pandas as pd
@@ -15,12 +15,9 @@ from msc_project.baselines.candidate_similarity import (
     FrozenTransformerSentenceEncoder,
     REGISTERED_CONFIGS as SIMILARITY_CONFIGS,
 )
-from msc_project.baselines.unified_pair_scorers import (
-    UnifiedPairCrossEncoderConfig,
+from msc_project.baselines.candidate_tfidf import (
     UnifiedTfidfPairConfig,
     UnifiedTfidfPairScorer,
-    fit_unified_pair_cross_encoder,
-    score_unified_pair_manifest,
     validate_pair_manifest,
 )
 from msc_project.llm.qwen_pair_classifier import (
@@ -28,6 +25,9 @@ from msc_project.llm.qwen_pair_classifier import (
     VerbalizerTokenIds,
     score_candidate_pairs,
 )
+
+if TYPE_CHECKING:
+    from msc_project.baselines.unified_pair_scorers import UnifiedPairCrossEncoderConfig
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -172,6 +172,8 @@ def distilbert_config_from_parameters(
     *,
     seed: int = 13,
 ) -> UnifiedPairCrossEncoderConfig:
+    from msc_project.baselines.unified_pair_scorers import UnifiedPairCrossEncoderConfig
+
     if not spec.model_id or not spec.model_revision:
         raise ValueError("DistilBERT method spec must pin its model and revision.")
     selected_epoch = int(
@@ -345,6 +347,8 @@ class DistilBertPairRuntime:
         tokenizer: Any | None = None,
         model: Any | None = None,
     ) -> None:
+        from msc_project.baselines.unified_pair_scorers import UnifiedPairCrossEncoderConfig
+
         self.config = config or UnifiedPairCrossEncoderConfig()
         self.device = device
         self.tokenizer = tokenizer
@@ -352,6 +356,8 @@ class DistilBertPairRuntime:
         self.history: list[float] = []
 
     def fit(self, train_manifest: pd.DataFrame) -> "DistilBertPairRuntime":
+        from msc_project.baselines.unified_pair_scorers import fit_unified_pair_cross_encoder
+
         self.tokenizer, self.model, self.history = fit_unified_pair_cross_encoder(
             train_manifest,
             self.config,
@@ -362,6 +368,8 @@ class DistilBertPairRuntime:
         return self
 
     def score(self, pair_manifest: pd.DataFrame) -> np.ndarray:
+        from msc_project.baselines.unified_pair_scorers import score_unified_pair_manifest
+
         if self.tokenizer is None or self.model is None:
             raise RuntimeError("DistilBERT runtime must be fitted before scoring.")
         validate_pair_manifest(pair_manifest, require_target=False)

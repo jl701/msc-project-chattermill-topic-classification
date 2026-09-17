@@ -27,21 +27,41 @@ checkpoints/
 runs/
 wandb/
 
+# Local previews, build products and development reports
+tmp/
+build/
+dist/
+*.egg-info/
+.coverage
+htmlcov/
+.venv-*/
+
+# Author-only material excluded from the public repository
+PROJECT_OVERVIEW.md
+START_NEW_CHAT_PROMPT.md
+report_notes.md
+deliverables/
+thesis/
+docs/experiment_log.md
+docs/aji_*.md
+docs/kaan_*.md
+docs/handoff_notes_*.md
+docs/dissertation_internal_spec.md
+docs/experiment_reproducibility_register.md
+docs/literature_review_matrix.md
+docs/next_stage_and_literature_review_plan.md
+docs/tasks_1_to_3_thesis_prep.md
+docs/thesis_completion_roadmap.md
+docs/thesis_T0_review_*.md
+docs/thesis_final_rewrite_*.md
+docs/thesis_latex_workflow.md
+docs/thesis_literature_gap_and_library_audit_*.md
+docs/thesis_pro_revision_*supervisor_feedback*.md
+docs/thesis_reference_audit_*.md
+scripts/render_policy_research_report_*.mjs
+
 # Logs
 *.log
-
-# LaTeX build artifacts
-thesis/*.aux
-thesis/*.bbl
-thesis/*.blg
-thesis/*.fls
-thesis/*.fdb_latexmk
-thesis/*.lof
-thesis/*.lot
-thesis/*.out
-thesis/*.pdf
-thesis/*.synctex.gz
-thesis/*.toc
 
 # OS/editor
 .DS_Store

@@ -1,0 +1,5 @@
+generator,fold_count,N_heldout_pair_micro_f1_mean,D_heldout_pair_micro_f1_mean,D_minus_N_heldout_pair_micro_f1_mean,D_presence_average_precision_mean,D_presence_f1_mean,D_false_positive_rows_per_100_mean,evidence_role
+cosine_barycentric_weight,12,0.14135770042392837,0.14261448517117228,0.0012567847472439164,0.21719507368528446,0.225078509959699,70.41942604856511,appendix generator diagnostic; no inferential p-value
+kernel_ridge,12,0.1443289953765545,0.1453139352158224,0.0009849398392678954,0.2201195921637804,0.23681969421798033,58.01797540208136,appendix generator diagnostic; no inferential p-value
+mean_seen_weight,12,0.13832267943413032,0.13957257783665097,0.001249898402520655,0.20801072230058212,0.21496320276645353,81.81961526332388,appendix generator diagnostic; no inferential p-value
+nearest_description_weight,12,0.1571933970716979,0.15341240569929818,-0.0037809913723997335,0.2108873239770649,0.24532016283976507,59.44497004099653,appendix generator diagnostic; no inferential p-value

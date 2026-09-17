@@ -1,0 +1,41 @@
+{
+  "allowed_splits": [
+    "train",
+    "validation"
+  ],
+  "bootstrap_draws": 20000,
+  "bootstrap_seed": 13,
+  "bootstrap_unit": "row_uid review cluster",
+  "conditional_inference_scope": "one trained realisation per neural system and the fixed 12-aspect taxonomy",
+  "failure_count": 0,
+  "fold_pair_error_diagnostic_rows": 168,
+  "fold_sign_test_label": "enumerated fold sign sensitivity",
+  "holm_family": "all seven methods for the enumerated fold-sign sensitivity associated with the primary D-minus-N metric",
+  "include_official_test": false,
+  "method_count": 7,
+  "methods": [
+    "strict_train_only_tfidf",
+    "e5_base_v2",
+    "description_conditioned_weight_transfer_kernel_ridge",
+    "distilbert_review_candidate_cross_encoder",
+    "frozen_qwen_candidate_pair",
+    "frozen_qwen_few_shot",
+    "qwen_candidate_pair_qlora"
+  ],
+  "official_test_opened": false,
+  "primary_estimand": "unweighted mean across the 12 held-out-aspect fold pair micro-F1 values",
+  "schema_version": "taxonomy_scientific_freeze_inference_v1",
+  "sensitivity_estimand": "pooled held-out pair micro-F1 across all folds",
+  "status": "pass",
+  "synchronisation": "the same review-cluster resample is used for every method, fold, and N/D condition",
+  "table_sha256": {
+    "l2_description_effects_review_bootstrap.csv": "3ed38332c1f94c3df64da18a85770e0c01b33388cf21bd143e6f240adea8d719",
+    "l2_fold_pair_error_diagnostics.csv": "8f96c98dae9588681fdf37474f5b8430e28fd9c79602061b93336d82c42ecc80",
+    "l2_model_condition_review_bootstrap.csv": "3adea326d498ec30a48066b75e555c856aff427d1a0e75ce86ac938920941914",
+    "l2_pairwise_model_differences_review_bootstrap.csv": "16867cb706f524ef9a0bb44d057ab19f7930ff98fb11886e1c4df403497e5edf",
+    "l4_parent_group_review_bootstrap.csv": "e947c66e22744969aee863985d20a9c67dcc59eb03a5ede0f13d0f9b6a4d6f30"
+  },
+  "test_contract_count": 0,
+  "validation_review_clusters": 1057,
+  "validation_row_uid_sha256": "3960f2dd3faa92bac12c47654508b00f1254a4b515e0425408f3c917a7e319fd"
+}

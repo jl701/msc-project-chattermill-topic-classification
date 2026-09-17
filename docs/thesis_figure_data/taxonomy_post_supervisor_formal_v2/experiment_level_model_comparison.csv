@@ -1,0 +1,23 @@
+evidence_source,level,model_id,condition,fold_count,heldout_pair_micro_f1_mean,overall_pair_micro_f1_mean,overall_aspect_micro_f1_mean,heldout_presence_ap_mean,comparability_note
+local_completion_audit_v1,L1,strict_train_only_tfidf_logistic_regression,full_seen_taxonomy,1,,0.7050776111549593,0.7594660855352765,,Seen-taxonomy Level 1 sanity baseline; not directly comparable with held-out Level 2/4.
+local_completion_audit_v1,L2,description_conditioned_weight_transfer_kernel_ridge,D,12,0.14531393521582237,0.21521450302315667,,0.2201195921637804,Exploratory appendix method; validation-only and not a primary architecture comparison.
+local_completion_audit_v1,L2,description_conditioned_weight_transfer_kernel_ridge,N,12,0.1443289953765545,0.21493165029494257,,0.21267910327265338,Exploratory appendix method; validation-only and not a primary architecture comparison.
+local_completion_audit_v1,L2,description_conditioned_weight_transfer_kernel_ridge,R,12,0.13230991040857878,0.21413870323449136,,0.21526571250539972,Exploratory appendix method; validation-only and not a primary architecture comparison.
+local_completion_audit_v1,L2,e5_base_v2,D,12,0.22218351851636312,0.3262669512074477,,0.3523259028153161,Validation-only local Level 2 run under the audited post-supervisor protocol.
+local_completion_audit_v1,L2,e5_base_v2,N,12,0.24147326429624685,0.3280722563262148,,0.34528324828252077,Validation-only local Level 2 run under the audited post-supervisor protocol.
+local_completion_audit_v1,L2,e5_base_v2,R,12,0.2222657866947159,0.326039468831605,,0.33383201080674135,Validation-only local Level 2 run under the audited post-supervisor protocol.
+local_completion_audit_v1,L2,frozen_qwen_candidate_pair,D,12,0.45129836541827334,0.499431947284708,,0.39003824926491615,Validation-only local Level 2 run under the audited post-supervisor protocol.
+local_completion_audit_v1,L2,frozen_qwen_candidate_pair,N,12,0.43585980561420007,0.4981029983088308,,0.4437719685507207,Validation-only local Level 2 run under the audited post-supervisor protocol.
+local_completion_audit_v1,L2,frozen_qwen_candidate_pair,R,12,0.4067509365060824,0.4969943613497767,,0.341169025813954,Validation-only local Level 2 run under the audited post-supervisor protocol.
+local_completion_audit_v1,L2,strict_train_only_tfidf,D,12,0.2772507342595331,0.3346295188747735,,0.5013343913047422,Validation-only local Level 2 run under the audited post-supervisor protocol.
+local_completion_audit_v1,L2,strict_train_only_tfidf,N,12,0.21076178788714608,0.33166411541183477,,0.4148449224559802,Validation-only local Level 2 run under the audited post-supervisor protocol.
+local_completion_audit_v1,L2,strict_train_only_tfidf,R,12,0.22810673280252192,0.32917100910920666,,0.4858334649300225,Validation-only local Level 2 run under the audited post-supervisor protocol.
+taxonomy_two_stage_formal_v2,L2,distilbert_review_candidate_cross_encoder,D,12,0.10542700174981318,0.4999478588097102,,0.2380677009626545,Formal validation-only result; Level 2 N/D or Level 4 D as labelled.
+taxonomy_two_stage_formal_v2,L2,distilbert_review_candidate_cross_encoder,N,12,0.10572129662734925,0.4969184509672047,,0.20986552327327815,Formal validation-only result; Level 2 N/D or Level 4 D as labelled.
+taxonomy_two_stage_formal_v2,L2,frozen_qwen_few_shot,D,12,0.5048826238901596,0.5462452976198877,,0.5058700113953779,Formal validation-only result; Level 2 N/D or Level 4 D as labelled.
+taxonomy_two_stage_formal_v2,L2,frozen_qwen_few_shot,N,12,0.5018514986496149,0.5455584669547168,,0.5816516763748344,Formal validation-only result; Level 2 N/D or Level 4 D as labelled.
+taxonomy_two_stage_formal_v2,L2,qwen_candidate_pair_qlora,D,12,0.47990323009308455,0.5868232769220748,,0.5833540353050181,Formal validation-only result; Level 2 N/D or Level 4 D as labelled.
+taxonomy_two_stage_formal_v2,L2,qwen_candidate_pair_qlora,N,12,0.4419644283937621,0.5842151488793857,,0.5338931476766898,Formal validation-only result; Level 2 N/D or Level 4 D as labelled.
+taxonomy_two_stage_formal_v2,L4,distilbert_review_candidate_cross_encoder,D,3,0.17622930936150508,0.49829176202813885,,,Formal validation-only result; Level 2 N/D or Level 4 D as labelled.
+taxonomy_two_stage_formal_v2,L4,frozen_qwen_few_shot,D,3,0.5614525886158757,0.5417445442048952,,,Formal validation-only result; Level 2 N/D or Level 4 D as labelled.
+taxonomy_two_stage_formal_v2,L4,qwen_candidate_pair_qlora,D,3,0.5151894232828776,0.5893306483825097,,,Formal validation-only result; Level 2 N/D or Level 4 D as labelled.

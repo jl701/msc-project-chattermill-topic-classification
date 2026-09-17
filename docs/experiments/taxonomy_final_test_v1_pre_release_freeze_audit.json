@@ -1,0 +1,204 @@
+{
+  "artifact_inventory_audit": {
+    "distilbert_selected_scopes": 15,
+    "entries": 159,
+    "failure_count": 0,
+    "few_shot_selected_scopes": 15,
+    "local_L2_folds_per_method": 12,
+    "local_L2_method_count": 4,
+    "qlora_selected_scopes": 15,
+    "status": "pass",
+    "test_contract_count": 0
+  },
+  "artifact_inventory_entry_manifest_sha256": "ece37c9d0fb122356df8a899035f42553d0131e723c90dcb96f382ceeb498ed9",
+  "artifact_preflight_sha256": "5e92152be17e04fc151a35dababb825e01d3e56cd932f8916a6fb3173c942363",
+  "bound_file_manifest_sha256": "1f67da15e39e33dd9e11521531bdaeb0e3fc184d8b22472b6a825af8b6c8808f",
+  "bound_files": {
+    "configs/experiments/taxonomy_final_test_release_TEMPLATE.json": {
+      "bytes": 1335,
+      "sha256": "3337f05865f9873e0dcc140b84a7dd3d9a4b2c8e96a41bc6298af31e79fa12b0"
+    },
+    "configs/experiments/taxonomy_final_test_v1.json": {
+      "bytes": 8163,
+      "sha256": "4ddf328f1d464ca69c832f861dbb73c294fce4994f9acb34bb2e20cdfdaecd60"
+    },
+    "docs/dissertation_taxonomy_post_supervisor_plan_2026_08_20.md": {
+      "bytes": 19376,
+      "sha256": "8dfddfe83615130fc933a4326f591e0f05ccef64539f2d928b088323fcd85ef6"
+    },
+    "docs/experiment_log.md": {
+      "bytes": 250848,
+      "sha256": "39bde232a4ed7b1f6a799b8c73392896cbd78ce8ab398007151e7c390facfe05"
+    },
+    "docs/experiment_reproducibility_register.md": {
+      "bytes": 42071,
+      "sha256": "ae3819da55aa9c797a03d6ea73c4b80edcf71f39347a8524e3b97984c7c9c972"
+    },
+    "docs/experiments/taxonomy_final_scientific_freeze_v2_20260824.md": {
+      "bytes": 8519,
+      "sha256": "d1c673e3dc15889ce07b88b67af16d5260ae69d7c5fe9bf1fc541c01666053b0"
+    },
+    "docs/experiments/taxonomy_final_test_v1_artifact_inventory.json": {
+      "bytes": 63898,
+      "sha256": "15cc31ebd4932edaa83cbf3cf4194b6172758693d3fa3c4d56f930ef147b55d5"
+    },
+    "docs/experiments/taxonomy_final_test_v1_execution_and_cost_plan_20260824.md": {
+      "bytes": 6429,
+      "sha256": "b648e599603bf71347beb25e3a1f5a74d6e1ee2c36e4b6cff8d757c3ba8578af"
+    },
+    "docs/experiments/taxonomy_final_test_v1_job_plan.json": {
+      "bytes": 46622,
+      "sha256": "44990163c6ac99bd6a20bb4f2088eff917a7b6ae5f0d826ea4170b9d4cbe151b"
+    },
+    "docs/experiments/taxonomy_final_test_v1_phase6_readiness_20260824.md": {
+      "bytes": 5611,
+      "sha256": "17000c2590152e39952b353829c92dbe799b776acaeb50f1d1ce358ca0384f9f"
+    },
+    "docs/experiments/taxonomy_final_test_v1_preflight_audit.json": {
+      "bytes": 622,
+      "sha256": "5e92152be17e04fc151a35dababb825e01d3e56cd932f8916a6fb3173c942363"
+    },
+    "docs/experiments/taxonomy_final_test_v1_preregistration.md": {
+      "bytes": 9825,
+      "sha256": "80c4c8357a514b83be791a3257fc986c7165696023fa05fb8cf522e396c8b812"
+    },
+    "docs/experiments/taxonomy_final_test_v1_validation_mirror_audit.json": {
+      "bytes": 1633,
+      "sha256": "00aeaa3c1b785592e85693c192f0e9719f87d0fb70de3559ca520343bc3dc19e"
+    },
+    "docs/taxonomy_current_authority_20260824.md": {
+      "bytes": 7538,
+      "sha256": "fa51880d232db9acafc7bfb29c749c8439d9bced042be872184ff8b490c46d1f"
+    },
+    "scripts/audit_taxonomy_final_test_pre_release.py": {
+      "bytes": 14620,
+      "sha256": "440126e553667ddef963afc232b5927f46226c74d0cb8ae30e5d40232b304fce"
+    },
+    "scripts/audit_taxonomy_final_test_validation_mirror.py": {
+      "bytes": 9782,
+      "sha256": "348dd7c7187587b8cfbe5c650958e58c38caf2c0276028e69fd2ffaf2d9bba18"
+    },
+    "scripts/build_taxonomy_final_test_artifact_inventory.py": {
+      "bytes": 12137,
+      "sha256": "8da82748a5869bfafae77ef6943aadc969afacb8d54f9d5b343eb4f3fdd46268"
+    },
+    "scripts/run_taxonomy_final_test.py": {
+      "bytes": 29580,
+      "sha256": "7df42ddf19504a5e7d5385201f4a9d1ecb60a9b62943dcc02724cd92b5846ab7"
+    },
+    "src/msc_project/experiments/taxonomy_final_test.py": {
+      "bytes": 22241,
+      "sha256": "f0ea71fc64c2140f84ddfa7ba5b23ddbd91c4343ef59d0e2f711bd29f71eb92d"
+    },
+    "src/msc_project/experiments/taxonomy_final_test_analysis.py": {
+      "bytes": 22755,
+      "sha256": "f90b60e00b2f169a333f9d0fd40654e857dd9c732ecabab41c16c025cbf70a6b"
+    },
+    "src/msc_project/experiments/taxonomy_final_test_artifacts.py": {
+      "bytes": 9613,
+      "sha256": "4d03b12780d0851de3bf286717d88aa7945960203840b0cbc44d634138b96afd"
+    },
+    "src/msc_project/experiments/taxonomy_final_test_scoring.py": {
+      "bytes": 20746,
+      "sha256": "ab8b5708b621257e808ccbae0b809a04cb0f14ef91e91a85bcfa1a42b8be8d46"
+    },
+    "src/msc_project/experiments/taxonomy_final_test_workflow.py": {
+      "bytes": 26124,
+      "sha256": "42b568b1529120d166432cddcdc5740fc593da5dfb0032c5ec06d709a740eadc"
+    },
+    "tests/test_run_taxonomy_final_test.py": {
+      "bytes": 2581,
+      "sha256": "07ee110a7e90a2145a50857a1a473f47ee8c82fa8c1c5a572257093fc29a932b"
+    },
+    "tests/test_taxonomy_final_test.py": {
+      "bytes": 3986,
+      "sha256": "81941989bab6ead6fb2b5a15bc39918939a8b8d362528430df1230c00ebf1637"
+    },
+    "tests/test_taxonomy_final_test_analysis.py": {
+      "bytes": 2757,
+      "sha256": "5168db42bae04ceda9759b9363ef5b817c04e6fad451e985c1514b318ea1eac7"
+    },
+    "tests/test_taxonomy_final_test_artifacts.py": {
+      "bytes": 1226,
+      "sha256": "87bffc738f316dc81e67767675e18ac077a6f6c6f3b42e7a666e7a0d3d1b241f"
+    },
+    "tests/test_taxonomy_final_test_workflow.py": {
+      "bytes": 7243,
+      "sha256": "e521daec8129a9bd1e717f7146565658eb01dcbcb0cdb684eab9a38c8bf34ce3"
+    },
+    "thesis/chapters/01_introduction.tex": {
+      "bytes": 10550,
+      "sha256": "e10f0a23e3f41cf2332e96abcac644aabb7fe4085104f5d94d6699ff45bb9c5c"
+    },
+    "thesis/chapters/04_methods.tex": {
+      "bytes": 23415,
+      "sha256": "8a26bfcf0ffb27f73688bbd71e0deb614362f56344d269f2463b589e9612c23f"
+    },
+    "thesis/main.tex": {
+      "bytes": 7260,
+      "sha256": "b4115cf31fd0b0894bd39e9e9fdfcce86c4a3dd7a9d0535946186c7d54121749"
+    }
+  },
+  "explicit_user_authorisation_present": true,
+  "failure_count": 0,
+  "future_release_must_bind_clean_synced_execution_commit": true,
+  "include_official_test": false,
+  "job_counts": {
+    "analyse": 1,
+    "compose": 12,
+    "score": 93,
+    "seal": 1
+  },
+  "job_plan_sha256": "44990163c6ac99bd6a20bb4f2088eff917a7b6ae5f0d826ea4170b9d4cbe151b",
+  "official_test_identity_previously_bound": true,
+  "official_test_outcomes_inspected": false,
+  "preparation_parent_commit": "3fd02631a4ce7baa938012cd9bb98cfeb6e173e3",
+  "preregistration_audit": {
+    "confirmatory_system_count": 3,
+    "descriptive_l2_base_method_count": 7,
+    "l2_fold_count": 12,
+    "l4_group_count": 3,
+    "preregistration_sha256": "b622cae1ffec4e1af473dbf9f52cf5a7c4e79e15beb7e6c90b15d7663d8b11dc",
+    "protocol_id": "taxonomy_two_stage_final_test_v1",
+    "status": "pass",
+    "test_contract_count": 0
+  },
+  "preregistration_sha256": "b622cae1ffec4e1af473dbf9f52cf5a7c4e79e15beb7e6c90b15d7663d8b11dc",
+  "protocol_id": "taxonomy_two_stage_final_test_v1",
+  "release_template_locked": true,
+  "replacement_release_required_after_repair_commit": true,
+  "schema_version": "taxonomy_final_test_pre_release_freeze_audit_v1",
+  "security_scan": {
+    "files_scanned": 31,
+    "potential_secret_count": 0,
+    "status": "pass"
+  },
+  "status": "pass_ready_to_bind_replacement_release_after_commit",
+  "superseded_release_execution_commit": "3fd02631a4ce7baa938012cd9bb98cfeb6e173e3",
+  "superseded_release_note_sha256": "1de637cbf1b9b2aeffa8ffb5c8aa7824e44cc730e126904271e38fcd9915ea9c",
+  "superseded_release_sha256": "2301cf632550cc242edb4a3dd350286e7f8be496cb4b0832301fcafb79884b00",
+  "synthetic_dry_run": {
+    "analysis_manifest_payload_sha256": "a41de3e181021aa68a53b0649a664702c65d3d5cf65c0d860bf02dda8472cd12",
+    "backup_receipt_count": 210,
+    "score_bundle_count": 105,
+    "score_seal_payload_sha256": "8b734831660358a1cf40973a052ecb5c40807c096d10d9984448e4eabb6e3d4f",
+    "summary_sha256": "a5e9bdf2f1c5e2b7fe4ab1d80fc806792400d947c05b201d30df656eadca0ffc"
+  },
+  "test_contract_count": 1,
+  "thesis_build": {
+    "fatal_error_count": 0,
+    "pages": 62,
+    "pdf_bytes": 234408,
+    "pdf_sha256": "128ecbc02a3aff49c309877b35f6610eb5b37ea03a8a9fe3accff19674e19b75",
+    "status": "pass"
+  },
+  "validation_mirror_sha256": "00aeaa3c1b785592e85693c192f0e9719f87d0fb70de3559ca520343bc3dc19e",
+  "whole_repository_tests": {
+    "errors": 0,
+    "failures": 0,
+    "sha256": "4409924920a34758657b08cd9fd8a3539a4a0a4eaaafb8f45b366189028ead68",
+    "skipped": 0,
+    "status": "pass",
+    "tests": 503
+  }
+}

@@ -1,5 +1,11 @@
 # Dissertation Taxonomy-Generalisation Mainline Lock - 23 July 2026
 
+> **Superseded for future execution on 20 August 2026.** Historical results and
+> provenance in this document remain valid within their recorded contracts,
+> but its old Level definitions and launch priorities must not be used to start
+> new work. The current source of truth is
+> `docs/dissertation_taxonomy_post_supervisor_plan_2026_08_20.md`.
+
 ## Status and authority
 
 This is the sole operational source of truth for the dissertation's experiment

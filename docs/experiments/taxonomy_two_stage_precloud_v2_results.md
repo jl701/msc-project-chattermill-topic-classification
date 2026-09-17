@@ -136,3 +136,33 @@ remaining L2 QLoRA, then L1/L3/L4 QLoRA.
   `outputs/experimental/taxonomy_two_stage_precloud_v2/cloud_gate_manifest.json`
 
 No document in this set authorises opening official test.
+
+## 7. Cloud throughput gate and safety stop
+
+The original RTX 3090 cloud smokes passed with finite losses/scores, complete
+train-only manifests, no OOM, no test contract and no thermal event inside any
+measured model window. A representative benchmark then measured the formal
+length and registered batch settings without creating a formal result.
+
+The batch-2/4/6/8 run passed independently. Batch 8 was the throughput optimum
+for both Qwen modes while using less than 20% of device memory in that run.
+Estimated validation-only capacity with exact prompt-hash deduplication is:
+
+| Method | Measured basis | Planned hours (25% margin) | Planned cost at $0.24/h |
+|---|---|---:|---:|
+| Frozen-Qwen few-shot | 775,248 prompts at 12.36/s | 21.77 | $5.23 |
+| DistilBERT | 958,464 epoch-examples plus 1,900,608 prompts | 2.02 | $0.48 |
+| QLoRA | 319,488 train examples plus 1,900,608 prompts | 61.40 | $14.74 |
+
+A follow-up batch-12/16/24 capacity probe did not improve throughput and
+recorded three software thermal-slowdown samples at a peak temperature of
+84 C. Hardware slowdown and power-brake counts remained zero, but repeated
+thermal throttling is an explicit stop condition. The Pod was stopped, batches
+above 8 were disabled in the benchmark, and no formal validation job was
+started. Formal release remains blocked pending a host thermal/power decision
+and a clean batch-8 revalidation.
+
+The safe-run audit is
+`outputs/experimental/taxonomy_two_stage_cloud_v1/throughput_benchmark_batch_2_8_audit.json`;
+the fail-closed extension audit is
+`outputs/experimental/taxonomy_two_stage_cloud_v1/throughput_benchmark_audit.json`.

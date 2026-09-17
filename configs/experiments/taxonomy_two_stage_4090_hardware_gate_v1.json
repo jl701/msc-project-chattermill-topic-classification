@@ -1,0 +1,92 @@
+{
+  "gate_id": "taxonomy_two_stage_4090_hardware_gate_v1",
+  "status": "preregistered_before_4090_deployment",
+  "registered_at": "2026-08-17T22:00:00+01:00",
+  "parent_protocol_id": "taxonomy_two_stage_precloud_v2",
+  "objective": "Qualify one Community RTX 4090 host for all remaining validation-only two-stage GPU work after the RTX 3090 batch-extension thermal stop.",
+  "source_commit_before_gate_changes": "a7716c2aaf49f702a78b0a12d7b609ba54f74a8b",
+  "data_contract": {
+    "allowed_splits": [
+      "train",
+      "validation"
+    ],
+    "include_official_test": false,
+    "upload_whitelist": {
+      "train.csv": "3ffcc7407cc8077fe9efc5ca06532847589a59464ea929d7f23d1f732b9efc7c",
+      "validation.csv": "3a32afda9c4ba1d59e76ee8fcfb480011c7178d8201d0025b254a40c2f81203c"
+    }
+  },
+  "target_hardware": {
+    "cloud": "Runpod Community Cloud",
+    "gpu": "NVIDIA GeForce RTX 4090",
+    "minimum_vram_gib": 24,
+    "gpu_count": 1,
+    "observed_running_price_usd_per_hour": 0.75,
+    "maximum_scoring_batch_size": 8,
+    "reason_for_cap": "The RTX 3090 measured batch optimum was 8; batches 12/16/24 produced no throughput gain and triggered three software thermal-slowdown samples."
+  },
+  "gate_sequence": [
+    "verify the new GPU identity, CUDA tensor execution, package versions, uploaded file whitelist and exact data hashes",
+    "run the original Frozen-Qwen few-shot, separate-head DistilBERT and shared-adapter QLoRA execution/memory smokes on l2-a01",
+    "run the representative formal-length throughput benchmark at batches 2, 4, 6 and 8",
+    "run a sustained batch-8 Frozen-Qwen few-shot scoring soak and one complete 4,096-example formal-length QLoRA training soak without retaining a scientific checkpoint",
+    "audit logs, finite values, prediction variation, memory, temperature, power and every named NVIDIA slowdown reason",
+    "freeze the 4090 batch sizes and update the wall-time/cost plan only after every gate passes"
+  ],
+  "telemetry": {
+    "sample_interval_seconds": 2,
+    "required_fields": [
+      "utilization.gpu",
+      "memory.used",
+      "temperature.gpu",
+      "power.draw",
+      "clocks_event_reasons.sw_power_cap",
+      "clocks_event_reasons.hw_slowdown",
+      "clocks_event_reasons.sw_thermal_slowdown",
+      "clocks_event_reasons.hw_thermal_slowdown",
+      "clocks_event_reasons.hw_power_brake_slowdown"
+    ]
+  },
+  "sustained_soak": {
+    "runner": "scripts/soak_taxonomy_two_stage_4090_gate.py",
+    "fold_id": "l2-a01",
+    "formal_result": false,
+    "frozen_scoring": {
+      "duration_seconds": 600,
+      "query_count_per_stage": 32,
+      "batch_size": 8,
+      "max_length": 1024
+    },
+    "qlora_training": {
+      "training_examples": 4096,
+      "max_length": 384,
+      "batch_size": 1,
+      "gradient_accumulation_steps": 8,
+      "epochs": 1,
+      "learning_rate": 0.000005,
+      "lora_r": 4,
+      "lora_alpha": 8,
+      "lora_dropout": 0.05,
+      "retain_checkpoint": false
+    }
+  },
+  "admission_criteria": [
+    "all processes and artifacts pass with failure_count zero",
+    "test_contract_count is zero and only train/validation are opened",
+    "all losses and scores are finite and scored probabilities are non-constant",
+    "no CUDA OOM, CUDA error or incompatible resume state",
+    "zero software-thermal, hardware-thermal, hardware-slowdown or power-brake samples in both the representative benchmark and sustained soak",
+    "batch 8 remains inside the memory boundary and does not reduce throughput relative to smaller registered batches",
+    "the complete 4,096-example QLoRA soak completes with finite loss and the exact registered max length, batch, accumulation and adapter recipe"
+  ],
+  "stop_conditions": [
+    "any official-test reference or uploaded test file",
+    "any failure, OOM, CUDA error or non-finite value",
+    "prediction collapse",
+    "any incompatible resume or artifact hash",
+    "two or more active software-thermal samples, or any hardware-thermal, hardware-slowdown or power-brake sample",
+    "unexpected GPU identity, VRAM capacity or package/model revision"
+  ],
+  "formal_result": false,
+  "formal_validation_released": false
+}

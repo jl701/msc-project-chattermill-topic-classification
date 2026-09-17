@@ -219,6 +219,19 @@ def _validate_pair_grid(frame: pd.DataFrame) -> None:
         raise ValueError("Pair scores must be finite.")
 
 
+def _validate_prediction_grid(frame: pd.DataFrame) -> None:
+    """Validate identities and gold labels without assuming one score schema."""
+
+    required = {*PAIR_KEY, "pair_label", "target"}
+    missing = sorted(required - set(frame.columns))
+    if missing:
+        raise ValueError(f"Prediction grid is missing columns: {missing}")
+    if frame.empty:
+        raise ValueError("Prediction grid must not be empty.")
+    if frame.duplicated(list(PAIR_KEY)).any():
+        raise ValueError("Prediction grid contains duplicate pair identities.")
+
+
 def crossfit_partition(row_uid: str, folds: int = 5) -> int:
     if folds < 2:
         raise ValueError("Cross-fitting requires at least two folds.")
@@ -1153,7 +1166,7 @@ def evaluate_prediction_mask(
     *,
     aspects: Iterable[str],
 ) -> dict[str, float]:
-    _validate_pair_grid(scored_grid)
+    _validate_prediction_grid(scored_grid)
     allowed_aspects = tuple(sorted(str(value) for value in aspects))
     frame = scored_grid[
         scored_grid["candidate_aspect"].astype(str).isin(allowed_aspects)

@@ -1,0 +1,250 @@
+{
+  "audit_sha256": {
+    "docs\\experiments\\taxonomy_capped_two_sentiment_validation_v2_audit.json": "439322f5db8677d2162d02d17009548fc1637d6d9c332b8d15120445418d0afb",
+    "docs\\experiments\\taxonomy_few_shot_contract_audit_20260822.json": "5b7ea1917e5a1cfd13715ee3985ec43d381f5a2922467db0e3741fa9d1c346d3",
+    "docs\\experiments\\taxonomy_l3_posthoc_robustness_audit_20260822.json": "5349abdc89e274eb73b921975347282c24381699cfd024f0fb6428e2fb791cc0",
+    "docs\\experiments\\taxonomy_matched_one_vs_two_stage_validation_v1_audit.json": "e2a3a32135edf2d93fe00e7db94d17a88bf5349cf7e2e43b931309f79d972bbf",
+    "docs\\experiments\\taxonomy_qwen_matched_interface_audit_20260822.json": "ed148b63ff84891a0d7163ddbd988000a29bdcdc676efea64c358923a87dce94",
+    "docs\\experiments\\taxonomy_rich_description_validation_confirmation_v1_audit.json": "3f7fd4b7a165c210fde21b25b351857f6c5048a501288a8bbaa7cdaf69c73970",
+    "docs\\experiments\\taxonomy_scientific_freeze_formal_evidence_audit_20260822.json": "5cdc62d31e0bf6397c4dc5e586685002b94b4449c9c87ead8966b128c8fb875d",
+    "docs\\experiments\\taxonomy_scientific_freeze_inference_audit_20260822.json": "ec7af5cd467bf028b3827405965c9aca565389419ceff0732510a670d379a4c8",
+    "docs\\experiments\\taxonomy_scientific_freeze_local_replay_audit_20260822.json": "e3d00a049a663f33ffdcaf64341d59bd61663d80bdd949d767447ada6ca0df68",
+    "docs\\experiments\\taxonomy_scientific_freeze_reporting_audit_20260822.json": "6612de2de0d50e51611a02feaa90a042ec68e7b45486ea1747e2260a6e6c3301"
+  },
+  "claim_limits": [
+    "D-N is matched within method/fold but includes train-inference format match for trainable methods",
+    "cross-method differences are descriptive systems comparisons",
+    "QLoRA versus frozen Qwen is not a causal LoRA-only effect",
+    "L3 is post-hoc targeted appendix robustness with no inferential p-values",
+    "L4 groups are non-exchangeable and reported separately",
+    "review-bootstrap intervals are conditional on observed trained realisations and fixed taxonomy"
+  ],
+  "environment": {
+    "analysis_package_versions": {
+      "matplotlib": "3.10.9",
+      "numpy": "2.2.6",
+      "pandas": "2.3.3",
+      "scikit-learn": "1.8.0",
+      "scipy": "1.17.1",
+      "torch": "2.10.0+cu128",
+      "transformers": "4.57.6"
+    },
+    "executable": "C:\\Users\\10537\\miniconda3\\python.exe",
+    "formal_compute": {
+      "cuda": "12.8",
+      "dependency_lock": "requirements-taxonomy-cloud.txt",
+      "gpu": "NVIDIA GeForce RTX 4090",
+      "provider": "Runpod Secure Cloud",
+      "worker_count": 3
+    },
+    "machine": "AMD64",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.13.11 | packaged by Anaconda, Inc. | (main, Dec 10 2025, 21:21:58) [MSC v.1929 64 bit (AMD64)]"
+  },
+  "explicit_exclusions": [
+    "official test rows and labels",
+    "multi-seed neural reruns",
+    "new expensive Level 3 runs",
+    "post-result rich-card variants other than selected R2_positive_concat confirmation",
+    "raw score shards, checkpoints, private data, credentials, and SSH keys from Git"
+  ],
+  "future_official_test_release_rule": {
+    "authorisation": "requires a later explicit user approval after this validation freeze",
+    "execution": "one predeclared pass only",
+    "failure_handling": "preserve evidence and report; do not retune from test outcomes",
+    "post_test_tuning": "forbidden",
+    "status": "blocked_not_executed"
+  },
+  "qlora_seen_invariant_repair": {
+    "l2-a07": {
+      "aspect_values_replaced": 4710,
+      "condition": "D",
+      "fold_id": "l2-a07",
+      "heldout_candidate_rows_preserved": 3171,
+      "heldout_scores_bitwise_unchanged": true,
+      "level": "L2",
+      "maximum_absolute_aspect_delta": 0.015619933605194092,
+      "maximum_absolute_sentiment_delta": 0.027635633945465088,
+      "method_id": "qwen_candidate_pair_qlora",
+      "original_d_score_sha256": "87ec4124a9c9d9e30a569e23111bef86c05a4ead99e546b68254d807d8a4f49b",
+      "outcome_labels_used_to_define_repair": false,
+      "repair_rule": "registered-first-condition N supplies scores only for unchanged seen candidates; D held-out scores remain published",
+      "repaired_d_score_sha256": "4966e18bbdf00d66cd6e7df996744c5d56e8bfa6baa9500d9715add6147ecd62",
+      "seen_candidate_rows": 34881,
+      "seen_scores_exactly_equal_after_repair": true,
+      "sentiment_values_replaced": 9062,
+      "source_n_score_sha256": "e831b78f105287227a5a40494533d31d1c36404c4626ff144f6b737a53fa85d4"
+    },
+    "l2-a12": {
+      "aspect_values_replaced": 2472,
+      "condition": "D",
+      "fold_id": "l2-a12",
+      "heldout_candidate_rows_preserved": 3171,
+      "heldout_scores_bitwise_unchanged": true,
+      "level": "L2",
+      "maximum_absolute_aspect_delta": 0.015619903802871704,
+      "maximum_absolute_sentiment_delta": 0.0162736177444458,
+      "method_id": "qwen_candidate_pair_qlora",
+      "original_d_score_sha256": "e0e1505271b7a4c0e6713f39aa4be390e732c1a6fe10f9f189db4cc5b34427d8",
+      "outcome_labels_used_to_define_repair": false,
+      "repair_rule": "registered-first-condition N supplies scores only for unchanged seen candidates; D held-out scores remain published",
+      "repaired_d_score_sha256": "24df5a7cf8c8ab29807c056d50c67a2449b795eb8be5bee05616d84be1e85e21",
+      "seen_candidate_rows": 34881,
+      "seen_scores_exactly_equal_after_repair": true,
+      "sentiment_values_replaced": 4051,
+      "source_n_score_sha256": "ec81eba26332a00ac8bddd47ca321f8fd3348ed37bb13a60a1f7d4c74377af0a"
+    }
+  },
+  "regeneration_commands": [
+    "python scripts/build_taxonomy_scientific_freeze_formal_evidence.py",
+    "python scripts/audit_taxonomy_scientific_freeze_local_replay.py",
+    "python scripts/analyse_taxonomy_scientific_freeze_v1.py --bootstrap-draws 20000 --bootstrap-seed 13",
+    "python scripts/build_taxonomy_scientific_freeze_reporting.py",
+    "python scripts/audit_taxonomy_qwen_matched_interface.py",
+    "python scripts/audit_taxonomy_few_shot_contract.py",
+    "python scripts/build_taxonomy_scientific_freeze_manifest.py",
+    "python scripts/build_taxonomy_scientific_freeze_results_markdown.py"
+  ],
+  "registered_input_sha256": {
+    "configs\\experiments\\fabsa_aspect_descriptions_minimal_v2.json": "8f72951f436bd6af606dd7d07ec249f406ce6b7d6ae690817978da5430c92106",
+    "configs\\experiments\\taxonomy_capped_two_sentiment_validation_v2.json": "99c7dd147f590ae2fd4af6ef8e41b1a6f543613bd25da9a912f59900e53030ff",
+    "configs\\experiments\\taxonomy_description_to_classifier_weight_transfer_v1.json": "5f8b89cb5eff6adefcee6f7d530329d0a2df6190db10bee3ae9c5ad019bf2618",
+    "configs\\experiments\\taxonomy_matched_one_vs_two_stage_validation_v1.json": "9788502d6bdce86a389c1584b67b18a5be85762279d0b203c78cc531b034387c",
+    "configs\\experiments\\taxonomy_rich_description_selected_interface_v1.json": "8be5ca3a1778e21ccfaac97d405b6af8e364a8f8a004854c6680087fc4012a04",
+    "configs\\experiments\\taxonomy_two_stage_precloud_v2.json": "1dc9f6823ccacc43ca2014e4f81dedb8999d25e00236dc6aaaad5aa448863cd9",
+    "configs\\experiments\\taxonomy_two_stage_three_gpu_parallel_v2.json": "4244b18649052ac2de10d28ec0c9289c0da74625d54fd9dd0507a87614d4a339",
+    "docs\\experiments\\taxonomy_capped_two_sentiment_validation_v2_results.md": "24a0b4dbf6824fc54230b1950c6e656fcd5c8b407ca6f0b64e5e0e45a7c7585e",
+    "docs\\experiments\\taxonomy_matched_one_vs_two_stage_validation_v1_results.md": "ee850dcdba7321ca8db28cef384cbc7deba718720b87952377a3e4969b7e5183",
+    "docs\\experiments\\taxonomy_rich_description_validation_confirmation_v1_results.md": "682c47ecc3121c666482230e8c59759a2f95493658f836e8afc71e9f588ea246",
+    "docs\\thesis_figure_data\\taxonomy_matched_one_vs_two_stage_validation_v1.csv": "92a35b0d1f5bce7f9479e94cd4c8bbe72ba27bcad02a1aaf9c75b15dc278a65a",
+    "outputs\\experimental\\taxonomy_level1_closed_reference_v1\\result.json": "37e7746577e4f5bbf9765196cab224e81f46ddb7da289c355fe17a111de6b76e",
+    "requirements-llm.txt": "309b3cb4fa4bfeae1949926ec38931c72e61922fdb61876684b004f1bc5bdf86",
+    "requirements-taxonomy-cloud.txt": "640a7ee1d7984afbba764e0f9712ce53165cf1646883b3cd4cbedfcf0043cfd7",
+    "requirements.txt": "7b464924080edb0759a370ee9369e4a571960322d88cf8f8a5806ce7c9f34ede",
+    "scripts\\analyse_taxonomy_scientific_freeze_v1.py": "437fc75d02d318939726a9eb17567f15a622aaf84d3ead4417b5f1544c70b80f",
+    "scripts\\audit_taxonomy_capped_two_sentiment_validation.py": "dc867655bbd9cf6f0b50547c800d4bfd34d4f5b9535b8114e3122b5823c4dfb2",
+    "scripts\\audit_taxonomy_few_shot_contract.py": "58e30613ae0db101bb41bbee356140c781c3570f7e689058ce13eacf3e94041f",
+    "scripts\\audit_taxonomy_l3_posthoc_robustness.py": "391cc8a94044b49d230188aba6aba9e723a0f696b29bc69ae60f2b50dd3d8c29",
+    "scripts\\audit_taxonomy_matched_one_vs_two_stage_validation.py": "f66490e08aae142d74cd2901997e905fb0fc8902d513cc7f9c392a0855782528",
+    "scripts\\audit_taxonomy_qwen_matched_interface.py": "ff442303895de32b26645c6c5aae61f73250b060669f6ccd821293e5c36da404",
+    "scripts\\audit_taxonomy_scientific_freeze_local_replay.py": "f0de534ad6da2b3cbf6b5f1adac01cd128815299e0955a720e18b76cad207a8d",
+    "scripts\\build_taxonomy_scientific_freeze_formal_evidence.py": "18150cd8b24798e18126d331cca23d220097edf4a5a097914f84cd4ae7723a19",
+    "scripts\\build_taxonomy_scientific_freeze_manifest.py": "f41480f9f50b26a8faba4f9f7373154aac28e9c5156aa8585d8ef620da332ab1",
+    "scripts\\build_taxonomy_scientific_freeze_reporting.py": "8a655053b70f69dc5557deee46cae49f8ae5f9a63fe8347d8de91ea888c4bd58",
+    "scripts\\build_taxonomy_scientific_freeze_results_markdown.py": "1ad749de79374cfe05f7425bb388b0e2ed38be59800a39593bed9a4094140c4d",
+    "scripts\\run_taxonomy_description_weight_transfer.py": "8704e52c658fed7adafa72ca55e0ef9bb202ae786ca7cd13cec694d19af6041b",
+    "scripts\\run_taxonomy_level2_local_validation.py": "34609c571794d855a71f9c0c3433831107fa6db42985c9b72e632e3a0db188e4",
+    "scripts\\run_taxonomy_two_stage_trainable_validation.py": "bd5c140fbb572f1916d2ff86d134bb35f946907611d4059fdd071624b9eafc7b",
+    "src\\msc_project\\experiments\\taxonomy_scientific_freeze.py": "984bcad03f6805bcc606d82f81df53d10c82262ff7e1451dff5f0cde9227adb0",
+    "src\\msc_project\\experiments\\taxonomy_two_stage.py": "29d1dd154a3065a6e3ce4406d30f4eac27b4df05d0c6cb8ee57729abe5a79c40",
+    "src\\msc_project\\experiments\\taxonomy_two_stage_distilbert.py": "5fa137d006372dbbe9c88215a76e416fa8465ec434cb42a706e09e7777306a1f",
+    "src\\msc_project\\experiments\\taxonomy_two_stage_training.py": "a216110d53c971ddf20ed9d025d6a5f9dd588e27ea2f51992bada2cda1a20b21",
+    "src\\msc_project\\llm\\qwen_two_stage_classifier.py": "3528f553dd63cd97baee03151462ca94e764458882beb1b28832aa4f1d1ae933",
+    "tests\\test_taxonomy_scientific_freeze.py": "4e633c924545dbbd4a0bc82c258e2b3d7ed1c7dfc5f5f87ec041aa36358c4b96"
+  },
+  "reporting_output_sha256": {
+    "docs\\thesis_figure_data\\taxonomy_scientific_freeze_v1\\architecture_and_decoder_controls.csv": "1c0f4ac64c38a41f3226d22ea6a688871b74b143307cbffb5212caffd4823b69",
+    "docs\\thesis_figure_data\\taxonomy_scientific_freeze_v1\\dcwt_generator_controls.csv": "84b5e9db738ef113d50d8f62c1aef6b6684c713e22c65f83c4817dcaa856f779",
+    "docs\\thesis_figure_data\\taxonomy_scientific_freeze_v1\\formal_fold_results.csv": "ffc47cd559ab0a31106c35954ceefa73f2752e8d98b94095d8bd331822948b6a",
+    "docs\\thesis_figure_data\\taxonomy_scientific_freeze_v1\\headline_contrast_comparability_matrix.csv": "9cdc1ea3e567bfd01c93876f580c29a9fdc1e010433c03ee842384888b8b60f5",
+    "docs\\thesis_figure_data\\taxonomy_scientific_freeze_v1\\l1_closed_taxonomy_development_reference.csv": "c65748a5402f9d19d589bcba1600ece10f5965bf9823778dd95cda558f5bc4aa",
+    "docs\\thesis_figure_data\\taxonomy_scientific_freeze_v1\\l2_complete_model_condition_metrics.csv": "5584c18f79d08326da084dc4759cafdc3554e34534ada188b6ff23d1c9c59126",
+    "docs\\thesis_figure_data\\taxonomy_scientific_freeze_v1\\l2_description_effects_review_bootstrap.csv": "3ed38332c1f94c3df64da18a85770e0c01b33388cf21bd143e6f240adea8d719",
+    "docs\\thesis_figure_data\\taxonomy_scientific_freeze_v1\\l2_fold_pair_error_diagnostics.csv": "8f96c98dae9588681fdf37474f5b8430e28fd9c79602061b93336d82c42ecc80",
+    "docs\\thesis_figure_data\\taxonomy_scientific_freeze_v1\\l2_fold_support_and_filtering.csv": "fc3b7188d0f8894792b92867ef1b869e057bd5a0c3e9aacf2503a80ec001ce4e",
+    "docs\\thesis_figure_data\\taxonomy_scientific_freeze_v1\\l2_model_condition_review_bootstrap.csv": "3adea326d498ec30a48066b75e555c856aff427d1a0e75ce86ac938920941914",
+    "docs\\thesis_figure_data\\taxonomy_scientific_freeze_v1\\l2_pairwise_model_differences_review_bootstrap.csv": "16867cb706f524ef9a0bb44d057ab19f7930ff98fb11886e1c4df403497e5edf",
+    "docs\\thesis_figure_data\\taxonomy_scientific_freeze_v1\\l2_stage_decomposition_fold_results.csv": "1a71f98ffe013db05c0d275deda41cdc4f3c8ca8559163541a7f2b79e2950636",
+    "docs\\thesis_figure_data\\taxonomy_scientific_freeze_v1\\l3_posthoc_targeted_robustness.csv": "22d47b3e3ace1287466449bfede3cccc6d55d59b2ae7246240d6f14402a29d5b",
+    "docs\\thesis_figure_data\\taxonomy_scientific_freeze_v1\\l4_parent_group_review_bootstrap.csv": "e947c66e22744969aee863985d20a9c67dcc59eb03a5ede0f13d0f9b6a4d6f30",
+    "docs\\thesis_figure_data\\taxonomy_scientific_freeze_v1\\negative_findings.csv": "27a74d77b2b3cadd6f1dc8f6d882ea1ce9f624f5932b0d237605ae8632f8f4b8",
+    "docs\\thesis_figure_data\\taxonomy_scientific_freeze_v1\\selected_rich_description_confirmation.csv": "6830cee18be42bcdf99e4188fdd48c651ca13ac1ebfd4bacbdfefadb5d2def41",
+    "thesis\\figures\\taxonomy_scientific_freeze_v1\\l2_description_effect_forest.pdf": "060ec4045e27c5e22fc3b7305a9c474980b8a02ef746ff83d895dd6f59d81a95",
+    "thesis\\figures\\taxonomy_scientific_freeze_v1\\l2_description_effect_forest.png": "13223fddb4cc0fdf31fa51ed9d27022b7ef685c517bbe0dededf8cf41431596d",
+    "thesis\\figures\\taxonomy_scientific_freeze_v1\\l2_model_condition_f1.pdf": "1a23b9de1f428c263a8f61bfc3ee48b5737f915a8f454c35826482ada398c2d1",
+    "thesis\\figures\\taxonomy_scientific_freeze_v1\\l2_model_condition_f1.png": "ab07370a645fe001dc8bbee16d8840ea55ec421a11668e77049c277b026cb682",
+    "thesis\\figures\\taxonomy_scientific_freeze_v1\\l2_stage_decomposition.pdf": "0d3527453d9fc91e008efd417b6fcdfe4c92f319d2a1d4d13b6d5a251cb9bc4b",
+    "thesis\\figures\\taxonomy_scientific_freeze_v1\\l2_stage_decomposition.png": "a4f5294333001af603c244b11f33e2cd36f87075b3351b99dee5cec52ce5a566",
+    "thesis\\figures\\taxonomy_scientific_freeze_v1\\l4_parent_group_f1.pdf": "cc1fbc789e6f353450d5bf84220b366d0ff063af82108f633f1a57fc51e091a3",
+    "thesis\\figures\\taxonomy_scientific_freeze_v1\\l4_parent_group_f1.png": "ecbb28d6e523d34f3d781ab6c0f8abe2228a1c934660165ef0c86e1239a290b2",
+    "thesis\\figures\\taxonomy_scientific_freeze_v1\\two_stage_pipeline.pdf": "4e810878023c4993feb9d8e59d987867159edec9019bcccd039cf693fc0e4527",
+    "thesis\\figures\\taxonomy_scientific_freeze_v1\\two_stage_pipeline.png": "337b4674347f5b99957df9292ed40e601cc9e2f0d912cdec02903045d942f8a7"
+  },
+  "schema_version": "taxonomy_scientific_freeze_manifest_v1",
+  "scientific_boundary": {
+    "allowed_splits": [
+      "train",
+      "validation"
+    ],
+    "analysis_branch_head_before_freeze_commit": "61ab6b35fab1966c11d68acb6b2d1a088de427bd",
+    "bootstrap": {
+      "draws": 20000,
+      "seed": 13,
+      "synchronised_across": "methods, folds and N/D conditions",
+      "unit": "row_uid review cluster"
+    },
+    "data_and_candidate_hashes": {
+      "minimal_description_file_sha256": "8f72951f436bd6af606dd7d07ec249f406ce6b7d6ae690817978da5430c92106",
+      "train_csv_sha256": "3ffcc7407cc8077fe9efc5ca06532847589a59464ea929d7f23d1f732b9efc7c",
+      "validation_csv_sha256": "3a32afda9c4ba1d59e76ee8fcfb480011c7178d8201d0025b254a40c2f81203c"
+    },
+    "decoder": {
+      "one_stage_role": "matched architecture control only; never relabel one-stage checkpoints or scores as genuine two-stage artifacts",
+      "stage_1": {
+        "decoder": "select every candidate aspect meeting the seen-only aspect threshold",
+        "maximum_aspects_per_review": null,
+        "output": "one finite presence probability per review-candidate-aspect",
+        "task": "candidate aspect presence",
+        "top_k_fallback": false
+      },
+      "stage_2": {
+        "argmax_role": "diagnostic control",
+        "evaluation_cache_permission": "all sentiment scores may be computed before threshold selection only to permit deterministic validation and oracle-gated diagnostics",
+        "execution": "score only stage-1-selected aspects in the deployed pipeline",
+        "labels": [
+          "negative",
+          "neutral",
+          "positive"
+        ],
+        "maximum_sentiments_per_aspect": 2,
+        "primary_decoder": "always emit top-1 sentiment and emit the runner-up only if its score meets a separately selected seen-only threshold",
+        "task": "sentiment conditional on a selected candidate aspect",
+        "third_sentiment_permitted": false
+      },
+      "thresholds": {
+        "aspect": "selected first on seen-aspect validation evidence",
+        "runner_up_sentiment": "selected second with the aspect threshold frozen, on the same seen-only population",
+        "sharing": "one aspect threshold and one runner-up threshold per method and outer training scope; shared across every representation condition belonging to that scope"
+      }
+    },
+    "formal_execution_commit": "aa84212976a652d62cfca31ed8bf0516a216c485",
+    "include_official_test": false,
+    "neural_training_seeds": 1,
+    "official_test_opened": false,
+    "primary_estimand": "aspect-balanced mean of 12 held-out fold pair micro-F1 values",
+    "protocol_id": "taxonomy_two_stage_formal_v2",
+    "qwen_matched_interface": {
+      "aspect_verbalizers": [
+        "Y",
+        "N"
+      ],
+      "load_in_4bit": true,
+      "max_length": 384,
+      "model_id": "Qwen/Qwen3-4B-Instruct-2507",
+      "model_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+      "prompt_contract_sha256": "ed6eff449c4396e46ce11c17875997772feced1ac2701e82092a4c66e1ba162b",
+      "qlora_checkpoint_manifests_checked": 45,
+      "qlora_contract_files_checked": 45,
+      "sentiment_verbalizers": {
+        "A": "negative",
+        "B": "neutral",
+        "C": "positive"
+      }
+    },
+    "sensitivity_estimand": "pooled held-out pair micro-F1",
+    "source_control_clean_before_manifest": true,
+    "test_contract_count": 0
+  },
+  "sealed_at_utc": "2026-08-22T01:09:35.280965+00:00",
+  "status": "pass"
+}

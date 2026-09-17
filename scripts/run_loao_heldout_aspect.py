@@ -6,6 +6,10 @@ import re
 import sys
 from pathlib import Path
 from types import SimpleNamespace
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import torch
 
 import pandas as pd
 

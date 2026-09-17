@@ -1,0 +1,13 @@
+fold_id,heldout_aspect,original_reviews,filtered_reviews,masked_reviews,removed_reviews,removed_fraction,lost_seen_pair_annotations,heldout_only_reviews_retained_by_masking
+l2-a01,Account management: Account access,7930,7457,7930,473,0.059646910466582596,500,189
+l2-a02,Company brand: Competitor,7930,7314,7930,616,0.0776796973518285,1128,25
+l2-a03,Company brand: General satisfaction,7930,5026,7930,2904,0.36620428751576295,2750,1131
+l2-a04,Company brand: Reviews,7930,7753,7930,177,0.0223203026481715,262,31
+l2-a05,Logistics rides: Speed,7930,6928,7930,1002,0.12635561160151323,1442,122
+l2-a06,Online experience: App website,7930,4330,7930,3600,0.45397225725094575,3269,1425
+l2-a07,Purchase booking experience: Ease of use,7930,5566,7930,2364,0.29810844892812105,2983,467
+l2-a08,Staff support: Attitude of staff,7930,6859,7930,1071,0.13505674653215638,1616,201
+l2-a09,Staff support: Email,7930,7810,7930,120,0.015132408575031526,285,1
+l2-a10,Staff support: Phone,7930,7749,7930,181,0.02282471626733922,409,3
+l2-a11,Value: Discounts promotions,7930,7528,7930,402,0.05069356872635561,555,80
+l2-a12,Value: Price value for money,7930,6915,7930,1015,0.12799495586380832,1618,102
