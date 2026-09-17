@@ -115,7 +115,10 @@ def test_double_backup_receipts_and_tamper(tmp_path):
 
 def test_real_masked_scope_all_reviews_no_heldout(tmp_path):
     executor = runner.load_executor()
-    args = SimpleNamespace(scope_id='heldout-a01', data_dir=ROOT.parent / 'Project_Preparation/Public_Datasets/FABSA', output_root=tmp_path)
+    data_dir = ROOT.parent / 'Project_Preparation/Public_Datasets/FABSA'
+    if not (data_dir / 'train.csv').is_file():
+        pytest.skip('requires the locally held FABSA training data, which is not distributed')
+    args = SimpleNamespace(scope_id='heldout-a01', data_dir=data_dir, output_root=tmp_path)
     train, val, manifests, _, folds = runner.load_masked_scope(args, config(), executor)
     assert len(train) == 7930 and len(val) == 1057
     for frame in manifests.values():
