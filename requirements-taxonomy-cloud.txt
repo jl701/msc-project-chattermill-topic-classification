@@ -10,7 +10,7 @@ datasets==5.0.0
 tokenizers==0.22.2
 safetensors==0.7.0
 numpy==2.2.6
-pandas==2.3.3
+pandas==3.0.5
 scikit-learn==1.8.0
 scipy==1.17.1
 matplotlib==3.10.9
