@@ -1,0 +1,60 @@
+{
+  "artifact_count": 28,
+  "artifact_sha256": {
+    "e5_base_v2\\folds\\l2-a01.json": "e7499a01292b74c4c17107dc34034cde4c7f3f06c04e9680d04ea39990437fd0",
+    "e5_base_v2\\folds\\l2-a02.json": "ab3c39764bcfe63db0a89ddd0a6f7bbfbd8f8a7f17b24d6b4202391d37ecef85",
+    "e5_base_v2\\folds\\l2-a03.json": "82f4235afc1741988330c8c70bf2e66edf30645817c604314730f49154b750d7",
+    "e5_base_v2\\folds\\l2-a04.json": "b07dcd18330373140c1619a2fdbd67edd4f0cbd716f0c1868751179be55392ed",
+    "e5_base_v2\\folds\\l2-a05.json": "c20ebbae72995723dce5f593957d4bbbd62f968ec7f5176f8d6cab4508eaf0cd",
+    "e5_base_v2\\folds\\l2-a06.json": "4f8796ee20910fc059dabd06c6bf06158a42c3759c30f7c9704dbd472a7583ae",
+    "e5_base_v2\\folds\\l2-a07.json": "044215dca02f30544409c0323ebbbdb7a0ddf89b71a4aa555b69dabaf7f96c96",
+    "e5_base_v2\\folds\\l2-a08.json": "09baf8f1b0e7c81c8a133a399ab5a5244f46ef8aad2e70e433b4f4ff92be8c1f",
+    "e5_base_v2\\folds\\l2-a09.json": "9b41ec913bd5630d7aff86f25eca5f26820e04406547b89e1d5d4f3f4d32b030",
+    "e5_base_v2\\folds\\l2-a10.json": "e87dfbb432f041dbaa685cb3e457a21045e4571e0db08ad11e129f73b048a72b",
+    "e5_base_v2\\folds\\l2-a11.json": "57578f5c32baf87feb3d396fe3c827666fa41110f6feaecedb5fd3357a74ed47",
+    "e5_base_v2\\folds\\l2-a12.json": "f2659d3d07d76bc40e503954f584ab2cbd2e4b655c9dfdfbbc449018b3e32959",
+    "e5_base_v2\\per_fold.csv": "b458bfd5693999020e66ae534f0bdc4bf59fcd14b5d27b25db65461541c5ad1b",
+    "e5_base_v2\\summary.json": "00625e2c203a88e446dcb066bf681b76f82dd6611342015a20297ca8346500f8",
+    "strict_train_only_tfidf\\folds\\l2-a01.json": "50b577a118d17194d128713b17f9448f0fb7120a2fc2eafca1b97a929ba62a5e",
+    "strict_train_only_tfidf\\folds\\l2-a02.json": "3cbd2603e5f5523c874e950f10765d6eea5d8cda4fe28d68448ee84227a8dc53",
+    "strict_train_only_tfidf\\folds\\l2-a03.json": "343cde8fdcaeec9b2163a6b9d79677d0ab31ecc9eaf06fbaf65827e593b98f83",
+    "strict_train_only_tfidf\\folds\\l2-a04.json": "f6192482b90524596538c3f8b06759520394a650a4a562aadae96ea30ac77418",
+    "strict_train_only_tfidf\\folds\\l2-a05.json": "99f0feafa080621e33820d2a8706e7ce98e30663535d0c463b46d6e57498e908",
+    "strict_train_only_tfidf\\folds\\l2-a06.json": "0bd12f067b07070832ca006bb60fb34cba2940f88eb21b1950108f30e3f3c2f9",
+    "strict_train_only_tfidf\\folds\\l2-a07.json": "d0cfb916aa6e240b0818f8a54a453394adcae8e5601b34e7dc2aad440367939c",
+    "strict_train_only_tfidf\\folds\\l2-a08.json": "1b831f163c71d78a1ed6da2f9627b80d1e2aad068fcf10fee85eb6a5ef8cdeb7",
+    "strict_train_only_tfidf\\folds\\l2-a09.json": "d1487f193589bdf333789c2517f028818860e9fdc0f6c46bff10eeaed0d488c0",
+    "strict_train_only_tfidf\\folds\\l2-a10.json": "0466e2da4e65b8611f797c3a042b11baa6adb8d7b35d6b7f00c22d8f2f852a37",
+    "strict_train_only_tfidf\\folds\\l2-a11.json": "aa326894419e4ade2458be3e4c1f57c493c525492462a658fc965d83ba068e63",
+    "strict_train_only_tfidf\\folds\\l2-a12.json": "b20dabeb882445de7360dc7fcd7f1fdacaa31a1fa52443ac055ae9ea204224fa",
+    "strict_train_only_tfidf\\per_fold.csv": "baf95f351e542f8eeb49aaeb3c61eff0775840c99ea1068abeab0b92bf9c8df7",
+    "strict_train_only_tfidf\\summary.json": "e4fb1a59b9f307503f0ce93799d54108e488de8ad69ad8a9588c5e4d19c6a909"
+  },
+  "failure_count": 0,
+  "methods": {
+    "e5_base_v2": {
+      "completed_folds": 12,
+      "decoder_rows": 36,
+      "failed_folds": 0,
+      "matched_representation": true,
+      "matched_validation_rows": true,
+      "maximum_primary_sentiments_per_aspect": 2,
+      "test_contract_count": 0
+    },
+    "strict_train_only_tfidf": {
+      "completed_folds": 12,
+      "decoder_rows": 36,
+      "failed_folds": 0,
+      "matched_representation": true,
+      "matched_validation_rows": true,
+      "maximum_primary_sentiments_per_aspect": 2,
+      "test_contract_count": 0
+    }
+  },
+  "non_finite_value_count": 0,
+  "official_test_artifact_count": 0,
+  "protocol_id": "taxonomy_matched_one_vs_two_stage_validation_v1",
+  "protocol_sha256": "9788502d6bdce86a389c1584b67b18a5be85762279d0b203c78cc531b034387c",
+  "resume_conflict_count": 0,
+  "schema_version": "taxonomy_matched_one_vs_two_stage_artifact_audit_v1"
+}

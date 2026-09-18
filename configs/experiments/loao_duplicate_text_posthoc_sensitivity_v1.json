@@ -1,0 +1,51 @@
+{
+  "protocol_id": "loao_duplicate_text_posthoc_sensitivity_v1",
+  "status": "post_hoc_descriptive_plan_recorded_before_sensitivity_smoke",
+  "main_story_status": "isolated_not_for_main_story",
+  "research_question": "How sensitive is the protocol-matched frozen-Qwen versus QLoRA LOAO comparison to evaluation reviews whose normalised text also occurs in that fold's permitted training rows?",
+  "no_retraining": true,
+  "no_model_inference": true,
+  "source_experiment": "loao_unified_candidate_pair_experimental_v1",
+  "fold_protocol": {
+    "strategy": "example_filtered",
+    "evaluation_row_scope": "all",
+    "evaluation_label_scope": "heldout",
+    "folds": 12
+  },
+  "duplicate_definition": {
+    "unit": "evaluation row",
+    "criterion": "the non-empty normalised evaluation text occurs among the held-out fold's permitted training rows",
+    "normalisation": [
+      "Unicode NFKC",
+      "Unicode casefold",
+      "collapse all whitespace runs to one ASCII space",
+      "strip leading and trailing whitespace"
+    ],
+    "empty_normalised_text_is_duplicate": false
+  },
+  "evaluation": {
+    "score_source": "saved validation_pair_scores.csv and test_pair_scores.csv only",
+    "validation_rule": "remove duplicate-text rows, then select each model's threshold independently on its remaining validation scores using the source experiment's frozen threshold-selection rule",
+    "test_rule": "remove duplicate-text rows, then evaluate once using that model's reselected validation threshold",
+    "diagnostics": [
+      "recompute the original all-row validation threshold and all-row test metrics",
+      "evaluate the retained test rows at the original threshold",
+      "evaluate the retained test rows at the retained-validation threshold"
+    ],
+    "primary_descriptive_comparison": "QLoRA minus frozen Qwen retained-test pair_micro_f1 after retained-validation threshold selection"
+  },
+  "integrity": {
+    "run_provenance": "full and pilot run manifests must match the source protocol, requested model mode, stage, enhanced variant and canonical fold sets; full comparison requires finished full runs",
+    "pair_score_rows": "must exactly match the FABSA-derived row_index, row_uid, text, held-out aspect, sentiment, target and enhanced variant",
+    "pilot_validation_fallback": "when a full fold lacks validation_pair_scores.csv, read it from the matching model's explicitly supplied pilot root",
+    "full_comparison_guard": "requires both models, both pilot roots, all 12 canonical folds and all score artifacts before writing output"
+  },
+  "interpretation": {
+    "classification": "post_hoc_descriptive_sensitivity_only",
+    "not_confirmatory": true,
+    "inferential_testing": "none; report fold deltas and descriptive aggregates only",
+    "not_evidence_of_causal_data_leakage": true,
+    "admission": "do not integrate into the dissertation or main result tables without explicit user approval"
+  },
+  "output_root_constraint": "outputs/experimental"
+}

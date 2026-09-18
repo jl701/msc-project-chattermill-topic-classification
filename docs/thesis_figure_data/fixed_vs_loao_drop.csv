@@ -1,0 +1,3 @@
+system,fixed_protocol,loao_protocol,fixed_pair_micro_f1,loao_pair_micro_f1_mean,pair_micro_f1_drop,fixed_pair_samples_f1,loao_pair_samples_f1_mean,notes
+Candidate-aspect DistilBERT + DistilBERT sentiment,fixed three held-out aspects,full all-row LOAO,0.5917,0.3128,0.2789,0.6071,0.055,Fixed split overstates robustness across aspect rotations.
+Qwen3-4B indexed zero-shot,fixed three held-out aspects,full all-row LOAO,0.53,0.3378,0.1922,0.5374,0.1212,LOAO exposes absence-calibration weakness hidden by the easier fixed split.

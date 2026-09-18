@@ -1,0 +1,172 @@
+{
+  "protocol_id": "taxonomy_two_stage_validation_v1",
+  "status": "preregistered_before_execution",
+  "registered_at": "2026-08-17",
+  "objective": "Test whether hierarchical aspect-then-sentiment decisions improve the existing candidate-pair system without new transformer fine-tuning.",
+  "scope": {
+    "included": [
+      "B: zero-retraining hierarchical decoding of existing final seen-validation pair scores for all five registered methods",
+      "C: genuine no-transformer-fine-tuning two-stage scoring for strict TF-IDF, frozen E5-base-v2, and frozen Qwen"
+    ],
+    "deferred": [
+      "D: open-set unknown-aspect anomaly detection and conditional sentiment",
+      "new DistilBERT training",
+      "new QLoRA training",
+      "official test evaluation"
+    ]
+  },
+  "data_contract": {
+    "allowed_splits": [
+      "train",
+      "validation"
+    ],
+    "forbidden_split": "test",
+    "include_official_test": false,
+    "level": "L2",
+    "folds": "all twelve registered single-held-out-aspect folds",
+    "training_filter": "remove every official training row containing the fold's held-out aspect",
+    "selection_rule": "thresholds use seen-aspect validation evidence only; held-out validation evidence is evaluation-only",
+    "seed": 13
+  },
+  "study_B": {
+    "methods": [
+      "strict_train_only_tfidf",
+      "e5_base_v2",
+      "distilbert_review_candidate_cross_encoder",
+      "frozen_qwen_candidate_pair",
+      "qwen_candidate_pair_qlora"
+    ],
+    "source": "immutable final L2 seen-calibration validation score shards referenced by each threshold-transfer artifact",
+    "review_crossfit_folds": 5,
+    "crossfit_assignment": "sha256(row_uid) modulo 5",
+    "baseline_decoder": "select every aspect-sentiment pair whose score meets the cross-fitted pair threshold",
+    "hierarchical_decoder": {
+      "aspect_score": "maximum of the three existing sentiment-specific pair scores",
+      "aspect_selection": "aspect_score meets the cross-fitted aspect threshold",
+      "sentiment_selection": "argmax over negative, neutral, positive for each selected aspect",
+      "maximum_sentiments_per_aspect": 1
+    },
+    "threshold_objective": "pair_micro_f1",
+    "threshold_tie_breakers": [
+      "pair_samples_f1",
+      "pair_micro_precision",
+      "lower false-positive rows per 100",
+      "higher threshold"
+    ],
+    "interpretation_boundary": "in-distribution seen-aspect decoder diagnostic; it does not estimate held-out taxonomy generalisation"
+  },
+  "study_C": {
+    "methods": [
+      "strict_train_only_tfidf",
+      "e5_base_v2",
+      "frozen_qwen_candidate_pair"
+    ],
+    "heldout_representation_variants": [
+      "name_and_description",
+      "name_only",
+      "description_only"
+    ],
+    "seen_representation": "name_and_description",
+    "stage_1": {
+      "target": "binary aspect presence",
+      "tfidf": {
+        "model": "balanced logistic regression over four aspect-only lexical interaction features fitted on the filtered train fold",
+        "features": [
+          "word review-aspect cosine",
+          "character review-aspect cosine",
+          "aspect-name token coverage",
+          "complete aspect-candidate token coverage"
+        ],
+        "word_ngram_range": [1, 2],
+        "char_ngram_range": [3, 5],
+        "min_df": 1,
+        "max_word_features": 80000,
+        "max_char_features": 120000,
+        "classifier_c": 1.0,
+        "class_weight": "balanced",
+        "max_iter": 1000,
+        "seed": 13
+      },
+      "e5": "frozen cosine similarity between review and aspect-only candidate text",
+      "frozen_qwen": {
+        "model": "frozen Y/N next-token aspect-presence prompt",
+        "prompt_schema": "qwen_true_two_stage_next_token_v1",
+        "prompt_contract_sha256": "ed6eff449c4396e46ce11c17875997772feced1ac2701e82092a4c66e1ba162b",
+        "max_length": 384,
+        "eval_batch_size": 6,
+        "verbalizers": ["Y", "N"]
+      }
+    },
+    "stage_2": {
+      "target": "conditional sentiment for an aspect selected by stage 1",
+      "tfidf": {
+        "model": "existing six-feature unified TF-IDF scorer fitted only on present seen aspects with wrong-sentiment negatives",
+        "feature_ablation": "all_six",
+        "classifier_c": 1.0,
+        "class_weight": "balanced",
+        "max_iter": 1000,
+        "seed": 13
+      },
+      "e5": "argmax frozen similarity over three sentiment-conditioned claims",
+      "frozen_qwen": {
+        "model": "argmax frozen next-token logits over three locked single-token sentiment verbalizers",
+        "prompt_schema": "qwen_true_two_stage_next_token_v1",
+        "prompt_contract_sha256": "ed6eff449c4396e46ce11c17875997772feced1ac2701e82092a4c66e1ba162b",
+        "verbalizers": {
+          "A": "negative",
+          "B": "neutral",
+          "C": "positive"
+        }
+      },
+      "maximum_sentiments_per_aspect": 1
+    },
+    "aspect_threshold_objective": "end-to-end pair_micro_f1 on seen-aspect validation evidence",
+    "primary_evaluation_partition": "held-out aspect validation labels",
+    "secondary_partitions": [
+      "overall",
+      "seen"
+    ],
+    "multi_sentiment_policy": {
+      "observed_train_rows": 72,
+      "observed_validation_rows": 12,
+      "primary": "retain all rows and evaluate the supervisor-style single-sentiment argmax decoder unchanged",
+      "sensitivity": "also report results restricted to aspect instances with exactly one gold sentiment",
+      "no_label_rewriting": true
+    }
+  },
+  "metrics": [
+    "pair micro precision recall F1",
+    "aspect micro precision recall F1",
+    "conditional sentiment accuracy",
+    "review-level exact match",
+    "prediction cardinality",
+    "multi-sentiment sensitivity"
+  ],
+  "execution": {
+    "smoke_before_full": true,
+    "resume_safe_outputs": true,
+    "finite_score_required": true,
+    "no_target_guided_changes": true,
+    "output_root": "outputs/experimental/taxonomy_two_stage_validation_v1",
+    "tracked_outputs": [
+      "configuration",
+      "code",
+      "tests",
+      "small aggregate summaries without review text"
+    ],
+    "local_only_outputs": [
+      "review text",
+      "raw scores",
+      "large caches"
+    ]
+  },
+  "stop_conditions": [
+    "official test access",
+    "missing or hash-incompatible source score shards",
+    "non-finite scores",
+    "duplicate review-aspect-sentiment identities",
+    "held-out aspects entering threshold selection",
+    "unexpected prediction collapse",
+    "OOM or repeated thermal throttling"
+  ]
+}

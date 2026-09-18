@@ -1,0 +1,97 @@
+{
+  "protocol_id": "taxonomy_capped_two_sentiment_validation_v2",
+  "status": "preregistered_before_execution",
+  "registered_at": "2026-08-17",
+  "objective": "Test a dataset-faithful decoder that preserves the parent aspect decisions and automatically adds at most one runner-up sentiment.",
+  "provenance": "Sequential follow-up designed after reviewing taxonomy_multi_sentiment_decoder_validation_v1; retain that v1 result as immutable exploratory evidence.",
+  "parent_protocol": "taxonomy_two_stage_validation_v1",
+  "methods": [
+    "strict_train_only_tfidf",
+    "e5_base_v2"
+  ],
+  "data_contract": {
+    "allowed_splits": [
+      "train",
+      "validation"
+    ],
+    "include_official_test": false,
+    "level": "L2",
+    "folds": "all twelve registered single-held-out-aspect folds",
+    "representation": "name_and_description for seen and held-out aspects",
+    "training_filter": "remove every official training row containing the fold's held-out aspect",
+    "selection_partition": "seen-aspect validation only",
+    "evaluation_partition": "held-out-aspect validation only",
+    "seed": 13
+  },
+  "observed_train_validation_structure": {
+    "train_review_aspect_cardinality": {
+      "1": 3777,
+      "2": 2756,
+      "3": 1026,
+      "4": 310,
+      "5": 51,
+      "6": 7,
+      "7": 3
+    },
+    "validation_review_aspect_cardinality": {
+      "1": 505,
+      "2": 369,
+      "3": 137,
+      "4": 38,
+      "5": 8
+    },
+    "maximum_aspects_per_review": {
+      "train": 7,
+      "validation": 5
+    },
+    "maximum_sentiments_per_review_aspect": {
+      "train": 2,
+      "validation": 2
+    },
+    "review_aspect_instances_with_two_sentiments": {
+      "train": 73,
+      "validation": 12
+    }
+  },
+  "aspect_decoder": {
+    "rule": "retain every aspect_score greater than or equal to the parent Study C seen-validation threshold",
+    "maximum_aspects_per_review": null,
+    "threshold_change_permitted": false
+  },
+  "argmax_control": {
+    "sentiment_rule": "emit exactly the highest-scoring sentiment for every selected aspect"
+  },
+  "capped_two_decoder": {
+    "sentiment_rule": "always emit the highest-scoring sentiment and additionally emit the runner-up only when its score reaches the seen-validation-selected second-sentiment threshold",
+    "maximum_sentiments_per_aspect": 2,
+    "minimum_sentiments_per_selected_aspect": 1,
+    "third_sentiment_permitted": false,
+    "threshold_candidates": "all strict candidates induced by runner-up scores of parent-selected seen-validation aspect instances, plus a value above the maximum that exactly reproduces argmax",
+    "threshold_objective": "end-to-end pair micro-F1 on seen-aspect validation with the parent aspect threshold frozen",
+    "tie_breakers": [
+      "pair samples F1",
+      "pair micro precision",
+      "fewer selected aspects receiving a second sentiment",
+      "higher second-sentiment threshold"
+    ]
+  },
+  "primary_metric": "held-out pair micro-F1, unweighted mean across folds",
+  "secondary_metrics": [
+    "held-out pair micro precision and recall",
+    "sentiments emitted per selected aspect",
+    "rate of selected aspects receiving a second sentiment",
+    "gold-sentiment recall on two-sentiment review-aspect instances",
+    "fold wins ties losses against argmax"
+  ],
+  "output_root": "outputs/experimental/taxonomy_capped_two_sentiment_validation_v2",
+  "stopping_rules": [
+    "official test access",
+    "held-out labels entering threshold selection",
+    "any change to the parent aspect threshold",
+    "more than two sentiments emitted for one aspect",
+    "non-finite score",
+    "fold identity mismatch",
+    "failure to reproduce the parent argmax control"
+  ],
+  "reporting_rule": "Report this as a sequential validation follow-up and retain negative results; do not modify v1 or parent Study C."
+}

@@ -1,0 +1,9 @@
+contrast,methods,same_rows,same_training_scope_and_parameters,same_decoder_thresholds,changed_component,status,claim_boundary
+L2 held-out D minus N within method/fold,all seven,True,True,True,held-out aspect card gains frozen minimal definition,primary matched representation contrast,includes train-inference format match for trainable systems
+selected R2_positive_concat minus D,TF-IDF; Frozen E5,True,True,True,held-out card gains selected rich guidance,secondary confirmation after bounded development,not a primary endpoint; no neural expansion
+two-stage capped-two minus one-stage independent pairs,TF-IDF; Frozen E5,True,False,False,architecture and architecture-appropriate training/selection,matched systems architecture control,not the isolated effect of one threshold
+capped-two minus top-one sentiment,TF-IDF; Frozen E5,True,True,aspect threshold only,thresholded runner-up is permitted,dataset-fidelity decoder control,retained despite small validation F1 cost
+QLoRA Qwen versus Frozen Qwen zero-shot,Qwen,True,False,False,task supervision/adaptation and operating point,descriptive systems comparison,not a causal LoRA-only effect
+Frozen Qwen few-shot versus zero-shot,Qwen,True,False,False,"demonstrations, max length, truncation, operating point",descriptive prompting systems comparison,not a causal demonstration-only effect
+L1 to L2-D to L4-D,within-system scenario profile,False,False,False,"taxonomy shift, filtered training, fold unit and support",descriptive stress-test profile,not a common-grid causal curve
+Historical L3 dual-unseen conditions and selected-versus-alternate matching,TF-IDF; Frozen E5; Frozen Qwen,not fully evidenced in payload,partially evidenced,recorded but no full score identities/hashes,two held-out cards,all 12 historical folds audited; post-hoc targeted robustness; appendix only,descriptive metrics; no inferential p-values

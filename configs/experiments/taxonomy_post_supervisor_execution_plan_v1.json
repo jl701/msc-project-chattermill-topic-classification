@@ -1,0 +1,251 @@
+{
+  "schema_version": "taxonomy_post_supervisor_execution_plan_v1",
+  "plan_id": "taxonomy_post_supervisor_execution_plan_v1",
+  "status": "approved_post_supervisor_replan_before_new_formal_execution",
+  "registered_at": "2026-08-20T00:00:00+01:00",
+  "authority": "User-approved consolidation after the completed UCL internal-supervisor discussion",
+  "supersedes_for_future_execution": [
+    "dissertation_loao_mainline_lock_2026_07_23",
+    "taxonomy_two_stage_precloud_v2 level definitions",
+    "taxonomy_two_stage_three_gpu_parallel_v1",
+    "taxonomy_two_stage_formal_v1 26-scope launch schedule"
+  ],
+  "preserves_as_historical_evidence": [
+    "all completed validation-only artifacts under their original contracts",
+    "matched one-stage versus true-two-stage validation",
+    "capped-two sentiment validation",
+    "cloud hardware, recovery, hash and sync gates"
+  ],
+  "data_contract": {
+    "current_allowed_splits": [
+      "train",
+      "validation"
+    ],
+    "official_test_status": "sealed",
+    "include_official_test": false,
+    "test_contract_count": 0,
+    "test_opening_rule": "A single official-test pass requires a later validation freeze, exact artifact audit and explicit user approval.",
+    "target_validation_use": "evaluation only",
+    "selection_population": "seen-aspect validation evidence within the exact outer training scope",
+    "result_guided_protocol_changes": false
+  },
+  "architecture": {
+    "primary": "true two-stage aspect presence followed by aspect-conditioned sentiment",
+    "aspect_selection": "uncapped multilabel thresholding with no forced top-k fallback",
+    "sentiment_decoder": "always top-1 and optionally the runner-up above a separately selected seen-only threshold",
+    "maximum_sentiments_per_aspect": 2,
+    "third_sentiment_permitted": false,
+    "one_stage_36_pair_role": "matched architecture control and Level 1 conventional reference only"
+  },
+  "levels": {
+    "L1": {
+      "name": "Closed-taxonomy supervised reference",
+      "heldout_aspects": 0,
+      "training_taxonomy": "all twelve aspects",
+      "evaluation_taxonomy": "all twelve aspects",
+      "required_method": "word-plus-character TF-IDF with one-vs-rest logistic regression over 36 aspect-sentiment pairs",
+      "purpose": [
+        "establish ordinary in-distribution task solvability",
+        "anchor the single-unseen generalisation gap",
+        "provide a conventional UCL thesis baseline"
+      ],
+      "description_sweep": false,
+      "thesis_role": "short reference table, not a contribution"
+    },
+    "L2": {
+      "name": "Single-unseen LOAO main experiment",
+      "outer_folds": 12,
+      "heldout_aspects_per_fold": 1,
+      "training_taxonomy": "eleven seen aspects under example_filtered",
+      "evaluation_taxonomy": "all twelve candidates on every validation review",
+      "representation_conditions": {
+        "N": "held-out canonical name only",
+        "D": "held-out canonical name plus frozen minimal description",
+        "R": "held-out globally selected positive-rich guidance; retained as a completed local controlled ablation only"
+      },
+      "representation_invariants": [
+        "same checkpoint or frozen model across N D R",
+        "same deterministic few-shot demonstrations across N D R",
+        "same review and candidate identities across N D R",
+        "same aspect and runner-up sentiment thresholds across N D R",
+        "all seen candidates retain canonical name plus frozen minimal description"
+      ],
+      "result_views": {
+        "L2_S": "supplied-candidate/oracle diagnostic derived from held-out raw scores and oracle-gated sentiment scores",
+        "L2_E": "primary end-to-end full-taxonomy prediction over seen and unseen candidates"
+      },
+      "primary_description_contrasts": [
+        "D minus N",
+        "R minus D for the completed TF-IDF and E5 confirmation only"
+      ],
+      "formal_cloud_conditions": [
+        "N",
+        "D"
+      ],
+      "required_methods": [
+        "strict_train_only_tfidf_true_two_stage",
+        "e5_base_v2_true_two_stage",
+        "description_to_classifier_weight_transfer_v1",
+        "distilbert_review_candidate_true_two_stage",
+        "frozen_qwen_zero_shot_true_two_stage",
+        "frozen_qwen_few_shot_true_two_stage",
+        "qwen_qlora_true_two_stage"
+      ],
+      "thesis_role": "core experiment and full model-family comparison"
+    },
+    "L3": {
+      "name": "Targeted dual-unseen robustness",
+      "status": "optional_after_L2_freeze",
+      "heldout_aspects_per_fold": 2,
+      "pair_selection_rule": "six disjoint adjacent pairs over the frozen canonical order, chosen without outcome inspection so every aspect appears exactly once",
+      "registered_pairs": [
+        "a01-a02",
+        "a03-a04",
+        "a05-a06",
+        "a07-a08",
+        "a09-a10",
+        "a11-a12"
+      ],
+      "primary_condition": "DD: both held-out aspects receive canonical name plus frozen minimal description",
+      "removed_from_core": [
+        "full twelve cyclic-pair schedule",
+        "full NN DN ND DD RR description crossover",
+        "requirement to run every model family"
+      ],
+      "purpose": "multi-unseen robustness rather than primary description-effect estimation",
+      "opaque_unknown_anomaly_arm": "deferred until candidate identity, output identity and sentiment scoring are separately pre-registered",
+      "thesis_role": "optional exploratory validation or appendix"
+    },
+    "L4": {
+      "name": "Parent-group structured taxonomy shift",
+      "status": "retained_secondary",
+      "registered_groups": [
+        {
+          "parent": "Company brand",
+          "aspects": [
+            "a02",
+            "a03",
+            "a04"
+          ]
+        },
+        {
+          "parent": "Staff support",
+          "aspects": [
+            "a08",
+            "a09",
+            "a10"
+          ]
+        },
+        {
+          "parent": "Value",
+          "aspects": [
+            "a11",
+            "a12"
+          ]
+        }
+      ],
+      "primary_condition": "D: all held-out group aspects receive canonical name plus frozen minimal description",
+      "description_sweep": false,
+      "reporting_limit": "show every group separately and do not claim strong cross-group inference from three folds",
+      "thesis_role": "secondary structured-shift stress test"
+    }
+  },
+  "few_shot_contract": {
+    "selection": "deterministic stable order from the exact outer train fold",
+    "retrieval": false,
+    "result_guided_examples": false,
+    "heldout_aspect_demonstrations": false,
+    "stage_1": "two Y and two N demonstrations",
+    "stage_2": "one negative, one neutral and one positive demonstration where support permits",
+    "sharing": "same demonstrations across N D R within an outer scope"
+  },
+  "description_to_classifier_transfer": {
+    "protocol_id": "taxonomy_description_to_classifier_weight_transfer_v1",
+    "level": "L2",
+    "scope": "Stage 1 aspect presence only",
+    "execution": "local validation-only before cloud launch",
+    "required_controls": [
+      "mean seen weight",
+      "nearest-description weight",
+      "cosine-barycentric weight",
+      "kernel-ridge description-to-weight generator"
+    ],
+    "stage_2": "reuse the registered aspect-conditioned capped-two sentiment component"
+  },
+  "rich_description_gate": {
+    "protocol_id": "taxonomy_rich_description_interface_study_v1",
+    "development": "72 train-only pseudo-folds across strict TF-IDF and frozen E5 selected R2_positive_concat globally",
+    "confirmation": "twelve Level 2 validation folds for each of strict TF-IDF and frozen E5, with Stage 2 fixed to D",
+    "decision": "retain one local R ablation and move interface exploration to the appendix; do not expand R to Frozen-Qwen few-shot, DistilBERT or QLoRA",
+    "reason": "both confirmation methods lost presence AP, presence F1 and held-out pair F1 while increasing false-positive rows",
+    "official_test": "sealed",
+    "test_contract_count": 0
+  },
+  "reuse_policy": {
+    "default": "reject unless every scientific and artifact field is exact",
+    "required_exact_fields": [
+      "data hashes and row identities",
+      "outer fold and training filter",
+      "model and tokenizer revisions",
+      "checkpoint and adapter hashes",
+      "candidate resource and representation hashes",
+      "task stage and score semantics",
+      "prompt, demonstration and truncation hashes",
+      "threshold selection population, objective and tie-break",
+      "decoder contract",
+      "test-access ledger"
+    ],
+    "candidate_exact_reuse_subject_to_audit": [
+      "matched Level 2 TF-IDF true-two-stage scores",
+      "matched Level 2 E5 true-two-stage scores",
+      "compatible Frozen-Qwen zero-shot cache rows",
+      "selected old L3 DD rows for the six newly registered pairs",
+      "old L4 D validation rows",
+      "frozen taxonomy and description resources",
+      "cloud checkpoint, resume, telemetry and replication infrastructure"
+    ],
+    "control_only": [
+      "historical independent 36-pair Level 2 models",
+      "historical pair DistilBERT checkpoints",
+      "historical pair QLoRA adapters"
+    ],
+    "never_reuse_approximately": true
+  },
+  "execution_phases": [
+    "P0 publish this revised plan and revoke the old 26-scope launch manifest",
+    "P1 build an exact reuse and missing-work matrix without opening official test",
+    "P2 complete the validation-only Level 1 logistic-regression reference",
+    "P3 implement, test and run the local Level 2 description-to-classifier weight-transfer experiment",
+    "P4 complete or exactly reuse local Level 2 TF-IDF, E5 and Frozen-Qwen zero-shot N D R evidence, then run the registered rich-interface gate",
+    "P5 regenerate and audit a reduced cloud manifest for Level 2 N D and Level 4 D only",
+    "P6 run Frozen-Qwen few-shot, DistilBERT and QLoRA N D validation with immutable local replication",
+    "P7 freeze Level 2 paired analysis and Level 4 group-wise analysis",
+    "P8 decide whether the optional six-pair Level 3 DD study adds enough information to execute or merely report already compatible validation evidence",
+    "P9 update thesis methods, results plan, limitations and supervisor materials",
+    "P10 run a new test-blind freeze audit; official test remains blocked pending explicit approval"
+  ],
+  "cloud_replan": {
+    "old_unique_scopes": 26,
+    "old_trainable_work_units": 260,
+    "old_expected_result_files": 297,
+    "old_manifest_authorised": false,
+    "core_L2_plus_L4_unique_scopes": 15,
+    "core_trainable_work_unit_estimate_if_scheduler_shape_is_unchanged": 150,
+    "core_result_payload_count_after_rich_gate": 81,
+    "core_plus_optional_L3_unique_scopes": 20,
+    "core_plus_optional_L3_trainable_work_unit_estimate_if_scheduler_shape_is_unchanged": 200,
+    "note": "All counts must be regenerated from the final manifest because N D R result conditions change scoring payload counts even when they share a training scope."
+  },
+  "global_stop_conditions": [
+    "official-test access or any test contract",
+    "target labels or outcomes used for selection",
+    "missing, duplicate or overlapping scope ownership",
+    "checkpoint, score-shard, cache, manifest or hash conflict",
+    "non-finite loss, parameter or probability",
+    "unexpected prediction collapse",
+    "third sentiment emitted for one aspect",
+    "OOM or repeated thermal/hardware slowdown",
+    "verified local replication failure",
+    "active unneeded cloud resource or unbounded billing"
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "version": "fabsa_aspect_descriptions_minimal_v2",
+  "status": "approved_and_frozen",
+  "created_at": "2026-07-23T00:00:00+01:00",
+  "approved_at": "2026-07-24T22:53:32+01:00",
+  "frozen_at": "2026-07-24T22:53:32+01:00",
+  "approval": "The user explicitly approved the exact minimal_v2 resource before formal taxonomy-generalisation execution. The twelve definitions are frozen and must not be rewritten in response to validation or test results.",
+  "authorship": "Human-authored project taxonomy resource, mechanically reduced from the definition fields of fabsa_aspect_descriptions_v1 before any new taxonomy-generalisation validation or test result.",
+  "allowed_sources": [
+    "the twelve canonical FABSA aspect names",
+    "the canonical parent-child taxonomy hierarchy",
+    "general language knowledge"
+  ],
+  "forbidden_sources": [
+    "FABSA review text",
+    "corpus keywords or frequencies",
+    "validation or test labels",
+    "model predictions",
+    "confusion matrices",
+    "error analysis",
+    "copied or paraphrased FABSA examples"
+  ],
+  "canonical_order": [
+    "Account management: Account access",
+    "Company brand: Competitor",
+    "Company brand: General satisfaction",
+    "Company brand: Reviews",
+    "Logistics rides: Speed",
+    "Online experience: App website",
+    "Purchase booking experience: Ease of use",
+    "Staff support: Attitude of staff",
+    "Staff support: Email",
+    "Staff support: Phone",
+    "Value: Discounts promotions",
+    "Value: Price value for money"
+  ],
+  "aspects": {
+    "Account management: Account access": "Accessing or regaining access to a customer account, including signing in, passwords, registration, verification, locked accounts, and account credentials.",
+    "Company brand: Competitor": "Another company, provider, brand, or alternative is named, compared, preferred, considered, or used as a substitute for the focal company.",
+    "Company brand: General satisfaction": "An overall judgement of the company, service, or complete customer experience rather than a judgement limited to one operational feature.",
+    "Company brand: Reviews": "Customer reviews, ratings, testimonials, reputation feedback, or the act of reading, leaving, requesting, or responding to a review.",
+    "Logistics rides: Speed": "How quickly or slowly a journey, ride, delivery, collection, or logistics service happens, including delays, waiting time, and punctuality.",
+    "Online experience: App website": "Using the mobile app, website, webpage, online portal, or digital interface, including navigation, loading, crashes, bugs, and online functionality.",
+    "Purchase booking experience: Ease of use": "How easy, difficult, clear, or convenient it is to purchase, order, reserve, book, check out, or complete the customer transaction workflow.",
+    "Staff support: Attitude of staff": "The behaviour, manner, helpfulness, friendliness, rudeness, professionalism, knowledge, or empathy of employees and support staff.",
+    "Staff support: Email": "Customer contact or support through email, including sending messages, replies, response time, missing responses, and the quality of an email exchange.",
+    "Staff support: Phone": "Customer contact or support by telephone, including calls, call centres, being on hold, callbacks, answering, and telephone conversations.",
+    "Value: Discounts promotions": "Discounts, promotions, promotional offers, coupons, vouchers, sales, special deals, loyalty offers, or advertised price reductions.",
+    "Value: Price value for money": "The ordinary price, cost, charge, fee, affordability, expensiveness, cheapness, or whether the service is worth what the customer paid."
+  },
+  "hash_payload": [
+    "version",
+    "canonical_order",
+    "aspects"
+  ],
+  "hash_algorithm": "sha256(canonical UTF-8 JSON; sorted keys; compact separators)",
+  "content_sha256": "fc93cf27efdb64ad335f39f4a0dbdbd3dad13b1aae5de0010280931867af7d4c"
+}

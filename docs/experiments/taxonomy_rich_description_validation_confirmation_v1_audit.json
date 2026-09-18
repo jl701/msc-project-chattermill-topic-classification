@@ -1,0 +1,46 @@
+{
+  "audit_sha256": "921e9a1578f5f88c5966601780261a3f3fea466fbd25359d60aef8663f09c8c1",
+  "cloud_expansion_of_R": false,
+  "confirmation": {
+    "e5_base_v2": {
+      "D_exactly_matches_prior_control": true,
+      "R_minus_D": {
+        "false_positive_rows_per_100": {"R_higher_folds": 10, "R_lower_folds": 2, "equal_folds": 0, "mean": 1.9394512771996222},
+        "heldout_pair_micro_f1": {"R_higher_folds": 4, "R_lower_folds": 8, "equal_folds": 0, "mean": -0.010226700515891203},
+        "overall_pair_micro_f1": {"R_higher_folds": 0, "R_lower_folds": 12, "equal_folds": 0, "mean": -0.002550841400600657},
+        "presence_average_precision": {"R_higher_folds": 4, "R_lower_folds": 8, "equal_folds": 0, "mean": -0.011447999293709337},
+        "presence_f1": {"R_higher_folds": 4, "R_lower_folds": 8, "equal_folds": 0, "mean": -0.014363198451744523},
+        "presence_precision": {"R_higher_folds": 2, "R_lower_folds": 10, "equal_folds": 0, "mean": -0.01681376749040232},
+        "presence_recall": {"R_higher_folds": 6, "R_lower_folds": 6, "equal_folds": 0, "mean": 0.00936393894176791}
+      },
+      "fold_count": 12,
+      "summary_sha256": "0d9ccd5b2714981cffa5ab0293490d4dd9de51a6efdd2ce6d4592e79bad57b0c"
+    },
+    "strict_train_only_tfidf": {
+      "D_exactly_matches_prior_control": true,
+      "R_minus_D": {
+        "false_positive_rows_per_100": {"R_higher_folds": 12, "R_lower_folds": 0, "equal_folds": 0, "mean": 4.619993692841375},
+        "heldout_pair_micro_f1": {"R_higher_folds": 2, "R_lower_folds": 10, "equal_folds": 0, "mean": -0.029352154014961756},
+        "overall_pair_micro_f1": {"R_higher_folds": 2, "R_lower_folds": 10, "equal_folds": 0, "mean": -0.0026691055367377564},
+        "presence_average_precision": {"R_higher_folds": 5, "R_lower_folds": 7, "equal_folds": 0, "mean": -0.009104616990650146},
+        "presence_f1": {"R_higher_folds": 4, "R_lower_folds": 8, "equal_folds": 0, "mean": -0.04050943271229588},
+        "presence_precision": {"R_higher_folds": 0, "R_lower_folds": 12, "equal_folds": 0, "mean": -0.07227219708806361},
+        "presence_recall": {"R_higher_folds": 9, "R_lower_folds": 2, "equal_folds": 1, "mean": 0.04091120664494464}
+      },
+      "fold_count": 12,
+      "summary_sha256": "07e8590ed2d6629918961f427e657023197c1db62a77331f9fa5450027776dba"
+    }
+  },
+  "development": {
+    "pseudo_fold_count": 72,
+    "record_count": 576,
+    "selected_interface": "R2_positive_concat",
+    "summary_sha256": "c1801fb962a2cd868a0b1183343892749bb71c3e993c5730f6815623ffd23d6f"
+  },
+  "failure_count": 0,
+  "non_finite_value_count": 0,
+  "resume_conflict_count": 0,
+  "schema_version": "taxonomy_rich_description_evidence_audit_v1",
+  "status": "pass",
+  "test_contract_count": 0
+}

@@ -1,0 +1,194 @@
+{
+  "schema_version": "taxonomy_two_stage_no_retraining_extensions_v1",
+  "protocol_id": "taxonomy_two_stage_formal_v2",
+  "study_id": "taxonomy_two_stage_no_retraining_extensions_v1",
+  "created_at": "2026-08-23",
+  "formal_execution_commit": "aa84212976a652d62cfca31ed8bf0516a216c485",
+  "analysis_parent_commit": "3bc8b1515845763ef8b0ffd3c000312e87f9fd20",
+  "evaluation_partition": "validation_only",
+  "allowed_splits": [
+    "train",
+    "validation"
+  ],
+  "official_test_permitted": false,
+  "include_official_test": false,
+  "test_contract_count": 0,
+  "execution_order": [
+    "smooth_stage_1_fusion",
+    "retrieval_few_shot_stage_1"
+  ],
+  "level": "L2",
+  "folds": [
+    "l2-a01",
+    "l2-a02",
+    "l2-a03",
+    "l2-a04",
+    "l2-a05",
+    "l2-a06",
+    "l2-a07",
+    "l2-a08",
+    "l2-a09",
+    "l2-a10",
+    "l2-a11",
+    "l2-a12"
+  ],
+  "conditions": [
+    "D",
+    "N"
+  ],
+  "primary_condition": "D",
+  "unchanged_selection_transfer_condition": "N",
+  "fixed_stage_2": {
+    "method_id": "qwen_candidate_pair_qlora",
+    "component": "threshold_aligned_sentiment_scores",
+    "decoder": "top_one_plus_thresholded_runner_up",
+    "maximum_sentiments_per_selected_aspect": 2,
+    "retraining": false,
+    "retuning": false
+  },
+  "smooth_stage_1_fusion": {
+    "method_id": "smooth_fewshot_qlora_stage1_fusion__qlora_stage2",
+    "sources": [
+      "frozen_qwen_few_shot",
+      "qwen_candidate_pair_qlora"
+    ],
+    "probability_clip_epsilon": 1e-06,
+    "source_evidence": "logit(raw_probability)-logit(frozen_source_aspect_threshold)",
+    "fusion": "alpha*fewshot_evidence+(1-alpha)*qlora_evidence",
+    "output_probability": "sigmoid(fused_evidence)",
+    "alpha_grid": {
+      "start": 0.0,
+      "stop": 1.0,
+      "step": 0.1
+    },
+    "aspect_threshold_grid": {
+      "start": 0.0,
+      "stop": 1.0,
+      "step": 0.01
+    },
+    "review_crossfit_folds": 5,
+    "review_crossfit_seed": 13,
+    "review_crossfit_assignment": "sha256(seed_pipe_row_uid)_first_8_bytes_mod_5",
+    "selection_condition": "D_only",
+    "selection_aspects": "same_outer_fold_seen_aspects_only",
+    "selection_reviews": "all_review_blocks_except_current_evaluation_block",
+    "evaluation_reviews": "current_review_block_only",
+    "selection_objective_and_ties": [
+      "maximum_seen_pair_micro_f1",
+      "maximum_seen_presence_f1",
+      "minimum_seen_aspect_call_rate",
+      "minimum_absolute_distance_from_alpha_1",
+      "minimum_absolute_distance_from_threshold_0.5",
+      "higher_threshold"
+    ],
+    "all_validation_fit": "descriptive_diagnostic_only",
+    "reference_method_id": "frozen_qwen_few_shot_stage1__qlora_stage2"
+  },
+  "retrieval_few_shot_stage_1": {
+    "method_id": "e5_retrieval_frozen_qwen_few_shot_stage1__qlora_stage2",
+    "base_model_id": "Qwen/Qwen3-4B-Instruct-2507",
+    "base_model_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+    "base_model_training": false,
+    "prompt_contract": "existing_locked_four_demonstration_aspect_presence_prompt",
+    "inference": "restricted_softmax_over_Y_N",
+    "max_length": 1024,
+    "batch_size": 6,
+    "retriever": {
+      "model_id": "intfloat/e5-base-v2",
+      "model_revision": "f52bf8ec8c7124536f0efb74aca902b2995e5bcd",
+      "pooling": "attention_mask_mean",
+      "normalisation": "l2",
+      "max_length": 256,
+      "review_prefix": "passage: ",
+      "candidate_prefix": "query: ",
+      "pair_representation": "l2_normalise(review_embedding+candidate_card_embedding)",
+      "similarity": "cosine",
+      "fit_scope": "frozen_pretrained_encoder_no_FABSA_fitting"
+    },
+    "retrieval_pool": "exact_outer_train_fold_crossed_with_seen_aspects_only",
+    "demonstration_candidate_representation": "name_and_description",
+    "demonstrations": {
+      "positive_count": 2,
+      "negative_count": 2,
+      "shortlist_size_per_answer_class": 256,
+      "order": [
+        "Y",
+        "Y",
+        "N",
+        "N"
+      ],
+      "ranking": "GPU top-256 cosine shortlist per answer class followed by descending_pair_cosine_then_row_uid_then_candidate_aspect",
+      "diversity": "distinct_row_uid_required_within_each_answer_class; distinct_candidate_aspect_preferred_within_fixed_shortlist",
+      "fallback": "allow_same_candidate_aspect_only_when_fixed_shortlist_has_no_second_distinct_aspect_after_row_diversity"
+    },
+    "condition_rule": "retrieve_and_score_from_each_condition's_permitted_candidate_card; use D-only selected thresholds unchanged for N",
+    "aspect_threshold_grid": {
+      "start": 0.0,
+      "stop": 1.0,
+      "step": 0.01
+    },
+    "review_crossfit_folds": 5,
+    "review_crossfit_seed": 13,
+    "selection_condition": "D_only",
+    "selection_aspects": "same_outer_fold_seen_aspects_only",
+    "selection_reviews": "all_review_blocks_except_current_evaluation_block",
+    "selection_objective_and_ties": [
+      "maximum_seen_pair_micro_f1",
+      "maximum_seen_presence_f1",
+      "minimum_seen_aspect_call_rate",
+      "minimum_absolute_distance_from_threshold_0.5",
+      "higher_threshold"
+    ],
+    "all_validation_fit": "descriptive_diagnostic_only",
+    "prompt_cache": "content_addressed_by_review_candidate_and_exact_demonstration_sha256"
+  },
+  "primary_metric": "aspect_balanced_mean_heldout_pair_micro_f1",
+  "secondary_metrics": [
+    "aspect_balanced_mean_overall_pair_micro_f1",
+    "pooled_heldout_pair_micro_f1",
+    "heldout_pair_micro_precision",
+    "heldout_pair_micro_recall",
+    "heldout_presence_f1",
+    "heldout_presence_average_precision",
+    "oracle_gated_sentiment_set_micro_f1",
+    "aspect_call_rate"
+  ],
+  "uncertainty": {
+    "unit": "row_uid_review_cluster",
+    "synchronised_draws": 20000,
+    "seed": 13,
+    "interval": "percentile_95"
+  },
+  "promotion_rule": "D heldout pair F1 exceeds the fixed few-shot-Stage-1 plus QLoRA-Stage-2 reference and the paired review-bootstrap 95% interval lower bound is greater than zero",
+  "pre_inference_amendments": [
+    {
+      "date": "2026-08-23",
+      "phase": "retrieval_smoke_before_any_Qwen_prediction",
+      "observed_issue": "one positive top-256 shortlist contained no feasible second example under simultaneous row and aspect hard-diversity constraints",
+      "change": "keep distinct review rows as a hard constraint; prefer distinct aspects and allow a repeated aspect only when the fixed shortlist cannot satisfy aspect diversity",
+      "outcome_evidence_seen": false,
+      "official_test_opened": false
+    }
+  ],
+  "stop_rules": [
+    "failure_or_OOM",
+    "non_finite_score",
+    "resume_or_cache_contract_conflict",
+    "heldout_aspect_enters_demonstration_pool_or_selection",
+    "train_evaluation_review_overlap_in_crossfit_selection",
+    "prediction_collapse",
+    "official_test_access_or_nonzero_test_contract"
+  ],
+  "forbidden": [
+    "official_test_access",
+    "heldout_aspect_labels_in_selection",
+    "N_specific_parameter_selection",
+    "prompt_or_retrieval_search_after_outcomes",
+    "third_sentiment_output",
+    "model_or_adapter_retraining",
+    "test_informed_adjustment"
+  ],
+  "local_output_directory": "outputs/experimental/taxonomy_two_stage_no_retraining_extensions_v1",
+  "committed_aggregate_directory": "docs/thesis_figure_data/taxonomy_two_stage_no_retraining_extensions_v1",
+  "raw_scores_and_prompt_cache_committed": false
+}

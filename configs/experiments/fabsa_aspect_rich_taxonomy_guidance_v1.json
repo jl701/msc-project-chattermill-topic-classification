@@ -1,0 +1,205 @@
+{
+  "version": "fabsa_aspect_rich_taxonomy_guidance_v1",
+  "status": "approved_and_frozen",
+  "created_at": "2026-07-24T22:53:32+01:00",
+  "approved_at": "2026-07-24T22:53:32+01:00",
+  "frozen_at": "2026-07-24T22:53:32+01:00",
+  "approval": "The user approved one secondary Level 3 DD-versus-RR rich-taxonomy-guidance comparison before formal taxonomy-generalisation execution.",
+  "scope": "Secondary Level 3 RR only. The primary NN/DN/ND/DD crossover and L1-D to L4-D difficulty curve remain unchanged.",
+  "authorship": "Human-authored project taxonomy guidance created only from the twelve canonical aspect names, their parent-child hierarchy, and general language knowledge. No FABSA review text, corpus statistics, labels, predictions, confusion matrices, or error analysis were consulted.",
+  "template": {
+    "field_order": [
+      "canonical_name",
+      "definition",
+      "aliases",
+      "inclusion_boundary",
+      "contrastive_boundary",
+      "candidate_sentiment"
+    ],
+    "alias_count_min": 3,
+    "alias_count_max": 5,
+    "sentiment_balance_rule": "Aliases name a topic, channel, entity, or process rather than expressing praise or criticism. Definitions and boundaries must not favour one candidate sentiment."
+  },
+  "allowed_sources": [
+    "the twelve canonical FABSA aspect names",
+    "the canonical parent-child taxonomy hierarchy",
+    "general language knowledge"
+  ],
+  "forbidden_sources": [
+    "FABSA review text",
+    "corpus keywords or frequencies",
+    "validation or test labels",
+    "model predictions",
+    "confusion matrices",
+    "error analysis",
+    "copied or paraphrased FABSA examples",
+    "target validation or test F1 used to select aliases or boundaries"
+  ],
+  "canonical_order": [
+    "Account management: Account access",
+    "Company brand: Competitor",
+    "Company brand: General satisfaction",
+    "Company brand: Reviews",
+    "Logistics rides: Speed",
+    "Online experience: App website",
+    "Purchase booking experience: Ease of use",
+    "Staff support: Attitude of staff",
+    "Staff support: Email",
+    "Staff support: Phone",
+    "Value: Discounts promotions",
+    "Value: Price value for money"
+  ],
+  "aspects": {
+    "Account management: Account access": {
+      "definition": "Accessing or regaining access to a customer account, including signing in, passwords, registration, verification, locked accounts, and account credentials.",
+      "aliases": [
+        "account sign-in",
+        "login access",
+        "account credentials",
+        "account verification",
+        "account recovery"
+      ],
+      "inclusion_boundary": "Use this aspect when the subject is obtaining, maintaining, or recovering access to a customer account or its credentials.",
+      "contrastive_boundary": "A contact channel without an account-access issue belongs to Email or Phone; a digital-interface problem that is not about credentials belongs to App website."
+    },
+    "Company brand: Competitor": {
+      "definition": "Another company, provider, brand, or alternative is named, compared, preferred, considered, or used as a substitute for the focal company.",
+      "aliases": [
+        "competing provider",
+        "alternative company",
+        "rival brand",
+        "other provider",
+        "substitute service"
+      ],
+      "inclusion_boundary": "Use this aspect when another provider, brand, or substitute is part of a comparison, choice, preference, or switch.",
+      "contrastive_boundary": "An overall judgement of the focal company without an alternative provider belongs to General satisfaction."
+    },
+    "Company brand: General satisfaction": {
+      "definition": "An overall judgement of the company, service, or complete customer experience rather than a judgement limited to one operational feature.",
+      "aliases": [
+        "overall company appraisal",
+        "overall service judgement",
+        "complete customer experience",
+        "brand-level evaluation"
+      ],
+      "inclusion_boundary": "Use this aspect when the judgement concerns the company, service, or experience as a whole.",
+      "contrastive_boundary": "A judgement limited to account access, speed, a digital channel, booking, staff, price, discounts, or reviews belongs to the corresponding specific aspect."
+    },
+    "Company brand: Reviews": {
+      "definition": "Customer reviews, ratings, testimonials, reputation feedback, or the act of reading, leaving, requesting, or responding to a review.",
+      "aliases": [
+        "customer review",
+        "star rating",
+        "testimonial",
+        "review feedback",
+        "reputation rating"
+      ],
+      "inclusion_boundary": "Use this aspect when reviews, ratings, testimonials, or review-management activity are themselves being discussed.",
+      "contrastive_boundary": "A customer's opinion expressed inside a review is not by itself about Reviews unless reviews or ratings are discussed as an object."
+    },
+    "Logistics rides: Speed": {
+      "definition": "How quickly or slowly a journey, ride, delivery, collection, or logistics service happens, including delays, waiting time, and punctuality.",
+      "aliases": [
+        "service timing",
+        "journey duration",
+        "delivery timing",
+        "waiting time",
+        "punctuality"
+      ],
+      "inclusion_boundary": "Use this aspect when elapsed time, arrival timing, waiting, delay, or punctuality of a ride or logistics service is the subject.",
+      "contrastive_boundary": "Ease of completing a booking belongs to Ease of use, while the response time of an email or telephone interaction belongs to that support channel."
+    },
+    "Online experience: App website": {
+      "definition": "Using the mobile app, website, webpage, online portal, or digital interface, including navigation, loading, crashes, bugs, and online functionality.",
+      "aliases": [
+        "mobile application",
+        "company website",
+        "online portal",
+        "web interface",
+        "digital channel"
+      ],
+      "inclusion_boundary": "Use this aspect when the digital channel, interface, navigation, loading, stability, or online functionality is the subject.",
+      "contrastive_boundary": "Credential and sign-in access belongs to Account access, while difficulty completing the purchase or booking workflow belongs to Ease of use."
+    },
+    "Purchase booking experience: Ease of use": {
+      "definition": "How easy, difficult, clear, or convenient it is to purchase, order, reserve, book, check out, or complete the customer transaction workflow.",
+      "aliases": [
+        "booking process",
+        "purchase workflow",
+        "reservation process",
+        "checkout process",
+        "transaction usability"
+      ],
+      "inclusion_boundary": "Use this aspect when the subject is completing a purchase, order, reservation, booking, checkout, or related transaction workflow.",
+      "contrastive_boundary": "A general app or website functionality issue belongs to App website unless it specifically concerns completing the transaction workflow."
+    },
+    "Staff support: Attitude of staff": {
+      "definition": "The behaviour, manner, helpfulness, friendliness, rudeness, professionalism, knowledge, or empathy of employees and support staff.",
+      "aliases": [
+        "staff manner",
+        "employee behaviour",
+        "agent conduct",
+        "support professionalism",
+        "staff interpersonal service"
+      ],
+      "inclusion_boundary": "Use this aspect when the conduct, manner, knowledge, professionalism, or interpersonal behaviour of staff is judged.",
+      "contrastive_boundary": "A mention of Email or Phone as a contact channel is not by itself about staff attitude, although both aspects may apply when the person's conduct is also judged."
+    },
+    "Staff support: Email": {
+      "definition": "Customer contact or support through email, including sending messages, replies, response time, missing responses, and the quality of an email exchange.",
+      "aliases": [
+        "email support",
+        "email exchange",
+        "written support message",
+        "email reply",
+        "support inbox"
+      ],
+      "inclusion_boundary": "Use this aspect when email is the communication channel or when sending, receiving, or awaiting an email response is discussed.",
+      "contrastive_boundary": "Telephone contact belongs to Phone; a judgement about the staff member's manner may additionally belong to Attitude of staff."
+    },
+    "Staff support: Phone": {
+      "definition": "Customer contact or support by telephone, including calls, call centres, being on hold, callbacks, answering, and telephone conversations.",
+      "aliases": [
+        "phone call",
+        "call centre",
+        "telephone support",
+        "phone queue",
+        "callback"
+      ],
+      "inclusion_boundary": "Use this aspect when telephone contact, calling, answering, holding, or receiving a callback is discussed.",
+      "contrastive_boundary": "Email exchanges belong to Email; a judgement about the staff member's manner may additionally belong to Attitude of staff."
+    },
+    "Value: Discounts promotions": {
+      "definition": "Discounts, promotions, promotional offers, coupons, vouchers, sales, special deals, loyalty offers, or advertised price reductions.",
+      "aliases": [
+        "promotional offer",
+        "discount code",
+        "coupon",
+        "voucher",
+        "price promotion"
+      ],
+      "inclusion_boundary": "Use this aspect when a specific reduction, promotion, coupon, voucher, deal, sale, or loyalty offer is the subject.",
+      "contrastive_boundary": "An ordinary price, cost, fee, affordability, or value judgement without a specific promotional reduction belongs to Price value for money."
+    },
+    "Value: Price value for money": {
+      "definition": "The ordinary price, cost, charge, fee, affordability, expensiveness, cheapness, or whether the service is worth what the customer paid.",
+      "aliases": [
+        "standard price",
+        "service cost",
+        "charge or fee",
+        "affordability",
+        "value for money"
+      ],
+      "inclusion_boundary": "Use this aspect when ordinary price, cost, fees, affordability, or the relationship between what was paid and what was received is judged.",
+      "contrastive_boundary": "A specific coupon, sale, promotional offer, voucher, or advertised reduction belongs to Discounts promotions."
+    }
+  },
+  "hash_payload": [
+    "version",
+    "template",
+    "canonical_order",
+    "aspects"
+  ],
+  "hash_algorithm": "sha256(canonical UTF-8 JSON; sorted keys; compact separators)",
+  "content_sha256": "289ba3238cb6772f9bfda98eb73ac8a1108ba4b2bb3d23eecf72826881f415b9"
+}

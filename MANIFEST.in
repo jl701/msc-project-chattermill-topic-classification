@@ -1,0 +1,13 @@
+include README.md CONTRIBUTING.md CITATION.cff pyproject.toml requirements*.txt requirements-dev.lock .editorconfig
+recursive-include src *.py
+recursive-include tests *.py *.json
+recursive-include scripts *.py *.sh *.ps1
+recursive-include configs *.json
+include docs/README.md docs/methods.md docs/results.md docs/architecture.md docs/reproducibility.md docs/history.md docs/github_upload_scope.md
+include docs/taxonomy_current_authority_20260824.md
+recursive-include docs/results *.md *.csv *.json
+recursive-include docs/thesis_figure_data/taxonomy_final_test_v1 *.csv
+recursive-include docs/thesis_figure_data/taxonomy_training_policy_extension_v1 *.csv
+recursive-include docs/thesis_figure_data/taxonomy_training_policy_sensitivity_v1 *.csv
+recursive-include .github *.yml *.yaml *.md
+global-exclude __pycache__ *.py[cod]

@@ -1,0 +1,141 @@
+{
+  "schema_version": "taxonomy_two_stage_parallel_plan_v1",
+  "protocol_id": "taxonomy_two_stage_formal_v1",
+  "status": "preregistered_before_parallel_execution",
+  "registered_at": "2026-08-18T00:00:00+01:00",
+  "objective": "Execute the validation-only formal workload on three independently qualified Secure RTX 4090 workers without shared mutable campaign state.",
+  "allowed_splits": [
+    "train",
+    "validation"
+  ],
+  "include_official_test": false,
+  "test_contract_count": 0,
+  "merge_policy": {
+    "scope_assignment": "each method and training scope belongs to exactly one worker",
+    "scope_dependency_boundary": "all three learning-rate candidates, selection and selected scoring remain on the same worker",
+    "shared_mutable_state": false,
+    "acceptance": "exact manifest and SHA-256 verification with no missing or duplicate scope",
+    "result_operation": "verified union, never averaging or score substitution"
+  },
+  "workers": [
+    {
+      "worker_id": "worker-qlora-a",
+      "role": "trainable",
+      "method_id": "qwen_candidate_pair_qlora",
+      "training_scope_ids": [
+        "heldout-a01",
+        "heldout-a02",
+        "heldout-a02-a03-a04",
+        "heldout-a03-a04",
+        "heldout-a04-a05",
+        "heldout-a05-a06",
+        "heldout-a06-a07",
+        "heldout-a07-a08",
+        "heldout-a08-a09",
+        "heldout-a09",
+        "heldout-a10",
+        "heldout-a11",
+        "heldout-a12"
+      ]
+    },
+    {
+      "worker_id": "worker-qlora-b",
+      "role": "trainable",
+      "method_id": "qwen_candidate_pair_qlora",
+      "training_scope_ids": [
+        "heldout-a01-a02",
+        "heldout-a02-a03",
+        "heldout-a03",
+        "heldout-a04",
+        "heldout-a05",
+        "heldout-a06",
+        "heldout-a07",
+        "heldout-a08",
+        "heldout-a08-a09-a10",
+        "heldout-a09-a10",
+        "heldout-a10-a11",
+        "heldout-a11-a12",
+        "heldout-a12-a01"
+      ]
+    },
+    {
+      "worker_id": "worker-distil-frozen",
+      "role": "trainable_and_frozen",
+      "method_id": "distilbert_review_candidate_cross_encoder",
+      "training_scope_ids": [
+        "heldout-a01",
+        "heldout-a01-a02",
+        "heldout-a02",
+        "heldout-a02-a03",
+        "heldout-a02-a03-a04",
+        "heldout-a03",
+        "heldout-a03-a04",
+        "heldout-a04",
+        "heldout-a04-a05",
+        "heldout-a05",
+        "heldout-a05-a06",
+        "heldout-a06",
+        "heldout-a06-a07",
+        "heldout-a07",
+        "heldout-a07-a08",
+        "heldout-a08",
+        "heldout-a08-a09",
+        "heldout-a08-a09-a10",
+        "heldout-a09",
+        "heldout-a09-a10",
+        "heldout-a10",
+        "heldout-a10-a11",
+        "heldout-a11",
+        "heldout-a11-a12",
+        "heldout-a12",
+        "heldout-a12-a01"
+      ],
+      "frozen_qwen_few_shot_scope_ids": [
+        "heldout-a01",
+        "heldout-a01-a02",
+        "heldout-a02",
+        "heldout-a02-a03",
+        "heldout-a02-a03-a04",
+        "heldout-a03",
+        "heldout-a03-a04",
+        "heldout-a04",
+        "heldout-a04-a05",
+        "heldout-a05",
+        "heldout-a05-a06",
+        "heldout-a06",
+        "heldout-a06-a07",
+        "heldout-a07",
+        "heldout-a07-a08",
+        "heldout-a08",
+        "heldout-a08-a09",
+        "heldout-a08-a09-a10",
+        "heldout-a09",
+        "heldout-a09-a10",
+        "heldout-a10",
+        "heldout-a10-a11",
+        "heldout-a11",
+        "heldout-a11-a12",
+        "heldout-a12",
+        "heldout-a12-a01"
+      ]
+    }
+  ],
+  "worker_hardware": {
+    "provider": "Runpod",
+    "cloud_type": "Secure Cloud",
+    "gpu": "NVIDIA GeForce RTX 4090",
+    "qualification": "each physical worker must independently pass the final-commit startup and telemetry gate"
+  },
+  "stop_conditions": [
+    "official-test access or any test contract",
+    "missing duplicated or overlapping worker scope",
+    "worker plan or output-root resume conflict",
+    "checkpoint cache score shard or artifact-unit hash mismatch",
+    "non-finite loss or probability",
+    "unexpected prediction collapse",
+    "third sentiment emitted for an aspect",
+    "OOM",
+    "repeated thermal or hardware slowdown",
+    "verified local replication failure"
+  ]
+}

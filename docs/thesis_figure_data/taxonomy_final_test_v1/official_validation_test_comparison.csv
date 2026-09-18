@@ -1,0 +1,4 @@
+method_id,validation_primary_f1,method,official_test_primary_f1,test_minus_validation
+frozen_qwen_few_shot_stage1__qlora_stage2,0.5259309432266017,Fixed stage-wise composition,0.5075377067124291,-0.018393236514172573
+frozen_qwen_few_shot,0.5048826238901596,Frozen Qwen few-shot,0.4953977758214929,-0.009484848068666674
+qwen_candidate_pair_qlora,0.4799032300930845,QLoRA,0.4864368041501483,0.006533574057063785

@@ -1,0 +1,1651 @@
+{
+  "artifact_inventory_entries": 159,
+  "artifact_inventory_manifest_sha256": "ece37c9d0fb122356df8a899035f42553d0131e723c90dcb96f382ceeb498ed9",
+  "include_official_test": false,
+  "job_counts": {
+    "analyse": 1,
+    "compose": 12,
+    "score": 93,
+    "seal": 1
+  },
+  "jobs": [
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a01",
+      "job_id": "score-L2-l2-a01-strict_train_only_tfidf",
+      "level": "L2",
+      "method_id": "strict_train_only_tfidf",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a01"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a01",
+      "job_id": "score-L2-l2-a01-e5_base_v2",
+      "level": "L2",
+      "method_id": "e5_base_v2",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a01"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a01",
+      "job_id": "score-L2-l2-a01-description_to_classifier_weight_transfer",
+      "level": "L2",
+      "method_id": "description_to_classifier_weight_transfer",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a01"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a01",
+      "job_id": "score-L2-l2-a01-distilbert_review_candidate_cross_encoder",
+      "level": "L2",
+      "method_id": "distilbert_review_candidate_cross_encoder",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a01"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a01",
+      "job_id": "score-L2-l2-a01-frozen_qwen_candidate_pair",
+      "level": "L2",
+      "method_id": "frozen_qwen_candidate_pair",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a01"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a01",
+      "job_id": "score-L2-l2-a01-frozen_qwen_few_shot",
+      "level": "L2",
+      "method_id": "frozen_qwen_few_shot",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a01"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a01",
+      "job_id": "score-L2-l2-a01-qwen_candidate_pair_qlora",
+      "level": "L2",
+      "method_id": "qwen_candidate_pair_qlora",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a01"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [
+        "score-L2-l2-a01-frozen_qwen_few_shot",
+        "score-L2-l2-a01-qwen_candidate_pair_qlora"
+      ],
+      "fold_id": "l2-a01",
+      "job_id": "compose-L2-l2-a01-frozen_qwen_few_shot_stage1__qlora_stage2",
+      "level": "L2",
+      "method_id": "frozen_qwen_few_shot_stage1__qlora_stage2",
+      "phase": "compose",
+      "role": "confirmatory_fixed_composition",
+      "training_scope_id": "heldout-a01"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a02",
+      "job_id": "score-L2-l2-a02-strict_train_only_tfidf",
+      "level": "L2",
+      "method_id": "strict_train_only_tfidf",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a02"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a02",
+      "job_id": "score-L2-l2-a02-e5_base_v2",
+      "level": "L2",
+      "method_id": "e5_base_v2",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a02"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a02",
+      "job_id": "score-L2-l2-a02-description_to_classifier_weight_transfer",
+      "level": "L2",
+      "method_id": "description_to_classifier_weight_transfer",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a02"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a02",
+      "job_id": "score-L2-l2-a02-distilbert_review_candidate_cross_encoder",
+      "level": "L2",
+      "method_id": "distilbert_review_candidate_cross_encoder",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a02"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a02",
+      "job_id": "score-L2-l2-a02-frozen_qwen_candidate_pair",
+      "level": "L2",
+      "method_id": "frozen_qwen_candidate_pair",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a02"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a02",
+      "job_id": "score-L2-l2-a02-frozen_qwen_few_shot",
+      "level": "L2",
+      "method_id": "frozen_qwen_few_shot",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a02"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a02",
+      "job_id": "score-L2-l2-a02-qwen_candidate_pair_qlora",
+      "level": "L2",
+      "method_id": "qwen_candidate_pair_qlora",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a02"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [
+        "score-L2-l2-a02-frozen_qwen_few_shot",
+        "score-L2-l2-a02-qwen_candidate_pair_qlora"
+      ],
+      "fold_id": "l2-a02",
+      "job_id": "compose-L2-l2-a02-frozen_qwen_few_shot_stage1__qlora_stage2",
+      "level": "L2",
+      "method_id": "frozen_qwen_few_shot_stage1__qlora_stage2",
+      "phase": "compose",
+      "role": "confirmatory_fixed_composition",
+      "training_scope_id": "heldout-a02"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a03",
+      "job_id": "score-L2-l2-a03-strict_train_only_tfidf",
+      "level": "L2",
+      "method_id": "strict_train_only_tfidf",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a03"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a03",
+      "job_id": "score-L2-l2-a03-e5_base_v2",
+      "level": "L2",
+      "method_id": "e5_base_v2",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a03"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a03",
+      "job_id": "score-L2-l2-a03-description_to_classifier_weight_transfer",
+      "level": "L2",
+      "method_id": "description_to_classifier_weight_transfer",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a03"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a03",
+      "job_id": "score-L2-l2-a03-distilbert_review_candidate_cross_encoder",
+      "level": "L2",
+      "method_id": "distilbert_review_candidate_cross_encoder",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a03"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a03",
+      "job_id": "score-L2-l2-a03-frozen_qwen_candidate_pair",
+      "level": "L2",
+      "method_id": "frozen_qwen_candidate_pair",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a03"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a03",
+      "job_id": "score-L2-l2-a03-frozen_qwen_few_shot",
+      "level": "L2",
+      "method_id": "frozen_qwen_few_shot",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a03"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a03",
+      "job_id": "score-L2-l2-a03-qwen_candidate_pair_qlora",
+      "level": "L2",
+      "method_id": "qwen_candidate_pair_qlora",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a03"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [
+        "score-L2-l2-a03-frozen_qwen_few_shot",
+        "score-L2-l2-a03-qwen_candidate_pair_qlora"
+      ],
+      "fold_id": "l2-a03",
+      "job_id": "compose-L2-l2-a03-frozen_qwen_few_shot_stage1__qlora_stage2",
+      "level": "L2",
+      "method_id": "frozen_qwen_few_shot_stage1__qlora_stage2",
+      "phase": "compose",
+      "role": "confirmatory_fixed_composition",
+      "training_scope_id": "heldout-a03"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a04",
+      "job_id": "score-L2-l2-a04-strict_train_only_tfidf",
+      "level": "L2",
+      "method_id": "strict_train_only_tfidf",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a04"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a04",
+      "job_id": "score-L2-l2-a04-e5_base_v2",
+      "level": "L2",
+      "method_id": "e5_base_v2",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a04"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a04",
+      "job_id": "score-L2-l2-a04-description_to_classifier_weight_transfer",
+      "level": "L2",
+      "method_id": "description_to_classifier_weight_transfer",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a04"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a04",
+      "job_id": "score-L2-l2-a04-distilbert_review_candidate_cross_encoder",
+      "level": "L2",
+      "method_id": "distilbert_review_candidate_cross_encoder",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a04"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a04",
+      "job_id": "score-L2-l2-a04-frozen_qwen_candidate_pair",
+      "level": "L2",
+      "method_id": "frozen_qwen_candidate_pair",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a04"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a04",
+      "job_id": "score-L2-l2-a04-frozen_qwen_few_shot",
+      "level": "L2",
+      "method_id": "frozen_qwen_few_shot",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a04"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a04",
+      "job_id": "score-L2-l2-a04-qwen_candidate_pair_qlora",
+      "level": "L2",
+      "method_id": "qwen_candidate_pair_qlora",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a04"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [
+        "score-L2-l2-a04-frozen_qwen_few_shot",
+        "score-L2-l2-a04-qwen_candidate_pair_qlora"
+      ],
+      "fold_id": "l2-a04",
+      "job_id": "compose-L2-l2-a04-frozen_qwen_few_shot_stage1__qlora_stage2",
+      "level": "L2",
+      "method_id": "frozen_qwen_few_shot_stage1__qlora_stage2",
+      "phase": "compose",
+      "role": "confirmatory_fixed_composition",
+      "training_scope_id": "heldout-a04"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a05",
+      "job_id": "score-L2-l2-a05-strict_train_only_tfidf",
+      "level": "L2",
+      "method_id": "strict_train_only_tfidf",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a05"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a05",
+      "job_id": "score-L2-l2-a05-e5_base_v2",
+      "level": "L2",
+      "method_id": "e5_base_v2",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a05"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a05",
+      "job_id": "score-L2-l2-a05-description_to_classifier_weight_transfer",
+      "level": "L2",
+      "method_id": "description_to_classifier_weight_transfer",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a05"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a05",
+      "job_id": "score-L2-l2-a05-distilbert_review_candidate_cross_encoder",
+      "level": "L2",
+      "method_id": "distilbert_review_candidate_cross_encoder",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a05"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a05",
+      "job_id": "score-L2-l2-a05-frozen_qwen_candidate_pair",
+      "level": "L2",
+      "method_id": "frozen_qwen_candidate_pair",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a05"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a05",
+      "job_id": "score-L2-l2-a05-frozen_qwen_few_shot",
+      "level": "L2",
+      "method_id": "frozen_qwen_few_shot",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a05"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a05",
+      "job_id": "score-L2-l2-a05-qwen_candidate_pair_qlora",
+      "level": "L2",
+      "method_id": "qwen_candidate_pair_qlora",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a05"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [
+        "score-L2-l2-a05-frozen_qwen_few_shot",
+        "score-L2-l2-a05-qwen_candidate_pair_qlora"
+      ],
+      "fold_id": "l2-a05",
+      "job_id": "compose-L2-l2-a05-frozen_qwen_few_shot_stage1__qlora_stage2",
+      "level": "L2",
+      "method_id": "frozen_qwen_few_shot_stage1__qlora_stage2",
+      "phase": "compose",
+      "role": "confirmatory_fixed_composition",
+      "training_scope_id": "heldout-a05"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a06",
+      "job_id": "score-L2-l2-a06-strict_train_only_tfidf",
+      "level": "L2",
+      "method_id": "strict_train_only_tfidf",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a06"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a06",
+      "job_id": "score-L2-l2-a06-e5_base_v2",
+      "level": "L2",
+      "method_id": "e5_base_v2",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a06"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a06",
+      "job_id": "score-L2-l2-a06-description_to_classifier_weight_transfer",
+      "level": "L2",
+      "method_id": "description_to_classifier_weight_transfer",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a06"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a06",
+      "job_id": "score-L2-l2-a06-distilbert_review_candidate_cross_encoder",
+      "level": "L2",
+      "method_id": "distilbert_review_candidate_cross_encoder",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a06"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a06",
+      "job_id": "score-L2-l2-a06-frozen_qwen_candidate_pair",
+      "level": "L2",
+      "method_id": "frozen_qwen_candidate_pair",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a06"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a06",
+      "job_id": "score-L2-l2-a06-frozen_qwen_few_shot",
+      "level": "L2",
+      "method_id": "frozen_qwen_few_shot",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a06"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a06",
+      "job_id": "score-L2-l2-a06-qwen_candidate_pair_qlora",
+      "level": "L2",
+      "method_id": "qwen_candidate_pair_qlora",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a06"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [
+        "score-L2-l2-a06-frozen_qwen_few_shot",
+        "score-L2-l2-a06-qwen_candidate_pair_qlora"
+      ],
+      "fold_id": "l2-a06",
+      "job_id": "compose-L2-l2-a06-frozen_qwen_few_shot_stage1__qlora_stage2",
+      "level": "L2",
+      "method_id": "frozen_qwen_few_shot_stage1__qlora_stage2",
+      "phase": "compose",
+      "role": "confirmatory_fixed_composition",
+      "training_scope_id": "heldout-a06"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a07",
+      "job_id": "score-L2-l2-a07-strict_train_only_tfidf",
+      "level": "L2",
+      "method_id": "strict_train_only_tfidf",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a07"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a07",
+      "job_id": "score-L2-l2-a07-e5_base_v2",
+      "level": "L2",
+      "method_id": "e5_base_v2",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a07"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a07",
+      "job_id": "score-L2-l2-a07-description_to_classifier_weight_transfer",
+      "level": "L2",
+      "method_id": "description_to_classifier_weight_transfer",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a07"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a07",
+      "job_id": "score-L2-l2-a07-distilbert_review_candidate_cross_encoder",
+      "level": "L2",
+      "method_id": "distilbert_review_candidate_cross_encoder",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a07"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a07",
+      "job_id": "score-L2-l2-a07-frozen_qwen_candidate_pair",
+      "level": "L2",
+      "method_id": "frozen_qwen_candidate_pair",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a07"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a07",
+      "job_id": "score-L2-l2-a07-frozen_qwen_few_shot",
+      "level": "L2",
+      "method_id": "frozen_qwen_few_shot",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a07"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a07",
+      "job_id": "score-L2-l2-a07-qwen_candidate_pair_qlora",
+      "level": "L2",
+      "method_id": "qwen_candidate_pair_qlora",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a07"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [
+        "score-L2-l2-a07-frozen_qwen_few_shot",
+        "score-L2-l2-a07-qwen_candidate_pair_qlora"
+      ],
+      "fold_id": "l2-a07",
+      "job_id": "compose-L2-l2-a07-frozen_qwen_few_shot_stage1__qlora_stage2",
+      "level": "L2",
+      "method_id": "frozen_qwen_few_shot_stage1__qlora_stage2",
+      "phase": "compose",
+      "role": "confirmatory_fixed_composition",
+      "training_scope_id": "heldout-a07"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a08",
+      "job_id": "score-L2-l2-a08-strict_train_only_tfidf",
+      "level": "L2",
+      "method_id": "strict_train_only_tfidf",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a08"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a08",
+      "job_id": "score-L2-l2-a08-e5_base_v2",
+      "level": "L2",
+      "method_id": "e5_base_v2",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a08"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a08",
+      "job_id": "score-L2-l2-a08-description_to_classifier_weight_transfer",
+      "level": "L2",
+      "method_id": "description_to_classifier_weight_transfer",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a08"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a08",
+      "job_id": "score-L2-l2-a08-distilbert_review_candidate_cross_encoder",
+      "level": "L2",
+      "method_id": "distilbert_review_candidate_cross_encoder",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a08"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a08",
+      "job_id": "score-L2-l2-a08-frozen_qwen_candidate_pair",
+      "level": "L2",
+      "method_id": "frozen_qwen_candidate_pair",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a08"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a08",
+      "job_id": "score-L2-l2-a08-frozen_qwen_few_shot",
+      "level": "L2",
+      "method_id": "frozen_qwen_few_shot",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a08"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a08",
+      "job_id": "score-L2-l2-a08-qwen_candidate_pair_qlora",
+      "level": "L2",
+      "method_id": "qwen_candidate_pair_qlora",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a08"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [
+        "score-L2-l2-a08-frozen_qwen_few_shot",
+        "score-L2-l2-a08-qwen_candidate_pair_qlora"
+      ],
+      "fold_id": "l2-a08",
+      "job_id": "compose-L2-l2-a08-frozen_qwen_few_shot_stage1__qlora_stage2",
+      "level": "L2",
+      "method_id": "frozen_qwen_few_shot_stage1__qlora_stage2",
+      "phase": "compose",
+      "role": "confirmatory_fixed_composition",
+      "training_scope_id": "heldout-a08"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a09",
+      "job_id": "score-L2-l2-a09-strict_train_only_tfidf",
+      "level": "L2",
+      "method_id": "strict_train_only_tfidf",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a09"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a09",
+      "job_id": "score-L2-l2-a09-e5_base_v2",
+      "level": "L2",
+      "method_id": "e5_base_v2",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a09"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a09",
+      "job_id": "score-L2-l2-a09-description_to_classifier_weight_transfer",
+      "level": "L2",
+      "method_id": "description_to_classifier_weight_transfer",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a09"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a09",
+      "job_id": "score-L2-l2-a09-distilbert_review_candidate_cross_encoder",
+      "level": "L2",
+      "method_id": "distilbert_review_candidate_cross_encoder",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a09"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a09",
+      "job_id": "score-L2-l2-a09-frozen_qwen_candidate_pair",
+      "level": "L2",
+      "method_id": "frozen_qwen_candidate_pair",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a09"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a09",
+      "job_id": "score-L2-l2-a09-frozen_qwen_few_shot",
+      "level": "L2",
+      "method_id": "frozen_qwen_few_shot",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a09"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a09",
+      "job_id": "score-L2-l2-a09-qwen_candidate_pair_qlora",
+      "level": "L2",
+      "method_id": "qwen_candidate_pair_qlora",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a09"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [
+        "score-L2-l2-a09-frozen_qwen_few_shot",
+        "score-L2-l2-a09-qwen_candidate_pair_qlora"
+      ],
+      "fold_id": "l2-a09",
+      "job_id": "compose-L2-l2-a09-frozen_qwen_few_shot_stage1__qlora_stage2",
+      "level": "L2",
+      "method_id": "frozen_qwen_few_shot_stage1__qlora_stage2",
+      "phase": "compose",
+      "role": "confirmatory_fixed_composition",
+      "training_scope_id": "heldout-a09"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a10",
+      "job_id": "score-L2-l2-a10-strict_train_only_tfidf",
+      "level": "L2",
+      "method_id": "strict_train_only_tfidf",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a10"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a10",
+      "job_id": "score-L2-l2-a10-e5_base_v2",
+      "level": "L2",
+      "method_id": "e5_base_v2",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a10"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a10",
+      "job_id": "score-L2-l2-a10-description_to_classifier_weight_transfer",
+      "level": "L2",
+      "method_id": "description_to_classifier_weight_transfer",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a10"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a10",
+      "job_id": "score-L2-l2-a10-distilbert_review_candidate_cross_encoder",
+      "level": "L2",
+      "method_id": "distilbert_review_candidate_cross_encoder",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a10"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a10",
+      "job_id": "score-L2-l2-a10-frozen_qwen_candidate_pair",
+      "level": "L2",
+      "method_id": "frozen_qwen_candidate_pair",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a10"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a10",
+      "job_id": "score-L2-l2-a10-frozen_qwen_few_shot",
+      "level": "L2",
+      "method_id": "frozen_qwen_few_shot",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a10"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a10",
+      "job_id": "score-L2-l2-a10-qwen_candidate_pair_qlora",
+      "level": "L2",
+      "method_id": "qwen_candidate_pair_qlora",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a10"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [
+        "score-L2-l2-a10-frozen_qwen_few_shot",
+        "score-L2-l2-a10-qwen_candidate_pair_qlora"
+      ],
+      "fold_id": "l2-a10",
+      "job_id": "compose-L2-l2-a10-frozen_qwen_few_shot_stage1__qlora_stage2",
+      "level": "L2",
+      "method_id": "frozen_qwen_few_shot_stage1__qlora_stage2",
+      "phase": "compose",
+      "role": "confirmatory_fixed_composition",
+      "training_scope_id": "heldout-a10"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a11",
+      "job_id": "score-L2-l2-a11-strict_train_only_tfidf",
+      "level": "L2",
+      "method_id": "strict_train_only_tfidf",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a11"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a11",
+      "job_id": "score-L2-l2-a11-e5_base_v2",
+      "level": "L2",
+      "method_id": "e5_base_v2",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a11"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a11",
+      "job_id": "score-L2-l2-a11-description_to_classifier_weight_transfer",
+      "level": "L2",
+      "method_id": "description_to_classifier_weight_transfer",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a11"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a11",
+      "job_id": "score-L2-l2-a11-distilbert_review_candidate_cross_encoder",
+      "level": "L2",
+      "method_id": "distilbert_review_candidate_cross_encoder",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a11"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a11",
+      "job_id": "score-L2-l2-a11-frozen_qwen_candidate_pair",
+      "level": "L2",
+      "method_id": "frozen_qwen_candidate_pair",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a11"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a11",
+      "job_id": "score-L2-l2-a11-frozen_qwen_few_shot",
+      "level": "L2",
+      "method_id": "frozen_qwen_few_shot",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a11"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a11",
+      "job_id": "score-L2-l2-a11-qwen_candidate_pair_qlora",
+      "level": "L2",
+      "method_id": "qwen_candidate_pair_qlora",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a11"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [
+        "score-L2-l2-a11-frozen_qwen_few_shot",
+        "score-L2-l2-a11-qwen_candidate_pair_qlora"
+      ],
+      "fold_id": "l2-a11",
+      "job_id": "compose-L2-l2-a11-frozen_qwen_few_shot_stage1__qlora_stage2",
+      "level": "L2",
+      "method_id": "frozen_qwen_few_shot_stage1__qlora_stage2",
+      "phase": "compose",
+      "role": "confirmatory_fixed_composition",
+      "training_scope_id": "heldout-a11"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a12",
+      "job_id": "score-L2-l2-a12-strict_train_only_tfidf",
+      "level": "L2",
+      "method_id": "strict_train_only_tfidf",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a12"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a12",
+      "job_id": "score-L2-l2-a12-e5_base_v2",
+      "level": "L2",
+      "method_id": "e5_base_v2",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a12"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a12",
+      "job_id": "score-L2-l2-a12-description_to_classifier_weight_transfer",
+      "level": "L2",
+      "method_id": "description_to_classifier_weight_transfer",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a12"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a12",
+      "job_id": "score-L2-l2-a12-distilbert_review_candidate_cross_encoder",
+      "level": "L2",
+      "method_id": "distilbert_review_candidate_cross_encoder",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a12"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a12",
+      "job_id": "score-L2-l2-a12-frozen_qwen_candidate_pair",
+      "level": "L2",
+      "method_id": "frozen_qwen_candidate_pair",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a12"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a12",
+      "job_id": "score-L2-l2-a12-frozen_qwen_few_shot",
+      "level": "L2",
+      "method_id": "frozen_qwen_few_shot",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a12"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [],
+      "fold_id": "l2-a12",
+      "job_id": "score-L2-l2-a12-qwen_candidate_pair_qlora",
+      "level": "L2",
+      "method_id": "qwen_candidate_pair_qlora",
+      "phase": "score",
+      "role": "descriptive_base_score",
+      "training_scope_id": "heldout-a12"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [
+        "score-L2-l2-a12-frozen_qwen_few_shot",
+        "score-L2-l2-a12-qwen_candidate_pair_qlora"
+      ],
+      "fold_id": "l2-a12",
+      "job_id": "compose-L2-l2-a12-frozen_qwen_few_shot_stage1__qlora_stage2",
+      "level": "L2",
+      "method_id": "frozen_qwen_few_shot_stage1__qlora_stage2",
+      "phase": "compose",
+      "role": "confirmatory_fixed_composition",
+      "training_scope_id": "heldout-a12"
+    },
+    {
+      "conditions": [
+        "D"
+      ],
+      "depends_on": [],
+      "fold_id": "l4-g01",
+      "job_id": "score-L4-l4-g01-distilbert_review_candidate_cross_encoder",
+      "level": "L4",
+      "method_id": "distilbert_review_candidate_cross_encoder",
+      "phase": "score",
+      "role": "descriptive_structured_shift",
+      "training_scope_id": "heldout-a02-a03-a04"
+    },
+    {
+      "conditions": [
+        "D"
+      ],
+      "depends_on": [],
+      "fold_id": "l4-g01",
+      "job_id": "score-L4-l4-g01-frozen_qwen_few_shot",
+      "level": "L4",
+      "method_id": "frozen_qwen_few_shot",
+      "phase": "score",
+      "role": "descriptive_structured_shift",
+      "training_scope_id": "heldout-a02-a03-a04"
+    },
+    {
+      "conditions": [
+        "D"
+      ],
+      "depends_on": [],
+      "fold_id": "l4-g01",
+      "job_id": "score-L4-l4-g01-qwen_candidate_pair_qlora",
+      "level": "L4",
+      "method_id": "qwen_candidate_pair_qlora",
+      "phase": "score",
+      "role": "descriptive_structured_shift",
+      "training_scope_id": "heldout-a02-a03-a04"
+    },
+    {
+      "conditions": [
+        "D"
+      ],
+      "depends_on": [],
+      "fold_id": "l4-g02",
+      "job_id": "score-L4-l4-g02-distilbert_review_candidate_cross_encoder",
+      "level": "L4",
+      "method_id": "distilbert_review_candidate_cross_encoder",
+      "phase": "score",
+      "role": "descriptive_structured_shift",
+      "training_scope_id": "heldout-a08-a09-a10"
+    },
+    {
+      "conditions": [
+        "D"
+      ],
+      "depends_on": [],
+      "fold_id": "l4-g02",
+      "job_id": "score-L4-l4-g02-frozen_qwen_few_shot",
+      "level": "L4",
+      "method_id": "frozen_qwen_few_shot",
+      "phase": "score",
+      "role": "descriptive_structured_shift",
+      "training_scope_id": "heldout-a08-a09-a10"
+    },
+    {
+      "conditions": [
+        "D"
+      ],
+      "depends_on": [],
+      "fold_id": "l4-g02",
+      "job_id": "score-L4-l4-g02-qwen_candidate_pair_qlora",
+      "level": "L4",
+      "method_id": "qwen_candidate_pair_qlora",
+      "phase": "score",
+      "role": "descriptive_structured_shift",
+      "training_scope_id": "heldout-a08-a09-a10"
+    },
+    {
+      "conditions": [
+        "D"
+      ],
+      "depends_on": [],
+      "fold_id": "l4-g03",
+      "job_id": "score-L4-l4-g03-distilbert_review_candidate_cross_encoder",
+      "level": "L4",
+      "method_id": "distilbert_review_candidate_cross_encoder",
+      "phase": "score",
+      "role": "descriptive_structured_shift",
+      "training_scope_id": "heldout-a11-a12"
+    },
+    {
+      "conditions": [
+        "D"
+      ],
+      "depends_on": [],
+      "fold_id": "l4-g03",
+      "job_id": "score-L4-l4-g03-frozen_qwen_few_shot",
+      "level": "L4",
+      "method_id": "frozen_qwen_few_shot",
+      "phase": "score",
+      "role": "descriptive_structured_shift",
+      "training_scope_id": "heldout-a11-a12"
+    },
+    {
+      "conditions": [
+        "D"
+      ],
+      "depends_on": [],
+      "fold_id": "l4-g03",
+      "job_id": "score-L4-l4-g03-qwen_candidate_pair_qlora",
+      "level": "L4",
+      "method_id": "qwen_candidate_pair_qlora",
+      "phase": "score",
+      "role": "descriptive_structured_shift",
+      "training_scope_id": "heldout-a11-a12"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [
+        "score-L2-l2-a01-strict_train_only_tfidf",
+        "score-L2-l2-a01-e5_base_v2",
+        "score-L2-l2-a01-description_to_classifier_weight_transfer",
+        "score-L2-l2-a01-distilbert_review_candidate_cross_encoder",
+        "score-L2-l2-a01-frozen_qwen_candidate_pair",
+        "score-L2-l2-a01-frozen_qwen_few_shot",
+        "score-L2-l2-a01-qwen_candidate_pair_qlora",
+        "compose-L2-l2-a01-frozen_qwen_few_shot_stage1__qlora_stage2",
+        "score-L2-l2-a02-strict_train_only_tfidf",
+        "score-L2-l2-a02-e5_base_v2",
+        "score-L2-l2-a02-description_to_classifier_weight_transfer",
+        "score-L2-l2-a02-distilbert_review_candidate_cross_encoder",
+        "score-L2-l2-a02-frozen_qwen_candidate_pair",
+        "score-L2-l2-a02-frozen_qwen_few_shot",
+        "score-L2-l2-a02-qwen_candidate_pair_qlora",
+        "compose-L2-l2-a02-frozen_qwen_few_shot_stage1__qlora_stage2",
+        "score-L2-l2-a03-strict_train_only_tfidf",
+        "score-L2-l2-a03-e5_base_v2",
+        "score-L2-l2-a03-description_to_classifier_weight_transfer",
+        "score-L2-l2-a03-distilbert_review_candidate_cross_encoder",
+        "score-L2-l2-a03-frozen_qwen_candidate_pair",
+        "score-L2-l2-a03-frozen_qwen_few_shot",
+        "score-L2-l2-a03-qwen_candidate_pair_qlora",
+        "compose-L2-l2-a03-frozen_qwen_few_shot_stage1__qlora_stage2",
+        "score-L2-l2-a04-strict_train_only_tfidf",
+        "score-L2-l2-a04-e5_base_v2",
+        "score-L2-l2-a04-description_to_classifier_weight_transfer",
+        "score-L2-l2-a04-distilbert_review_candidate_cross_encoder",
+        "score-L2-l2-a04-frozen_qwen_candidate_pair",
+        "score-L2-l2-a04-frozen_qwen_few_shot",
+        "score-L2-l2-a04-qwen_candidate_pair_qlora",
+        "compose-L2-l2-a04-frozen_qwen_few_shot_stage1__qlora_stage2",
+        "score-L2-l2-a05-strict_train_only_tfidf",
+        "score-L2-l2-a05-e5_base_v2",
+        "score-L2-l2-a05-description_to_classifier_weight_transfer",
+        "score-L2-l2-a05-distilbert_review_candidate_cross_encoder",
+        "score-L2-l2-a05-frozen_qwen_candidate_pair",
+        "score-L2-l2-a05-frozen_qwen_few_shot",
+        "score-L2-l2-a05-qwen_candidate_pair_qlora",
+        "compose-L2-l2-a05-frozen_qwen_few_shot_stage1__qlora_stage2",
+        "score-L2-l2-a06-strict_train_only_tfidf",
+        "score-L2-l2-a06-e5_base_v2",
+        "score-L2-l2-a06-description_to_classifier_weight_transfer",
+        "score-L2-l2-a06-distilbert_review_candidate_cross_encoder",
+        "score-L2-l2-a06-frozen_qwen_candidate_pair",
+        "score-L2-l2-a06-frozen_qwen_few_shot",
+        "score-L2-l2-a06-qwen_candidate_pair_qlora",
+        "compose-L2-l2-a06-frozen_qwen_few_shot_stage1__qlora_stage2",
+        "score-L2-l2-a07-strict_train_only_tfidf",
+        "score-L2-l2-a07-e5_base_v2",
+        "score-L2-l2-a07-description_to_classifier_weight_transfer",
+        "score-L2-l2-a07-distilbert_review_candidate_cross_encoder",
+        "score-L2-l2-a07-frozen_qwen_candidate_pair",
+        "score-L2-l2-a07-frozen_qwen_few_shot",
+        "score-L2-l2-a07-qwen_candidate_pair_qlora",
+        "compose-L2-l2-a07-frozen_qwen_few_shot_stage1__qlora_stage2",
+        "score-L2-l2-a08-strict_train_only_tfidf",
+        "score-L2-l2-a08-e5_base_v2",
+        "score-L2-l2-a08-description_to_classifier_weight_transfer",
+        "score-L2-l2-a08-distilbert_review_candidate_cross_encoder",
+        "score-L2-l2-a08-frozen_qwen_candidate_pair",
+        "score-L2-l2-a08-frozen_qwen_few_shot",
+        "score-L2-l2-a08-qwen_candidate_pair_qlora",
+        "compose-L2-l2-a08-frozen_qwen_few_shot_stage1__qlora_stage2",
+        "score-L2-l2-a09-strict_train_only_tfidf",
+        "score-L2-l2-a09-e5_base_v2",
+        "score-L2-l2-a09-description_to_classifier_weight_transfer",
+        "score-L2-l2-a09-distilbert_review_candidate_cross_encoder",
+        "score-L2-l2-a09-frozen_qwen_candidate_pair",
+        "score-L2-l2-a09-frozen_qwen_few_shot",
+        "score-L2-l2-a09-qwen_candidate_pair_qlora",
+        "compose-L2-l2-a09-frozen_qwen_few_shot_stage1__qlora_stage2",
+        "score-L2-l2-a10-strict_train_only_tfidf",
+        "score-L2-l2-a10-e5_base_v2",
+        "score-L2-l2-a10-description_to_classifier_weight_transfer",
+        "score-L2-l2-a10-distilbert_review_candidate_cross_encoder",
+        "score-L2-l2-a10-frozen_qwen_candidate_pair",
+        "score-L2-l2-a10-frozen_qwen_few_shot",
+        "score-L2-l2-a10-qwen_candidate_pair_qlora",
+        "compose-L2-l2-a10-frozen_qwen_few_shot_stage1__qlora_stage2",
+        "score-L2-l2-a11-strict_train_only_tfidf",
+        "score-L2-l2-a11-e5_base_v2",
+        "score-L2-l2-a11-description_to_classifier_weight_transfer",
+        "score-L2-l2-a11-distilbert_review_candidate_cross_encoder",
+        "score-L2-l2-a11-frozen_qwen_candidate_pair",
+        "score-L2-l2-a11-frozen_qwen_few_shot",
+        "score-L2-l2-a11-qwen_candidate_pair_qlora",
+        "compose-L2-l2-a11-frozen_qwen_few_shot_stage1__qlora_stage2",
+        "score-L2-l2-a12-strict_train_only_tfidf",
+        "score-L2-l2-a12-e5_base_v2",
+        "score-L2-l2-a12-description_to_classifier_weight_transfer",
+        "score-L2-l2-a12-distilbert_review_candidate_cross_encoder",
+        "score-L2-l2-a12-frozen_qwen_candidate_pair",
+        "score-L2-l2-a12-frozen_qwen_few_shot",
+        "score-L2-l2-a12-qwen_candidate_pair_qlora",
+        "compose-L2-l2-a12-frozen_qwen_few_shot_stage1__qlora_stage2",
+        "score-L4-l4-g01-distilbert_review_candidate_cross_encoder",
+        "score-L4-l4-g01-frozen_qwen_few_shot",
+        "score-L4-l4-g01-qwen_candidate_pair_qlora",
+        "score-L4-l4-g02-distilbert_review_candidate_cross_encoder",
+        "score-L4-l4-g02-frozen_qwen_few_shot",
+        "score-L4-l4-g02-qwen_candidate_pair_qlora",
+        "score-L4-l4-g03-distilbert_review_candidate_cross_encoder",
+        "score-L4-l4-g03-frozen_qwen_few_shot",
+        "score-L4-l4-g03-qwen_candidate_pair_qlora"
+      ],
+      "fold_id": "all",
+      "job_id": "seal-all-score-grids",
+      "level": "L2_L4",
+      "method_id": "all_registered_systems",
+      "phase": "seal",
+      "role": "integrity_and_backup_barrier",
+      "training_scope_id": "all"
+    },
+    {
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "depends_on": [
+        "seal-all-score-grids"
+      ],
+      "fold_id": "all",
+      "job_id": "analyse-once-after-seal",
+      "level": "L2_L4",
+      "method_id": "all_registered_systems",
+      "phase": "analyse",
+      "role": "single_outcome_reveal",
+      "training_scope_id": "all"
+    }
+  ],
+  "preregistration_sha256": "b622cae1ffec4e1af473dbf9f52cf5a7c4e79e15beb7e6c90b15d7663d8b11dc",
+  "protocol_id": "taxonomy_two_stage_final_test_v1",
+  "schema_version": "taxonomy_final_test_job_plan_v1",
+  "status": "pre_release_no_test_access",
+  "test_contract_count": 0
+}

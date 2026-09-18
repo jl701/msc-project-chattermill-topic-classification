@@ -1,0 +1,59 @@
+{
+  "study_id": "taxonomy_policy_qlora_completion_v1",
+  "status": "registered_before_masked_qlora_execution",
+  "policy": "label_masked_all_reviews",
+  "method": "qwen_candidate_pair_qlora",
+  "allowed_splits": ["train", "validation"],
+  "include_official_test": false,
+  "test_contract_count": 0,
+  "folds": ["l2-a01", "l2-a02", "l2-a03", "l2-a04", "l2-a05", "l2-a06", "l2-a07", "l2-a08", "l2-a09", "l2-a10", "l2-a11", "l2-a12"],
+  "data_hashes": {
+    "train.csv": "3ffcc7407cc8077fe9efc5ca06532847589a59464ea929d7f23d1f732b9efc7c",
+    "validation.csv": "3a32afda9c4ba1d59e76ee8fcfb480011c7178d8201d0025b254a40c2f81203c"
+  },
+  "learning_rates": [0.000002, 0.000005, 0.00001],
+  "canonical_seen_policy": "registered_first_N_prompt_identity_reuse",
+  "training": {
+    "model": "Qwen/Qwen3-4B-Instruct-2507",
+    "revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+    "shared_adapter_for_both_stages": true,
+    "training_review_count": 7930,
+    "aspect_examples": 2048,
+    "sentiment_examples": 2048,
+    "sampling": "original_seed_13_balanced_without_replacement",
+    "heldout_supervision": "excluded_from_all_training_tasks_never_used_as_negative",
+    "max_length": 384, "batch_size": 1, "gradient_accumulation_steps": 8,
+    "epochs": 1, "seed": 13, "lora_r": 4, "lora_alpha": 8,
+    "lora_dropout": 0.05, "targets": ["q_proj", "k_proj", "v_proj", "o_proj"],
+    "gradient_checkpointing": true, "load_in_4bit": true
+  },
+  "selection": {
+    "rows": "all_1057_validation_reviews",
+    "labels": "eleven_seen_aspects_only",
+    "rule": "unchanged_original_sequential_thresholds_then_learning_rate_tie_rule",
+    "heldout_outcome_selection": false,
+    "conditions": ["N", "D"],
+    "N_thresholds": "inherit_selected_D_calibration_without_retuning",
+    "decoder": "top_one_plus_thresholded_runner_up_maximum_two",
+    "scoring_batch_size": 8, "scoring_max_length": 384
+  },
+  "baseline": {
+    "policy": "review_filtered",
+    "artifact_origin_commit": "aa84212976a652d62cfca31ed8bf0516a216c485",
+    "reuse": "hash_verified_train_only_adapters_and_original_seen_only_selection",
+    "retraining": false,
+    "aligned_inference": "rescore_twelve_selected_adapters_with_same_canonical_N_D_scorer",
+    "historical_raw_D_scores": "preserved_not_claimed_identical_to_canonical_aligned_inference"
+  },
+  "analysis": {
+    "primary": "D_mean_twelve_fold_heldout_pair_micro_F1",
+    "secondary": "pooled_heldout_pair_micro_F1",
+    "bootstrap": "synchronised_review_uid_clusters_20000_draws_seed_13",
+    "evidence_role": "post_test_validation_only_training_policy_sensitivity",
+    "composition": "each_policy_uses_its_own_few_shot_gate_and_its_own_selected_qlora_sentiment_decoder",
+    "cross_policy_hybrid": "excluded_from_final_complete_policy_comparison"
+  },
+  "failure_policy": "stop_and_preserve_on_OOM_nonfinite_contract_or_backup_conflict_no_automatic_retuning",
+  "official_test": "excluded_requires_separate_future_decision",
+  "github": "no_commit_or_push"
+}

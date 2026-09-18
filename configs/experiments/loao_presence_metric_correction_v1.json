@@ -1,0 +1,40 @@
+{
+  "experiment_id": "loao_presence_metric_correction_v1",
+  "status": "complete",
+  "date": "2026-07-17",
+  "objective": "Correct singleton-candidate presence F1 so true-negative rows do not inflate the positive-class score, then recompute protocol-matched LOAO presence metrics from frozen prediction files.",
+  "dataset": "FABSA official validation and test splits",
+  "protocol": "12-fold all-row LOAO with one held-out aspect per fold",
+  "systems": {
+    "tfidf": "outputs/baselines/loao_lexical_global_score_export_20260713",
+    "distilbert": "outputs/baselines/loao_cross_encoder_transformer_sentiment_example_filtered_micro_selection_score_export_20260702",
+    "qwen_validation": "outputs/llm/qwen_loao_heldout_aspect_all_rows_validation_20260701",
+    "qwen_test": "outputs/llm/qwen_loao_heldout_aspect_all_rows_test_20260701"
+  },
+  "selection_rule": "Reuse every frozen prediction, threshold, checkpoint, prompt, and parser decision; perform no model selection, inference, training, or test-guided tuning.",
+  "metrics": [
+    "presence_precision",
+    "presence_recall",
+    "presence_f1",
+    "presence_prevalence",
+    "presence_false_positive_rows_per_100",
+    "presence_false_negative_rows_per_100",
+    "pair_micro_f1"
+  ],
+  "aggregation": "Unweighted mean, population standard deviation, minimum, and maximum across the 12 held-out aspects, reported separately for validation and test.",
+  "output_dir": "outputs/analysis/loao_presence_metric_correction_20260717",
+  "public_report": "docs/experiments/loao_presence_metric_correction_20260717.md",
+  "commit_scope": "Metric implementation, regression tests, recomputation script, configuration, and aggregate audit report only. Raw review text and prediction JSONL remain local under ignored outputs/.",
+  "seed": null,
+  "cost": "No new model calls or training; deterministic recomputation only.",
+  "result": {
+    "test_presence_f1_mean": {
+      "tfidf": 0.4300485858045491,
+      "distilbert": 0.33896107328624553,
+      "qwen": 0.3550705723408503
+    },
+    "pair_metrics_changed": false,
+    "maximum_absolute_frozen_pair_metric_delta": 9.80118763926896e-17,
+    "tests": "142 passed"
+  }
+}

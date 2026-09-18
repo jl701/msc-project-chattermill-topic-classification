@@ -1,0 +1,58 @@
+{
+  "study_id": "taxonomy_training_policy_extension_v1",
+  "registered_date": "2026-09-08",
+  "evidence_role": "post_official_test_proposed_validation_only_sensitivity_extension",
+  "parent_study": "taxonomy_training_policy_sensitivity_v1",
+  "parent_config_sha256": "a7775e0d98de47969226d1be938889723bf9145e0268e691ccf531a1ee368ebc",
+  "allowed_splits": ["train", "validation"],
+  "include_official_test": false,
+  "test_contract_count": 0,
+  "policies": ["review_filtered", "label_masked_all_reviews"],
+  "conditions": ["D", "N"],
+  "folds": ["l2-a01", "l2-a02", "l2-a03", "l2-a04", "l2-a05", "l2-a06", "l2-a07", "l2-a08", "l2-a09", "l2-a10", "l2-a11", "l2-a12"],
+  "dcwt": {
+    "recipe": "configs/experiments/taxonomy_description_to_classifier_weight_transfer_v1.json",
+    "recipe_sha256": "5f8b89cb5eff6adefcee6f7d530329d0a2df6190db10bee3ae9c5ad019bf2618",
+    "reference_implementation_sha256": "8704e52c658fed7adafa72ca55e0ef9bb202ae786ca7cd13cec694d19af6041b",
+    "primary_family": "kernel_ridge",
+    "controls": ["mean_seen_weight", "nearest_description_weight", "cosine_barycentric_weight"],
+    "selection": "Keep the original 11-seen-aspect pseudo-unseen presence-F1 selection and original tie rules, then select the runner-up threshold on directly scored seen candidates. Each policy refits its original recipe. No held-out outcomes used for selection.",
+    "training_policy_override": "Only the registered training-row retention/masking policy changes between paired arms. TF-IDF, SVD, scalers, seen LR weights and Stage-2 scorer fit the eligible policy-specific train rows. The held-out aspect has no supervised classifier.",
+    "description_encoder_device": "cpu",
+    "paired_descriptor_cache": true,
+    "save_all_weight_candidates_and_fitted_feature_transforms": true,
+    "cpu_threads": 2,
+    "maximum_seconds_per_fold_policy": 7200,
+    "hyperparameter_grid_expansion": false
+  },
+  "invariance": {
+    "methods": ["e5_base_v2", "frozen_qwen_candidate_pair"],
+    "source_audit": "docs/experiments/taxonomy_scientific_freeze_local_replay_audit_20260822.json",
+    "source_audit_sha256": "e3d00a049a663f33ffdcaf64341d59bd61663d80bdd949d767447ada6ca0df68",
+    "source_root": "outputs/experimental/taxonomy_scientific_freeze_v1",
+    "rule": "Changing train-row retention cannot affect these frozen scorers or their unchanged seen-validation threshold inputs. Verify exact model-input equality, source fold-result SHA256, row-evidence SHA256 and F1 reconstruction. Reuse the identical result object, not a newly claimed independent inference pass.",
+    "new_gpu_inference": false,
+    "evidence_role": "audited_training_policy_invariance_reference_not_independent_replication"
+  },
+  "analysis": {
+    "primary_condition": "D",
+    "endpoint": "12-fold aspect-balanced mean held-out pair micro-F1",
+    "bootstrap_draws": 20000,
+    "bootstrap_seed": 13,
+    "bootstrap_unit": "synchronised validation row_uid review cluster, no fold resampling",
+    "include_all_four_dcwt_families": true,
+    "frozen_method_zero_delta": "structural invariance, not evidence from an independent experiment",
+    "combine_with_parent_only_after_all_expected_receipts": true
+  },
+  "execution": {
+    "do_not_change_running_parent_config_or_scripts": true,
+    "qlora_retraining": false,
+    "github_commit_or_push": false,
+    "cloud_permission": "User permits RunPod for the GPU work. Cloud relocation must have a separate exact transport/execution contract and cannot duplicate the local Qwen queue.",
+    "cloud_launched": false,
+    "browser_preflight_status": "RunPod tab visible but control attachment failed. Existing safe local fallback remains active.",
+    "minimum_free_gib": 20
+  },
+  "output_root": "outputs/experimental/taxonomy_training_policy_extension_v1",
+  "report_root": "docs/thesis_figure_data/taxonomy_training_policy_extension_v1"
+}

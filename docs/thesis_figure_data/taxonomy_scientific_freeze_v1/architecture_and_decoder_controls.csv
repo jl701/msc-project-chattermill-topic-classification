@@ -1,0 +1,11 @@
+study,method_id,method,variant,pair_micro_f1_mean,delta_reference,pair_micro_f1_delta,test_contract_count
+matched one-stage versus two-stage,strict_train_only_tfidf,TF-IDF,one_stage_independent_pairs,0.21958033275796418,one_stage_independent_pairs,0.0,0
+matched one-stage versus two-stage,strict_train_only_tfidf,TF-IDF,two_stage_argmax,0.2780171192990842,one_stage_independent_pairs,0.058436786541119924,0
+matched one-stage versus two-stage,strict_train_only_tfidf,TF-IDF,two_stage_capped_two,0.2772507342595331,one_stage_independent_pairs,0.05767040150156886,0
+capped-two versus top-one,strict_train_only_tfidf,TF-IDF,argmax,0.2780171192990842,argmax,0.0,0
+capped-two versus top-one,strict_train_only_tfidf,TF-IDF,capped_two_threshold,0.2772507342595331,argmax,-0.0007663850395510652,0
+matched one-stage versus two-stage,e5_base_v2,Frozen E5,one_stage_independent_pairs,0.18599643818993325,one_stage_independent_pairs,0.0,0
+matched one-stage versus two-stage,e5_base_v2,Frozen E5,two_stage_argmax,0.22457567065163608,one_stage_independent_pairs,0.038579232461702855,0
+matched one-stage versus two-stage,e5_base_v2,Frozen E5,two_stage_capped_two,0.22218351851636312,one_stage_independent_pairs,0.03618708032642989,0
+capped-two versus top-one,e5_base_v2,Frozen E5,argmax,0.22457567065163608,argmax,0.0,0
+capped-two versus top-one,e5_base_v2,Frozen E5,capped_two_threshold,0.22218351851636312,argmax,-0.002392152135272968,0

@@ -1,0 +1,151 @@
+{
+  "protocol_id": "taxonomy_two_stage_formal_v1",
+  "status": "preregistered_before_formal_execution",
+  "registered_at": "2026-08-17T23:00:00+01:00",
+  "parent_protocol_id": "taxonomy_two_stage_precloud_v2",
+  "base_commit": "ae1d874fd0e251eedaf3e2fa0f580b69c4cbfa51",
+  "objective": "Run genuine two-stage Frozen-Qwen few-shot, DistilBERT and QLoRA validation with immutable checkpoints or prompt caches, exact score shards, fail-closed resume and automatically verified RunPod-to-local replication.",
+  "sealed_data_contract": {
+    "allowed_splits": [
+      "train",
+      "validation"
+    ],
+    "include_official_test": false,
+    "forbidden_cloud_file": "test.csv",
+    "test_contract_count_required": 0,
+    "selection_population": "seen-aspect validation rows inside the exact outer training scope",
+    "heldout_validation_role": "evaluation_only",
+    "seed": 13
+  },
+  "methods": {
+    "frozen_qwen_few_shot": {
+      "base_method_id": "frozen_qwen_candidate_pair",
+      "prompt_schema": "qwen_true_two_stage_few_shot_next_token_v1",
+      "maximum_length": 1024,
+      "scoring_batch_size": 6,
+      "cache_chunk_prompts": 1536,
+      "demonstration_selection": "stable SHA-256 order from the exact outer train fold with no retrieval or result-guided selection",
+      "stage_1_demonstrations": "two positive and two negative examples",
+      "stage_2_demonstrations": "one negative one neutral and one positive example",
+      "threshold_selection": "seen-aspect validation only inside each exact training scope"
+    },
+    "distilbert_review_candidate_cross_encoder": {
+      "learning_rates": [
+        0.00002,
+        0.00003,
+        0.00005
+      ],
+      "epochs": 3,
+      "training_batch_size": 32,
+      "scoring_batch_size": 96,
+      "maximum_length": 256
+    },
+    "qwen_candidate_pair_qlora": {
+      "learning_rates": [
+        0.000002,
+        0.000005,
+        0.00001
+      ],
+      "epochs": 1,
+      "training_batch_size": 1,
+      "gradient_accumulation_steps": 8,
+      "scoring_batch_size": 8,
+      "maximum_length": 384,
+      "lora_r": 4,
+      "lora_alpha": 8,
+      "lora_dropout": 0.05
+    }
+  },
+  "training": {
+    "unique_outer_scopes": 26,
+    "total_examples_per_scope": 4096,
+    "aspect_presence_examples": 2048,
+    "sentiment_examples": 2048,
+    "manifest_policy": "deterministic balanced without replacement",
+    "candidate_checkpoint_count": 156,
+    "selection_tie_breakers": [
+      "higher seen-validation end-to-end pair micro-F1",
+      "higher seen-validation pair samples-F1",
+      "higher seen-validation pair precision",
+      "lower learning rate"
+    ]
+  },
+  "evaluation": {
+    "levels": [
+      "L1",
+      "L2",
+      "L3",
+      "L4"
+    ],
+    "fold_condition_count_per_selected_method": 99,
+    "score_shards_per_fold_condition": 8,
+    "decoder": "aspect threshold followed by top-one sentiment plus thresholded runner-up",
+    "maximum_sentiments_per_aspect": 2,
+    "third_sentiment_permitted": false
+  },
+  "checkpoint_and_resume": {
+    "checkpoint_publish": "write sibling temporary directory, hash every file, write manifest, atomic directory rename",
+    "score_publish": "write immutable CSV then manifest with contract, pair-identity and score hashes",
+    "resume": "accept only a complete artifact whose full contract and file hashes match; partial corrupt or changed state aborts",
+    "configuration_change": "a changed scientific contract creates a new content-addressed path; old artifacts may be controls but are not reused as exact",
+    "interruption_boundary": "only completed manifest-bearing units are reusable"
+  },
+  "replication": {
+    "transport": "OpenSSH/SCP using key authentication; no credential is stored in the repository",
+    "poll_interval_seconds": 300,
+    "maximum_heartbeat_age_seconds": 900,
+    "formal_executor_requires_live_receiver_heartbeat": true,
+    "remote_delete": false,
+    "local_overwrite": false,
+    "publication": "stage complete unit, verify byte counts and SHA-256, then atomically publish files and a local receipt",
+    "required_restore_drill": true
+  },
+  "storage_budget": {
+    "network_volume_capacity_gib": 100.0,
+    "campaign_growth_upper_bound_gib": 30.0,
+    "minimum_final_headroom_gib": 20.0,
+    "parallel_volume_policy": "one independently audited 100 GiB volume and isolated output root per physical worker",
+    "basis": {
+      "distilbert_candidate_checkpoints": "78 checkpoints at less than 0.28 GiB each",
+      "qlora_candidate_checkpoints": "78 checkpoints at less than 0.03 GiB each",
+      "validation_scores": "7,534,296 rows at a conservative 512 bytes per CSV row",
+      "overhead_policy": "remaining allowance covers manifests, logs, telemetry and filesystem rounding"
+    }
+  },
+  "qualified_hardware": {
+    "provider": "Runpod",
+    "cloud_type": "Secure Cloud",
+    "gpu": "NVIDIA GeForce RTX 4090",
+    "scoring_batches": {
+      "frozen_qwen_few_shot": 6,
+      "qlora": 8
+    },
+    "qualification_record": "docs/experiments/taxonomy_two_stage_4090_hardware_gate_v1_result.json"
+  },
+  "formal_release_requirements": [
+    "official test remains sealed and test-contract count equals zero",
+    "all checkpoint score-shard sync and restore tests pass",
+    "an interrupted transfer resumes without recomputation or overwrite",
+    "a corrupt checkpoint score shard and transfer are rejected",
+    "registered scope and job counts match this file",
+    "the three worker manifests form the exact dependency-closed union and the final merge audit reports 297 unique validation results",
+    "RunPod source commit equals the reviewed and pushed Git commit",
+    "startup GPU identity CUDA package and input-hash checks pass",
+    "declared RunPod volume quota leaves at least 20 GiB after conservative campaign growth",
+    "a fresh short startup telemetry sample has no OOM non-finite score collapse or slowdown",
+    "the local sync receiver is running before the formal executor starts"
+  ],
+  "stop_conditions": [
+    "official-test access or any test contract",
+    "hash-incompatible resume or local overwrite conflict",
+    "partial checkpoint or score shard",
+    "non-finite loss or probability",
+    "duplicate training or evaluation identity",
+    "held-out validation labels used for parameter selection",
+    "third sentiment emitted for an aspect",
+    "unexpected prediction collapse",
+    "OOM",
+    "repeated thermal or hardware slowdown",
+    "automatic local replication is not healthy"
+  ]
+}

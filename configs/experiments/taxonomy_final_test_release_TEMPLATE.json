@@ -1,0 +1,23 @@
+{
+  "schema_version": "taxonomy_final_test_release_v1",
+  "protocol_id": "taxonomy_two_stage_final_test_v1",
+  "status": "draft_not_authorised",
+  "include_official_test": false,
+  "explicit_user_authorisation": false,
+  "preregistration_sha256": "REPLACE_ONLY_AFTER_FINAL_PREFLIGHT",
+  "execution_commit": "REPLACE_ONLY_AFTER_FINAL_PREFLIGHT",
+  "authorisation_id": "REPLACE_ONLY_AFTER_EXPLICIT_USER_AUTHORISATION",
+  "authorised_at": "REPLACE_ONLY_AFTER_EXPLICIT_USER_AUTHORISATION",
+  "official_test_relative_path": "test.csv",
+  "official_test_file_sha256": "REPLACE_ONLY_AFTER_EXPLICIT_USER_AUTHORISATION",
+  "official_test_row_uid_sha256": "REPLACE_ONLY_AFTER_EXPLICIT_USER_AUTHORISATION",
+  "official_test_rows": 1587,
+  "backup_root_id": "REPLACE_WITH_IMMUTABLE_BACKUP_ROOT_IDENTIFIER",
+  "batch_fallback_policy": "none_no_post_release_batch_change",
+  "instructions": [
+    "This file is an inert template and must remain rejected while status is draft_not_authorised.",
+    "Do not populate, rename, or activate it before a clean preflight PASS and a new explicit one-time user authorisation.",
+    "The authorised release record must be a separately named immutable file, not an in-place edit hidden from review.",
+    "Do not inspect, hash, parse, or otherwise touch the official test while preparing this template."
+  ]
+}

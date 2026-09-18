@@ -1,0 +1,112 @@
+{
+  "experiment_id": "loao_strict_tfidf_aspect_qwen_router_v1",
+  "status": "preregistered_before_router_execution",
+  "registered": "2026-07-23",
+  "research_question": "Can validation-selected selective routing from the strict TF-IDF plus aspect-conditioned sentiment endpoint to the active frozen candidate-pair Qwen endpoint improve pair F1 under a 50 percent mean Qwen-call budget?",
+  "scope": {
+    "folds": 12,
+    "validation_rows": "all official validation rows",
+    "test_rows": "all official test rows",
+    "candidate_scope": "singleton held-out aspect",
+    "information_regime": "target-calibrated LOAO",
+    "primary_metric": "unweighted mean of fold-level pair micro-F1"
+  },
+  "endpoints": {
+    "local": {
+      "presence": "tfidf_char_3_5_train_vocab",
+      "vocabulary_fitting": "permitted training reviews only; candidate text excluded",
+      "sentiment": "frozen DistilBERT aspect-conditioned sentiment",
+      "threshold": "per-method per-target-aspect validation pair micro-F1 threshold frozen by loao_similarity_aspect_conditioned_sentiment_rescore_v1"
+    },
+    "qwen": {
+      "model": "Qwen/Qwen3-4B-Instruct-2507",
+      "mode": "frozen candidate-pair enhanced control",
+      "sentiment": "joint candidate-conditioned pair prediction",
+      "threshold": "per-target-aspect validation pair micro-F1 threshold frozen by the candidate-pair experiment"
+    }
+  },
+  "artifact_policy": {
+    "new_model_training": false,
+    "new_model_inference": false,
+    "reuse_saved_predictions": true,
+    "strict_alignment": [
+      "exact one-to-one row_uid set, deterministically joined in strict TF-IDF artifact order",
+      "gold pair labels",
+      "singleton held-out aspect",
+      "validation/test split",
+      "complete twelve-fold coverage"
+    ],
+    "legacy_router_artifacts_permitted": false,
+    "historical_json_prompt_qwen_permitted": false
+  },
+  "policy_search": {
+    "family": "asymmetric local-presence boundary replacement",
+    "definition": {
+      "local_absent": "use Qwen when threshold minus local presence score is at or below the fold cutoff for rescue_fraction",
+      "local_present": "use Qwen when local presence score minus threshold is at or below the fold cutoff for confirm_fraction",
+      "otherwise": "use strict TF-IDF presence plus aspect-conditioned sentiment"
+    },
+    "fraction_grid": [
+      0.0,
+      0.05,
+      0.1,
+      0.15,
+      0.2,
+      0.3,
+      0.4,
+      0.5
+    ],
+    "fold_cutoff_rule": "For each side independently, take the validation distance at rank ceil(fraction * eligible_rows), using stable ascending distance and row_uid order; a zero fraction disables that side.",
+    "hard_mean_validation_qwen_call_rate_max": 0.5,
+    "selection_scope": "one fraction pair selected globally from all twelve validation folds",
+    "selection_order": [
+      "highest mean validation pair_micro_f1",
+      "highest mean validation pair_samples_f1",
+      "lowest mean validation false_positive_rows_per_100",
+      "lowest mean validation qwen_call_rate",
+      "highest mean validation pair_micro_precision",
+      "lexicographically smallest policy_id"
+    ]
+  },
+  "test_policy": {
+    "manifest_must_exist_before_test_read": true,
+    "evaluated_rows": [
+      "strict_local_only",
+      "frozen_qwen_only",
+      "selected_router"
+    ],
+    "no_test_boundary_tuning": true
+  },
+  "reporting": {
+    "metrics": [
+      "pair_micro_f1",
+      "pair_samples_f1",
+      "pair_micro_precision",
+      "pair_micro_recall",
+      "presence_precision",
+      "presence_recall",
+      "presence_f1",
+      "false_positive_rows_per_100",
+      "false_negative_rows_per_100",
+      "qwen_call_rate"
+    ],
+    "paired_diagnostics": [
+      "per-aspect delta",
+      "wins ties losses",
+      "paired mean and median delta",
+      "fold-resampling bootstrap 95 percent interval with seed 20260723",
+      "exact two-sided sign-flip p-value"
+    ]
+  },
+  "admission_gate": {
+    "minimum_pair_micro_f1_gain_over_strict_local": 0.01,
+    "maximum_test_mean_qwen_call_rate": 0.5,
+    "decision_if_passed": "retain as a supporting deployment method, separate from the baseline table",
+    "decision_if_failed": "report as a negative optional experiment and omit a thesis quality-call-rate figure"
+  },
+  "limitations": [
+    "This is post-hoc relative to already observed endpoint test results, although the replacement router policy and gate are registered before its execution.",
+    "Target-aspect validation labels calibrate both endpoints and router policy, so this is not strict zero-label LOAO.",
+    "The twelve folds share underlying reviews and are not independent datasets."
+  ]
+}

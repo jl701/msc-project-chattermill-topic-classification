@@ -1,0 +1,57 @@
+{
+  "artifact_count": 28,
+  "artifact_sha256": {
+    "e5_base_v2\\folds\\l2-a01.json": "55a2032a419beb28a71f1bcb9e83ff89aee0c916f4a419f75b924b5e75852147",
+    "e5_base_v2\\folds\\l2-a02.json": "c0d5a3efe5ffe7613d43789041f820a441341ac79124b42ea152ca5a18889f86",
+    "e5_base_v2\\folds\\l2-a03.json": "066e2a46aee763f4260daac84ff305d0800867cd5a8d8fc219e8da9abb9de008",
+    "e5_base_v2\\folds\\l2-a04.json": "54c37317c3718f0a4188cd448fd3aa3763682881ee0db856660f0c513da576f9",
+    "e5_base_v2\\folds\\l2-a05.json": "38ccf9a96b994819f78950d93b3681768f8428934fcd53397250c24cece82f15",
+    "e5_base_v2\\folds\\l2-a06.json": "ce288eb7b46e2e7c8262c5ffd38d0f93ce89ca0ebf26722a3d96fcc4e65a6e47",
+    "e5_base_v2\\folds\\l2-a07.json": "486bf5b0f9fea8981189ceca8b8cf545af6f3981133191afff119061cceb97ed",
+    "e5_base_v2\\folds\\l2-a08.json": "d2d2b0ae35ef341d19641ab112bc47b57931ee2c1cdafb8f44412f08117c5fce",
+    "e5_base_v2\\folds\\l2-a09.json": "df853499e3a625cc7f6ad47a4dafc6043d639beee449287de8fed8b989c0ff14",
+    "e5_base_v2\\folds\\l2-a10.json": "312de6af9f8e8e31ba03ebf6cda625e0e1ed2d08625a2a03f17bd39e3d948cb3",
+    "e5_base_v2\\folds\\l2-a11.json": "bb0da466b79022b7c011f686d3f4d5c8643df823e477a5500faa0df54d52f034",
+    "e5_base_v2\\folds\\l2-a12.json": "7e366fe33e69b01b76eb0cc97c5e06b1ebcb0e03fbe81276adae873150ae1aba",
+    "e5_base_v2\\per_fold.csv": "e80ebce39925350eeddeb3a46b2373855b969b7080bf697614e2970f19ed25fe",
+    "e5_base_v2\\summary.json": "3e8cbbc7913184ed28e5b5267548005a87cf8f6959f85ac4f2015e0bf20dea94",
+    "strict_train_only_tfidf\\folds\\l2-a01.json": "81cff70148fa10ffcaf09e0b29ee494d05472e1d4979767c42dc160c6a885313",
+    "strict_train_only_tfidf\\folds\\l2-a02.json": "e7617b278dcf2ef353215c696c98d850ed4444715e1145f2c83a4dc60f32753f",
+    "strict_train_only_tfidf\\folds\\l2-a03.json": "92831f142b0911917c07a6304fce8994a7f631c0b3afcbc8a73985c5fc5e042c",
+    "strict_train_only_tfidf\\folds\\l2-a04.json": "6d34067f54a9e86e5421d68e412b33e298c855afa7e2cf0f7b0e692b3e4aee40",
+    "strict_train_only_tfidf\\folds\\l2-a05.json": "74dbe5b0804dde622ab799c9c8ea49837a7be2fb95a110d225b28041a7824c64",
+    "strict_train_only_tfidf\\folds\\l2-a06.json": "e04a79cdbf175959e5836eba35f32b85e7260837d17119b2e027aeb734aab218",
+    "strict_train_only_tfidf\\folds\\l2-a07.json": "b0b9b7ad1463d80d66541f7979a91ba61e5bdffd97d870afbfa8576ec0b20f0e",
+    "strict_train_only_tfidf\\folds\\l2-a08.json": "9e3bc4ed920d33a48f61f38c85944d56739ea3600fd436aba874121a79f06111",
+    "strict_train_only_tfidf\\folds\\l2-a09.json": "9e0fabedc47bb4f4d48ac4439f5cb54485b51998957ead25a76240e66d1593d0",
+    "strict_train_only_tfidf\\folds\\l2-a10.json": "01d200da2270572976c8da95153d7a566770c40014f971998e645fdad28e86d8",
+    "strict_train_only_tfidf\\folds\\l2-a11.json": "b13cdfa2033596569fde21bea9e1ca5be845bb246eaba1446c0dd5e3ec7efbc5",
+    "strict_train_only_tfidf\\folds\\l2-a12.json": "24e581fc6028e237517da949d531d3fbecaae9f7808980624dcce2a1dcd03d62",
+    "strict_train_only_tfidf\\per_fold.csv": "821acd30f93464e43b0d8b5f0843378106ba939afd3cb5d46aa0b1440ac42750",
+    "strict_train_only_tfidf\\summary.json": "5933972850cff3db94676effd58ac876f836637c17c858829b8dd37fe5a19034"
+  },
+  "failure_count": 0,
+  "methods": {
+    "e5_base_v2": {
+      "aspect_threshold_frozen": true,
+      "completed_folds": 12,
+      "decoder_rows": 24,
+      "failed_folds": 0,
+      "maximum_sentiments_per_aspect": 2,
+      "parent_argmax_reproduced": true,
+      "test_contract_count": 0
+    },
+    "strict_train_only_tfidf": {
+      "aspect_threshold_frozen": true,
+      "completed_folds": 12,
+      "decoder_rows": 24,
+      "failed_folds": 0,
+      "maximum_sentiments_per_aspect": 2,
+      "parent_argmax_reproduced": true,
+      "test_contract_count": 0
+    }
+  },
+  "non_finite_value_count": 0,
+  "official_test_artifact_count": 0,
+  "schema_version": "taxonomy_capped_two_sentiment_artifact_audit_v2"
+}

@@ -1,0 +1,22 @@
+condition,left_method,right_method,left_minus_right_aspect_balanced_heldout_pair_micro_f1,shared_review_bootstrap_95_ci_low,shared_review_bootstrap_95_ci_high,interpretation
+D,strict_train_only_tfidf,e5_base_v2,0.05506721574317,0.029614613326727632,0.08065313103367579,descriptive systems comparison; not a causal adaptation effect
+D,strict_train_only_tfidf,description_conditioned_weight_transfer_kernel_ridge,0.13193679904371075,0.11172646067393467,0.15138377969719563,descriptive systems comparison; not a causal adaptation effect
+D,strict_train_only_tfidf,distilbert_review_candidate_cross_encoder,0.17182373250971994,0.1411552848480677,0.20236242810334215,descriptive systems comparison; not a causal adaptation effect
+D,strict_train_only_tfidf,frozen_qwen_candidate_pair,-0.17404763115874022,-0.20291623651703136,-0.14400958934413963,descriptive systems comparison; not a causal adaptation effect
+D,strict_train_only_tfidf,frozen_qwen_few_shot,-0.22763188963062647,-0.2623138689176077,-0.1899428982409009,descriptive systems comparison; not a causal adaptation effect
+D,strict_train_only_tfidf,qwen_candidate_pair_qlora,-0.20265249583355144,-0.23165037325817525,-0.17255934436063675,descriptive systems comparison; not a causal adaptation effect
+D,e5_base_v2,description_conditioned_weight_transfer_kernel_ridge,0.07686958330054075,0.05808112818858887,0.09548931339501945,descriptive systems comparison; not a causal adaptation effect
+D,e5_base_v2,distilbert_review_candidate_cross_encoder,0.11675651676654994,0.0878210525692982,0.14569226853906453,descriptive systems comparison; not a causal adaptation effect
+D,e5_base_v2,frozen_qwen_candidate_pair,-0.22911484690191022,-0.25380424218506104,-0.20338630569342972,descriptive systems comparison; not a causal adaptation effect
+D,e5_base_v2,frozen_qwen_few_shot,-0.2826991053737965,-0.3153083822503534,-0.24734638043571328,descriptive systems comparison; not a causal adaptation effect
+D,e5_base_v2,qwen_candidate_pair_qlora,-0.25771971157672147,-0.2827940962199341,-0.2319685412547581,descriptive systems comparison; not a causal adaptation effect
+D,description_conditioned_weight_transfer_kernel_ridge,distilbert_review_candidate_cross_encoder,0.03988693346600919,0.014316701201653945,0.06551169774363974,descriptive systems comparison; not a causal adaptation effect
+D,description_conditioned_weight_transfer_kernel_ridge,frozen_qwen_candidate_pair,-0.305984430202451,-0.3297018604084505,-0.27996197988168664,descriptive systems comparison; not a causal adaptation effect
+D,description_conditioned_weight_transfer_kernel_ridge,frozen_qwen_few_shot,-0.3595686886743372,-0.39044910097897556,-0.32470747355763063,descriptive systems comparison; not a causal adaptation effect
+D,description_conditioned_weight_transfer_kernel_ridge,qwen_candidate_pair_qlora,-0.3345892948772622,-0.3591824363193449,-0.3077339766448574,descriptive systems comparison; not a causal adaptation effect
+D,distilbert_review_candidate_cross_encoder,frozen_qwen_candidate_pair,-0.34587136366846016,-0.3767748599111492,-0.3135392143051579,descriptive systems comparison; not a causal adaptation effect
+D,distilbert_review_candidate_cross_encoder,frozen_qwen_few_shot,-0.3994556221403464,-0.4352650065806946,-0.3614425242221247,descriptive systems comparison; not a causal adaptation effect
+D,distilbert_review_candidate_cross_encoder,qwen_candidate_pair_qlora,-0.3744762283432714,-0.40520565539691245,-0.3425985810039666,descriptive systems comparison; not a causal adaptation effect
+D,frozen_qwen_candidate_pair,frozen_qwen_few_shot,-0.05358425847188625,-0.08139072020058594,-0.025539959064611498,descriptive systems comparison; not a causal adaptation effect
+D,frozen_qwen_candidate_pair,qwen_candidate_pair_qlora,-0.028604864674811215,-0.04172935260136009,-0.015589045442208172,descriptive systems comparison; not a causal adaptation effect
+D,frozen_qwen_few_shot,qwen_candidate_pair_qlora,0.024979393797075033,-0.0027371686924357232,0.05220916196240048,descriptive systems comparison; not a causal adaptation effect

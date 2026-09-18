@@ -1,0 +1,82 @@
+{
+  "study_id": "taxonomy_training_policy_sensitivity_v1",
+  "registered_date": "2026-09-08",
+  "evidence_role": "post_official_test_proposed_validation_only_sensitivity",
+  "base_commit": "919c2293bb71bc6ec43e6666e94f7cb3433b0956",
+  "allowed_splits": ["train", "validation"],
+  "include_official_test": false,
+  "test_contract_count": 0,
+  "data_hashes": {
+    "train.csv": "3ffcc7407cc8077fe9efc5ca06532847589a59464ea929d7f23d1f732b9efc7c",
+    "validation.csv": "3a32afda9c4ba1d59e76ee8fcfb480011c7178d8201d0025b254a40c2f81203c"
+  },
+  "folds": ["l2-a01", "l2-a02", "l2-a03", "l2-a04", "l2-a05", "l2-a06", "l2-a07", "l2-a08", "l2-a09", "l2-a10", "l2-a11", "l2-a12"],
+  "conditions": ["D", "N"],
+  "primary_condition": "D",
+  "policies": ["review_filtered", "label_masked_all_reviews"],
+  "masking_rule": "Retain all original training reviews, remove held-out labels from every supervision field, construct Stage 1 only for the eleven seen candidates, and construct Stage 2 only for gold-present seen aspects. Held-out-only reviews remain eligible seen-candidate negatives for Stage 1 and provide no Stage 2 positives. Never instantiate a held-out candidate as a negative training target.",
+  "seed": 13,
+  "tfidf": {
+    "runtime": "TfidfTrueTwoStageRuntime",
+    "configuration": "unchanged six-feature sentiment and existing aspect-presence scorer",
+    "subset_seeds": [13, 29, 47],
+    "subset_rule": "Order full masked training pool by SHA256(study|fold|subset_seed|row_uid), take exactly the review-filtered row count, then preserve original row order.",
+    "report_all_subset_seeds": true
+  },
+  "distilbert": {
+    "model_id": "distilbert-base-uncased",
+    "revision": "12040accade4e8a0f71eabdb258fecc2e7e948be",
+    "learning_rates": [0.00002, 0.00003, 0.00005],
+    "epochs": 3,
+    "batch_size": 32,
+    "eval_batch_size": 96,
+    "max_length": 256,
+    "aspect_budget": 2048,
+    "sentiment_budget": 2048,
+    "paired_local_replay": true,
+    "initialisation": "Reset seed 13 before constructing either policy's randomly initialised classifier heads. Both policies use the same local runtime and pinned base. These are sensitivity replays, not replacements for the original formal model realisations."
+  },
+  "few_shot": {
+    "model_id": "Qwen/Qwen3-4B-Instruct-2507",
+    "revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+    "selector": "select_qwen_two_stage_demonstrations",
+    "aspect_demonstrations": 4,
+    "sentiment_demonstrations": 3,
+    "max_length": 1024,
+    "batch_size": 6,
+    "reuse": "Exact rendered prompt, full demonstration content/order, pinned model, tokenizer, precision and score-contract match only. An unchanged seed or demonstration ID alone is insufficient.",
+    "selection": "Source few-shot pipeline's own seen-only sequential pair-F1 rule. No gate selection against the QLoRA decoder.",
+    "maximum_local_inference_hours": 24
+  },
+  "mixed_composition_diagnostic": {
+    "stage_1": "label_masked_all_reviews few-shot source scores and its own selected threshold",
+    "stage_2": "original review-filtered QLoRA validation scores and original runner-up threshold",
+    "joint_retuning": false,
+    "role": "mixed-provenance component substitution with source-gate adaptation, not a fully label-masked-trained hybrid",
+    "promotion_to_final_system": false
+  },
+  "selection": {
+    "population": "same-fold seen candidates on all 1057 validation reviews",
+    "aspect_threshold": "existing select_two_stage_threshold with top-one sentiment",
+    "runner_up_threshold": "existing select_second_sentiment_threshold with frozen aspect threshold",
+    "learning_rate_ties": ["pair_micro_f1", "pair_samples_f1", "pair_micro_precision", "lower_learning_rate"],
+    "N_rule": "transfer D-selected model and thresholds unchanged"
+  },
+  "analysis": {
+    "primary": "mean of 12 held-out pair micro-F1 values",
+    "secondary": ["pooled held-out pair F1", "seen and overall pair F1", "held-out presence AP/F1", "oracle-gated Stage 2", "precision", "recall", "two-sentiment emission"],
+    "bootstrap": {"unit": "synchronised row_uid review cluster", "draws": 20000, "seed": 13, "interval": "nominal conditional percentile 95%"},
+    "comparisons": "Masked minus filtered per method and condition, D-minus-N changes, all three size-control seeds, and mixed-composition diagnostic. No confirmatory superiority claims or result-guided expansion."
+  },
+  "safety": {
+    "maximum_temperature_c": 86,
+    "minimum_free_gib": 20,
+    "gpu_poll_seconds": 30,
+    "stop": ["OOM", "nonfinite", "hash or resume conflict", "forbidden data access", "third sentiment", "unexpected whole-grid constant or empty prediction collapse", "repeated thermal or hardware slowdown"],
+    "local_only": true,
+    "qlora_training": false,
+    "cloud_launch": false
+  },
+  "output_root": "outputs/experimental/taxonomy_training_policy_sensitivity_v1",
+  "report_root": "docs/thesis_figure_data/taxonomy_training_policy_sensitivity_v1"
+}

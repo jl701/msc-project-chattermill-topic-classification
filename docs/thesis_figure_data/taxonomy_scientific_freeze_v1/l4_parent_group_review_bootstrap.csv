@@ -1,0 +1,10 @@
+method_id,parent_group_fold,heldout_parent_group,condition,validation_reviews,positive_review_support,heldout_pair_micro_f1,review_bootstrap_95_ci_low,review_bootstrap_95_ci_high,bootstrap_draws,bootstrap_seed,cross_group_p_value_reported
+distilbert_review_candidate_cross_encoder,l4-g01,Company brand,D,1057,472,0.06932409012131716,0.03880070546737213,0.10163354259022343,20000,13,False
+distilbert_review_candidate_cross_encoder,l4-g02,Staff support,D,1057,137,0.21305841924398625,0.14189069388537473,0.28391264555828166,20000,13,False
+distilbert_review_candidate_cross_encoder,l4-g03,Value,D,1057,173,0.24630541871921183,0.20736653740247,0.2843016069221261,20000,13,False
+frozen_qwen_few_shot,l4-g01,Company brand,D,1057,472,0.5122749590834698,0.47758757693280496,0.5464566929133858,20000,13,False
+frozen_qwen_few_shot,l4-g02,Staff support,D,1057,137,0.5804597701149425,0.5236768802228412,0.6333333333333333,20000,13,False
+frozen_qwen_few_shot,l4-g03,Value,D,1057,173,0.5916230366492147,0.5337078651685393,0.6449864498644986,20000,13,False
+qwen_candidate_pair_qlora,l4-g01,Company brand,D,1057,472,0.42433234421364985,0.3920958645142938,0.4561911658218682,20000,13,False
+qwen_candidate_pair_qlora,l4-g02,Staff support,D,1057,137,0.5422885572139303,0.4898989898989899,0.5927713948577816,20000,13,False
+qwen_candidate_pair_qlora,l4-g03,Value,D,1057,173,0.5789473684210527,0.5357873210633947,0.6200378071833649,20000,13,False

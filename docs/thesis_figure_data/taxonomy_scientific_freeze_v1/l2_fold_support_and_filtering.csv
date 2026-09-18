@@ -1,0 +1,13 @@
+fold_id,heldout_aspect,original_train_reviews,filtered_train_reviews,removed_train_reviews,validation_reviews,heldout_positive_review_support
+l2-a01,Account management: Account access,7930,7457,473,1057,81
+l2-a02,Company brand: Competitor,7930,7314,616,1057,86
+l2-a03,Company brand: General satisfaction,7930,5026,2904,1057,401
+l2-a04,Company brand: Reviews,7930,7753,177,1057,22
+l2-a05,Logistics rides: Speed,7930,6928,1002,1057,118
+l2-a06,Online experience: App website,7930,4330,3600,1057,468
+l2-a07,Purchase booking experience: Ease of use,7930,5566,2364,1057,335
+l2-a08,Staff support: Attitude of staff,7930,6859,1071,1057,125
+l2-a09,Staff support: Email,7930,7810,120,1057,13
+l2-a10,Staff support: Phone,7930,7749,181,1057,18
+l2-a11,Value: Discounts promotions,7930,7528,402,1057,51
+l2-a12,Value: Price value for money,7930,6915,1015,1057,128

@@ -1,0 +1,175 @@
+{
+  "experiment_id": "loao_bow_sentence_embedding_v1",
+  "status": "complete",
+  "date": "2026-07-17",
+  "objective": "Add protocol-matched BoW and frozen sentence-embedding baselines to the primary 12-fold all-row LOAO benchmark, with a strict train-only TF-IDF rerun as the lexical reference.",
+  "dataset": "FABSA official train, validation, and test splits",
+  "protocol": {
+    "folds": 12,
+    "heldout_unit": "one canonical aspect per fold",
+    "training_strategy": "example_filtered",
+    "evaluation_rows": "all official rows",
+    "gold_projection": "heldout aspect only",
+    "candidate_text": "raw canonical aspect string",
+    "empty_predictions_allowed": true,
+    "sentiment_component": "shared global word+character TF-IDF balanced LogisticRegression fitted on each permitted training fold",
+    "prediction_representation": "pair set; methods may emit zero or one pair and are evaluated against all gold pairs"
+  },
+  "methods": [
+    {
+      "name": "bow_count_1_2_train_vocab",
+      "family": "bag_of_words",
+      "fit_scope": "per-fold permitted training review text only; candidate text is transform-only",
+      "vectorizer": {
+        "type": "CountVectorizer",
+        "lowercase": true,
+        "analyzer": "word",
+        "ngram_range": [1, 2],
+        "min_df": 1,
+        "max_features": 60000,
+        "binary": false
+      },
+      "pooling": "L2-normalised sparse count vectors",
+      "score": "cosine similarity"
+    },
+    {
+      "name": "tfidf_char_3_5_train_vocab",
+      "family": "strict_tfidf_reference",
+      "fit_scope": "per-fold permitted training review text only; candidate text is transform-only",
+      "vectorizer": {
+        "type": "TfidfVectorizer",
+        "lowercase": true,
+        "analyzer": "char_wb",
+        "ngram_range": [3, 5],
+        "min_df": 1,
+        "sublinear_tf": true
+      },
+      "pooling": "L2-normalised sparse TF-IDF vectors",
+      "score": "cosine similarity",
+      "note": "The historical 0.3780 lexical row fitted candidate text jointly with train reviews and remains legacy evidence rather than the strict reference."
+    },
+    {
+      "name": "minilm_l6_v2",
+      "family": "compact_general_sentence_embedding",
+      "model_id": "sentence-transformers/all-MiniLM-L6-v2",
+      "revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+      "fit_scope": "frozen pretrained encoder; no FABSA fitting",
+      "pooling": "attention-mask mean pooling",
+      "normalisation": "L2",
+      "max_length": 256,
+      "review_prefix": "",
+      "candidate_prefix": "",
+      "score": "cosine similarity"
+    },
+    {
+      "name": "e5_base_v2",
+      "family": "stronger_retrieval_sentence_embedding",
+      "model_id": "intfloat/e5-base-v2",
+      "revision": "f52bf8ec8c7124536f0efb74aca902b2995e5bcd",
+      "fit_scope": "frozen pretrained encoder; no FABSA fitting",
+      "pooling": "attention-mask mean pooling",
+      "normalisation": "L2",
+      "max_length": 256,
+      "review_prefix": "passage: ",
+      "candidate_prefix": "query: ",
+      "score": "cosine similarity"
+    }
+  ],
+  "selection": {
+    "validation_stage_reads_test": false,
+    "threshold_grid": {
+      "minimum": -1.0,
+      "maximum": 1.0,
+      "step": 0.01
+    },
+    "primary": "pair_micro_f1",
+    "tie_breakers": [
+      "pair_samples_f1",
+      "pair_macro_f1",
+      "presence_f1",
+      "presence_precision",
+      "higher_threshold"
+    ],
+    "threshold_scope": "one validation-selected threshold per method and held-out aspect",
+    "encoder_selection": "none; both frozen encoders are fixed a priori and reported independently",
+    "test_rule": "load the frozen validation selection file and evaluate each registered method once"
+  },
+  "metrics": [
+    "presence_precision",
+    "presence_recall",
+    "presence_f1",
+    "presence_average_precision",
+    "presence_false_positive_rows_per_100",
+    "presence_false_negative_rows_per_100",
+    "pair_micro_precision",
+    "pair_micro_recall",
+    "pair_micro_f1",
+    "pair_samples_f1",
+    "pair_macro_f1",
+    "pair_exact_match_rate",
+    "sentiment_accuracy_when_gold_aspect_predicted",
+    "oracle_presence_sentiment_accuracy"
+  ],
+  "aggregation": "unweighted mean, median, population standard deviation, minimum, and maximum across the 12 aspects",
+  "seed": 13,
+  "execution": {
+    "encoder_batch_size": 64,
+    "device": "auto",
+    "validation_output": "outputs/baselines/loao_bow_sentence_embedding_v1/validation",
+    "test_output": "outputs/baselines/loao_bow_sentence_embedding_v1/test",
+    "public_numeric_output": "docs/thesis_figure_data/loao_bow_sentence_embedding_v1_*.csv",
+    "smoke_gate": "one-aspect validation run and focused tests before full validation",
+    "test_gate": "all 12 validation thresholds present and frozen before any test-stage load"
+  },
+  "commit_scope": "Source, runner, tests, config, aggregate/per-aspect numeric CSVs, and experiment report only. Model cache, review-level predictions, raw text, and local outputs remain untracked.",
+  "stopping_rule": "No architecture or test-guided tuning. Stop after the four registered methods complete validation and one frozen test evaluation unless a correctness failure requires rerun.",
+  "validation_result": {
+    "runtime_seconds": 274.91552329063416,
+    "device": "cpu",
+    "git_commit": "a6c1f85dd658879b592d283e8d92fafcb44b605d",
+    "test_file_loaded": false,
+    "protocol_complete": true,
+    "selected_thresholds": 48,
+    "pair_micro_f1_mean": {
+      "bow_count_1_2_train_vocab": 0.32688722026263833,
+      "tfidf_char_3_5_train_vocab": 0.3942782869156877,
+      "minilm_l6_v2": 0.36026157782355206,
+      "e5_base_v2": 0.39442618487980896
+    }
+  },
+  "test_result": {
+    "runtime_seconds": 229.8376648426056,
+    "device": "cpu",
+    "git_commit": "0256e4d7ac58609a4de0795d12d0703be77d9451",
+    "protocol_complete": true,
+    "frozen_thresholds": 48,
+    "maximum_threshold_change_from_validation": 0.0,
+    "pair_micro_f1_mean": {
+      "bow_count_1_2_train_vocab": 0.3224887175982793,
+      "tfidf_char_3_5_train_vocab": 0.36672820349357366,
+      "minilm_l6_v2": 0.36991675524709233,
+      "e5_base_v2": 0.3790661776258785
+    },
+    "presence_f1_mean": {
+      "bow_count_1_2_train_vocab": 0.3630592020456532,
+      "tfidf_char_3_5_train_vocab": 0.4160759397013804,
+      "minilm_l6_v2": 0.4137743045826507,
+      "e5_base_v2": 0.4271902651505726
+    },
+    "presence_average_precision_mean": {
+      "bow_count_1_2_train_vocab": 0.25615565592185874,
+      "tfidf_char_3_5_train_vocab": 0.34759190644698057,
+      "minilm_l6_v2": 0.38821663190593075,
+      "e5_base_v2": 0.41774483641589
+    },
+    "paired_aspect_analysis": {
+      "metric": "pair_micro_f1",
+      "status": "post_run_exploratory_aspect_stability_analysis",
+      "comparisons": "all six method pairs",
+      "multiplicity_correction": "Holm within each split",
+      "bootstrap_resamples": 100000,
+      "seed": 13,
+      "output": "docs/thesis_figure_data/loao_bow_sentence_embedding_v1_paired_comparisons.csv"
+    }
+  }
+}

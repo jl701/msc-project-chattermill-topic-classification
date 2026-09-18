@@ -1,0 +1,225 @@
+{
+  "schema_version": "taxonomy_final_test_preregistration_v1",
+  "protocol_id": "taxonomy_two_stage_final_test_v1",
+  "status": "frozen_pre_release",
+  "created_at": "2026-08-24",
+  "formal_artifact_origin_commit": "aa84212976a652d62cfca31ed8bf0516a216c485",
+  "decision_evidence_commit": "a2701db912baf25113384ea442ec205272c95fa5",
+  "objective": "Run one locked held-out evaluation of the revised example-filtered supplied-candidate two-stage protocol after every score, checkpoint, threshold, hypothesis and failure rule is frozen.",
+  "allowed_splits_pre_release": [
+    "train",
+    "validation"
+  ],
+  "include_official_test": false,
+  "test_contract_count": 0,
+  "historical_test_disclosure": "Earlier project phases accessed the released official test under superseded fixed-split and one-stage protocols. The revised two-stage LOAO models, thresholds, capped-two decoder and fixed stage-wise composition were selected without revised-protocol test outcomes. The final run is therefore a locked held-out evaluation of the revised protocol, not the project's first completely blind test.",
+  "estimand": {
+    "task": "complete 12-aspect by 3-sentiment review-candidate grid",
+    "training_shift": "example_filtered_taxonomy_shift",
+    "candidate_taxonomy_supplied": true,
+    "open_world_aspect_generation": false,
+    "primary_scope": "unseen held-out aspect pairs in each of 12 fixed LOAO folds"
+  },
+  "levels": {
+    "L2": {
+      "role": "primary_confirmatory_level",
+      "folds": [
+        "l2-a01",
+        "l2-a02",
+        "l2-a03",
+        "l2-a04",
+        "l2-a05",
+        "l2-a06",
+        "l2-a07",
+        "l2-a08",
+        "l2-a09",
+        "l2-a10",
+        "l2-a11",
+        "l2-a12"
+      ],
+      "training_scopes": [
+        "heldout-a01",
+        "heldout-a02",
+        "heldout-a03",
+        "heldout-a04",
+        "heldout-a05",
+        "heldout-a06",
+        "heldout-a07",
+        "heldout-a08",
+        "heldout-a09",
+        "heldout-a10",
+        "heldout-a11",
+        "heldout-a12"
+      ],
+      "conditions": [
+        "D",
+        "N"
+      ],
+      "primary_condition": "D",
+      "n_role": "descriptive"
+    },
+    "L4": {
+      "role": "descriptive_structured_shift",
+      "folds": [
+        "l4-g01",
+        "l4-g02",
+        "l4-g03"
+      ],
+      "training_scopes": [
+        "heldout-a02-a03-a04",
+        "heldout-a08-a09-a10",
+        "heldout-a11-a12"
+      ],
+      "conditions": [
+        "D"
+      ]
+    }
+  },
+  "roster": {
+    "confirmatory_L2_D": [
+      "frozen_qwen_few_shot_stage1__qlora_stage2",
+      "frozen_qwen_few_shot",
+      "qwen_candidate_pair_qlora"
+    ],
+    "descriptive_L2_base_methods": [
+      "strict_train_only_tfidf",
+      "e5_base_v2",
+      "description_to_classifier_weight_transfer",
+      "distilbert_review_candidate_cross_encoder",
+      "frozen_qwen_candidate_pair",
+      "frozen_qwen_few_shot",
+      "qwen_candidate_pair_qlora"
+    ],
+    "descriptive_L4_D": [
+      "distilbert_review_candidate_cross_encoder",
+      "frozen_qwen_few_shot",
+      "qwen_candidate_pair_qlora"
+    ],
+    "excluded": [
+      "global_router",
+      "relative_calibrator",
+      "smooth_stage1_fusion",
+      "retrieval_few_shot",
+      "reverse_composition",
+      "rich_description_R",
+      "Level_1",
+      "Level_3",
+      "legacy_fixed_split_systems",
+      "legacy_one_stage_systems"
+    ]
+  },
+  "fixed_composition": {
+    "method_id": "frozen_qwen_few_shot_stage1__qlora_stage2",
+    "scientific_label": "validation-selected fixed stage-wise composition",
+    "stage_1": "frozen_qwen_few_shot",
+    "stage_1_score": "aspect_presence_probability",
+    "stage_1_threshold": "frozen_few_shot_fold_threshold",
+    "stage_2": "qwen_candidate_pair_qlora",
+    "stage_2_score": "conditional_sentiment_probabilities",
+    "stage_2_runner_up_threshold": "frozen_qlora_fold_threshold",
+    "decoder": "top_one_plus_thresholded_runner_up",
+    "maximum_sentiments_per_selected_aspect": 2,
+    "retraining": false,
+    "retuning": false,
+    "joint_optimisation": false
+  },
+  "statistics": {
+    "primary_endpoint": "L2_D_aspect_balanced_mean_heldout_pair_micro_f1",
+    "sensitivity_endpoint": "L2_D_pooled_heldout_pair_micro_f1",
+    "secondary_endpoints": [
+      "heldout_pair_micro_precision",
+      "heldout_pair_micro_recall",
+      "overall_pair_micro_f1",
+      "seen_pair_micro_f1",
+      "pair_macro_f1",
+      "exact_set_match",
+      "prediction_set_size",
+      "aspect_call_rate",
+      "per_aspect_fold_result_and_support"
+    ],
+    "diagnostic_only": [
+      "heldout_presence_average_precision",
+      "heldout_presence_f1",
+      "oracle_gated_stage2_sentiment_set_f1",
+      "stage1_false_positive_and_false_negative_counts",
+      "third_sentiment_violation_count",
+      "prediction_collapse_checks",
+      "L4_group_metrics"
+    ],
+    "bootstrap_unit": "synchronised_row_uid_review_cluster",
+    "bootstrap_draws": 20000,
+    "bootstrap_seed": 13,
+    "interval": "paired_percentile_95",
+    "taxonomy_inference": "fixed_12_aspects_not_random_taxonomy_population"
+  },
+  "hypotheses": {
+    "multiplicity": "hierarchical_gatekeeping_H1_then_H2",
+    "superiority_rule": "paired_difference_95_percent_interval_lower_bound_greater_than_zero",
+    "H1": {
+      "candidate": "frozen_qwen_few_shot_stage1__qlora_stage2",
+      "comparator": "frozen_qwen_few_shot",
+      "endpoint": "L2_D_aspect_balanced_mean_heldout_pair_micro_f1"
+    },
+    "H2": {
+      "candidate": "frozen_qwen_few_shot_stage1__qlora_stage2",
+      "comparator": "qwen_candidate_pair_qlora",
+      "endpoint": "L2_D_aspect_balanced_mean_heldout_pair_micro_f1",
+      "confirmatory_only_if": "H1_passes"
+    }
+  },
+  "selection_and_reuse": {
+    "train_plus_validation_retraining": false,
+    "checkpoint_source": "formal_v2_train_only_selected_checkpoints",
+    "few_shot_demonstrations": "formal_v2_deterministic_train_only_contract",
+    "threshold_source": "formal_v2_seen_validation_only selections",
+    "description_resource": "fabsa_aspect_descriptions_minimal_v2 approved_and_frozen",
+    "new_parameter_selection_on_test": false
+  },
+  "governance": {
+    "train_plus_validation_retraining": false,
+    "interim_outcome_inspection": false,
+    "test_informed_retuning": false,
+    "post_test_candidate_promotion": false,
+    "score_before_label_reveal": true,
+    "canonical_seen_scores_shared_across_N_D": true,
+    "all_predeclared_results_reported_regardless_of_outcome": true,
+    "one_complete_execution_only": true,
+    "official_test_metrics_revealed_once_after_score_seal_and_backup": true
+  },
+  "failure_policy": {
+    "data_hash_or_schema_mismatch": "abort_before_metrics_and_preserve_evidence",
+    "pure_operational_failure": "exact_rerun_only_if_no_outcome_was_revealed_and_config_is_byte_identical",
+    "OOM_non_finite_or_prediction_collapse": "protocol_failure_no_performance_guided_change",
+    "low_performance_or_failed_hypothesis": "scientific_outcome_never_rerun",
+    "batch_size_change": "forbidden_after_release_no_fallback",
+    "descriptive_method_failure": "report_failure_and_continue_primary_only_if_shared_infrastructure_and_primary_scores_are_unaffected",
+    "third_sentiment": "abort_affected_job_and_fail_integrity_audit",
+    "resume_conflict": "abort_without_overwrite"
+  },
+  "release": {
+    "required": true,
+    "currently_authorised": false,
+    "release_manifest_schema": "taxonomy_final_test_release_v1",
+    "must_bind": [
+      "preregistration_sha256",
+      "execution_commit",
+      "official_test_file_sha256",
+      "official_test_row_uid_sha256",
+      "official_test_rows",
+      "official_test_relative_path",
+      "backup_root_id",
+      "batch_fallback_policy",
+      "explicit_user_authorisation",
+      "authorisation_id",
+      "authorised_at"
+    ]
+  },
+  "output_contract": {
+    "root": "outputs/experimental/taxonomy_two_stage_final_test_v1",
+    "immutable_score_subtree": "sealed_scores",
+    "analysis_subtree": "single_reveal_analysis",
+    "local_backup_required_before_analysis": true,
+    "raw_reviews_predictions_checkpoints_committed": false,
+    "aggregate_tables_and_hash_manifests_committed": true
+  }
+}

@@ -1,0 +1,137 @@
+{
+  "experiment_id": "loao_active_baseline_registry_v1",
+  "status": "frozen_active_registry",
+  "updated": "2026-07-23",
+  "outer_protocol": {
+    "name": "target_calibrated_all_row_loao",
+    "folds": 12,
+    "split": "test",
+    "primary_metric": "unweighted_mean_fold_pair_micro_f1",
+    "candidate_scope": "singleton_heldout_aspect",
+    "sentiment_requirement": "candidate_conditioned"
+  },
+  "rows": [
+    {
+      "method_id": "bow_count_1_2_train_vocab",
+      "display_name": "Count BoW",
+      "comparison_block": "strict_representation",
+      "sentiment_formulation": "Shared DistilBERT aspect-conditioned sentiment",
+      "threshold_selection": "per_method_per_aspect_validation_pair_micro_f1",
+      "pair_micro_f1_mean": 0.31441221043860423,
+      "pair_micro_precision_mean": 0.33734313189939363,
+      "pair_micro_recall_mean": 0.48311624044503193,
+      "presence_f1_mean": 0.34215215399849286,
+      "false_positive_rows_per_100_mean": 25.4043268220962,
+      "false_negative_rows_per_100_mean": 4.977945809703844,
+      "thesis_role": "Sanity control",
+      "source": "docs/thesis_figure_data/loao_similarity_aspect_conditioned_sentiment_v1_active.csv"
+    },
+    {
+      "method_id": "tfidf_char_3_5_train_vocab",
+      "display_name": "Strict train-only character TF-IDF",
+      "comparison_block": "strict_representation",
+      "sentiment_formulation": "Shared DistilBERT aspect-conditioned sentiment",
+      "threshold_selection": "per_method_per_aspect_validation_pair_micro_f1",
+      "pair_micro_f1_mean": 0.38564006469164386,
+      "pair_micro_precision_mean": 0.4155688481906959,
+      "pair_micro_recall_mean": 0.5042206701474069,
+      "presence_f1_mean": 0.4171748408002815,
+      "false_positive_rows_per_100_mean": 17.617097248477208,
+      "false_negative_rows_per_100_mean": 4.44234404536862,
+      "thesis_role": "Main classical baseline",
+      "source": "docs/thesis_figure_data/loao_similarity_aspect_conditioned_sentiment_v1_active.csv"
+    },
+    {
+      "method_id": "minilm_l6_v2",
+      "display_name": "MiniLM-L6-v2",
+      "comparison_block": "strict_representation",
+      "sentiment_formulation": "Shared DistilBERT aspect-conditioned sentiment",
+      "threshold_selection": "per_method_per_aspect_validation_pair_micro_f1",
+      "pair_micro_f1_mean": 0.3888830304649798,
+      "pair_micro_precision_mean": 0.3472702077849365,
+      "pair_micro_recall_mean": 0.4934398813323592,
+      "presence_f1_mean": 0.41587407818173466,
+      "false_positive_rows_per_100_mean": 12.250577609745852,
+      "false_negative_rows_per_100_mean": 4.972694812014282,
+      "thesis_role": "Appendix/repository",
+      "source": "docs/thesis_figure_data/loao_similarity_aspect_conditioned_sentiment_v1_active.csv"
+    },
+    {
+      "method_id": "e5_base_v2",
+      "display_name": "E5-base-v2",
+      "comparison_block": "strict_representation",
+      "sentiment_formulation": "Shared DistilBERT aspect-conditioned sentiment",
+      "threshold_selection": "per_method_per_aspect_validation_pair_micro_f1",
+      "pair_micro_f1_mean": 0.40130102400140827,
+      "pair_micro_precision_mean": 0.3418558181424643,
+      "pair_micro_recall_mean": 0.541620071886712,
+      "presence_f1_mean": 0.43193298915641715,
+      "false_positive_rows_per_100_mean": 12.917454316320102,
+      "false_negative_rows_per_100_mean": 3.8962402856542746,
+      "thesis_role": "Main frozen sentence-embedding baseline",
+      "source": "docs/thesis_figure_data/loao_similarity_aspect_conditioned_sentiment_v1_active.csv"
+    },
+    {
+      "method_id": "distilbert_review_candidate_cross_encoder",
+      "display_name": "DistilBERT review-candidate cross-encoder",
+      "comparison_block": "common_outer_benchmark",
+      "sentiment_formulation": "DistilBERT aspect-conditioned sentiment",
+      "threshold_selection": "per_aspect_validation_pair_micro_f1",
+      "pair_micro_f1_mean": 0.31584787136848674,
+      "pair_micro_precision_mean": 0.3449245620420038,
+      "pair_micro_recall_mean": 0.39653407551316416,
+      "presence_f1_mean": 0.33896107328624553,
+      "false_positive_rows_per_100_mean": 10.44423440453686,
+      "false_negative_rows_per_100_mean": 8.958202058391096,
+      "thesis_role": "Fine-tuned contextual baseline",
+      "source": "docs/thesis_figure_data/qwen_local_qwen_loao_pareto.csv"
+    },
+    {
+      "method_id": "frozen_qwen_candidate_pair",
+      "display_name": "Frozen candidate-pair Qwen",
+      "comparison_block": "matched_qwen_adaptation",
+      "sentiment_formulation": "Joint candidate-conditioned pair prediction",
+      "threshold_selection": "per_aspect_validation_pair_micro_f1",
+      "pair_micro_f1_mean": 0.3378035832522078,
+      "pair_micro_precision_mean": 0.244003,
+      "pair_micro_recall_mean": 0.651851,
+      "presence_f1_mean": 0.451565,
+      "false_positive_rows_per_100_mean": 14.287965,
+      "false_negative_rows_per_100_mean": 4.584121,
+      "thesis_role": "Matched QLoRA control",
+      "source": "docs/experiments/loao_unified_candidate_pair_experimental_v1.md"
+    },
+    {
+      "method_id": "qlora_qwen_candidate_pair",
+      "display_name": "Candidate-pair QLoRA",
+      "comparison_block": "matched_qwen_adaptation",
+      "sentiment_formulation": "Joint candidate-conditioned pair prediction",
+      "threshold_selection": "per_aspect_validation_pair_micro_f1",
+      "pair_micro_f1_mean": 0.4831582925751108,
+      "pair_micro_precision_mean": 0.501423,
+      "pair_micro_recall_mean": 0.499727,
+      "presence_f1_mean": 0.50089,
+      "false_positive_rows_per_100_mean": 7.146608,
+      "false_negative_rows_per_100_mean": 6.070153,
+      "thesis_role": "Main adaptation contribution",
+      "source": "docs/experiments/loao_unified_candidate_pair_experimental_v1.md"
+    }
+  ],
+  "retired_guards": {
+    "forbidden_method_ids": [
+      "legacy_tfidf",
+      "historical_json_prompt_qwen",
+      "legacy_tfidf_qwen_router"
+    ],
+    "forbidden_sentiment_terms": [
+      "global",
+      "document-level",
+      "shallow"
+    ],
+    "forbidden_pair_micro_f1_values": [
+      0.378,
+      0.4549,
+      0.456
+    ]
+  }
+}

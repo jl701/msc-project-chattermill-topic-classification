@@ -1,0 +1,16 @@
+{
+  "description_source": "Gemini 2.5 Pro generated decision-boundary descriptions from canonical FABSA held-out aspect names only; no validation or test review text was used.",
+  "generated_at": "2026-07-01",
+  "model": "vertex_ai/gemini-2.5-pro",
+  "generation_usage": {
+    "prompt_tokens": 132,
+    "completion_tokens": 826,
+    "reasoning_tokens": 701,
+    "total_tokens": 958
+  },
+  "aspect_descriptions": {
+    "Account management: Account access": "Mentions of logging in, password issues, or being locked out of an account, but not general account settings or website availability.",
+    "Company brand: Competitor": "Direct mentions of or comparisons to competing companies, brands, or services, but not discussions of partner companies or the industry in general.",
+    "Value: Discounts promotions": "Mentions of specific sales, coupons, promo codes, or special deals, but not general commentary on price, cost, or overall value for money."
+  }
+}

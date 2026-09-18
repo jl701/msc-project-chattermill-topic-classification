@@ -1,0 +1,70 @@
+{
+  "protocol_id": "taxonomy_multi_sentiment_decoder_validation_v1",
+  "status": "preregistered_before_execution",
+  "registered_at": "2026-08-17",
+  "objective": "Test whether allowing more than one sentiment for a selected aspect improves held-out pair F1 or instead loses precision.",
+  "parent_protocol": "taxonomy_two_stage_validation_v1",
+  "methods": [
+    "strict_train_only_tfidf",
+    "e5_base_v2"
+  ],
+  "data_contract": {
+    "allowed_splits": [
+      "train",
+      "validation"
+    ],
+    "include_official_test": false,
+    "level": "L2",
+    "folds": "all twelve registered single-held-out-aspect folds",
+    "representation": "name_and_description for seen and held-out aspects",
+    "training_filter": "remove every official training row containing the fold's held-out aspect",
+    "selection_partition": "seen-aspect validation only",
+    "evaluation_partition": "held-out-aspect validation only",
+    "seed": 13
+  },
+  "control_decoder": {
+    "aspect_rule": "aspect_score >= validation-selected aspect threshold",
+    "sentiment_rule": "emit exactly the highest-scoring sentiment",
+    "aspect_threshold_objective": "end-to-end pair micro-F1 on seen-aspect validation"
+  },
+  "multi_sentiment_decoder": {
+    "aspect_rule": "aspect_score >= jointly selected aspect threshold",
+    "sentiment_rule": "emit every sentiment_score >= jointly selected sentiment threshold; if none passes, emit the argmax sentiment",
+    "threshold_objective": "end-to-end pair micro-F1 on seen-aspect validation",
+    "aspect_threshold_candidates": "all strict candidates induced by seen validation aspect scores",
+    "sentiment_threshold_candidates": "65 equally spaced empirical quantiles of seen validation sentiment scores plus a value above the maximum that exactly nests the argmax control",
+    "tie_breakers": [
+      "pair samples F1",
+      "pair micro precision",
+      "lower false-positive rows per 100",
+      "fewer emitted sentiments per selected aspect",
+      "higher aspect threshold",
+      "higher sentiment threshold"
+    ],
+    "maximum_sentiments_per_aspect": 3,
+    "minimum_sentiments_per_selected_aspect": 1
+  },
+  "secondary_decoder": {
+    "name": "forced_top2",
+    "sentiment_rule": "always emit the two highest-scoring sentiments for every selected aspect",
+    "aspect_threshold_objective": "end-to-end pair micro-F1 on seen-aspect validation",
+    "role": "stress-test the precision cost of unconditional multi-sentiment output"
+  },
+  "primary_metric": "held-out pair micro-F1, unweighted mean across folds",
+  "secondary_metrics": [
+    "held-out pair micro precision and recall",
+    "sentiments emitted per selected aspect",
+    "rate of selected aspects receiving more than one sentiment",
+    "gold-sentiment recall on multi-gold review-aspect instances",
+    "fold wins ties losses against argmax"
+  ],
+  "output_root": "outputs/experimental/taxonomy_multi_sentiment_decoder_validation_v1",
+  "stopping_rules": [
+    "official test access",
+    "held-out labels entering threshold selection",
+    "non-finite score",
+    "fold identity mismatch",
+    "failure to reproduce the parent argmax control"
+  ],
+  "reporting_rule": "Retain negative results and do not modify the parent Study C results."
+}

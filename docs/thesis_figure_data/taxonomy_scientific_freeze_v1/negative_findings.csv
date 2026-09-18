@@ -1,0 +1,8 @@
+finding,method,estimate,evidence_role
+Minimal description did not improve the aspect-balanced held-out pair F1,Frozen E5,-0.0192897457798837,primary L2 matched contrast
+Minimal description did not improve the aspect-balanced held-out pair F1,DistilBERT,-0.000294294877536,primary L2 matched contrast
+Selected rich card did not improve over the minimal description,Frozen E5,-0.010226700515891203,secondary confirmation
+Selected rich card did not improve over the minimal description,TF-IDF,-0.029352154014961756,secondary confirmation
+Dataset-faithful capped-two decoder had a small F1 cost,TF-IDF,-0.0007663850395510652,sequential validation decoder control
+Dataset-faithful capped-two decoder had a small F1 cost,Frozen E5,-0.002392152135272968,sequential validation decoder control
+Kernel-ridge description-to-weight transfer did not outperform its strongest simple generator control,Description-to-weight transfer,-0.008098470483475784,appendix generator diagnostic versus nearest_description_weight

@@ -1,0 +1,37 @@
+method_id,method,fold_id,heldout_aspect,review_rows,gold_presence_rows,predicted_presence_rows,true_absence_rows,missed_aspect_rows,spurious_aspect_rows,correct_sentiment_set_rows,wrong_sentiment_set_rows,gold_multi_sentiment_rows,predicted_multi_sentiment_rows,multi_sentiment_exact_rows,multi_sentiment_mismatch_rows,heldout_pair_tp,heldout_pair_fp,heldout_pair_fn,heldout_pair_f1_recomputed
+frozen_qwen_few_shot_stage1__qlora_stage2,Fixed stage-wise composition,l2-a01,Account management: Account access,1587,79,137,1434,16,74,54,9,0,4,0,0,57,84,22,0.5181818181818182
+frozen_qwen_few_shot_stage1__qlora_stage2,Fixed stage-wise composition,l2-a02,Company brand: Competitor,1587,121,202,1318,67,148,49,5,0,0,0,0,49,153,72,0.30340557275541796
+frozen_qwen_few_shot_stage1__qlora_stage2,Fixed stage-wise composition,l2-a03,Company brand: General satisfaction,1587,580,894,551,142,456,419,19,0,0,0,0,419,475,161,0.5685210312075983
+frozen_qwen_few_shot_stage1__qlora_stage2,Fixed stage-wise composition,l2-a04,Company brand: Reviews,1587,38,42,1531,14,18,15,9,0,2,0,0,16,28,22,0.3902439024390244
+frozen_qwen_few_shot_stage1__qlora_stage2,Fixed stage-wise composition,l2-a05,Logistics rides: Speed,1587,189,36,1396,155,2,33,1,0,0,0,0,33,3,156,0.29333333333333333
+frozen_qwen_few_shot_stage1__qlora_stage2,Fixed stage-wise composition,l2-a06,Online experience: App website,1587,724,692,761,134,102,489,101,19,0,0,19,504,188,239,0.7024390243902439
+frozen_qwen_few_shot_stage1__qlora_stage2,Fixed stage-wise composition,l2-a07,Purchase booking experience: Ease of use,1587,503,699,774,114,310,372,17,2,3,0,2,375,327,130,0.6213753106876554
+frozen_qwen_few_shot_stage1__qlora_stage2,Fixed stage-wise composition,l2-a08,Staff support: Attitude of staff,1587,201,162,1344,81,42,118,2,0,1,0,0,119,44,82,0.6538461538461539
+frozen_qwen_few_shot_stage1__qlora_stage2,Fixed stage-wise composition,l2-a09,Staff support: Email,1587,22,25,1553,9,12,13,0,0,0,0,0,13,12,9,0.5531914893617021
+frozen_qwen_few_shot_stage1__qlora_stage2,Fixed stage-wise composition,l2-a10,Staff support: Phone,1587,39,119,1462,6,86,31,2,0,1,0,0,31,89,8,0.389937106918239
+frozen_qwen_few_shot_stage1__qlora_stage2,Fixed stage-wise composition,l2-a11,Value: Discounts promotions,1587,89,150,1409,28,89,56,5,0,0,0,0,56,94,33,0.4686192468619247
+frozen_qwen_few_shot_stage1__qlora_stage2,Fixed stage-wise composition,l2-a12,Value: Price value for money,1587,206,213,1309,65,72,131,10,0,5,0,0,133,85,73,0.6273584905660378
+frozen_qwen_few_shot,Frozen Qwen few-shot,l2-a01,Account management: Account access,1587,79,137,1434,16,74,54,9,0,0,0,0,54,83,25,0.5
+frozen_qwen_few_shot,Frozen Qwen few-shot,l2-a02,Company brand: Competitor,1587,121,202,1318,67,148,26,28,0,8,0,0,27,183,94,0.16314199395770393
+frozen_qwen_few_shot,Frozen Qwen few-shot,l2-a03,Company brand: General satisfaction,1587,580,894,551,142,456,423,15,0,0,0,0,423,471,157,0.5739484396200815
+frozen_qwen_few_shot,Frozen Qwen few-shot,l2-a04,Company brand: Reviews,1587,38,42,1531,14,18,17,7,0,1,0,0,18,25,20,0.4444444444444444
+frozen_qwen_few_shot,Frozen Qwen few-shot,l2-a05,Logistics rides: Speed,1587,189,36,1396,155,2,31,3,0,3,0,0,34,5,155,0.2982456140350877
+frozen_qwen_few_shot,Frozen Qwen few-shot,l2-a06,Online experience: App website,1587,724,692,761,134,102,475,115,19,5,0,19,483,214,260,0.6708333333333333
+frozen_qwen_few_shot,Frozen Qwen few-shot,l2-a07,Purchase booking experience: Ease of use,1587,503,699,774,114,310,356,33,2,8,0,2,361,346,144,0.5957095709570958
+frozen_qwen_few_shot,Frozen Qwen few-shot,l2-a08,Staff support: Attitude of staff,1587,201,162,1344,81,42,119,1,0,1,0,0,119,44,82,0.6538461538461539
+frozen_qwen_few_shot,Frozen Qwen few-shot,l2-a09,Staff support: Email,1587,22,25,1553,9,12,13,0,0,0,0,0,13,12,9,0.5531914893617021
+frozen_qwen_few_shot,Frozen Qwen few-shot,l2-a10,Staff support: Phone,1587,39,119,1462,6,86,31,2,0,2,0,0,31,90,8,0.3875
+frozen_qwen_few_shot,Frozen Qwen few-shot,l2-a11,Value: Discounts promotions,1587,89,150,1409,28,89,58,3,0,2,0,0,59,93,30,0.4896265560165975
+frozen_qwen_few_shot,Frozen Qwen few-shot,l2-a12,Value: Price value for money,1587,206,213,1309,65,72,128,13,0,1,0,0,129,85,77,0.6142857142857143
+qwen_candidate_pair_qlora,QLoRA,l2-a01,Account management: Account access,1587,79,120,1449,18,59,52,9,0,4,0,0,55,69,24,0.541871921182266
+qwen_candidate_pair_qlora,QLoRA,l2-a02,Company brand: Competitor,1587,121,111,1392,84,74,32,5,0,0,0,0,32,79,89,0.27586206896551724
+qwen_candidate_pair_qlora,QLoRA,l2-a03,Company brand: General satisfaction,1587,580,683,655,249,352,326,5,0,0,0,0,326,357,254,0.5162311955661124
+qwen_candidate_pair_qlora,QLoRA,l2-a04,Company brand: Reviews,1587,38,199,1377,11,172,17,10,0,7,0,0,19,187,19,0.1557377049180328
+qwen_candidate_pair_qlora,QLoRA,l2-a05,Logistics rides: Speed,1587,189,177,1356,54,42,132,3,0,0,0,0,132,45,57,0.7213114754098361
+qwen_candidate_pair_qlora,QLoRA,l2-a06,Online experience: App website,1587,724,264,797,526,66,187,11,19,0,0,19,188,76,555,0.3733862959285005
+qwen_candidate_pair_qlora,QLoRA,l2-a07,Purchase booking experience: Ease of use,1587,503,590,859,138,225,353,12,2,1,0,2,355,236,150,0.6478102189781022
+qwen_candidate_pair_qlora,QLoRA,l2-a08,Staff support: Attitude of staff,1587,201,191,1336,60,50,139,2,0,1,0,0,140,52,61,0.712468193384224
+qwen_candidate_pair_qlora,QLoRA,l2-a09,Staff support: Email,1587,22,41,1538,8,27,14,0,0,0,0,0,14,27,8,0.4444444444444444
+qwen_candidate_pair_qlora,QLoRA,l2-a10,Staff support: Phone,1587,39,137,1445,5,103,33,1,0,2,0,0,33,106,6,0.3707865168539326
+qwen_candidate_pair_qlora,QLoRA,l2-a11,Value: Discounts promotions,1587,89,178,1377,32,121,53,4,0,0,0,0,53,125,36,0.3970037453183521
+qwen_candidate_pair_qlora,QLoRA,l2-a12,Value: Price value for money,1587,206,278,1279,30,102,164,12,0,4,0,0,166,116,40,0.680327868852459

@@ -1,0 +1,23 @@
+{
+  "schema_version": "taxonomy_two_stage_global_router_selected_v1",
+  "study_id": "taxonomy_two_stage_global_router_validation_v1",
+  "protocol_id": "taxonomy_two_stage_formal_v2",
+  "evaluation_partition_used_for_selection": "validation_only",
+  "official_test_opened": false,
+  "include_official_test": false,
+  "test_contract_count": 0,
+  "selection_condition": "D",
+  "base_method_id": "frozen_qwen_few_shot",
+  "expert_method_id": "distilbert_review_candidate_cross_encoder",
+  "rescue_band": 0.2,
+  "confirmation_band": 0.3,
+  "normalised_aspect_threshold": 0.5,
+  "normalised_runner_up_sentiment_threshold": 0.5,
+  "maximum_sentiments_per_selected_aspect": 2,
+  "n_condition_retuned": false,
+  "source_preregistration_sha256": "6a8962999fe3ec87074b728502e7524c30b566e927529db57590076855f8ba14",
+  "source_selected_payload_sha256": "c9d0d960b59e103a01f163104bdb5a266373bd2543be9292275b720f2962be84",
+  "pre_registered_success_rule_passed": false,
+  "status": "frozen_secondary_candidate_negative_validation_result",
+  "permitted_future_use": "unchanged_secondary_comparison_only_after_separate_official_test_authorisation"
+}

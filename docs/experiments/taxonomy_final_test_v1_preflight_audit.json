@@ -1,0 +1,24 @@
+{
+  "artifact_audit": {
+    "bytes": 8468719835,
+    "entries": 159,
+    "files": 459,
+    "hash_mismatch_count": 0,
+    "status": "pass",
+    "test_contract_count": 0
+  },
+  "include_official_test": false,
+  "job_counts": {
+    "analyse": 1,
+    "compose": 12,
+    "score": 93,
+    "seal": 1
+  },
+  "official_test_accessed": false,
+  "preregistration_sha256": "b622cae1ffec4e1af473dbf9f52cf5a7c4e79e15beb7e6c90b15d7663d8b11dc",
+  "protocol_id": "taxonomy_two_stage_final_test_v1",
+  "release_template_locked": true,
+  "schema_version": "taxonomy_final_test_preflight_v1",
+  "status": "pass",
+  "test_contract_count": 0
+}
