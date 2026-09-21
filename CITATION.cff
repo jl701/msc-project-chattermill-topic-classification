@@ -1,12 +1,12 @@
 cff-version: 1.2.0
 message: >-
   If you use this research code or its aggregate evidence, cite the dissertation
-  and identify the repository commit used.
+  and identify the repository commit used. Author information is temporarily
+  withheld for anonymous assessment.
 title: Generalising aspect-sentiment models to unseen aspects
 type: software
 authors:
-  - family-names: Liu
-    given-names: Jialin
+  - name: Anonymous author (identity withheld for assessment)
 repository-code: https://github.com/jl701/msc-project-chattermill-topic-classification
 version: 0.1.0
 date-released: 2026-09-17

@@ -177,7 +177,7 @@ the current project direction.
 ## Project and dissertation
 
 **From Supplied Candidates to Evolving Taxonomies: Generalising Fine-grained
-Aspect-Based Sentiment Models to Unseen Aspects** — Jialin Liu, UCL MSc Data
+Aspect-Based Sentiment Models to Unseen Aspects** — UCL MSc Data
 Science and Machine Learning. Academic supervisor: Professor Lewis Griffin.
 Industry supervisor: Dr Aji Ghose, Chattermill.
 
@@ -190,7 +190,8 @@ record, including aggregate results and the historical execution revisions.
 This is research software. No project-wide redistribution licence has yet been
 granted, so public visibility does not imply permission to copy, modify or
 redistribute the code. Dataset and model licences are separate. For attribution,
-include the dissertation title, author and the repository commit you used.
+include the dissertation title and the repository commit you used. Author
+information is temporarily withheld for anonymous assessment.
 
 The public tree deliberately excludes raw reviews, row-level predictions,
 checkpoints, adapters, credentials, cloud endpoints, private supervision notes
