@@ -21,6 +21,13 @@ Correctness checks compare the original full-grid scorer and decoder with condit
 python scripts/serve_chattermill.py --artifacts outputs/serving_20261109/artifacts.json --variant hybrid --pair-batch-size 4 --max-batch-tokens 4096 --request-batch-size 1 --queue-size 8 --timeout-s 120 --output-dir outputs/serving_20261109/example_server
 ```
 
+This example uses the default `--prefix-cache off`. The registered primary
+campaign explicitly used `--prefix-cache on`; its latency must not be attributed
+to the default uncached command. Prefix reuse is a separately evaluated
+configuration: the complete replay changed six of 957 hybrid prediction sets,
+even though its overall pair F1 was unchanged. The recorded comparison and
+deployment boundaries are documented in [the experiment results](results_20261109.md).
+
 The API binds only to `127.0.0.1`. `GET /health` reports readiness and `GET /metrics` reports runtime counts. `POST /predict` accepts only `request_id` and `text`. For example, this is a synthetic input rather than a dataset record:
 
 ```json

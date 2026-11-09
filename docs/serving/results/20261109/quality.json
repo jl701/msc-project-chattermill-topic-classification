@@ -1,0 +1,1012 @@
+{
+  "schema_version": "serving_public_quality_v1",
+  "scope": "Fixed l2-a01; historically exposed validation engineering replay, not a new blind test or the historical twelve-fold held-out mean.",
+  "fold_id": "l2-a01",
+  "selected_view": "successful_only",
+  "paired_view": "successful_only_common_subset",
+  "scale": "Fields f1_x100 and interval95_x100 use 0-100; differences are absolute F1 points.",
+  "bootstrap": {
+    "replicates": 2000,
+    "seed": 20261109,
+    "unit": "complete unique review",
+    "method": "paired percentile bootstrap; descriptive, no significance claim"
+  },
+  "coverage": {
+    "frozen_evaluation_reviews": 957,
+    "common_unique_attempted_reviews": 957,
+    "unattempted_evaluation_reviews": 0,
+    "complete_evaluation_coverage": true
+  },
+  "systems": {
+    "few_shot_on": {
+      "variant": "few_shot",
+      "attempts": 957,
+      "successful_attempts": 957,
+      "unique_successful_reviews": 957,
+      "scopes": {
+        "overall": {
+          "positive_review_count": 957,
+          "presence": {
+            "f1_x100": 65.32691763373903,
+            "interval95_x100": [
+              63.64634650812814,
+              67.05116678133916
+            ],
+            "tp": 1154,
+            "fp": 710,
+            "fn": 515,
+            "gold_support": 1669
+          },
+          "pair": {
+            "f1_x100": 59.006211180124225,
+            "interval95_x100": [
+              57.093199108025416,
+              60.83890168422589
+            ],
+            "tp": 1045,
+            "fp": 819,
+            "fn": 633,
+            "gold_support": 1678
+          }
+        },
+        "seen": {
+          "positive_review_count": 931,
+          "presence": {
+            "f1_x100": 65.23936961046685,
+            "interval95_x100": [
+              63.45496980199488,
+              67.05986434680035
+            ],
+            "tp": 1097,
+            "fp": 670,
+            "fn": 499,
+            "gold_support": 1596
+          },
+          "pair": {
+            "f1_x100": 58.89679715302491,
+            "interval95_x100": [
+              56.92854594330223,
+              60.87497491420971
+            ],
+            "tp": 993,
+            "fp": 774,
+            "fn": 612,
+            "gold_support": 1605
+          }
+        },
+        "heldout": {
+          "positive_review_count": 73,
+          "presence": {
+            "f1_x100": 67.05882352941175,
+            "interval95_x100": [
+              57.80133452302441,
+              74.61178563142835
+            ],
+            "tp": 57,
+            "fp": 40,
+            "fn": 16,
+            "gold_support": 73
+          },
+          "pair": {
+            "f1_x100": 61.1764705882353,
+            "interval95_x100": [
+              51.94453137224221,
+              69.8803177311014
+            ],
+            "tp": 52,
+            "fp": 45,
+            "fn": 21,
+            "gold_support": 73
+          }
+        }
+      }
+    },
+    "qlora_on": {
+      "variant": "qlora",
+      "attempts": 957,
+      "successful_attempts": 957,
+      "unique_successful_reviews": 957,
+      "scopes": {
+        "overall": {
+          "positive_review_count": 957,
+          "presence": {
+            "f1_x100": 62.28335625859698,
+            "interval95_x100": [
+              60.61081085939233,
+              63.89795904202106
+            ],
+            "tp": 1132,
+            "fp": 834,
+            "fn": 537,
+            "gold_support": 1669
+          },
+          "pair": {
+            "f1_x100": 59.103335155822855,
+            "interval95_x100": [
+              57.331965954360776,
+              60.99885013972985
+            ],
+            "tp": 1081,
+            "fp": 899,
+            "fn": 597,
+            "gold_support": 1678
+          }
+        },
+        "seen": {
+          "positive_review_count": 931,
+          "presence": {
+            "f1_x100": 61.86342592592593,
+            "interval95_x100": [
+              60.06993383571664,
+              63.579482133865326
+            ],
+            "tp": 1069,
+            "fp": 791,
+            "fn": 527,
+            "gold_support": 1596
+          },
+          "pair": {
+            "f1_x100": 58.82691201840138,
+            "interval95_x100": [
+              56.93423089563081,
+              60.75627887401143
+            ],
+            "tp": 1023,
+            "fp": 850,
+            "fn": 582,
+            "gold_support": 1605
+          }
+        },
+        "heldout": {
+          "positive_review_count": 73,
+          "presence": {
+            "f1_x100": 70.39106145251397,
+            "interval95_x100": [
+              62.42015629940823,
+              77.53348916659175
+            ],
+            "tp": 63,
+            "fp": 43,
+            "fn": 10,
+            "gold_support": 73
+          },
+          "pair": {
+            "f1_x100": 64.44444444444444,
+            "interval95_x100": [
+              55.42168674698795,
+              72.53934208940836
+            ],
+            "tp": 58,
+            "fp": 49,
+            "fn": 15,
+            "gold_support": 73
+          }
+        }
+      }
+    },
+    "hybrid_on": {
+      "variant": "hybrid",
+      "attempts": 957,
+      "successful_attempts": 957,
+      "unique_successful_reviews": 957,
+      "scopes": {
+        "overall": {
+          "positive_review_count": 957,
+          "presence": {
+            "f1_x100": 65.32691763373903,
+            "interval95_x100": [
+              63.590291540200305,
+              67.04533619486982
+            ],
+            "tp": 1154,
+            "fp": 710,
+            "fn": 515,
+            "gold_support": 1669
+          },
+          "pair": {
+            "f1_x100": 60.71829405162739,
+            "interval95_x100": [
+              58.82352941176471,
+              62.48611840990919
+            ],
+            "tp": 1082,
+            "fp": 804,
+            "fn": 596,
+            "gold_support": 1678
+          }
+        },
+        "seen": {
+          "positive_review_count": 931,
+          "presence": {
+            "f1_x100": 65.23936961046685,
+            "interval95_x100": [
+              63.450600969093514,
+              67.04651966185583
+            ],
+            "tp": 1097,
+            "fp": 670,
+            "fn": 499,
+            "gold_support": 1596
+          },
+          "pair": {
+            "f1_x100": 60.654288240495134,
+            "interval95_x100": [
+              58.67739146413864,
+              62.51132739751397
+            ],
+            "tp": 1029,
+            "fp": 759,
+            "fn": 576,
+            "gold_support": 1605
+          }
+        },
+        "heldout": {
+          "positive_review_count": 73,
+          "presence": {
+            "f1_x100": 67.05882352941175,
+            "interval95_x100": [
+              58.27641593357714,
+              75.0
+            ],
+            "tp": 57,
+            "fp": 40,
+            "fn": 16,
+            "gold_support": 73
+          },
+          "pair": {
+            "f1_x100": 61.98830409356725,
+            "interval95_x100": [
+              52.85646900269542,
+              70.58823529411765
+            ],
+            "tp": 53,
+            "fp": 45,
+            "fn": 20,
+            "gold_support": 73
+          }
+        }
+      }
+    },
+    "few_shot_off": {
+      "variant": "few_shot",
+      "attempts": 957,
+      "successful_attempts": 957,
+      "unique_successful_reviews": 957,
+      "scopes": {
+        "overall": {
+          "positive_review_count": 957,
+          "presence": {
+            "f1_x100": 65.32691763373903,
+            "interval95_x100": [
+              63.644027518846755,
+              66.93071555239544
+            ],
+            "tp": 1154,
+            "fp": 710,
+            "fn": 515,
+            "gold_support": 1669
+          },
+          "pair": {
+            "f1_x100": 58.94974590626765,
+            "interval95_x100": [
+              57.00400228702116,
+              60.82168472338515
+            ],
+            "tp": 1044,
+            "fp": 820,
+            "fn": 634,
+            "gold_support": 1678
+          }
+        },
+        "seen": {
+          "positive_review_count": 931,
+          "presence": {
+            "f1_x100": 65.21997621878715,
+            "interval95_x100": [
+              63.46769957263786,
+              66.90080046248143
+            ],
+            "tp": 1097,
+            "fp": 671,
+            "fn": 499,
+            "gold_support": 1596
+          },
+          "pair": {
+            "f1_x100": 58.82004150607768,
+            "interval95_x100": [
+              56.82413877681647,
+              60.76790418089667
+            ],
+            "tp": 992,
+            "fp": 776,
+            "fn": 613,
+            "gold_support": 1605
+          }
+        },
+        "heldout": {
+          "positive_review_count": 73,
+          "presence": {
+            "f1_x100": 67.45562130177515,
+            "interval95_x100": [
+              58.57123125493292,
+              75.30904280904281
+            ],
+            "tp": 57,
+            "fp": 39,
+            "fn": 16,
+            "gold_support": 73
+          },
+          "pair": {
+            "f1_x100": 61.53846153846154,
+            "interval95_x100": [
+              51.65456099124118,
+              70.05076142131979
+            ],
+            "tp": 52,
+            "fp": 44,
+            "fn": 21,
+            "gold_support": 73
+          }
+        }
+      }
+    },
+    "hybrid_off": {
+      "variant": "hybrid",
+      "attempts": 957,
+      "successful_attempts": 957,
+      "unique_successful_reviews": 957,
+      "scopes": {
+        "overall": {
+          "positive_review_count": 957,
+          "presence": {
+            "f1_x100": 65.32691763373903,
+            "interval95_x100": [
+              63.689416918596734,
+              66.91451947539375
+            ],
+            "tp": 1154,
+            "fp": 710,
+            "fn": 515,
+            "gold_support": 1669
+          },
+          "pair": {
+            "f1_x100": 60.71829405162739,
+            "interval95_x100": [
+              58.813282146342985,
+              62.646617105433165
+            ],
+            "tp": 1082,
+            "fp": 804,
+            "fn": 596,
+            "gold_support": 1678
+          }
+        },
+        "seen": {
+          "positive_review_count": 931,
+          "presence": {
+            "f1_x100": 65.21997621878715,
+            "interval95_x100": [
+              63.498333840657494,
+              66.88616185325033
+            ],
+            "tp": 1097,
+            "fp": 671,
+            "fn": 499,
+            "gold_support": 1596
+          },
+          "pair": {
+            "f1_x100": 60.63641720683559,
+            "interval95_x100": [
+              58.73692882568861,
+              62.5447789352383
+            ],
+            "tp": 1029,
+            "fp": 760,
+            "fn": 576,
+            "gold_support": 1605
+          }
+        },
+        "heldout": {
+          "positive_review_count": 73,
+          "presence": {
+            "f1_x100": 67.45562130177515,
+            "interval95_x100": [
+              59.1174130484201,
+              74.86048456965315
+            ],
+            "tp": 57,
+            "fp": 39,
+            "fn": 16,
+            "gold_support": 73
+          },
+          "pair": {
+            "f1_x100": 62.35294117647059,
+            "interval95_x100": [
+              53.235588744194516,
+              70.33163265306122
+            ],
+            "tp": 53,
+            "fp": 44,
+            "fn": 20,
+            "gold_support": 73
+          }
+        }
+      }
+    }
+  },
+  "paired_differences": [
+    {
+      "left": "hybrid_on",
+      "right": "few_shot_on",
+      "direction": "left_minus_right",
+      "unique_reviews": 957,
+      "scopes": {
+        "overall": {
+          "presence": {
+            "difference_points": -0.0,
+            "interval95_points": [
+              -0.0,
+              -0.0
+            ]
+          },
+          "pair": {
+            "difference_points": 1.7120828715031622,
+            "interval95_points": [
+              0.745720521607161,
+              2.7108514928753404
+            ]
+          }
+        },
+        "seen": {
+          "presence": {
+            "difference_points": -0.0,
+            "interval95_points": [
+              -0.0,
+              -0.0
+            ]
+          },
+          "pair": {
+            "difference_points": 1.7574910874702199,
+            "interval95_points": [
+              0.771636803175844,
+              2.787582104712525
+            ]
+          }
+        },
+        "heldout": {
+          "presence": {
+            "difference_points": -0.0,
+            "interval95_points": [
+              -0.0,
+              -0.0
+            ]
+          },
+          "pair": {
+            "difference_points": 0.8118335053319492,
+            "interval95_points": [
+              -4.366888915821401,
+              6.2574932992014745
+            ]
+          }
+        }
+      }
+    },
+    {
+      "left": "hybrid_on",
+      "right": "qlora_on",
+      "direction": "left_minus_right",
+      "unique_reviews": 957,
+      "scopes": {
+        "overall": {
+          "presence": {
+            "difference_points": 3.0435613751420565,
+            "interval95_points": [
+              1.448427337323213,
+              4.6785061370579095
+            ]
+          },
+          "pair": {
+            "difference_points": 1.6149588958045302,
+            "interval95_points": [
+              -0.032071165464366835,
+              3.266127904480905
+            ]
+          }
+        },
+        "seen": {
+          "presence": {
+            "difference_points": 3.3759436845409163,
+            "interval95_points": [
+              1.7040863144249039,
+              5.163635741907545
+            ]
+          },
+          "pair": {
+            "difference_points": 1.8273762220937573,
+            "interval95_points": [
+              0.07516269058113784,
+              3.5647427231061894
+            ]
+          }
+        },
+        "heldout": {
+          "presence": {
+            "difference_points": -3.3322379231022103,
+            "interval95_points": [
+              -10.327613865485386,
+              3.7058476539028904
+            ]
+          },
+          "pair": {
+            "difference_points": -2.4561403508772006,
+            "interval95_points": [
+              -9.006560480318736,
+              4.044026088890032
+            ]
+          }
+        }
+      }
+    },
+    {
+      "left": "qlora_on",
+      "right": "few_shot_on",
+      "direction": "left_minus_right",
+      "unique_reviews": 957,
+      "scopes": {
+        "overall": {
+          "presence": {
+            "difference_points": -3.0435613751420565,
+            "interval95_points": [
+              -4.667517740121117,
+              -1.437670839637684
+            ]
+          },
+          "pair": {
+            "difference_points": 0.09712397569863196,
+            "interval95_points": [
+              -1.6855207358797257,
+              1.8420676577396946
+            ]
+          }
+        },
+        "seen": {
+          "presence": {
+            "difference_points": -3.3759436845409163,
+            "interval95_points": [
+              -5.057848151202723,
+              -1.7018956556150229
+            ]
+          },
+          "pair": {
+            "difference_points": -0.0698851346235374,
+            "interval95_points": [
+              -1.9346801294321587,
+              1.7371068012441446
+            ]
+          }
+        },
+        "heldout": {
+          "presence": {
+            "difference_points": 3.3322379231022103,
+            "interval95_points": [
+              -3.734887117888619,
+              10.06842376059301
+            ]
+          },
+          "pair": {
+            "difference_points": 3.26797385620915,
+            "interval95_points": [
+              -5.195846851277565,
+              11.473230717849072
+            ]
+          }
+        }
+      }
+    },
+    {
+      "left": "few_shot_on",
+      "right": "few_shot_off",
+      "direction": "left_minus_right",
+      "unique_reviews": 957,
+      "scopes": {
+        "overall": {
+          "presence": {
+            "difference_points": -0.0,
+            "interval95_points": [
+              -0.09190350854961112,
+              0.08982255488162866
+            ]
+          },
+          "pair": {
+            "difference_points": 0.05646527385657629,
+            "interval95_points": [
+              -0.06451181754985763,
+              0.20375065655231947
+            ]
+          }
+        },
+        "seen": {
+          "presence": {
+            "difference_points": 0.019393391679689564,
+            "interval95_points": [
+              -0.058856538417284554,
+              0.09853551965567364
+            ]
+          },
+          "pair": {
+            "difference_points": 0.07675564694723525,
+            "interval95_points": [
+              -0.035320246644467694,
+              0.23036292562618718
+            ]
+          }
+        },
+        "heldout": {
+          "presence": {
+            "difference_points": -0.39679777236338865,
+            "interval95_points": [
+              -1.2643466690104146,
+              -0.0
+            ]
+          },
+          "pair": {
+            "difference_points": -0.36199095022624306,
+            "interval95_points": [
+              -1.1560097031910013,
+              -0.0
+            ]
+          }
+        }
+      }
+    },
+    {
+      "left": "hybrid_on",
+      "right": "hybrid_off",
+      "direction": "left_minus_right",
+      "unique_reviews": 957,
+      "scopes": {
+        "overall": {
+          "presence": {
+            "difference_points": -0.0,
+            "interval95_points": [
+              -0.09157586245907649,
+              0.09060391831932274
+            ]
+          },
+          "pair": {
+            "difference_points": -0.0,
+            "interval95_points": [
+              -0.08456063254379528,
+              0.08341640447213444
+            ]
+          }
+        },
+        "seen": {
+          "presence": {
+            "difference_points": 0.019393391679689564,
+            "interval95_points": [
+              -0.05957063971126553,
+              0.09941818821026598
+            ]
+          },
+          "pair": {
+            "difference_points": 0.017871033659544455,
+            "interval95_points": [
+              -0.05479120664353686,
+              0.09182137875754781
+            ]
+          }
+        },
+        "heldout": {
+          "presence": {
+            "difference_points": -0.39679777236338865,
+            "interval95_points": [
+              -1.3810719675532883,
+              -0.0
+            ]
+          },
+          "pair": {
+            "difference_points": -0.36463708290334074,
+            "interval95_points": [
+              -1.2863382857162617,
+              -0.0
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "error_decomposition": {
+    "few_shot_on": {
+      "overall": {
+        "pair_fp_absent_aspect": 710,
+        "pair_fp_existing_aspect_wrong_or_extra_sentiment": 109,
+        "pair_fn_missed_aspect": 515,
+        "pair_fn_detected_aspect_missing_or_wrong_sentiment": 118,
+        "conditional_sentiment": {
+          "tp": 1045,
+          "fp": 109,
+          "fn": 118,
+          "gold_pair_support": 1163,
+          "predicted_pair_support": 1154,
+          "correctly_detected_aspect_instances": 1154,
+          "reviews_with_correctly_detected_aspect": 827,
+          "precision_x100": 90.55459272097053,
+          "recall_x100": 89.85382631126397,
+          "f1_x100": 90.20284851100561
+        }
+      },
+      "seen": {
+        "pair_fp_absent_aspect": 670,
+        "pair_fp_existing_aspect_wrong_or_extra_sentiment": 104,
+        "pair_fn_missed_aspect": 499,
+        "pair_fn_detected_aspect_missing_or_wrong_sentiment": 113,
+        "conditional_sentiment": {
+          "tp": 993,
+          "fp": 104,
+          "fn": 113,
+          "gold_pair_support": 1106,
+          "predicted_pair_support": 1097,
+          "correctly_detected_aspect_instances": 1097,
+          "reviews_with_correctly_detected_aspect": 794,
+          "precision_x100": 90.51959890610757,
+          "recall_x100": 89.78300180831826,
+          "f1_x100": 90.14979573309124
+        }
+      },
+      "heldout": {
+        "pair_fp_absent_aspect": 40,
+        "pair_fp_existing_aspect_wrong_or_extra_sentiment": 5,
+        "pair_fn_missed_aspect": 16,
+        "pair_fn_detected_aspect_missing_or_wrong_sentiment": 5,
+        "conditional_sentiment": {
+          "tp": 52,
+          "fp": 5,
+          "fn": 5,
+          "gold_pair_support": 57,
+          "predicted_pair_support": 57,
+          "correctly_detected_aspect_instances": 57,
+          "reviews_with_correctly_detected_aspect": 57,
+          "precision_x100": 91.22807017543859,
+          "recall_x100": 91.22807017543859,
+          "f1_x100": 91.22807017543859
+        }
+      }
+    },
+    "qlora_on": {
+      "overall": {
+        "pair_fp_absent_aspect": 837,
+        "pair_fp_existing_aspect_wrong_or_extra_sentiment": 62,
+        "pair_fn_missed_aspect": 541,
+        "pair_fn_detected_aspect_missing_or_wrong_sentiment": 56,
+        "conditional_sentiment": {
+          "tp": 1081,
+          "fp": 62,
+          "fn": 56,
+          "gold_pair_support": 1137,
+          "predicted_pair_support": 1143,
+          "correctly_detected_aspect_instances": 1132,
+          "reviews_with_correctly_detected_aspect": 726,
+          "precision_x100": 94.57567804024497,
+          "recall_x100": 95.07475813544414,
+          "f1_x100": 94.82456140350877
+        }
+      },
+      "seen": {
+        "pair_fp_absent_aspect": 794,
+        "pair_fp_existing_aspect_wrong_or_extra_sentiment": 56,
+        "pair_fn_missed_aspect": 531,
+        "pair_fn_detected_aspect_missing_or_wrong_sentiment": 51,
+        "conditional_sentiment": {
+          "tp": 1023,
+          "fp": 56,
+          "fn": 51,
+          "gold_pair_support": 1074,
+          "predicted_pair_support": 1079,
+          "correctly_detected_aspect_instances": 1069,
+          "reviews_with_correctly_detected_aspect": 689,
+          "precision_x100": 94.81000926784058,
+          "recall_x100": 95.25139664804469,
+          "f1_x100": 95.0301904319554
+        }
+      },
+      "heldout": {
+        "pair_fp_absent_aspect": 43,
+        "pair_fp_existing_aspect_wrong_or_extra_sentiment": 6,
+        "pair_fn_missed_aspect": 10,
+        "pair_fn_detected_aspect_missing_or_wrong_sentiment": 5,
+        "conditional_sentiment": {
+          "tp": 58,
+          "fp": 6,
+          "fn": 5,
+          "gold_pair_support": 63,
+          "predicted_pair_support": 64,
+          "correctly_detected_aspect_instances": 63,
+          "reviews_with_correctly_detected_aspect": 63,
+          "precision_x100": 90.625,
+          "recall_x100": 92.06349206349206,
+          "f1_x100": 91.33858267716536
+        }
+      }
+    },
+    "hybrid_on": {
+      "overall": {
+        "pair_fp_absent_aspect": 719,
+        "pair_fp_existing_aspect_wrong_or_extra_sentiment": 85,
+        "pair_fn_missed_aspect": 515,
+        "pair_fn_detected_aspect_missing_or_wrong_sentiment": 81,
+        "conditional_sentiment": {
+          "tp": 1082,
+          "fp": 85,
+          "fn": 81,
+          "gold_pair_support": 1163,
+          "predicted_pair_support": 1167,
+          "correctly_detected_aspect_instances": 1154,
+          "reviews_with_correctly_detected_aspect": 827,
+          "precision_x100": 92.71636675235648,
+          "recall_x100": 93.03525365434223,
+          "f1_x100": 92.87553648068669
+        }
+      },
+      "seen": {
+        "pair_fp_absent_aspect": 679,
+        "pair_fp_existing_aspect_wrong_or_extra_sentiment": 80,
+        "pair_fn_missed_aspect": 499,
+        "pair_fn_detected_aspect_missing_or_wrong_sentiment": 77,
+        "conditional_sentiment": {
+          "tp": 1029,
+          "fp": 80,
+          "fn": 77,
+          "gold_pair_support": 1106,
+          "predicted_pair_support": 1109,
+          "correctly_detected_aspect_instances": 1097,
+          "reviews_with_correctly_detected_aspect": 794,
+          "precision_x100": 92.7862939585212,
+          "recall_x100": 93.0379746835443,
+          "f1_x100": 92.91196388261851
+        }
+      },
+      "heldout": {
+        "pair_fp_absent_aspect": 40,
+        "pair_fp_existing_aspect_wrong_or_extra_sentiment": 5,
+        "pair_fn_missed_aspect": 16,
+        "pair_fn_detected_aspect_missing_or_wrong_sentiment": 4,
+        "conditional_sentiment": {
+          "tp": 53,
+          "fp": 5,
+          "fn": 4,
+          "gold_pair_support": 57,
+          "predicted_pair_support": 58,
+          "correctly_detected_aspect_instances": 57,
+          "reviews_with_correctly_detected_aspect": 57,
+          "precision_x100": 91.37931034482759,
+          "recall_x100": 92.98245614035088,
+          "f1_x100": 92.17391304347827
+        }
+      }
+    },
+    "few_shot_off": {
+      "overall": {
+        "pair_fp_absent_aspect": 710,
+        "pair_fp_existing_aspect_wrong_or_extra_sentiment": 110,
+        "pair_fn_missed_aspect": 515,
+        "pair_fn_detected_aspect_missing_or_wrong_sentiment": 119,
+        "conditional_sentiment": {
+          "tp": 1044,
+          "fp": 110,
+          "fn": 119,
+          "gold_pair_support": 1163,
+          "predicted_pair_support": 1154,
+          "correctly_detected_aspect_instances": 1154,
+          "reviews_with_correctly_detected_aspect": 827,
+          "precision_x100": 90.46793760831889,
+          "recall_x100": 89.76784178847808,
+          "f1_x100": 90.11652999568408
+        }
+      },
+      "seen": {
+        "pair_fp_absent_aspect": 671,
+        "pair_fp_existing_aspect_wrong_or_extra_sentiment": 105,
+        "pair_fn_missed_aspect": 499,
+        "pair_fn_detected_aspect_missing_or_wrong_sentiment": 114,
+        "conditional_sentiment": {
+          "tp": 992,
+          "fp": 105,
+          "fn": 114,
+          "gold_pair_support": 1106,
+          "predicted_pair_support": 1097,
+          "correctly_detected_aspect_instances": 1097,
+          "reviews_with_correctly_detected_aspect": 794,
+          "precision_x100": 90.42844120328168,
+          "recall_x100": 89.69258589511753,
+          "f1_x100": 90.05901044030867
+        }
+      },
+      "heldout": {
+        "pair_fp_absent_aspect": 39,
+        "pair_fp_existing_aspect_wrong_or_extra_sentiment": 5,
+        "pair_fn_missed_aspect": 16,
+        "pair_fn_detected_aspect_missing_or_wrong_sentiment": 5,
+        "conditional_sentiment": {
+          "tp": 52,
+          "fp": 5,
+          "fn": 5,
+          "gold_pair_support": 57,
+          "predicted_pair_support": 57,
+          "correctly_detected_aspect_instances": 57,
+          "reviews_with_correctly_detected_aspect": 57,
+          "precision_x100": 91.22807017543859,
+          "recall_x100": 91.22807017543859,
+          "f1_x100": 91.22807017543859
+        }
+      }
+    },
+    "hybrid_off": {
+      "overall": {
+        "pair_fp_absent_aspect": 719,
+        "pair_fp_existing_aspect_wrong_or_extra_sentiment": 85,
+        "pair_fn_missed_aspect": 515,
+        "pair_fn_detected_aspect_missing_or_wrong_sentiment": 81,
+        "conditional_sentiment": {
+          "tp": 1082,
+          "fp": 85,
+          "fn": 81,
+          "gold_pair_support": 1163,
+          "predicted_pair_support": 1167,
+          "correctly_detected_aspect_instances": 1154,
+          "reviews_with_correctly_detected_aspect": 827,
+          "precision_x100": 92.71636675235648,
+          "recall_x100": 93.03525365434223,
+          "f1_x100": 92.87553648068669
+        }
+      },
+      "seen": {
+        "pair_fp_absent_aspect": 680,
+        "pair_fp_existing_aspect_wrong_or_extra_sentiment": 80,
+        "pair_fn_missed_aspect": 499,
+        "pair_fn_detected_aspect_missing_or_wrong_sentiment": 77,
+        "conditional_sentiment": {
+          "tp": 1029,
+          "fp": 80,
+          "fn": 77,
+          "gold_pair_support": 1106,
+          "predicted_pair_support": 1109,
+          "correctly_detected_aspect_instances": 1097,
+          "reviews_with_correctly_detected_aspect": 794,
+          "precision_x100": 92.7862939585212,
+          "recall_x100": 93.0379746835443,
+          "f1_x100": 92.91196388261851
+        }
+      },
+      "heldout": {
+        "pair_fp_absent_aspect": 39,
+        "pair_fp_existing_aspect_wrong_or_extra_sentiment": 5,
+        "pair_fn_missed_aspect": 16,
+        "pair_fn_detected_aspect_missing_or_wrong_sentiment": 4,
+        "conditional_sentiment": {
+          "tp": 53,
+          "fp": 5,
+          "fn": 4,
+          "gold_pair_support": 57,
+          "predicted_pair_support": 58,
+          "correctly_detected_aspect_instances": 57,
+          "reviews_with_correctly_detected_aspect": 57,
+          "precision_x100": 91.37931034482759,
+          "recall_x100": 92.98245614035088,
+          "f1_x100": 92.17391304347827
+        }
+      }
+    }
+  },
+  "diagnostic_scope": "Pair FP/FN, not erroneous-review counts. Conditional sentiment excludes missed and falsely detected aspects and cannot replace end-to-end pair F1.",
+  "heldout_support": {
+    "gold_positive_reviews": 73,
+    "negative_pairs": 48,
+    "neutral_pairs": 20,
+    "positive_pairs": 5
+  },
+  "analysis_environment": {
+    "python": "3.13.11",
+    "numpy": "2.2.6"
+  }
+}

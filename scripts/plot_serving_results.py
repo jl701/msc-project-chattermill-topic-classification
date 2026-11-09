@@ -1,7 +1,7 @@
 """Plot six Chinese report figures from completed, aggregate-only serving evidence.
 
 This script never imports model code, reads request records, or runs experiments.
-All four aggregate inputs must exist and pass completeness checks before output.
+All five aggregate inputs must exist and pass completeness checks before output.
 Only PNG images and a provenance/plot-data manifest are written, to a new folder.
 """
 
@@ -22,6 +22,7 @@ SOURCES = {
     "comparison": "aggregate_comparison/campaign_aggregate.json",
     "intervals": "quality_intervals.json",
     "resilience": "resilience_analysis/resilience_analysis.json",
+    "resilience_campaign": "aggregate_resilience/campaign_aggregate.json",
 }
 VARIANTS = ("few_shot", "qlora", "hybrid")
 LABELS = {"few_shot": "Few-shot", "qlora": "QLoRA", "hybrid": "Hybrid"}
@@ -149,6 +150,7 @@ def prepare(study_root):
         hashes[relative] = hashlib.sha256(raw).hexdigest()
     primary = complete_campaign(documents["primary"], "primary campaign")
     comparison = complete_campaign(documents["comparison"], "comparison campaign")
+    resilience_runs = complete_campaign(documents["resilience_campaign"], "resilience campaign")
     intervals = documents["intervals"]
     require(intervals.get("schema_version") == "chattermill_serving_quality_intervals_v1",
             "Unsupported quality interval schema")
@@ -220,6 +222,16 @@ def prepare(study_root):
     soak = single(resilience["soak"], "soak run")
     require(soak["run"].startswith("hybrid_resilience__"), "Soak figure requires the Hybrid campaign")
     require(soak["registered_duration_s"] == 3600, "Soak must cover the registered 60 minutes")
+    soak_run = single([row for row in resilience_runs if row["run"] == soak["run"]], "soak aggregate run")
+    require(soak_run["variant"] == "hybrid" and soak_run["client_mode"] == "open", "Wrong soak identity")
+    capacity_rows = [row for row in primary if row.get("variant") == "hybrid"
+                     and row.get("purpose") == "closed_load" and row.get("client_concurrency") == 1]
+    require(len(capacity_rows) == 3, "Soak capacity reference requires three closed-C1 repeats")
+    capacity = statistics.median(performance_number(row, "successful_reviews_per_second") for row in capacity_rows)
+    rate = number(soak_run["offered_reviews_per_second"], "soak offered rate")
+    fraction = rate / capacity
+    require(math.isclose(fraction, .7, rel_tol=0, abs_tol=1e-12), "Original soak must use 70% capacity")
+    require(soak_run["performance"]["attempts"] == soak["summary"]["attempts"], "Soak aggregates disagree")
     soak_data = []
     for row in windows_checked(soak["windows"], 300, duration=3600):
         soak_data.append({"start_min": row["window_start_s"] / 60,
@@ -247,7 +259,8 @@ def prepare(study_root):
     return {"review_count": review_count, "bootstrap_replicates": intervals["bootstrap_replicates"],
             "settings": settings[0], "quality": quality, "quality_http": http,
             "closed": pressure_data(primary, "closed"), "open": pressure_data(primary, "open"),
-            "soak": soak_data, "shift": shift_data, "js_threshold_bits": threshold}, hashes
+            "soak": soak_data, "soak_capacity_fraction": fraction, "soak_offered_rate": rate,
+            "shift": shift_data, "js_threshold_bits": threshold}, hashes
 
 
 def configure_matplotlib():
@@ -402,7 +415,7 @@ def soak_figure(plt, data):
     axes[0].plot(x, [r["http_p95_s"] for r in rows], "o-", color="#3378A8", label="HTTP P95", markersize=4)
     axes[0].plot(x, [r["queue_p95_s"] for r in rows], "s-", color="#C47828", label="排队 P95", markersize=4)
     axes[0].set_ylabel("延迟（秒）")
-    axes[0].legend(ncols=2, frameon=False, loc="upper right")
+    axes[0].legend(ncols=2, frameon=False, loc="lower right", bbox_to_anchor=(1, 1.01))
     for ax, field, color, ylabel in [(axes[1], "gpu_memory_mib", "#23876A", "设备显存（MiB）"),
                                      (axes[2], "gpu_temperature_c", "#9E5E87", "设备温度（°C）")]:
         ax.plot(x, [r[field]["mean"] for r in rows], "o-", color=color, markersize=4)
@@ -413,7 +426,7 @@ def soak_figure(plt, data):
     axes[-1].set_xlim(0, 60)
     axes[-1].set_xticks(range(0, 61, 10))
     axes[-1].set_xlabel("持续运行时间（分钟；点位于各 5 分钟窗口中心）")
-    finish(fig, "Hybrid 连续运行 60 分钟：延迟、显存与温度",
+    finish(fig, f"Hybrid：{data['soak_capacity_fraction']:.0%} 容量连续运行 60 分钟",
            "延迟和排队时间按计划到达窗口分组，末尾窗口包含结束后的排空结果；只统计成功请求。\n"
            "设备指标为窗口内采样均值，阴影为采样最小–最大值；采样峰值不是连续真实峰值。\n"
            "显存与温度由设备驱动报告，覆盖整块 GPU，不等于服务独占显存或模型内存。",
@@ -434,11 +447,11 @@ def shift_figure(plt, data):
                             s=25, facecolor=fill, edgecolor="#23876A", label=label, zorder=3)
     axes[0].axhline(data["js_threshold_bits"], linestyle="--", color="#AA4A41", linewidth=1.3,
                    label="描述性阈值 0.1 bits")
-    axes[0].set_ylabel("输入长度 JS 散度（bits）")
+    axes[0].set_ylabel("输入长度 JS 散度\n（bits）", labelpad=13)
     axes[0].set_ylim(bottom=0)
     axes[0].legend(frameon=False, ncols=2, fontsize=8, loc="upper left", bbox_to_anchor=(0, 1.44))
     axes[1].plot(x, [r["http_p95_s"] for r in rows], "o-", color="#3378A8", markersize=4)
-    axes[1].set_ylabel("成功请求 HTTP P95（秒）")
+    axes[1].set_ylabel("成功请求 HTTP P95\n（秒）", labelpad=13)
     axes[1].set_ylim(bottom=0)
     axes[1].set_xlim(0, rows[-1]["end_min"])
     axes[1].set_xlabel("运行时间（分钟；每点覆盖 60 秒计划到达窗口）")

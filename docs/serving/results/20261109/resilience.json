@@ -1,0 +1,2753 @@
+{
+  "schema_version": "serving_public_resilience_v1",
+  "delayed_label_f1_scale": "0-1 in input_shift diagnostic fields; quality.json separately uses explicitly named x100 fields.",
+  "scope": "Historical validation-derived development pool of 100 reviews, repeatedly replayed; request counts are not independent labelled samples.",
+  "window_scope": "Latency/error/queue windows are scheduled-arrival cohorts; completion throughput counts actual completions in each wall window. Device values are interval samples, not continuous process peaks.",
+  "rules": {
+    "soak_window_seconds": 300,
+    "shift_window_seconds": 60,
+    "input_length_js_threshold_bits": 0.1,
+    "recovery_consecutive_successes": 3,
+    "baseline_min_successful_requests": 10,
+    "latency_band_multiplier": 1.1,
+    "queue_band_floor_ms": 100.0
+  },
+  "soaks": {
+    "original_70pct": {
+      "selection": "Registered before the original campaign.",
+      "capacity_fraction": 0.7,
+      "offered_reviews_per_second": 0.7852086639484651,
+      "registered_duration_seconds": 3600.0,
+      "performance": {
+        "attempts": 2827,
+        "sent": 2827,
+        "successful": 2827,
+        "failed": 0,
+        "success_rate": 1.0,
+        "error_rate": 0.0,
+        "wall_seconds_including_drain": 3600.0081711999956,
+        "successful_reviews_per_second": 0.785275995375775,
+        "successful_latency": {
+          "count": 2827,
+          "mean_ms": 1093.6696424125835,
+          "p50_ms": 894.5106999599375,
+          "p95_ms": 2136.9805400143373,
+          "p99_ms": 3777.7138599683512,
+          "max_ms": 4118.642700021155
+        },
+        "successful_latency_from_scheduled_arrival": {
+          "count": 2827,
+          "mean_ms": 1102.06313018732,
+          "p50_ms": 902.9800833750414,
+          "p95_ms": 2141.5457403331397,
+          "p99_ms": 3788.4799905316913,
+          "max_ms": 4122.837974237882
+        },
+        "response_budgets_seconds": {
+          "1": {
+            "met": 1872,
+            "fraction_of_all_attempts": 0.6621860629642731
+          },
+          "2": {
+            "met": 2646,
+            "fraction_of_all_attempts": 0.9359745313052706
+          },
+          "5": {
+            "met": 2827,
+            "fraction_of_all_attempts": 1.0
+          },
+          "10": {
+            "met": 2827,
+            "fraction_of_all_attempts": 1.0
+          },
+          "30": {
+            "met": 2827,
+            "fraction_of_all_attempts": 1.0
+          },
+          "60": {
+            "met": 2827,
+            "fraction_of_all_attempts": 1.0
+          }
+        },
+        "failure_counts": {}
+      },
+      "unique_development_reviews": 100,
+      "repeat_consistency": {
+        "attempts": 2827,
+        "successful_attempts": 2827,
+        "failed_attempts": 0,
+        "unique_attempted_reviews": 100,
+        "unique_successful_reviews": 100,
+        "reviews_with_repeated_successful_deliveries": 100,
+        "repeated_successful_deliveries_after_first": 2727,
+        "reviews_with_differing_prediction_sets": 0,
+        "repeated_deliveries_differing_from_first": 0
+      },
+      "whole_run_sampled_device_metrics": {
+        "gpu_memory_used_mib": {
+          "n": 719,
+          "mean": 3805.173852573018,
+          "min": 3508.0,
+          "max": 3815.0,
+          "p50": 3815.0,
+          "p95": 3815.0
+        },
+        "gpu_temperature_c": {
+          "n": 719,
+          "mean": 67.21279554937414,
+          "min": 58.0,
+          "max": 74.0,
+          "p50": 69.0,
+          "p95": 71.10000000000002
+        },
+        "gpu_utilisation_percent": {
+          "n": 719,
+          "mean": 63.767732962447845,
+          "min": 0.0,
+          "max": 100.0,
+          "p50": 87.0,
+          "p95": 99.0
+        },
+        "gpu_power_draw_w": {
+          "n": 719,
+          "mean": 47.939596662030596,
+          "min": 8.22,
+          "max": 83.2,
+          "p50": 52.54,
+          "p95": 71.331
+        },
+        "gpu_sm_clock_mhz": {
+          "n": 719,
+          "mean": 1883.9582753824757,
+          "min": 187.0,
+          "max": 2617.0,
+          "p50": 2242.0,
+          "p95": 2542.0
+        },
+        "gpu_memory_clock_mhz": {
+          "n": 719,
+          "mean": 9355.867872044506,
+          "min": 9001.0,
+          "max": 11026.0,
+          "p50": 9001.0,
+          "p95": 11026.0
+        }
+      },
+      "whole_run_memory_sample_min_max_mib": [
+        3508.0,
+        3815.0
+      ],
+      "range_of_five_minute_window_memory_sample_maxima_mib": [
+        3814.0,
+        3815.0
+      ],
+      "windows": [
+        {
+          "window_start_s": 0,
+          "window_end_s": 300,
+          "attempts": 236,
+          "sent": 236,
+          "successful": 236,
+          "failed": 0,
+          "success_rate": 1.0,
+          "unique_attempted_review_count": 100,
+          "successful_latency": {
+            "count": 236,
+            "mean_ms": 1077.310732203009,
+            "p50_ms": 879.710300010629,
+            "p95_ms": 2058.634950008127,
+            "p99_ms": 3694.8434049991197,
+            "max_ms": 4062.8425999893807
+          },
+          "successful_scheduled_latency": {
+            "count": 236,
+            "mean_ms": 1085.4695603315038,
+            "p50_ms": 891.8498880590241,
+            "p95_ms": 2064.6205236996734,
+            "p99_ms": 3698.7336346269763,
+            "max_ms": 4076.718195053246
+          },
+          "successful_queue_wait": {
+            "count": 236,
+            "mean_ms": 120.22411949085111,
+            "p50_ms": 0.062050006818026304,
+            "p95_ms": 780.7408499938902,
+            "p99_ms": 2413.9842899807268,
+            "max_ms": 2798.044099996332
+          },
+          "failure_counts": {},
+          "successful_completions_in_wall_window": 235,
+          "completion_throughput_reviews_per_second": 0.7833333333333333,
+          "cohort_completions_after_window_end": 1,
+          "telemetry_scope": "Approximately run-aligned by UTC: config.utc_start is recorded just before the client monotonic epoch; telemetry is sampled every few seconds. Includes client drain.",
+          "sampled_device_metrics": {
+            "gpu_memory_used_mib": {
+              "n": 60,
+              "mean": 3701.8,
+              "min": 3508.0,
+              "max": 3814.0,
+              "p50": 3814.0,
+              "p95": 3814.0
+            },
+            "gpu_temperature_c": {
+              "n": 60,
+              "mean": 66.16666666666667,
+              "min": 58.0,
+              "max": 71.0,
+              "p50": 68.0,
+              "p95": 70.0
+            }
+          }
+        },
+        {
+          "window_start_s": 300,
+          "window_end_s": 600,
+          "attempts": 236,
+          "sent": 236,
+          "successful": 236,
+          "failed": 0,
+          "success_rate": 1.0,
+          "unique_attempted_review_count": 100,
+          "successful_latency": {
+            "count": 236,
+            "mean_ms": 1047.123112712821,
+            "p50_ms": 877.5575500039849,
+            "p95_ms": 1853.9163500099676,
+            "p99_ms": 3591.2132700061193,
+            "max_ms": 3933.085900032893
+          },
+          "successful_scheduled_latency": {
+            "count": 236,
+            "mean_ms": 1055.7955431901187,
+            "p50_ms": 885.6071091958029,
+            "p95_ms": 1859.9366068332586,
+            "p99_ms": 3603.104576880466,
+            "max_ms": 3947.609033008746
+          },
+          "successful_queue_wait": {
+            "count": 236,
+            "mean_ms": 104.66717881391267,
+            "p50_ms": 0.05879998207092285,
+            "p95_ms": 569.7979500255315,
+            "p99_ms": 2324.3373199919006,
+            "max_ms": 2656.6501000197604
+          },
+          "failure_counts": {},
+          "successful_completions_in_wall_window": 236,
+          "completion_throughput_reviews_per_second": 0.7866666666666666,
+          "cohort_completions_after_window_end": 1,
+          "telemetry_scope": "Approximately run-aligned by UTC: config.utc_start is recorded just before the client monotonic epoch; telemetry is sampled every few seconds. Includes client drain.",
+          "sampled_device_metrics": {
+            "gpu_memory_used_mib": {
+              "n": 60,
+              "mean": 3814.0,
+              "min": 3814.0,
+              "max": 3814.0,
+              "p50": 3814.0,
+              "p95": 3814.0
+            },
+            "gpu_temperature_c": {
+              "n": 60,
+              "mean": 66.55,
+              "min": 59.0,
+              "max": 72.0,
+              "p50": 69.0,
+              "p95": 71.0
+            }
+          }
+        },
+        {
+          "window_start_s": 600,
+          "window_end_s": 900,
+          "attempts": 235,
+          "sent": 235,
+          "successful": 235,
+          "failed": 0,
+          "success_rate": 1.0,
+          "unique_attempted_review_count": 100,
+          "successful_latency": {
+            "count": 235,
+            "mean_ms": 1116.5166029803197,
+            "p50_ms": 882.9952999949455,
+            "p95_ms": 2411.0706900130067,
+            "p99_ms": 3846.4677800028576,
+            "max_ms": 3972.4379999679513
+          },
+          "successful_scheduled_latency": {
+            "count": 235,
+            "mean_ms": 1124.6172377921255,
+            "p50_ms": 891.5823615028557,
+            "p95_ms": 2417.3463103995728,
+            "p99_ms": 3856.7343288279462,
+            "max_ms": 3973.9245519435826
+          },
+          "successful_queue_wait": {
+            "count": 235,
+            "mean_ms": 156.5433651065216,
+            "p50_ms": 0.06150000263005495,
+            "p95_ms": 1129.0501299954526,
+            "p99_ms": 2570.8673420117693,
+            "max_ms": 2690.9987999824807
+          },
+          "failure_counts": {},
+          "successful_completions_in_wall_window": 236,
+          "completion_throughput_reviews_per_second": 0.7866666666666666,
+          "cohort_completions_after_window_end": 0,
+          "telemetry_scope": "Approximately run-aligned by UTC: config.utc_start is recorded just before the client monotonic epoch; telemetry is sampled every few seconds. Includes client drain.",
+          "sampled_device_metrics": {
+            "gpu_memory_used_mib": {
+              "n": 60,
+              "mean": 3814.0,
+              "min": 3814.0,
+              "max": 3814.0,
+              "p50": 3814.0,
+              "p95": 3814.0
+            },
+            "gpu_temperature_c": {
+              "n": 60,
+              "mean": 66.7,
+              "min": 59.0,
+              "max": 71.0,
+              "p50": 69.0,
+              "p95": 71.0
+            }
+          }
+        },
+        {
+          "window_start_s": 900,
+          "window_end_s": 1200,
+          "attempts": 236,
+          "sent": 236,
+          "successful": 236,
+          "failed": 0,
+          "success_rate": 1.0,
+          "unique_attempted_review_count": 100,
+          "successful_latency": {
+            "count": 236,
+            "mean_ms": 1051.344525000925,
+            "p50_ms": 878.5334500134923,
+            "p95_ms": 1883.27502500033,
+            "p99_ms": 3603.0436899745837,
+            "max_ms": 3946.3006999576464
+          },
+          "successful_scheduled_latency": {
+            "count": 236,
+            "mean_ms": 1059.36239161273,
+            "p50_ms": 885.4440183093288,
+            "p95_ms": 1894.5545980102452,
+            "p99_ms": 3608.3227716372508,
+            "max_ms": 3954.434008797648
+          },
+          "successful_queue_wait": {
+            "count": 236,
+            "mean_ms": 103.77897838746213,
+            "p50_ms": 0.05954998778179288,
+            "p95_ms": 597.536225017393,
+            "p99_ms": 2322.552204999374,
+            "max_ms": 2673.9500999683514
+          },
+          "failure_counts": {},
+          "successful_completions_in_wall_window": 235,
+          "completion_throughput_reviews_per_second": 0.7833333333333333,
+          "cohort_completions_after_window_end": 1,
+          "telemetry_scope": "Approximately run-aligned by UTC: config.utc_start is recorded just before the client monotonic epoch; telemetry is sampled every few seconds. Includes client drain.",
+          "sampled_device_metrics": {
+            "gpu_memory_used_mib": {
+              "n": 60,
+              "mean": 3814.0,
+              "min": 3814.0,
+              "max": 3814.0,
+              "p50": 3814.0,
+              "p95": 3814.0
+            },
+            "gpu_temperature_c": {
+              "n": 60,
+              "mean": 67.41666666666667,
+              "min": 60.0,
+              "max": 72.0,
+              "p50": 69.0,
+              "p95": 71.05
+            }
+          }
+        },
+        {
+          "window_start_s": 1200,
+          "window_end_s": 1500,
+          "attempts": 235,
+          "sent": 235,
+          "successful": 235,
+          "failed": 0,
+          "success_rate": 1.0,
+          "unique_attempted_review_count": 100,
+          "successful_latency": {
+            "count": 235,
+            "mean_ms": 1056.019319574091,
+            "p50_ms": 873.3529999735765,
+            "p95_ms": 1965.9561499662248,
+            "p99_ms": 3679.5296019676603,
+            "max_ms": 4069.7322000050917
+          },
+          "successful_scheduled_latency": {
+            "count": 235,
+            "mean_ms": 1064.310343077951,
+            "p50_ms": 880.7140371422975,
+            "p95_ms": 1979.1559052443533,
+            "p99_ms": 3689.4605693533454,
+            "max_ms": 4077.609846748146
+          },
+          "successful_queue_wait": {
+            "count": 235,
+            "mean_ms": 111.00320212538057,
+            "p50_ms": 0.056100019719451666,
+            "p95_ms": 688.3227499842192,
+            "p99_ms": 2398.4809860133096,
+            "max_ms": 2789.1870999592356
+          },
+          "failure_counts": {},
+          "successful_completions_in_wall_window": 235,
+          "completion_throughput_reviews_per_second": 0.7833333333333333,
+          "cohort_completions_after_window_end": 1,
+          "telemetry_scope": "Approximately run-aligned by UTC: config.utc_start is recorded just before the client monotonic epoch; telemetry is sampled every few seconds. Includes client drain.",
+          "sampled_device_metrics": {
+            "gpu_memory_used_mib": {
+              "n": 60,
+              "mean": 3814.0,
+              "min": 3814.0,
+              "max": 3814.0,
+              "p50": 3814.0,
+              "p95": 3814.0
+            },
+            "gpu_temperature_c": {
+              "n": 60,
+              "mean": 66.63333333333334,
+              "min": 60.0,
+              "max": 73.0,
+              "p50": 68.0,
+              "p95": 71.0
+            }
+          }
+        },
+        {
+          "window_start_s": 1500,
+          "window_end_s": 1800,
+          "attempts": 236,
+          "sent": 236,
+          "successful": 236,
+          "failed": 0,
+          "success_rate": 1.0,
+          "unique_attempted_review_count": 100,
+          "successful_latency": {
+            "count": 236,
+            "mean_ms": 1124.451353813776,
+            "p50_ms": 898.5095000243746,
+            "p95_ms": 2399.6592999756103,
+            "p99_ms": 3831.6523300018175,
+            "max_ms": 4003.0285000102594
+          },
+          "successful_scheduled_latency": {
+            "count": 236,
+            "mean_ms": 1132.7335743572746,
+            "p50_ms": 905.68449877901,
+            "p95_ms": 2408.650125099655,
+            "p99_ms": 3842.273668639372,
+            "max_ms": 4011.926584652656
+          },
+          "successful_queue_wait": {
+            "count": 236,
+            "mean_ms": 158.09439067823527,
+            "p50_ms": 0.06664998363703489,
+            "p95_ms": 1111.928850034019,
+            "p99_ms": 2550.711005000632,
+            "max_ms": 2723.5301000182517
+          },
+          "failure_counts": {},
+          "successful_completions_in_wall_window": 236,
+          "completion_throughput_reviews_per_second": 0.7866666666666666,
+          "cohort_completions_after_window_end": 1,
+          "telemetry_scope": "Approximately run-aligned by UTC: config.utc_start is recorded just before the client monotonic epoch; telemetry is sampled every few seconds. Includes client drain.",
+          "sampled_device_metrics": {
+            "gpu_memory_used_mib": {
+              "n": 60,
+              "mean": 3814.45,
+              "min": 3814.0,
+              "max": 3815.0,
+              "p50": 3814.0,
+              "p95": 3815.0
+            },
+            "gpu_temperature_c": {
+              "n": 60,
+              "mean": 67.61666666666666,
+              "min": 60.0,
+              "max": 74.0,
+              "p50": 69.0,
+              "p95": 72.0
+            }
+          }
+        },
+        {
+          "window_start_s": 1800,
+          "window_end_s": 2100,
+          "attempts": 235,
+          "sent": 235,
+          "successful": 235,
+          "failed": 0,
+          "success_rate": 1.0,
+          "unique_attempted_review_count": 100,
+          "successful_latency": {
+            "count": 235,
+            "mean_ms": 1056.5758851064527,
+            "p50_ms": 873.6788999522105,
+            "p95_ms": 1903.0092300090494,
+            "p99_ms": 3614.4537099800073,
+            "max_ms": 3972.15409995988
+          },
+          "successful_scheduled_latency": {
+            "count": 235,
+            "mean_ms": 1065.305802834165,
+            "p50_ms": 887.5853368440403,
+            "p95_ms": 1908.7135633251157,
+            "p99_ms": 3617.1111882153355,
+            "max_ms": 3979.575260447973
+          },
+          "successful_queue_wait": {
+            "count": 235,
+            "mean_ms": 108.1189336153639,
+            "p50_ms": 0.060999998822808266,
+            "p95_ms": 625.529499980623,
+            "p99_ms": 2328.986552002607,
+            "max_ms": 2701.9456999842077
+          },
+          "failure_counts": {},
+          "successful_completions_in_wall_window": 236,
+          "completion_throughput_reviews_per_second": 0.7866666666666666,
+          "cohort_completions_after_window_end": 0,
+          "telemetry_scope": "Approximately run-aligned by UTC: config.utc_start is recorded just before the client monotonic epoch; telemetry is sampled every few seconds. Includes client drain.",
+          "sampled_device_metrics": {
+            "gpu_memory_used_mib": {
+              "n": 60,
+              "mean": 3815.0,
+              "min": 3815.0,
+              "max": 3815.0,
+              "p50": 3815.0,
+              "p95": 3815.0
+            },
+            "gpu_temperature_c": {
+              "n": 60,
+              "mean": 67.5,
+              "min": 59.0,
+              "max": 72.0,
+              "p50": 69.0,
+              "p95": 71.05
+            }
+          }
+        },
+        {
+          "window_start_s": 2100,
+          "window_end_s": 2400,
+          "attempts": 236,
+          "sent": 236,
+          "successful": 236,
+          "failed": 0,
+          "success_rate": 1.0,
+          "unique_attempted_review_count": 100,
+          "successful_latency": {
+            "count": 236,
+            "mean_ms": 1053.8271381347085,
+            "p50_ms": 874.6501500136219,
+            "p95_ms": 1949.0552249917528,
+            "p99_ms": 3616.7784250224945,
+            "max_ms": 3969.46689998731
+          },
+          "successful_scheduled_latency": {
+            "count": 236,
+            "mean_ms": 1062.1871893029943,
+            "p50_ms": 885.9320912201838,
+            "p95_ms": 1950.8971341502956,
+            "p99_ms": 3624.3796872651046,
+            "max_ms": 3972.2059794112283
+          },
+          "successful_queue_wait": {
+            "count": 236,
+            "mean_ms": 109.2245516935028,
+            "p50_ms": 0.06009999196976423,
+            "p95_ms": 663.2920750125777,
+            "p99_ms": 2344.8535850155167,
+            "max_ms": 2679.1445999988355
+          },
+          "failure_counts": {},
+          "successful_completions_in_wall_window": 235,
+          "completion_throughput_reviews_per_second": 0.7833333333333333,
+          "cohort_completions_after_window_end": 1,
+          "telemetry_scope": "Approximately run-aligned by UTC: config.utc_start is recorded just before the client monotonic epoch; telemetry is sampled every few seconds. Includes client drain.",
+          "sampled_device_metrics": {
+            "gpu_memory_used_mib": {
+              "n": 60,
+              "mean": 3815.0,
+              "min": 3815.0,
+              "max": 3815.0,
+              "p50": 3815.0,
+              "p95": 3815.0
+            },
+            "gpu_temperature_c": {
+              "n": 60,
+              "mean": 67.05,
+              "min": 60.0,
+              "max": 72.0,
+              "p50": 68.5,
+              "p95": 71.05
+            }
+          }
+        },
+        {
+          "window_start_s": 2400,
+          "window_end_s": 2700,
+          "attempts": 236,
+          "sent": 236,
+          "successful": 236,
+          "failed": 0,
+          "success_rate": 1.0,
+          "unique_attempted_review_count": 100,
+          "successful_latency": {
+            "count": 236,
+            "mean_ms": 1166.081575422757,
+            "p50_ms": 915.1338999799918,
+            "p95_ms": 2575.61152499693,
+            "p99_ms": 3889.9434449878763,
+            "max_ms": 4084.2064999742433
+          },
+          "successful_scheduled_latency": {
+            "count": 236,
+            "mean_ms": 1174.2290382625097,
+            "p50_ms": 920.5877219944796,
+            "p95_ms": 2584.4699422775648,
+            "p99_ms": 3900.3842906432064,
+            "max_ms": 4099.282336282613
+          },
+          "successful_queue_wait": {
+            "count": 236,
+            "mean_ms": 175.9415838972989,
+            "p50_ms": 0.06724998820573092,
+            "p95_ms": 1287.6670999685302,
+            "p99_ms": 2600.040960012121,
+            "max_ms": 2807.279300002847
+          },
+          "failure_counts": {},
+          "successful_completions_in_wall_window": 236,
+          "completion_throughput_reviews_per_second": 0.7866666666666666,
+          "cohort_completions_after_window_end": 1,
+          "telemetry_scope": "Approximately run-aligned by UTC: config.utc_start is recorded just before the client monotonic epoch; telemetry is sampled every few seconds. Includes client drain.",
+          "sampled_device_metrics": {
+            "gpu_memory_used_mib": {
+              "n": 59,
+              "mean": 3815.0,
+              "min": 3815.0,
+              "max": 3815.0,
+              "p50": 3815.0,
+              "p95": 3815.0
+            },
+            "gpu_temperature_c": {
+              "n": 59,
+              "mean": 67.86440677966101,
+              "min": 60.0,
+              "max": 73.0,
+              "p50": 69.0,
+              "p95": 71.1
+            }
+          }
+        },
+        {
+          "window_start_s": 2700,
+          "window_end_s": 3000,
+          "attempts": 235,
+          "sent": 235,
+          "successful": 235,
+          "failed": 0,
+          "success_rate": 1.0,
+          "unique_attempted_review_count": 100,
+          "successful_latency": {
+            "count": 235,
+            "mean_ms": 1099.8874655312939,
+            "p50_ms": 906.0769999632612,
+            "p95_ms": 2098.7971499853306,
+            "p99_ms": 3768.9906339882873,
+            "max_ms": 4118.642700021155
+          },
+          "successful_scheduled_latency": {
+            "count": 235,
+            "mean_ms": 1107.9287769422383,
+            "p50_ms": 914.1636504486996,
+            "p95_ms": 2110.1778270739946,
+            "p99_ms": 3780.9842128465425,
+            "max_ms": 4122.837974237882
+          },
+          "successful_queue_wait": {
+            "count": 235,
+            "mean_ms": 128.59531233800536,
+            "p50_ms": 0.07499998901039362,
+            "p95_ms": 823.8496600009972,
+            "p99_ms": 2478.53478798992,
+            "max_ms": 2833.840000035707
+          },
+          "failure_counts": {},
+          "successful_completions_in_wall_window": 235,
+          "completion_throughput_reviews_per_second": 0.7833333333333333,
+          "cohort_completions_after_window_end": 1,
+          "telemetry_scope": "Approximately run-aligned by UTC: config.utc_start is recorded just before the client monotonic epoch; telemetry is sampled every few seconds. Includes client drain.",
+          "sampled_device_metrics": {
+            "gpu_memory_used_mib": {
+              "n": 60,
+              "mean": 3815.0,
+              "min": 3815.0,
+              "max": 3815.0,
+              "p50": 3815.0,
+              "p95": 3815.0
+            },
+            "gpu_temperature_c": {
+              "n": 60,
+              "mean": 67.58333333333333,
+              "min": 60.0,
+              "max": 72.0,
+              "p50": 69.0,
+              "p95": 71.0
+            }
+          }
+        },
+        {
+          "window_start_s": 3000,
+          "window_end_s": 3300,
+          "attempts": 236,
+          "sent": 236,
+          "successful": 236,
+          "failed": 0,
+          "success_rate": 1.0,
+          "unique_attempted_review_count": 100,
+          "successful_latency": {
+            "count": 236,
+            "mean_ms": 1157.1076542390135,
+            "p50_ms": 921.9864000042435,
+            "p95_ms": 2545.3131749818567,
+            "p99_ms": 3916.5066399815278,
+            "max_ms": 4045.1278000255115
+          },
+          "successful_scheduled_latency": {
+            "count": 236,
+            "mean_ms": 1165.9918256697065,
+            "p50_ms": 932.4610144151393,
+            "p95_ms": 2554.0997120613156,
+            "p99_ms": 3921.8193493859435,
+            "max_ms": 4053.6389121471075
+          },
+          "successful_queue_wait": {
+            "count": 236,
+            "mean_ms": 166.9928516967664,
+            "p50_ms": 0.07195002399384975,
+            "p95_ms": 1265.145625002333,
+            "p99_ms": 2641.990184978933,
+            "max_ms": 2757.0295999757946
+          },
+          "failure_counts": {},
+          "successful_completions_in_wall_window": 235,
+          "completion_throughput_reviews_per_second": 0.7833333333333333,
+          "cohort_completions_after_window_end": 2,
+          "telemetry_scope": "Approximately run-aligned by UTC: config.utc_start is recorded just before the client monotonic epoch; telemetry is sampled every few seconds. Includes client drain.",
+          "sampled_device_metrics": {
+            "gpu_memory_used_mib": {
+              "n": 60,
+              "mean": 3815.0,
+              "min": 3815.0,
+              "max": 3815.0,
+              "p50": 3815.0,
+              "p95": 3815.0
+            },
+            "gpu_temperature_c": {
+              "n": 60,
+              "mean": 67.21666666666667,
+              "min": 61.0,
+              "max": 73.0,
+              "p50": 68.0,
+              "p95": 72.0
+            }
+          }
+        },
+        {
+          "window_start_s": 3300,
+          "window_end_s": 3600,
+          "attempts": 235,
+          "sent": 235,
+          "successful": 235,
+          "failed": 0,
+          "success_rate": 1.0,
+          "unique_attempted_review_count": 100,
+          "successful_latency": {
+            "count": 235,
+            "mean_ms": 1117.698605531242,
+            "p50_ms": 919.398199999705,
+            "p95_ms": 2075.057829997968,
+            "p99_ms": 3713.62529998878,
+            "max_ms": 4037.6648000092246
+          },
+          "successful_scheduled_latency": {
+            "count": 235,
+            "mean_ms": 1126.7355247833957,
+            "p50_ms": 932.1049738346119,
+            "p95_ms": 2086.6967750959247,
+            "p99_ms": 3721.842537707398,
+            "max_ms": 4046.5697689965054
+          },
+          "successful_queue_wait": {
+            "count": 235,
+            "mean_ms": 135.1945591508411,
+            "p50_ms": 0.07460004417225718,
+            "p95_ms": 790.1318299933339,
+            "p99_ms": 2434.08163398155,
+            "max_ms": 2756.427899992559
+          },
+          "failure_counts": {},
+          "successful_completions_in_wall_window": 237,
+          "completion_throughput_reviews_per_second": 0.79,
+          "cohort_completions_after_window_end": 0,
+          "telemetry_scope": "Approximately run-aligned by UTC: config.utc_start is recorded just before the client monotonic epoch; telemetry is sampled every few seconds. Includes client drain.",
+          "sampled_device_metrics": {
+            "gpu_memory_used_mib": {
+              "n": 60,
+              "mean": 3815.0,
+              "min": 3815.0,
+              "max": 3815.0,
+              "p50": 3815.0,
+              "p95": 3815.0
+            },
+            "gpu_temperature_c": {
+              "n": 60,
+              "mean": 68.26666666666667,
+              "min": 61.0,
+              "max": 74.0,
+              "p50": 70.0,
+              "p95": 72.0
+            }
+          }
+        }
+      ]
+    },
+    "additional_50pct": {
+      "selection": "Selected after observing the 70% one-hour result; registered before this additional run. Not part of the original preregistration or a new blind test.",
+      "capacity_fraction": 0.5,
+      "offered_reviews_per_second": 0.5608633313917608,
+      "registered_duration_seconds": 3600.0,
+      "performance": {
+        "attempts": 2020,
+        "sent": 2020,
+        "successful": 2020,
+        "failed": 0,
+        "success_rate": 1.0,
+        "error_rate": 0.0,
+        "wall_seconds_including_drain": 3600.5411014999845,
+        "successful_reviews_per_second": 0.5610267854346861,
+        "successful_latency": {
+          "count": 2020,
+          "mean_ms": 902.4532968317859,
+          "p50_ms": 786.0067999863531,
+          "p95_ms": 1361.1030499974731,
+          "p99_ms": 2873.6029230023255,
+          "max_ms": 3792.7731000236236
+        },
+        "successful_latency_from_scheduled_arrival": {
+          "count": 2020,
+          "mean_ms": 909.0178279710293,
+          "p50_ms": 791.9379856923001,
+          "p95_ms": 1366.6788501773729,
+          "p99_ms": 2878.5659756726795,
+          "max_ms": 3797.2635330904154
+        },
+        "response_budgets_seconds": {
+          "1": {
+            "met": 1646,
+            "fraction_of_all_attempts": 0.8148514851485148
+          },
+          "2": {
+            "met": 1978,
+            "fraction_of_all_attempts": 0.9792079207920792
+          },
+          "5": {
+            "met": 2020,
+            "fraction_of_all_attempts": 1.0
+          },
+          "10": {
+            "met": 2020,
+            "fraction_of_all_attempts": 1.0
+          },
+          "30": {
+            "met": 2020,
+            "fraction_of_all_attempts": 1.0
+          },
+          "60": {
+            "met": 2020,
+            "fraction_of_all_attempts": 1.0
+          }
+        },
+        "failure_counts": {}
+      },
+      "unique_development_reviews": 100,
+      "repeat_consistency": {
+        "attempts": 2020,
+        "successful_attempts": 2020,
+        "failed_attempts": 0,
+        "unique_attempted_reviews": 100,
+        "unique_successful_reviews": 100,
+        "reviews_with_repeated_successful_deliveries": 100,
+        "repeated_successful_deliveries_after_first": 1920,
+        "reviews_with_differing_prediction_sets": 0,
+        "repeated_deliveries_differing_from_first": 0
+      },
+      "whole_run_sampled_device_metrics": {
+        "gpu_memory_used_mib": {
+          "n": 720,
+          "mean": 3801.698611111111,
+          "min": 3508.0,
+          "max": 3815.0,
+          "p50": 3815.0,
+          "p95": 3815.0
+        },
+        "gpu_temperature_c": {
+          "n": 720,
+          "mean": 57.775,
+          "min": 50.0,
+          "max": 68.0,
+          "p50": 56.0,
+          "p95": 66.0
+        },
+        "gpu_utilisation_percent": {
+          "n": 720,
+          "mean": 43.00833333333333,
+          "min": 0.0,
+          "max": 100.0,
+          "p50": 16.5,
+          "p95": 97.0
+        },
+        "gpu_power_draw_w": {
+          "n": 720,
+          "mean": 32.45919444444444,
+          "min": 7.75,
+          "max": 91.89,
+          "p50": 24.66,
+          "p95": 77.82249999999999
+        },
+        "gpu_sm_clock_mhz": {
+          "n": 720,
+          "mean": 1431.4833333333333,
+          "min": 195.0,
+          "max": 2737.0,
+          "p50": 1432.0,
+          "p95": 2715.0
+        },
+        "gpu_memory_clock_mhz": {
+          "n": 720,
+          "mean": 9158.5,
+          "min": 9001.0,
+          "max": 11026.0,
+          "p50": 9001.0,
+          "p95": 11026.0
+        }
+      },
+      "whole_run_memory_sample_min_max_mib": [
+        3508.0,
+        3815.0
+      ],
+      "range_of_five_minute_window_memory_sample_maxima_mib": [
+        3814.0,
+        3815.0
+      ],
+      "windows": [
+        {
+          "window_start_s": 0,
+          "window_end_s": 300,
+          "attempts": 169,
+          "sent": 169,
+          "successful": 169,
+          "failed": 0,
+          "success_rate": 1.0,
+          "unique_attempted_review_count": 100,
+          "successful_latency": {
+            "count": 169,
+            "mean_ms": 889.589479290219,
+            "p50_ms": 787.4439000152051,
+            "p95_ms": 1345.2963200048544,
+            "p99_ms": 2271.8493959912976,
+            "max_ms": 3728.000000002794
+          },
+          "successful_scheduled_latency": {
+            "count": 169,
+            "mean_ms": 895.8160571667911,
+            "p50_ms": 797.6195464803197,
+            "p95_ms": 1351.405470502425,
+            "p99_ms": 2273.2928802229744,
+            "max_ms": 3732.3576665561122
+          },
+          "successful_queue_wait": {
+            "count": 169,
+            "mean_ms": 19.519805324059973,
+            "p50_ms": 0.06449996726587415,
+            "p95_ms": 0.1980200060643252,
+            "p99_ms": 472.68476397729864,
+            "max_ms": 1945.3480000374839
+          },
+          "failure_counts": {},
+          "successful_completions_in_wall_window": 168,
+          "completion_throughput_reviews_per_second": 0.56,
+          "cohort_completions_after_window_end": 1,
+          "telemetry_scope": "Approximately run-aligned by UTC: config.utc_start is recorded just before the client monotonic epoch; telemetry is sampled every few seconds. Includes client drain.",
+          "sampled_device_metrics": {
+            "gpu_memory_used_mib": {
+              "n": 60,
+              "mean": 3655.9,
+              "min": 3508.0,
+              "max": 3814.0,
+              "p50": 3508.0,
+              "p95": 3814.0
+            },
+            "gpu_temperature_c": {
+              "n": 60,
+              "mean": 59.4,
+              "min": 51.0,
+              "max": 68.0,
+              "p50": 58.5,
+              "p95": 67.0
+            }
+          }
+        },
+        {
+          "window_start_s": 300,
+          "window_end_s": 600,
+          "attempts": 168,
+          "sent": 168,
+          "successful": 168,
+          "failed": 0,
+          "success_rate": 1.0,
+          "unique_attempted_review_count": 100,
+          "successful_latency": {
+            "count": 168,
+            "mean_ms": 916.6867196417159,
+            "p50_ms": 783.3172000246122,
+            "p95_ms": 1357.6679150224663,
+            "p99_ms": 3151.2076789955713,
+            "max_ms": 3792.7731000236236
+          },
+          "successful_scheduled_latency": {
+            "count": 168,
+            "mean_ms": 922.9135466996033,
+            "p50_ms": 787.3758663966726,
+            "p95_ms": 1362.640490712363,
+            "p99_ms": 3157.010033308531,
+            "max_ms": 3797.2635330904154
+          },
+          "successful_queue_wait": {
+            "count": 168,
+            "mean_ms": 37.600001193433336,
+            "p50_ms": 0.06020005093887448,
+            "p95_ms": 0.23696000280324384,
+            "p99_ms": 1350.9883879922668,
+            "max_ms": 1991.4818999823183
+          },
+          "failure_counts": {},
+          "successful_completions_in_wall_window": 169,
+          "completion_throughput_reviews_per_second": 0.5633333333333334,
+          "cohort_completions_after_window_end": 0,
+          "telemetry_scope": "Approximately run-aligned by UTC: config.utc_start is recorded just before the client monotonic epoch; telemetry is sampled every few seconds. Includes client drain.",
+          "sampled_device_metrics": {
+            "gpu_memory_used_mib": {
+              "n": 60,
+              "mean": 3814.483333333333,
+              "min": 3814.0,
+              "max": 3815.0,
+              "p50": 3814.0,
+              "p95": 3815.0
+            },
+            "gpu_temperature_c": {
+              "n": 60,
+              "mean": 57.8,
+              "min": 51.0,
+              "max": 67.0,
+              "p50": 55.5,
+              "p95": 66.0
+            }
+          }
+        },
+        {
+          "window_start_s": 600,
+          "window_end_s": 900,
+          "attempts": 168,
+          "sent": 168,
+          "successful": 168,
+          "failed": 0,
+          "success_rate": 1.0,
+          "unique_attempted_review_count": 100,
+          "successful_latency": {
+            "count": 168,
+            "mean_ms": 909.1034511927448,
+            "p50_ms": 787.716899998486,
+            "p95_ms": 1375.2978350268677,
+            "p99_ms": 3139.4163720239994,
+            "max_ms": 3766.7306999792345
+          },
+          "successful_scheduled_latency": {
+            "count": 168,
+            "mean_ms": 915.4609579145479,
+            "p50_ms": 792.7184594795449,
+            "p95_ms": 1377.5356212039298,
+            "p99_ms": 3143.8272940307465,
+            "max_ms": 3768.9659326958918
+          },
+          "successful_queue_wait": {
+            "count": 168,
+            "mean_ms": 36.88536369112886,
+            "p50_ms": 0.05970001802779734,
+            "p95_ms": 0.21835001534782358,
+            "p99_ms": 1352.065644004626,
+            "max_ms": 1966.6231999872252
+          },
+          "failure_counts": {},
+          "successful_completions_in_wall_window": 168,
+          "completion_throughput_reviews_per_second": 0.56,
+          "cohort_completions_after_window_end": 0,
+          "telemetry_scope": "Approximately run-aligned by UTC: config.utc_start is recorded just before the client monotonic epoch; telemetry is sampled every few seconds. Includes client drain.",
+          "sampled_device_metrics": {
+            "gpu_memory_used_mib": {
+              "n": 60,
+              "mean": 3815.0,
+              "min": 3815.0,
+              "max": 3815.0,
+              "p50": 3815.0,
+              "p95": 3815.0
+            },
+            "gpu_temperature_c": {
+              "n": 60,
+              "mean": 57.71666666666667,
+              "min": 51.0,
+              "max": 67.0,
+              "p50": 55.5,
+              "p95": 66.0
+            }
+          }
+        },
+        {
+          "window_start_s": 900,
+          "window_end_s": 1200,
+          "attempts": 169,
+          "sent": 169,
+          "successful": 169,
+          "failed": 0,
+          "success_rate": 1.0,
+          "unique_attempted_review_count": 100,
+          "successful_latency": {
+            "count": 169,
+            "mean_ms": 877.0642751488923,
+            "p50_ms": 783.7545999791473,
+            "p95_ms": 1348.1671799905598,
+            "p99_ms": 2179.6392760355893,
+            "max_ms": 3726.894599967636
+          },
+          "successful_scheduled_latency": {
+            "count": 169,
+            "mean_ms": 883.7493557387935,
+            "p50_ms": 786.7576125117921,
+            "p95_ms": 1358.4770285772947,
+            "p99_ms": 2182.5121261902614,
+            "max_ms": 3731.1947992420755
+          },
+          "successful_queue_wait": {
+            "count": 169,
+            "mean_ms": 18.017634319226925,
+            "p50_ms": 0.060999998822808266,
+            "p95_ms": 0.18566000508144492,
+            "p99_ms": 389.49255199170983,
+            "max_ms": 1926.8277999944985
+          },
+          "failure_counts": {},
+          "successful_completions_in_wall_window": 168,
+          "completion_throughput_reviews_per_second": 0.56,
+          "cohort_completions_after_window_end": 1,
+          "telemetry_scope": "Approximately run-aligned by UTC: config.utc_start is recorded just before the client monotonic epoch; telemetry is sampled every few seconds. Includes client drain.",
+          "sampled_device_metrics": {
+            "gpu_memory_used_mib": {
+              "n": 60,
+              "mean": 3815.0,
+              "min": 3815.0,
+              "max": 3815.0,
+              "p50": 3815.0,
+              "p95": 3815.0
+            },
+            "gpu_temperature_c": {
+              "n": 60,
+              "mean": 57.483333333333334,
+              "min": 51.0,
+              "max": 66.0,
+              "p50": 55.5,
+              "p95": 66.0
+            }
+          }
+        },
+        {
+          "window_start_s": 1200,
+          "window_end_s": 1500,
+          "attempts": 168,
+          "sent": 168,
+          "successful": 168,
+          "failed": 0,
+          "success_rate": 1.0,
+          "unique_attempted_review_count": 100,
+          "successful_latency": {
+            "count": 168,
+            "mean_ms": 920.0901654763757,
+            "p50_ms": 790.9934500348754,
+            "p95_ms": 1365.070320016821,
+            "p99_ms": 3113.4392419940673,
+            "max_ms": 3728.798000025563
+          },
+          "successful_scheduled_latency": {
+            "count": 168,
+            "mean_ms": 926.9289162960978,
+            "p50_ms": 798.7859890796472,
+            "p95_ms": 1375.658083092435,
+            "p99_ms": 3120.6978620032714,
+            "max_ms": 3735.2007657948434
+          },
+          "successful_queue_wait": {
+            "count": 168,
+            "mean_ms": 36.02455952308706,
+            "p50_ms": 0.059200014220550656,
+            "p95_ms": 0.22136499756015843,
+            "p99_ms": 1311.6962089936828,
+            "max_ms": 1922.8007000056095
+          },
+          "failure_counts": {},
+          "successful_completions_in_wall_window": 168,
+          "completion_throughput_reviews_per_second": 0.56,
+          "cohort_completions_after_window_end": 1,
+          "telemetry_scope": "Approximately run-aligned by UTC: config.utc_start is recorded just before the client monotonic epoch; telemetry is sampled every few seconds. Includes client drain.",
+          "sampled_device_metrics": {
+            "gpu_memory_used_mib": {
+              "n": 60,
+              "mean": 3815.0,
+              "min": 3815.0,
+              "max": 3815.0,
+              "p50": 3815.0,
+              "p95": 3815.0
+            },
+            "gpu_temperature_c": {
+              "n": 60,
+              "mean": 58.18333333333333,
+              "min": 51.0,
+              "max": 67.0,
+              "p50": 60.5,
+              "p95": 65.05
+            }
+          }
+        },
+        {
+          "window_start_s": 1500,
+          "window_end_s": 1800,
+          "attempts": 168,
+          "sent": 168,
+          "successful": 168,
+          "failed": 0,
+          "success_rate": 1.0,
+          "unique_attempted_review_count": 100,
+          "successful_latency": {
+            "count": 168,
+            "mean_ms": 908.1628994037081,
+            "p50_ms": 788.0237500066869,
+            "p95_ms": 1371.8701850244543,
+            "p99_ms": 3113.1200140045366,
+            "max_ms": 3723.592899972573
+          },
+          "successful_scheduled_latency": {
+            "count": 168,
+            "mean_ms": 914.7438239376617,
+            "p50_ms": 795.2847122195408,
+            "p95_ms": 1378.023238181936,
+            "p99_ms": 3115.426018708633,
+            "max_ms": 3733.9925653845967
+          },
+          "successful_queue_wait": {
+            "count": 168,
+            "mean_ms": 35.91153154827355,
+            "p50_ms": 0.07214999641291797,
+            "p95_ms": 0.1942499860888347,
+            "p99_ms": 1308.9755619928587,
+            "max_ms": 1929.3669000035152
+          },
+          "failure_counts": {},
+          "successful_completions_in_wall_window": 168,
+          "completion_throughput_reviews_per_second": 0.56,
+          "cohort_completions_after_window_end": 1,
+          "telemetry_scope": "Approximately run-aligned by UTC: config.utc_start is recorded just before the client monotonic epoch; telemetry is sampled every few seconds. Includes client drain.",
+          "sampled_device_metrics": {
+            "gpu_memory_used_mib": {
+              "n": 60,
+              "mean": 3815.0,
+              "min": 3815.0,
+              "max": 3815.0,
+              "p50": 3815.0,
+              "p95": 3815.0
+            },
+            "gpu_temperature_c": {
+              "n": 60,
+              "mean": 57.75,
+              "min": 50.0,
+              "max": 66.0,
+              "p50": 56.5,
+              "p95": 65.05
+            }
+          }
+        },
+        {
+          "window_start_s": 1800,
+          "window_end_s": 2100,
+          "attempts": 168,
+          "sent": 168,
+          "successful": 168,
+          "failed": 0,
+          "success_rate": 1.0,
+          "unique_attempted_review_count": 100,
+          "successful_latency": {
+            "count": 168,
+            "mean_ms": 876.0359851172931,
+            "p50_ms": 784.1681000136305,
+            "p95_ms": 1345.0411299825646,
+            "p99_ms": 2192.5636670005156,
+            "max_ms": 3709.247199993115
+          },
+          "successful_scheduled_latency": {
+            "count": 168,
+            "mean_ms": 882.2489053908777,
+            "p50_ms": 792.9186685768173,
+            "p95_ms": 1352.0351762530822,
+            "p99_ms": 2194.689745326293,
+            "max_ms": 3721.56513195182
+          },
+          "successful_queue_wait": {
+            "count": 168,
+            "mean_ms": 17.817039287322025,
+            "p50_ms": 0.05775000317953527,
+            "p95_ms": 0.17405498656444254,
+            "p99_ms": 380.76284000418343,
+            "max_ms": 1914.5193999866024
+          },
+          "failure_counts": {},
+          "successful_completions_in_wall_window": 169,
+          "completion_throughput_reviews_per_second": 0.5633333333333334,
+          "cohort_completions_after_window_end": 0,
+          "telemetry_scope": "Approximately run-aligned by UTC: config.utc_start is recorded just before the client monotonic epoch; telemetry is sampled every few seconds. Includes client drain.",
+          "sampled_device_metrics": {
+            "gpu_memory_used_mib": {
+              "n": 60,
+              "mean": 3815.0,
+              "min": 3815.0,
+              "max": 3815.0,
+              "p50": 3815.0,
+              "p95": 3815.0
+            },
+            "gpu_temperature_c": {
+              "n": 60,
+              "mean": 57.45,
+              "min": 50.0,
+              "max": 66.0,
+              "p50": 54.0,
+              "p95": 66.0
+            }
+          }
+        },
+        {
+          "window_start_s": 2100,
+          "window_end_s": 2400,
+          "attempts": 169,
+          "sent": 169,
+          "successful": 169,
+          "failed": 0,
+          "success_rate": 1.0,
+          "unique_attempted_review_count": 100,
+          "successful_latency": {
+            "count": 169,
+            "mean_ms": 914.2923550308302,
+            "p50_ms": 787.6167999929748,
+            "p95_ms": 1357.4132400099188,
+            "p99_ms": 3104.2877800157235,
+            "max_ms": 3736.199499981012
+          },
+          "successful_scheduled_latency": {
+            "count": 169,
+            "mean_ms": 921.0390704250847,
+            "p50_ms": 791.1951716564545,
+            "p95_ms": 1359.915314391401,
+            "p99_ms": 3107.1471274852897,
+            "max_ms": 3736.506665028628
+          },
+          "successful_queue_wait": {
+            "count": 169,
+            "mean_ms": 35.54462781520395,
+            "p50_ms": 0.06400002166628838,
+            "p95_ms": 0.3264000057242808,
+            "p99_ms": 1298.9985879650278,
+            "max_ms": 1936.1667999764904
+          },
+          "failure_counts": {},
+          "successful_completions_in_wall_window": 168,
+          "completion_throughput_reviews_per_second": 0.56,
+          "cohort_completions_after_window_end": 1,
+          "telemetry_scope": "Approximately run-aligned by UTC: config.utc_start is recorded just before the client monotonic epoch; telemetry is sampled every few seconds. Includes client drain.",
+          "sampled_device_metrics": {
+            "gpu_memory_used_mib": {
+              "n": 60,
+              "mean": 3815.0,
+              "min": 3815.0,
+              "max": 3815.0,
+              "p50": 3815.0,
+              "p95": 3815.0
+            },
+            "gpu_temperature_c": {
+              "n": 60,
+              "mean": 58.233333333333334,
+              "min": 50.0,
+              "max": 67.0,
+              "p50": 60.0,
+              "p95": 66.0
+            }
+          }
+        },
+        {
+          "window_start_s": 2400,
+          "window_end_s": 2700,
+          "attempts": 168,
+          "sent": 168,
+          "successful": 168,
+          "failed": 0,
+          "success_rate": 1.0,
+          "unique_attempted_review_count": 100,
+          "successful_latency": {
+            "count": 168,
+            "mean_ms": 913.7549130928597,
+            "p50_ms": 783.0717999895569,
+            "p95_ms": 1356.1674600205151,
+            "p99_ms": 3109.066310990613,
+            "max_ms": 3721.0138000082225
+          },
+          "successful_scheduled_latency": {
+            "count": 168,
+            "mean_ms": 919.9833107948593,
+            "p50_ms": 798.5662581982069,
+            "p95_ms": 1362.491598909969,
+            "p99_ms": 3112.2416987910015,
+            "max_ms": 3723.04233155819
+          },
+          "successful_queue_wait": {
+            "count": 168,
+            "mean_ms": 35.79783095171609,
+            "p50_ms": 0.0659999786876142,
+            "p95_ms": 0.1849749736720696,
+            "p99_ms": 1307.8034679935192,
+            "max_ms": 1920.8860999788158
+          },
+          "failure_counts": {},
+          "successful_completions_in_wall_window": 168,
+          "completion_throughput_reviews_per_second": 0.56,
+          "cohort_completions_after_window_end": 1,
+          "telemetry_scope": "Approximately run-aligned by UTC: config.utc_start is recorded just before the client monotonic epoch; telemetry is sampled every few seconds. Includes client drain.",
+          "sampled_device_metrics": {
+            "gpu_memory_used_mib": {
+              "n": 60,
+              "mean": 3815.0,
+              "min": 3815.0,
+              "max": 3815.0,
+              "p50": 3815.0,
+              "p95": 3815.0
+            },
+            "gpu_temperature_c": {
+              "n": 60,
+              "mean": 56.96666666666667,
+              "min": 51.0,
+              "max": 67.0,
+              "p50": 53.5,
+              "p95": 65.05
+            }
+          }
+        },
+        {
+          "window_start_s": 2700,
+          "window_end_s": 3000,
+          "attempts": 168,
+          "sent": 168,
+          "successful": 168,
+          "failed": 0,
+          "success_rate": 1.0,
+          "unique_attempted_review_count": 100,
+          "successful_latency": {
+            "count": 168,
+            "mean_ms": 871.1696666647358,
+            "p50_ms": 781.4040500088595,
+            "p95_ms": 1310.6028549605985,
+            "p99_ms": 2193.9838129718664,
+            "max_ms": 3703.3012000028975
+          },
+          "successful_scheduled_latency": {
+            "count": 168,
+            "mean_ms": 878.1680999896691,
+            "p50_ms": 786.5182280249883,
+            "p95_ms": 1317.6330203021057,
+            "p99_ms": 2196.89524101617,
+            "max_ms": 3716.311864632644
+          },
+          "successful_queue_wait": {
+            "count": 168,
+            "mean_ms": 18.085665476627625,
+            "p50_ms": 0.06840002606622875,
+            "p95_ms": 0.201250019017607,
+            "p99_ms": 407.81436000253245,
+            "max_ms": 1909.4635000219569
+          },
+          "failure_counts": {},
+          "successful_completions_in_wall_window": 169,
+          "completion_throughput_reviews_per_second": 0.5633333333333334,
+          "cohort_completions_after_window_end": 0,
+          "telemetry_scope": "Approximately run-aligned by UTC: config.utc_start is recorded just before the client monotonic epoch; telemetry is sampled every few seconds. Includes client drain.",
+          "sampled_device_metrics": {
+            "gpu_memory_used_mib": {
+              "n": 60,
+              "mean": 3815.0,
+              "min": 3815.0,
+              "max": 3815.0,
+              "p50": 3815.0,
+              "p95": 3815.0
+            },
+            "gpu_temperature_c": {
+              "n": 60,
+              "mean": 57.53333333333333,
+              "min": 50.0,
+              "max": 67.0,
+              "p50": 55.5,
+              "p95": 66.0
+            }
+          }
+        },
+        {
+          "window_start_s": 3000,
+          "window_end_s": 3300,
+          "attempts": 168,
+          "sent": 168,
+          "successful": 168,
+          "failed": 0,
+          "success_rate": 1.0,
+          "unique_attempted_review_count": 100,
+          "successful_latency": {
+            "count": 168,
+            "mean_ms": 916.0917434571837,
+            "p50_ms": 787.9720999917481,
+            "p95_ms": 1367.884709991631,
+            "p99_ms": 3114.0429290151333,
+            "max_ms": 3733.463400043547
+          },
+          "successful_scheduled_latency": {
+            "count": 168,
+            "mean_ms": 922.7450838273024,
+            "p50_ms": 791.4001877302326,
+            "p95_ms": 1371.2142560118082,
+            "p99_ms": 3120.303110033176,
+            "max_ms": 3734.576597751584
+          },
+          "successful_queue_wait": {
+            "count": 168,
+            "mean_ms": 36.73572023641706,
+            "p50_ms": 0.06389999180100858,
+            "p95_ms": 0.2596500184154139,
+            "p99_ms": 1322.3470889823625,
+            "max_ms": 1933.8283999823034
+          },
+          "failure_counts": {},
+          "successful_completions_in_wall_window": 168,
+          "completion_throughput_reviews_per_second": 0.56,
+          "cohort_completions_after_window_end": 0,
+          "telemetry_scope": "Approximately run-aligned by UTC: config.utc_start is recorded just before the client monotonic epoch; telemetry is sampled every few seconds. Includes client drain.",
+          "sampled_device_metrics": {
+            "gpu_memory_used_mib": {
+              "n": 59,
+              "mean": 3815.0,
+              "min": 3815.0,
+              "max": 3815.0,
+              "p50": 3815.0,
+              "p95": 3815.0
+            },
+            "gpu_temperature_c": {
+              "n": 59,
+              "mean": 57.59322033898305,
+              "min": 50.0,
+              "max": 67.0,
+              "p50": 55.0,
+              "p95": 65.1
+            }
+          }
+        },
+        {
+          "window_start_s": 3300,
+          "window_end_s": 3600,
+          "attempts": 169,
+          "sent": 169,
+          "successful": 169,
+          "failed": 0,
+          "success_rate": 1.0,
+          "unique_attempted_review_count": 100,
+          "successful_latency": {
+            "count": 169,
+            "mean_ms": 917.4657733725196,
+            "p50_ms": 789.3698000116274,
+            "p95_ms": 1369.9357600184157,
+            "p99_ms": 3089.862520000891,
+            "max_ms": 3716.6364999720827
+          },
+          "successful_scheduled_latency": {
+            "count": 169,
+            "mean_ms": 924.4821922111953,
+            "p50_ms": 799.6931174538986,
+            "p95_ms": 1379.7202375601955,
+            "p99_ms": 3101.0514412386447,
+            "max_ms": 3719.8610307923445
+          },
+          "successful_queue_wait": {
+            "count": 169,
+            "mean_ms": 35.816027812822306,
+            "p50_ms": 0.05879998207092285,
+            "p95_ms": 0.24888004409149256,
+            "p99_ms": 1298.9085760060639,
+            "max_ms": 1920.3017000108957
+          },
+          "failure_counts": {},
+          "successful_completions_in_wall_window": 168,
+          "completion_throughput_reviews_per_second": 0.56,
+          "cohort_completions_after_window_end": 1,
+          "telemetry_scope": "Approximately run-aligned by UTC: config.utc_start is recorded just before the client monotonic epoch; telemetry is sampled every few seconds. Includes client drain.",
+          "sampled_device_metrics": {
+            "gpu_memory_used_mib": {
+              "n": 60,
+              "mean": 3815.0,
+              "min": 3815.0,
+              "max": 3815.0,
+              "p50": 3815.0,
+              "p95": 3815.0
+            },
+            "gpu_temperature_c": {
+              "n": 60,
+              "mean": 57.13333333333333,
+              "min": 50.0,
+              "max": 66.0,
+              "p50": 54.5,
+              "p95": 65.0
+            }
+          }
+        }
+      ]
+    }
+  },
+  "additional_registration": {
+    "registered_utc": "2026-11-09T16:12:16.769956+00:00",
+    "selection": "After observing the original 70%-capacity one-hour soak: 2827/2827 successful, HTTP P95 2136.98 ms. Earlier 50% short runs motivated this separate validation.",
+    "objective": "Measure whether 50% of the frozen primary hybrid C1 capacity sustains the illustrative 95% of all attempts within 2 seconds over a full hour.",
+    "candidate_target": "At least 95% of all scheduled attempts succeed within 2 seconds from scheduled arrival. This is an illustrative engineering target, not a contractual business SLA.",
+    "selection_rule": "One new one-hour run at 50%; no model/prompt/threshold or runtime tuning; retain and report both 70% and 50% outcomes regardless of target attainment.",
+    "dataset": "Replay the same 100 historical validation-derived development reviews; seed 20261109. No label access or evaluation-based model selection during execution.",
+    "duration_seconds": 3600,
+    "reference_capacity_reviews_per_second": 1.1217266627835216,
+    "offered_reviews_per_second": 0.5608633313917608,
+    "capacity_fraction": 0.5,
+    "private_plan_sha256": "5e581c69a006ba990cec9404118fd4b9ac85269974a20e430fe84d9947877632"
+  },
+  "burst_recovery": [
+    {
+      "run": "hybrid_resilience__burst_recovery_r1",
+      "status": "confirmed_under_declared_request_rule",
+      "baseline_source": "same_run_normal_phase",
+      "baseline_successful_requests": 34,
+      "baseline_latency": {
+        "count": 34,
+        "mean_ms": 975.4673823549905,
+        "p50_ms": 843.2335999968927,
+        "p95_ms": 1449.901039985707,
+        "p99_ms": 1925.8483470004296,
+        "max_ms": 2150.946000008844
+      },
+      "baseline_queue": {
+        "count": 34,
+        "mean_ms": 10.722800005597117,
+        "p50_ms": 0.05050000618211925,
+        "p95_ms": 0.18584000936243694,
+        "p99_ms": 242.97503902169473,
+        "max_ms": 362.5346000189893
+      },
+      "latency_band_ms": 1594.891143984278,
+      "queue_band_ms": 100.0,
+      "first_request_in_band": {
+        "scheduled_arrival_after_burst_s": 14.26372442667683,
+        "observed_completion_after_burst_s": 15.198534399969503
+      },
+      "confirmation": {
+        "first_request_scheduled_after_burst_s": 14.26372442667683,
+        "confirmed_by_completion_after_burst_s": 19.18318559997715,
+        "consecutive_requests": 3
+      },
+      "recovery_attempts": 101,
+      "recovery_in_band_attempts": 89,
+      "phases": [
+        {
+          "phase": "normal",
+          "scheduled_start_s": 0.0,
+          "scheduled_end_s": 60.0,
+          "offered_reviews_per_second": 0.5608633313917608,
+          "attempts": 34,
+          "sent": 34,
+          "successful": 34,
+          "failed": 0,
+          "success_rate": 1.0,
+          "unique_attempted_review_count": 34,
+          "successful_latency": {
+            "count": 34,
+            "mean_ms": 975.4673823549905,
+            "p50_ms": 843.2335999968927,
+            "p95_ms": 1449.901039985707,
+            "p99_ms": 1925.8483470004296,
+            "max_ms": 2150.946000008844
+          },
+          "successful_scheduled_latency": {
+            "count": 34,
+            "mean_ms": 984.0845052433644,
+            "p50_ms": 854.45331661807,
+            "p95_ms": 1457.4653989454973,
+            "p99_ms": 1930.6175985441096,
+            "max_ms": 2152.230499952566
+          },
+          "successful_queue_wait": {
+            "count": 34,
+            "mean_ms": 10.722800005597117,
+            "p50_ms": 0.05050000618211925,
+            "p95_ms": 0.18584000936243694,
+            "p99_ms": 242.97503902169473,
+            "max_ms": 362.5346000189893
+          },
+          "failure_counts": {},
+          "completed_after_phase_end": 0
+        },
+        {
+          "phase": "burst",
+          "scheduled_start_s": 60.0,
+          "scheduled_end_s": 90.0,
+          "offered_reviews_per_second": 2.2434533255670432,
+          "attempts": 68,
+          "sent": 68,
+          "successful": 39,
+          "failed": 29,
+          "success_rate": 0.5735294117647058,
+          "unique_attempted_review_count": 68,
+          "successful_latency": {
+            "count": 39,
+            "mean_ms": 7081.293028206206,
+            "p50_ms": 7823.435500031337,
+            "p95_ms": 8823.72617002111,
+            "p99_ms": 8935.7657539926,
+            "max_ms": 8978.24089997448
+          },
+          "successful_scheduled_latency": {
+            "count": 39,
+            "mean_ms": 7089.947102442344,
+            "p50_ms": 7833.9694383010965,
+            "p95_ms": 8832.977712654583,
+            "p99_ms": 8943.126155165488,
+            "max_ms": 8981.114898288311
+          },
+          "successful_queue_wait": {
+            "count": 39,
+            "mean_ms": 6103.4862948700975,
+            "p50_ms": 6920.595199975651,
+            "p95_ms": 7899.215699988417,
+            "p99_ms": 8023.36234799237,
+            "max_ms": 8058.846900006756
+          },
+          "failure_counts": {
+            "http_429": 29
+          },
+          "completed_after_phase_end": 9
+        },
+        {
+          "phase": "recovery",
+          "scheduled_start_s": 90.0,
+          "scheduled_end_s": 270.0,
+          "offered_reviews_per_second": 0.5608633313917608,
+          "attempts": 101,
+          "sent": 101,
+          "successful": 100,
+          "failed": 1,
+          "success_rate": 0.9900990099009901,
+          "unique_attempted_review_count": 100,
+          "successful_latency": {
+            "count": 100,
+            "mean_ms": 1185.722959995037,
+            "p50_ms": 849.5294499734882,
+            "p95_ms": 3219.9619599792627,
+            "p99_ms": 6024.716009988339,
+            "max_ms": 7007.371200015768
+          },
+          "successful_scheduled_latency": {
+            "count": 100,
+            "mean_ms": 1193.556457568389,
+            "p50_ms": 856.4576499047689,
+            "p95_ms": 3222.2727949381842,
+            "p99_ms": 6036.838575845779,
+            "max_ms": 7020.837446624256
+          },
+          "successful_queue_wait": {
+            "count": 100,
+            "mean_ms": 256.8695539981127,
+            "p50_ms": 0.05940001574344933,
+            "p95_ms": 1969.4261350261504,
+            "p99_ms": 5217.499682001075,
+            "max_ms": 5912.547199986875
+          },
+          "failure_counts": {
+            "http_429": 1
+          },
+          "completed_after_phase_end": 1
+        }
+      ],
+      "rule": "Three consecutive scheduled recovery requests must all return successfully with client latency <= 1.10 x baseline P95 and queue wait <= max(100 ms, 1.10 x baseline queue P95). Failures reset the sequence. Baseline requires at least 10 successful requests; otherwise no confirmation.",
+      "interpretation": "This is an operational observation rule, not a business SLA, confidence interval, or proof of permanent recovery. Resolution depends on arrival spacing. A first in-band request alone does not establish recovery; later deterioration remains visible in phase/window metrics."
+    },
+    {
+      "run": "hybrid_resilience__burst_recovery_r2",
+      "status": "confirmed_under_declared_request_rule",
+      "baseline_source": "same_run_normal_phase",
+      "baseline_successful_requests": 34,
+      "baseline_latency": {
+        "count": 34,
+        "mean_ms": 877.5334852929091,
+        "p50_ms": 783.303350006463,
+        "p95_ms": 1291.9836149696496,
+        "p99_ms": 1730.217720020447,
+        "max_ms": 1918.2636000332423
+      },
+      "baseline_queue": {
+        "count": 34,
+        "mean_ms": 3.465202941750998,
+        "p50_ms": 0.058250006986781955,
+        "p95_ms": 0.12683501408901068,
+        "p99_ms": 77.46589902613798,
+        "max_ms": 115.55440002121031
+      },
+      "latency_band_ms": 1421.1819764666147,
+      "queue_band_ms": 100.0,
+      "first_request_in_band": {
+        "scheduled_arrival_after_burst_s": 10.69779332000762,
+        "observed_completion_after_burst_s": 11.423648399999365
+      },
+      "confirmation": {
+        "first_request_scheduled_after_burst_s": 10.69779332000762,
+        "confirmed_by_completion_after_burst_s": 15.077950300008524,
+        "consecutive_requests": 3
+      },
+      "recovery_attempts": 101,
+      "recovery_in_band_attempts": 91,
+      "phases": [
+        {
+          "phase": "normal",
+          "scheduled_start_s": 0.0,
+          "scheduled_end_s": 60.0,
+          "offered_reviews_per_second": 0.5608633313917608,
+          "attempts": 34,
+          "sent": 34,
+          "successful": 34,
+          "failed": 0,
+          "success_rate": 1.0,
+          "unique_attempted_review_count": 34,
+          "successful_latency": {
+            "count": 34,
+            "mean_ms": 877.5334852929091,
+            "p50_ms": 783.303350006463,
+            "p95_ms": 1291.9836149696496,
+            "p99_ms": 1730.217720020447,
+            "max_ms": 1918.2636000332423
+          },
+          "successful_scheduled_latency": {
+            "count": 34,
+            "mean_ms": 883.2418405608391,
+            "p50_ms": 786.7132799758112,
+            "p95_ms": 1298.724711633017,
+            "p99_ms": 1733.6905765985155,
+            "max_ms": 1919.123400002718
+          },
+          "successful_queue_wait": {
+            "count": 34,
+            "mean_ms": 3.465202941750998,
+            "p50_ms": 0.058250006986781955,
+            "p95_ms": 0.12683501408901068,
+            "p99_ms": 77.46589902613798,
+            "max_ms": 115.55440002121031
+          },
+          "failure_counts": {},
+          "completed_after_phase_end": 0
+        },
+        {
+          "phase": "burst",
+          "scheduled_start_s": 60.0,
+          "scheduled_end_s": 90.0,
+          "offered_reviews_per_second": 2.2434533255670432,
+          "attempts": 68,
+          "sent": 68,
+          "successful": 41,
+          "failed": 27,
+          "success_rate": 0.6029411764705882,
+          "unique_attempted_review_count": 68,
+          "successful_latency": {
+            "count": 41,
+            "mean_ms": 6655.332090239404,
+            "p50_ms": 7351.119599945378,
+            "p95_ms": 8700.879600015469,
+            "p99_ms": 8857.041819987353,
+            "max_ms": 8926.011100003961
+          },
+          "successful_scheduled_latency": {
+            "count": 41,
+            "mean_ms": 6661.368765715204,
+            "p50_ms": 7355.342064949213,
+            "p95_ms": 8709.024675015826,
+            "p99_ms": 8861.438887629967,
+            "max_ms": 8927.192998297201
+          },
+          "successful_queue_wait": {
+            "count": 41,
+            "mean_ms": 5751.783219515346,
+            "p50_ms": 6643.746600020677,
+            "p95_ms": 7815.040199959185,
+            "p99_ms": 7935.194900014903,
+            "max_ms": 8010.513300017919
+          },
+          "failure_counts": {
+            "http_429": 27
+          },
+          "completed_after_phase_end": 9
+        },
+        {
+          "phase": "recovery",
+          "scheduled_start_s": 90.0,
+          "scheduled_end_s": 270.0,
+          "offered_reviews_per_second": 0.5608633313917608,
+          "attempts": 101,
+          "sent": 101,
+          "successful": 100,
+          "failed": 1,
+          "success_rate": 0.9900990099009901,
+          "unique_attempted_review_count": 100,
+          "successful_latency": {
+            "count": 100,
+            "mean_ms": 1052.8244520007866,
+            "p50_ms": 806.6699500195682,
+            "p95_ms": 2659.178075031377,
+            "p99_ms": 4774.285331011639,
+            "max_ms": 5818.431499996223
+          },
+          "successful_scheduled_latency": {
+            "count": 100,
+            "mean_ms": 1059.110131596877,
+            "p50_ms": 814.6202632905145,
+            "p95_ms": 2663.1537630065636,
+            "p99_ms": 4776.26373788082,
+            "max_ms": 5821.589346633601
+          },
+          "successful_queue_wait": {
+            "count": 100,
+            "mean_ms": 175.11963099823333,
+            "p50_ms": 0.056949997087940574,
+            "p95_ms": 1077.286865015046,
+            "p99_ms": 4042.6668049593027,
+            "max_ms": 4776.91070002038
+          },
+          "failure_counts": {
+            "http_429": 1
+          },
+          "completed_after_phase_end": 1
+        }
+      ],
+      "rule": "Three consecutive scheduled recovery requests must all return successfully with client latency <= 1.10 x baseline P95 and queue wait <= max(100 ms, 1.10 x baseline queue P95). Failures reset the sequence. Baseline requires at least 10 successful requests; otherwise no confirmation.",
+      "interpretation": "This is an operational observation rule, not a business SLA, confidence interval, or proof of permanent recovery. Resolution depends on arrival spacing. A first in-band request alone does not establish recovery; later deterioration remains visible in phase/window metrics."
+    },
+    {
+      "run": "hybrid_resilience__burst_recovery_r3",
+      "status": "confirmed_under_declared_request_rule",
+      "baseline_source": "same_run_normal_phase",
+      "baseline_successful_requests": 34,
+      "baseline_latency": {
+        "count": 34,
+        "mean_ms": 884.6516264705261,
+        "p50_ms": 786.4931500225794,
+        "p95_ms": 1281.6751449950973,
+        "p99_ms": 1738.5508550051609,
+        "max_ms": 1934.695100004319
+      },
+      "baseline_queue": {
+        "count": 34,
+        "mean_ms": 3.8828411796951996,
+        "p50_ms": 0.04770001396536827,
+        "p95_ms": 0.14916500658728188,
+        "p99_ms": 87.18376498436578,
+        "max_ms": 130.04069996532053
+      },
+      "latency_band_ms": 1409.8426594946072,
+      "queue_band_ms": 100.0,
+      "first_request_in_band": {
+        "scheduled_arrival_after_burst_s": 10.69779332000762,
+        "observed_completion_after_burst_s": 11.40823860000819
+      },
+      "confirmation": {
+        "first_request_scheduled_after_burst_s": 10.69779332000762,
+        "confirmed_by_completion_after_burst_s": 15.103914999985136,
+        "consecutive_requests": 3
+      },
+      "recovery_attempts": 101,
+      "recovery_in_band_attempts": 91,
+      "phases": [
+        {
+          "phase": "normal",
+          "scheduled_start_s": 0.0,
+          "scheduled_end_s": 60.0,
+          "offered_reviews_per_second": 0.5608633313917608,
+          "attempts": 34,
+          "sent": 34,
+          "successful": 34,
+          "failed": 0,
+          "success_rate": 1.0,
+          "unique_attempted_review_count": 34,
+          "successful_latency": {
+            "count": 34,
+            "mean_ms": 884.6516264705261,
+            "p50_ms": 786.4931500225794,
+            "p95_ms": 1281.6751449950973,
+            "p99_ms": 1738.5508550051609,
+            "max_ms": 1934.695100004319
+          },
+          "successful_scheduled_latency": {
+            "count": 34,
+            "mean_ms": 891.7149699936792,
+            "p50_ms": 793.4106666555936,
+            "p95_ms": 1287.9437616580024,
+            "p99_ms": 1740.0911256243724,
+            "max_ms": 1936.0063000349328
+          },
+          "successful_queue_wait": {
+            "count": 34,
+            "mean_ms": 3.8828411796951996,
+            "p50_ms": 0.04770001396536827,
+            "p95_ms": 0.14916500658728188,
+            "p99_ms": 87.18376498436578,
+            "max_ms": 130.04069996532053
+          },
+          "failure_counts": {},
+          "completed_after_phase_end": 0
+        },
+        {
+          "phase": "burst",
+          "scheduled_start_s": 60.0,
+          "scheduled_end_s": 90.0,
+          "offered_reviews_per_second": 2.2434533255670432,
+          "attempts": 68,
+          "sent": 68,
+          "successful": 41,
+          "failed": 27,
+          "success_rate": 0.6029411764705882,
+          "unique_attempted_review_count": 68,
+          "successful_latency": {
+            "count": 41,
+            "mean_ms": 6638.7296902419,
+            "p50_ms": 7338.5694999597035,
+            "p95_ms": 8830.745799990837,
+            "p99_ms": 8990.491239994299,
+            "max_ms": 9054.127399984282
+          },
+          "successful_scheduled_latency": {
+            "count": 41,
+            "mean_ms": 6643.732108212003,
+            "p50_ms": 7344.210241649605,
+            "p95_ms": 8832.55737501895,
+            "p99_ms": 8993.298207659584,
+            "max_ms": 9056.58439832429
+          },
+          "successful_queue_wait": {
+            "count": 41,
+            "mean_ms": 5736.354599996447,
+            "p50_ms": 6485.260299989022,
+            "p95_ms": 7922.110199986491,
+            "p99_ms": 8065.8748199930415,
+            "max_ms": 8145.485099987127
+          },
+          "failure_counts": {
+            "http_429": 27
+          },
+          "completed_after_phase_end": 9
+        },
+        {
+          "phase": "recovery",
+          "scheduled_start_s": 90.0,
+          "scheduled_end_s": 270.0,
+          "offered_reviews_per_second": 0.5608633313917608,
+          "attempts": 101,
+          "sent": 101,
+          "successful": 100,
+          "failed": 1,
+          "success_rate": 0.9900990099009901,
+          "unique_attempted_review_count": 100,
+          "successful_latency": {
+            "count": 100,
+            "mean_ms": 1051.8698870041408,
+            "p50_ms": 809.3475500063505,
+            "p95_ms": 2601.9243900052966,
+            "p99_ms": 4707.52804197488,
+            "max_ms": 5740.864499995951
+          },
+          "successful_scheduled_latency": {
+            "count": 100,
+            "mean_ms": 1058.0622706174252,
+            "p50_ms": 812.9364199238012,
+            "p95_ms": 2608.530983007519,
+            "p99_ms": 4714.808713856931,
+            "max_ms": 5745.093846701394
+          },
+          "successful_queue_wait": {
+            "count": 100,
+            "mean_ms": 171.19343099708203,
+            "p50_ms": 0.05800000508315861,
+            "p95_ms": 1059.9713999894425,
+            "p99_ms": 3947.574449003445,
+            "max_ms": 4686.832099978346
+          },
+          "failure_counts": {
+            "http_429": 1
+          },
+          "completed_after_phase_end": 1
+        }
+      ],
+      "rule": "Three consecutive scheduled recovery requests must all return successfully with client latency <= 1.10 x baseline P95 and queue wait <= max(100 ms, 1.10 x baseline queue P95). Failures reset the sequence. Baseline requires at least 10 successful requests; otherwise no confirmation.",
+      "interpretation": "This is an operational observation rule, not a business SLA, confidence interval, or proof of permanent recovery. Resolution depends on arrival spacing. A first in-band request alone does not establish recovery; later deterioration remains visible in phase/window metrics."
+    }
+  ],
+  "input_shift": {
+    "scope": "Normal/long/normal development-input composition experiment; delayed-label F1 is diagnostic and cannot identify model degradation.",
+    "phases": [
+      {
+        "phase": "normal_before",
+        "attempts": 68,
+        "successful": 68,
+        "failed": 0,
+        "success_rate": 1.0,
+        "unique_attempted_review_count": 68,
+        "successful_latency": {
+          "count": 68,
+          "mean_ms": 862.5565191169325,
+          "p50_ms": 777.2621000185609,
+          "p95_ms": 1326.8785649735946,
+          "p99_ms": 1552.9122399934558,
+          "max_ms": 1923.3940999838524
+        },
+        "successful_scheduled_latency": {
+          "count": 68,
+          "mean_ms": 869.1716750461721,
+          "p50_ms": 789.6188032968591,
+          "p95_ms": 1333.4496166372762,
+          "p99_ms": 1553.886542876876,
+          "max_ms": 1924.5102999848314
+        },
+        "successful_queue_wait": {
+          "count": 68,
+          "mean_ms": 1.8527926474823342,
+          "p50_ms": 0.06264998228289187,
+          "p95_ms": 0.17380002536810932,
+          "p99_ms": 40.05609397601781,
+          "max_ms": 120.89279998326674
+        },
+        "failure_counts": {},
+        "successful_unique_reviews": 68,
+        "quality_successful_unique": {
+          "overall": {
+            "unique_reviews": 68,
+            "gold_presence_support": 120,
+            "gold_pair_support": 121,
+            "positive_review_count": 68,
+            "presence": {
+              "tp": 86,
+              "fp": 42,
+              "fn": 34,
+              "precision": 0.671875,
+              "recall": 0.7166666666666667,
+              "micro_f1": 0.6935483870967742
+            },
+            "pair": {
+              "tp": 81,
+              "fp": 47,
+              "fn": 40,
+              "precision": 0.6328125,
+              "recall": 0.6694214876033058,
+              "micro_f1": 0.6506024096385542
+            }
+          },
+          "heldout": {
+            "unique_reviews": 68,
+            "gold_presence_support": 4,
+            "gold_pair_support": 4,
+            "positive_review_count": 4,
+            "presence": {
+              "tp": 2,
+              "fp": 4,
+              "fn": 2,
+              "precision": 0.3333333333333333,
+              "recall": 0.5,
+              "micro_f1": 0.4
+            },
+            "pair": {
+              "tp": 2,
+              "fp": 4,
+              "fn": 2,
+              "precision": 0.3333333333333333,
+              "recall": 0.5,
+              "micro_f1": 0.4
+            }
+          },
+          "seen": {
+            "unique_reviews": 68,
+            "gold_presence_support": 116,
+            "gold_pair_support": 117,
+            "positive_review_count": 68,
+            "presence": {
+              "tp": 84,
+              "fp": 38,
+              "fn": 32,
+              "precision": 0.6885245901639344,
+              "recall": 0.7241379310344828,
+              "micro_f1": 0.7058823529411765
+            },
+            "pair": {
+              "tp": 79,
+              "fp": 43,
+              "fn": 38,
+              "precision": 0.6475409836065574,
+              "recall": 0.6752136752136753,
+              "micro_f1": 0.6610878661087866
+            }
+          }
+        }
+      },
+      {
+        "phase": "long_input",
+        "attempts": 68,
+        "successful": 68,
+        "failed": 0,
+        "success_rate": 1.0,
+        "unique_attempted_review_count": 10,
+        "successful_latency": {
+          "count": 68,
+          "mean_ms": 2456.453226470758,
+          "p50_ms": 2590.040749986656,
+          "p95_ms": 3881.3911650009686,
+          "p99_ms": 4069.4709590246202,
+          "max_ms": 4143.49410001887
+        },
+        "successful_scheduled_latency": {
+          "count": 68,
+          "mean_ms": 2462.018607397207,
+          "p50_ms": 2602.881186614596,
+          "p95_ms": 3884.910573287435,
+          "p99_ms": 4071.916069399099,
+          "max_ms": 4146.8112466468765
+        },
+        "successful_queue_wait": {
+          "count": 68,
+          "mean_ms": 858.5544647083974,
+          "p50_ms": 792.1393500000704,
+          "p95_ms": 2079.0359349921346,
+          "p99_ms": 2269.328815017361,
+          "max_ms": 2344.278700009454
+        },
+        "failure_counts": {},
+        "successful_unique_reviews": 10,
+        "quality_successful_unique": {
+          "overall": {
+            "unique_reviews": 10,
+            "gold_presence_support": 27,
+            "gold_pair_support": 28,
+            "positive_review_count": 10,
+            "presence": {
+              "tp": 17,
+              "fp": 7,
+              "fn": 10,
+              "precision": 0.7083333333333334,
+              "recall": 0.6296296296296297,
+              "micro_f1": 0.6666666666666666
+            },
+            "pair": {
+              "tp": 17,
+              "fp": 7,
+              "fn": 11,
+              "precision": 0.7083333333333334,
+              "recall": 0.6071428571428571,
+              "micro_f1": 0.6538461538461539
+            }
+          },
+          "heldout": {
+            "unique_reviews": 10,
+            "gold_presence_support": 1,
+            "gold_pair_support": 1,
+            "positive_review_count": 1,
+            "presence": {
+              "tp": 1,
+              "fp": 1,
+              "fn": 0,
+              "precision": 0.5,
+              "recall": 1.0,
+              "micro_f1": 0.6666666666666666
+            },
+            "pair": {
+              "tp": 1,
+              "fp": 1,
+              "fn": 0,
+              "precision": 0.5,
+              "recall": 1.0,
+              "micro_f1": 0.6666666666666666
+            }
+          },
+          "seen": {
+            "unique_reviews": 10,
+            "gold_presence_support": 26,
+            "gold_pair_support": 27,
+            "positive_review_count": 10,
+            "presence": {
+              "tp": 16,
+              "fp": 6,
+              "fn": 10,
+              "precision": 0.7272727272727273,
+              "recall": 0.6153846153846154,
+              "micro_f1": 0.6666666666666666
+            },
+            "pair": {
+              "tp": 16,
+              "fp": 6,
+              "fn": 11,
+              "precision": 0.7272727272727273,
+              "recall": 0.5925925925925926,
+              "micro_f1": 0.6530612244897959
+            }
+          }
+        }
+      },
+      {
+        "phase": "normal_after",
+        "attempts": 68,
+        "successful": 68,
+        "failed": 0,
+        "success_rate": 1.0,
+        "unique_attempted_review_count": 68,
+        "successful_latency": {
+          "count": 68,
+          "mean_ms": 879.3239735284313,
+          "p50_ms": 783.9862999971956,
+          "p95_ms": 1345.5770249885973,
+          "p99_ms": 2027.323409960953,
+          "max_ms": 2566.1152999964543
+        },
+        "successful_scheduled_latency": {
+          "count": 68,
+          "mean_ms": 886.3059176893355,
+          "p50_ms": 797.0774566192063,
+          "p95_ms": 1356.3951142817416,
+          "p99_ms": 2028.6183972347812,
+          "max_ms": 2567.077399988193
+        },
+        "successful_queue_wait": {
+          "count": 68,
+          "mean_ms": 20.514551469686385,
+          "p50_ms": 0.05915001383982599,
+          "p95_ms": 0.14218503492884338,
+          "p99_ms": 665.9928380057678,
+          "max_ms": 781.0979000059888
+        },
+        "failure_counts": {},
+        "successful_unique_reviews": 68,
+        "quality_successful_unique": {
+          "overall": {
+            "unique_reviews": 68,
+            "gold_presence_support": 120,
+            "gold_pair_support": 121,
+            "positive_review_count": 68,
+            "presence": {
+              "tp": 86,
+              "fp": 42,
+              "fn": 34,
+              "precision": 0.671875,
+              "recall": 0.7166666666666667,
+              "micro_f1": 0.6935483870967742
+            },
+            "pair": {
+              "tp": 81,
+              "fp": 47,
+              "fn": 40,
+              "precision": 0.6328125,
+              "recall": 0.6694214876033058,
+              "micro_f1": 0.6506024096385542
+            }
+          },
+          "heldout": {
+            "unique_reviews": 68,
+            "gold_presence_support": 4,
+            "gold_pair_support": 4,
+            "positive_review_count": 4,
+            "presence": {
+              "tp": 2,
+              "fp": 4,
+              "fn": 2,
+              "precision": 0.3333333333333333,
+              "recall": 0.5,
+              "micro_f1": 0.4
+            },
+            "pair": {
+              "tp": 2,
+              "fp": 4,
+              "fn": 2,
+              "precision": 0.3333333333333333,
+              "recall": 0.5,
+              "micro_f1": 0.4
+            }
+          },
+          "seen": {
+            "unique_reviews": 68,
+            "gold_presence_support": 116,
+            "gold_pair_support": 117,
+            "positive_review_count": 68,
+            "presence": {
+              "tp": 84,
+              "fp": 38,
+              "fn": 32,
+              "precision": 0.6885245901639344,
+              "recall": 0.7241379310344828,
+              "micro_f1": 0.7058823529411765
+            },
+            "pair": {
+              "tp": 79,
+              "fp": 43,
+              "fn": 38,
+              "precision": 0.6475409836065574,
+              "recall": 0.6752136752136753,
+              "micro_f1": 0.6610878661087866
+            }
+          }
+        }
+      }
+    ],
+    "scheduled_arrival_windows": [
+      {
+        "window_start_s": 0,
+        "window_end_s": 60,
+        "attempts": 34,
+        "successful": 34,
+        "failed": 0,
+        "success_rate": 1.0,
+        "unique_attempted_review_count": 34,
+        "successful_latency": {
+          "count": 34,
+          "mean_ms": 885.63156176379,
+          "p50_ms": 773.3612000010908,
+          "p95_ms": 1304.9161349597853,
+          "p99_ms": 1734.9995089857848,
+          "max_ms": 1923.3940999838524
+        },
+        "completion_throughput_reviews_per_second": 0.5666666666666667,
+        "input_length_js_bits": 0.021613550164935734,
+        "input_length_shift_signal": false,
+        "minimum_sample_warning": false
+      },
+      {
+        "window_start_s": 60,
+        "window_end_s": 120,
+        "attempts": 34,
+        "successful": 34,
+        "failed": 0,
+        "success_rate": 1.0,
+        "unique_attempted_review_count": 34,
+        "successful_latency": {
+          "count": 34,
+          "mean_ms": 839.4814764700748,
+          "p50_ms": 801.8974500300828,
+          "p95_ms": 1208.6776450043549,
+          "p99_ms": 1367.6513619808247,
+          "max_ms": 1370.4360999981873
+        },
+        "completion_throughput_reviews_per_second": 0.55,
+        "input_length_js_bits": 0.024579458035742213,
+        "input_length_shift_signal": false,
+        "minimum_sample_warning": false
+      },
+      {
+        "window_start_s": 120,
+        "window_end_s": 180,
+        "attempts": 34,
+        "successful": 34,
+        "failed": 0,
+        "success_rate": 1.0,
+        "unique_attempted_review_count": 10,
+        "successful_latency": {
+          "count": 34,
+          "mean_ms": 2568.128905882237,
+          "p50_ms": 2751.5421499847434,
+          "p95_ms": 3935.5658800079254,
+          "p99_ms": 4107.034941021702,
+          "max_ms": 4143.49410001887
+        },
+        "completion_throughput_reviews_per_second": 0.55,
+        "input_length_js_bits": 0.7394468924503993,
+        "input_length_shift_signal": true,
+        "minimum_sample_warning": false
+      },
+      {
+        "window_start_s": 180,
+        "window_end_s": 240,
+        "attempts": 34,
+        "successful": 34,
+        "failed": 0,
+        "success_rate": 1.0,
+        "unique_attempted_review_count": 10,
+        "successful_latency": {
+          "count": 34,
+          "mean_ms": 2344.777547059279,
+          "p50_ms": 2181.308100000024,
+          "p95_ms": 3869.6041500137653,
+          "p99_ms": 3880.775165024679,
+          "max_ms": 3885.3620000299998
+        },
+        "completion_throughput_reviews_per_second": 0.5833333333333334,
+        "input_length_js_bits": 0.7394468924503993,
+        "input_length_shift_signal": true,
+        "minimum_sample_warning": false
+      },
+      {
+        "window_start_s": 240,
+        "window_end_s": 300,
+        "attempts": 34,
+        "successful": 34,
+        "failed": 0,
+        "success_rate": 1.0,
+        "unique_attempted_review_count": 34,
+        "successful_latency": {
+          "count": 34,
+          "mean_ms": 916.9079911713625,
+          "p50_ms": 777.2126000199933,
+          "p95_ms": 1495.043089977117,
+          "p99_ms": 2300.7401899789706,
+          "max_ms": 2566.1152999964543
+        },
+        "completion_throughput_reviews_per_second": 0.5833333333333334,
+        "input_length_js_bits": 0.021613550164935734,
+        "input_length_shift_signal": false,
+        "minimum_sample_warning": false
+      },
+      {
+        "window_start_s": 300,
+        "window_end_s": 360,
+        "attempts": 34,
+        "successful": 34,
+        "failed": 0,
+        "success_rate": 1.0,
+        "unique_attempted_review_count": 34,
+        "successful_latency": {
+          "count": 34,
+          "mean_ms": 841.7399558855002,
+          "p50_ms": 797.8542000346351,
+          "p95_ms": 1216.6474449972159,
+          "p99_ms": 1372.9964560066583,
+          "max_ms": 1391.7592000216246
+        },
+        "completion_throughput_reviews_per_second": 0.55,
+        "input_length_js_bits": 0.024579458035742213,
+        "input_length_shift_signal": false,
+        "minimum_sample_warning": false
+      }
+    ]
+  },
+  "online_observer": {
+    "reason": "run_completed",
+    "labels_read": false,
+    "window_count": 7,
+    "signal_windows": 3,
+    "late_attachment_windows": 0,
+    "window_revision_count": 0,
+    "window_seconds": 60,
+    "js_divergence_threshold_bits": 0.1,
+    "low_count_threshold": 20,
+    "windows": [
+      {
+        "window_start_s": 0,
+        "window_end_s": 60,
+        "completed_attempts": 34,
+        "completed_successful": 34,
+        "completed_failed": 0,
+        "input_length_js_bits": 0.021613550164935734,
+        "input_length_shift_signal": false,
+        "low_sample_warning": false,
+        "partial_final_window": false,
+        "revision": 0,
+        "attachment_was_after_window_end": false,
+        "live_observation": true,
+        "observer_elapsed_s": 60.97147168847732,
+        "emission_lag_after_window_end_s": 0.9714716884773225,
+        "successful_latency": {
+          "count": 34,
+          "mean_ms": 885.63156176379,
+          "p50_ms": 773.3612000010908,
+          "p95_ms": 1304.9161349597853,
+          "p99_ms": 1734.9995089857848,
+          "max_ms": 1923.3940999838524
+        }
+      },
+      {
+        "window_start_s": 60,
+        "window_end_s": 120,
+        "completed_attempts": 33,
+        "completed_successful": 33,
+        "completed_failed": 0,
+        "input_length_js_bits": 0.023326307695312805,
+        "input_length_shift_signal": false,
+        "low_sample_warning": false,
+        "partial_final_window": false,
+        "revision": 0,
+        "attachment_was_after_window_end": false,
+        "live_observation": true,
+        "observer_elapsed_s": 120.2164635884692,
+        "emission_lag_after_window_end_s": 0.2164635884691961,
+        "successful_latency": {
+          "count": 33,
+          "mean_ms": 843.002930302949,
+          "p50_ms": 803.0243000248447,
+          "p95_ms": 1220.4714799998324,
+          "p99_ms": 1367.7357479813509,
+          "max_ms": 1370.4360999981873
+        }
+      },
+      {
+        "window_start_s": 120,
+        "window_end_s": 180,
+        "completed_attempts": 33,
+        "completed_successful": 33,
+        "completed_failed": 0,
+        "input_length_js_bits": 0.6930386988771847,
+        "input_length_shift_signal": true,
+        "low_sample_warning": false,
+        "partial_final_window": false,
+        "revision": 0,
+        "attachment_was_after_window_end": false,
+        "live_observation": true,
+        "observer_elapsed_s": 180.4663328884635,
+        "emission_lag_after_window_end_s": 0.46633288846351206,
+        "successful_latency": {
+          "count": 33,
+          "mean_ms": 2471.55699091011,
+          "p50_ms": 2560.5111999902874,
+          "p95_ms": 3943.0617200094275,
+          "p99_ms": 4108.139764021616,
+          "max_ms": 4143.49410001887
+        }
+      },
+      {
+        "window_start_s": 180,
+        "window_end_s": 240,
+        "completed_attempts": 35,
+        "completed_successful": 35,
+        "completed_failed": 0,
+        "input_length_js_bits": 0.7394468924503993,
+        "input_length_shift_signal": true,
+        "low_sample_warning": false,
+        "partial_final_window": false,
+        "revision": 0,
+        "attachment_was_after_window_end": false,
+        "live_observation": true,
+        "observer_elapsed_s": 240.85783698846353,
+        "emission_lag_after_window_end_s": 0.8578369884635322,
+        "successful_latency": {
+          "count": 35,
+          "mean_ms": 2429.5501714272955,
+          "p50_ms": 2626.1168000055477,
+          "p95_ms": 3869.4612000137568,
+          "p99_ms": 3880.636170024518,
+          "max_ms": 3885.3620000299998
+        }
+      },
+      {
+        "window_start_s": 240,
+        "window_end_s": 300,
+        "completed_attempts": 35,
+        "completed_successful": 35,
+        "completed_failed": 0,
+        "input_length_js_bits": 0.026050055051543883,
+        "input_length_shift_signal": false,
+        "low_sample_warning": false,
+        "partial_final_window": false,
+        "revision": 0,
+        "attachment_was_after_window_end": false,
+        "live_observation": true,
+        "observer_elapsed_s": 300.35449758847244,
+        "emission_lag_after_window_end_s": 0.35449758847244084,
+        "successful_latency": {
+          "count": 35,
+          "mean_ms": 924.0379399952611,
+          "p50_ms": 778.2532999990508,
+          "p95_ms": 1474.5119199797034,
+          "p99_ms": 2292.6985199784367,
+          "max_ms": 2566.1152999964543
+        }
+      },
+      {
+        "window_start_s": 300,
+        "window_end_s": 360,
+        "completed_attempts": 33,
+        "completed_successful": 33,
+        "completed_failed": 0,
+        "input_length_js_bits": 0.023326307695312805,
+        "input_length_shift_signal": false,
+        "low_sample_warning": false,
+        "partial_final_window": false,
+        "revision": 0,
+        "attachment_was_after_window_end": false,
+        "live_observation": true,
+        "observer_elapsed_s": 361.00097628845833,
+        "emission_lag_after_window_end_s": 1.0009762884583324,
+        "successful_latency": {
+          "count": 33,
+          "mean_ms": 845.6535939441176,
+          "p50_ms": 804.224300023634,
+          "p95_ms": 1225.7439799956044,
+          "p99_ms": 1373.5650240071118,
+          "max_ms": 1391.7592000216246
+        }
+      },
+      {
+        "window_start_s": 360,
+        "window_end_s": 420,
+        "completed_attempts": 1,
+        "completed_successful": 1,
+        "completed_failed": 0,
+        "input_length_js_bits": 0.7779178552576685,
+        "input_length_shift_signal": true,
+        "low_sample_warning": true,
+        "partial_final_window": true,
+        "revision": 0,
+        "attachment_was_after_window_end": false,
+        "live_observation": true,
+        "observer_elapsed_s": 361.00097628845833,
+        "emission_lag_after_window_end_s": 0,
+        "successful_latency": {
+          "count": 1,
+          "mean_ms": 712.5898999511264,
+          "p50_ms": 712.5898999511264,
+          "p95_ms": 712.5898999511264,
+          "p99_ms": 712.5898999511264,
+          "max_ms": 712.5898999511264
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,343 @@
+{
+  "schema_version": "serving_public_cache_v1",
+  "scope": "Each mode executed once in sequence on the same frozen 957-review replay; timing ratios are descriptive, not randomized repeated causal estimates.",
+  "change_direction": "cache_off_to_cache_on",
+  "performance_ratio_direction": "cache_on_over_cache_off",
+  "quality_intervals": "Use the matching contrasts in quality.json; no mixing alternative bootstrap streams.",
+  "variants": {
+    "few_shot": {
+      "coverage": {
+        "frozen_evaluation_reviews": 957,
+        "both_successful_reviews": 957,
+        "on_only_successful_reviews": 0,
+        "off_only_successful_reviews": 0,
+        "neither_successful_reviews": 0,
+        "complete_model_output_comparison": true
+      },
+      "changes": {
+        "reviews_compared": 957,
+        "pair_label_changed_reviews": 7,
+        "presence_changed_reviews": 6,
+        "sentiment_only_changed_reviews": 1,
+        "pair_assignments_added": 4,
+        "pair_assignments_removed": 4,
+        "aspect_assignments_added": 3,
+        "aspect_assignments_removed": 3,
+        "pair_label_changed_fraction": 0.0073145245559038665
+      },
+      "all_final_label_sets_equal": false,
+      "scores": {
+        "aspect_scores_compared": 11484,
+        "aspect_max_absolute_difference": 0.2820848226547241,
+        "aspect_nonidentical_score_count": 7839,
+        "common_selected_aspect_instances": 1861,
+        "sentiment_scores_compared": 5583,
+        "sentiment_max_absolute_difference": 0.055028438568115234,
+        "sentiment_nonidentical_score_count": 3324,
+        "scope": "All taxonomy aspect scores for common-success reviews; sentiment differences only for aspects selected by BOTH systems. No missing sentiment score is fabricated."
+      },
+      "performance": {
+        "cache_on": {
+          "attempts": 957,
+          "successful": 957,
+          "failed": 0,
+          "wall_seconds_including_drain": 855.4883816000074,
+          "successful_reviews_per_second": 1.118659260117755,
+          "successful_latency": {
+            "count": 957,
+            "mean_ms": 893.8082699059843,
+            "p50_ms": 833.372299966868,
+            "p95_ms": 1315.5282800318673,
+            "p99_ms": 1710.5523080122664,
+            "max_ms": 3721.268700028304
+          },
+          "response_budgets_seconds": {
+            "1": {
+              "met": 789,
+              "fraction_of_all_attempts": 0.8244514106583072
+            },
+            "2": {
+              "met": 950,
+              "fraction_of_all_attempts": 0.9926854754440961
+            },
+            "5": {
+              "met": 957,
+              "fraction_of_all_attempts": 1.0
+            },
+            "10": {
+              "met": 957,
+              "fraction_of_all_attempts": 1.0
+            },
+            "30": {
+              "met": 957,
+              "fraction_of_all_attempts": 1.0
+            },
+            "60": {
+              "met": 957,
+              "fraction_of_all_attempts": 1.0
+            }
+          }
+        },
+        "cache_off": {
+          "attempts": 957,
+          "successful": 957,
+          "failed": 0,
+          "wall_seconds_including_drain": 3196.013790600002,
+          "successful_reviews_per_second": 0.2994355039439108,
+          "successful_latency": {
+            "count": 957,
+            "mean_ms": 3339.4986416933116,
+            "p50_ms": 3250.736300018616,
+            "p95_ms": 3899.607820040547,
+            "p99_ms": 4585.659716003577,
+            "max_ms": 6523.347899958026
+          },
+          "response_budgets_seconds": {
+            "1": {
+              "met": 0,
+              "fraction_of_all_attempts": 0.0
+            },
+            "2": {
+              "met": 0,
+              "fraction_of_all_attempts": 0.0
+            },
+            "5": {
+              "met": 953,
+              "fraction_of_all_attempts": 0.9958202716823407
+            },
+            "10": {
+              "met": 957,
+              "fraction_of_all_attempts": 1.0
+            },
+            "30": {
+              "met": 957,
+              "fraction_of_all_attempts": 1.0
+            },
+            "60": {
+              "met": 957,
+              "fraction_of_all_attempts": 1.0
+            }
+          }
+        }
+      },
+      "ratios": {
+        "on_over_off_p50_latency": 0.2563641658543929,
+        "on_over_off_p95_latency": 0.3373488670504792,
+        "on_over_off_successful_throughput": 3.735893858222298,
+        "interpretation": "One sequential full-replay run per mode, not a randomized or repeated causal performance estimate. Latency uses successful attempts only; compare coverage/success rates and thermal/clock telemetry. Throughput includes client drain."
+      },
+      "source_hashes": {
+        "cache_on": {
+          "campaign_plan_sha256": "bb9f8d1fcb8d2fe707352f4e4a391a19cca7c5b0bc3d7b73455f323c75a25dff",
+          "requests_sha256": "1e98e1e863547b340cee5b046bbc0e3b83758e211036126ed70782f014fa4971",
+          "summary_sha256": "a53d742c9a500e2ef03475f7a6bad6519b9ad33940aa493ed8280006d7891870",
+          "client_config_sha256": "99504737839cff807fa0351f2d1fc41722654365e1c2c2130bef02dee2a0b104"
+        },
+        "cache_off": {
+          "campaign_plan_sha256": "a7a014f78f3323dbf5fada092db974e123b8730467120c9f7ab76187d66d5cad",
+          "requests_sha256": "1605a09ccfec4ed10aa75ff3c94e47d82496cc20e8a50ff02d613a4d923bb998",
+          "summary_sha256": "047dedcddc1fbaf029cd2edf0883c643b07a95984ee51c608d1da179d1063456",
+          "client_config_sha256": "d041f8d2094bcb622f2fdb8ba52ffd2bf298561f544d75b688e6be2dee1f2dee"
+        },
+        "implementation_sha256": {
+          "inference.py": "f2130eec1eb5099cf99b3af4f2c1ee1bcd43ebfc592c0ce9ddf03153738a898f",
+          "prefix_cache.py": "fb6f8495db97e4468bd22c5e8740608f21a5bd8431353d48ba4acce26c82733b"
+        },
+        "runtime_settings": {
+          "device": "NVIDIA GeForce RTX 5050 Laptop GPU",
+          "versions": {
+            "torch": "2.10.0+cu128",
+            "transformers": "4.57.6",
+            "peft": "0.19.1",
+            "bitsandbytes": "0.49.2",
+            "accelerate": "1.14.0",
+            "numpy": "2.2.6"
+          },
+          "quantization": "NF4 double quantization, float16 compute"
+        }
+      },
+      "exploratory_after_completion_diagnostic": {
+        "counts": {
+          "correct_aspects_added": 0,
+          "incorrect_aspects_added": 3,
+          "correct_aspects_removed": 0,
+          "incorrect_aspects_removed": 3,
+          "correctly_detected_aspect_set_changed_reviews": 0,
+          "common_sentiment_score_changed_reviews": 878,
+          "score_changed_reviews_with_aspect_change": 6,
+          "score_changed_reviews_without_aspect_change": 872
+        },
+        "scope": "Post-hoc CPU aggregate inspection, no new GPU experiment or causal identification.",
+        "source_sha256": "6cae21c526ec754612d02edb33873ab55112b24397aa8941e0a37197e0d120ca",
+        "evaluation_labels_sha256": "4bfc23e175cfe911a6036e7a2cce602d07913808220b86d9fe2230d0122a9190"
+      }
+    },
+    "hybrid": {
+      "coverage": {
+        "frozen_evaluation_reviews": 957,
+        "both_successful_reviews": 957,
+        "on_only_successful_reviews": 0,
+        "off_only_successful_reviews": 0,
+        "neither_successful_reviews": 0,
+        "complete_model_output_comparison": true
+      },
+      "changes": {
+        "reviews_compared": 957,
+        "pair_label_changed_reviews": 6,
+        "presence_changed_reviews": 6,
+        "sentiment_only_changed_reviews": 0,
+        "pair_assignments_added": 3,
+        "pair_assignments_removed": 3,
+        "aspect_assignments_added": 3,
+        "aspect_assignments_removed": 3,
+        "pair_label_changed_fraction": 0.006269592476489028
+      },
+      "all_final_label_sets_equal": false,
+      "scores": {
+        "aspect_scores_compared": 11484,
+        "aspect_max_absolute_difference": 0.2820848226547241,
+        "aspect_nonidentical_score_count": 7839,
+        "common_selected_aspect_instances": 1861,
+        "sentiment_scores_compared": 5583,
+        "sentiment_max_absolute_difference": 0.00454479455947876,
+        "sentiment_nonidentical_score_count": 21,
+        "scope": "All taxonomy aspect scores for common-success reviews; sentiment differences only for aspects selected by BOTH systems. No missing sentiment score is fabricated."
+      },
+      "performance": {
+        "cache_on": {
+          "attempts": 957,
+          "successful": 957,
+          "failed": 0,
+          "wall_seconds_including_drain": 852.8127152000088,
+          "successful_reviews_per_second": 1.1221690096113968,
+          "successful_latency": {
+            "count": 957,
+            "mean_ms": 891.0233680256292,
+            "p50_ms": 825.4856000421569,
+            "p95_ms": 1314.9786600028167,
+            "p99_ms": 1776.260603989942,
+            "max_ms": 3574.319100007415
+          },
+          "response_budgets_seconds": {
+            "1": {
+              "met": 788,
+              "fraction_of_all_attempts": 0.8234064785788924
+            },
+            "2": {
+              "met": 951,
+              "fraction_of_all_attempts": 0.9937304075235109
+            },
+            "5": {
+              "met": 957,
+              "fraction_of_all_attempts": 1.0
+            },
+            "10": {
+              "met": 957,
+              "fraction_of_all_attempts": 1.0
+            },
+            "30": {
+              "met": 957,
+              "fraction_of_all_attempts": 1.0
+            },
+            "60": {
+              "met": 957,
+              "fraction_of_all_attempts": 1.0
+            }
+          }
+        },
+        "cache_off": {
+          "attempts": 957,
+          "successful": 957,
+          "failed": 0,
+          "wall_seconds_including_drain": 3021.758974700002,
+          "successful_reviews_per_second": 0.3167029561300501,
+          "successful_latency": {
+            "count": 957,
+            "mean_ms": 3157.397364367305,
+            "p50_ms": 3087.902100000065,
+            "p95_ms": 3589.6526199998334,
+            "p99_ms": 4087.2416479885605,
+            "max_ms": 5996.16129999049
+          },
+          "response_budgets_seconds": {
+            "1": {
+              "met": 0,
+              "fraction_of_all_attempts": 0.0
+            },
+            "2": {
+              "met": 0,
+              "fraction_of_all_attempts": 0.0
+            },
+            "5": {
+              "met": 954,
+              "fraction_of_all_attempts": 0.9968652037617555
+            },
+            "10": {
+              "met": 957,
+              "fraction_of_all_attempts": 1.0
+            },
+            "30": {
+              "met": 957,
+              "fraction_of_all_attempts": 1.0
+            },
+            "60": {
+              "met": 957,
+              "fraction_of_all_attempts": 1.0
+            }
+          }
+        }
+      },
+      "ratios": {
+        "on_over_off_p50_latency": 0.2673289415626679,
+        "on_over_off_p95_latency": 0.3663247671031961,
+        "on_over_off_successful_throughput": 3.543285554778946,
+        "interpretation": "One sequential full-replay run per mode, not a randomized or repeated causal performance estimate. Latency uses successful attempts only; compare coverage/success rates and thermal/clock telemetry. Throughput includes client drain."
+      },
+      "source_hashes": {
+        "cache_on": {
+          "campaign_plan_sha256": "bb9f8d1fcb8d2fe707352f4e4a391a19cca7c5b0bc3d7b73455f323c75a25dff",
+          "requests_sha256": "471378f4439f5c12c87c9b01a7be04a93f800aa8fc139a6fa396bbe36aca9508",
+          "summary_sha256": "96a15918234fdd1e6171e90faea91046defe3b1a5b5a18baeb47d87475935285",
+          "client_config_sha256": "8addce05049b6979abf050ee0b099d3d6e9a934490a569832b0a62e28104126c"
+        },
+        "cache_off": {
+          "campaign_plan_sha256": "a7a014f78f3323dbf5fada092db974e123b8730467120c9f7ab76187d66d5cad",
+          "requests_sha256": "9b13f5668670f75e1d557f673387d34fa27686a835846b006ba1e03b26ff70bc",
+          "summary_sha256": "ae70b7ce396990f3a28cd90ad05d5ca116f2f686e5fed4ae91274abb1cb220a3",
+          "client_config_sha256": "4adb7998e47cb8765ddb99bd60ceaf1fd5afca733e2621dd5743347de88a39b6"
+        },
+        "implementation_sha256": {
+          "inference.py": "f2130eec1eb5099cf99b3af4f2c1ee1bcd43ebfc592c0ce9ddf03153738a898f",
+          "prefix_cache.py": "fb6f8495db97e4468bd22c5e8740608f21a5bd8431353d48ba4acce26c82733b"
+        },
+        "runtime_settings": {
+          "device": "NVIDIA GeForce RTX 5050 Laptop GPU",
+          "versions": {
+            "torch": "2.10.0+cu128",
+            "transformers": "4.57.6",
+            "peft": "0.19.1",
+            "bitsandbytes": "0.49.2",
+            "accelerate": "1.14.0",
+            "numpy": "2.2.6"
+          },
+          "quantization": "NF4 double quantization, float16 compute"
+        }
+      },
+      "exploratory_after_completion_diagnostic": {
+        "counts": {
+          "correct_aspects_added": 0,
+          "incorrect_aspects_added": 3,
+          "correct_aspects_removed": 0,
+          "incorrect_aspects_removed": 3,
+          "correctly_detected_aspect_set_changed_reviews": 0,
+          "common_sentiment_score_changed_reviews": 4,
+          "score_changed_reviews_with_aspect_change": 4,
+          "score_changed_reviews_without_aspect_change": 0
+        },
+        "scope": "Post-hoc CPU aggregate inspection, no new GPU experiment or causal identification.",
+        "source_sha256": "6cae21c526ec754612d02edb33873ab55112b24397aa8941e0a37197e0d120ca",
+        "evaluation_labels_sha256": "4bfc23e175cfe911a6036e7a2cce602d07913808220b86d9fe2230d0122a9190"
+      }
+    }
+  }
+}

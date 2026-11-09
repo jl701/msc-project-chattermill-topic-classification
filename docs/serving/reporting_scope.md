@@ -175,10 +175,15 @@ multi-tenant reliability, production availability or real customer usage. Shared
 host CPU/GPU contention is part of this local measurement environment.
 
 Input-length and prediction-distribution changes are descriptive monitoring
-signals. They cannot establish declining accuracy or F1 without labels. Current
-time windows are assigned by scheduled arrival, not completion time. State the
-reference workload, window size and threshold; a threshold crossing is not a
-statistical significance result. Small windows may fluctuate.
+signals. They cannot establish declining accuracy or F1 without labels. Post-run
+analysis assigns latency, errors and delayed-label quality to scheduled-arrival
+cohorts, while completion throughput uses actual completion-time windows. The
+separate live input-shift observer uses completed client outcomes available at
+emission time and records its actual emission timestamp, late attachment,
+revisions and partial windows. Queueing can move a signal into a later completion
+window; these two time bases must not be conflated. State the reference workload,
+window size and threshold; a threshold crossing is not a statistical significance
+result. Small windows and repeatedly sampled source reviews need explicit limits.
 
 Random audit queues are sampled from successful unique replay samples, so any
 quality estimate from them targets that successful population. They do not

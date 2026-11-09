@@ -1,0 +1,450 @@
+{
+  "schema_version": "serving_public_runtime_v1",
+  "operating_system": "Windows",
+  "device": "NVIDIA GeForce RTX 5050 Laptop GPU",
+  "device_total_bytes": 8546484224,
+  "python": "3.13.11",
+  "package_versions": {
+    "torch": "2.10.0+cu128",
+    "transformers": "4.57.6",
+    "peft": "0.19.1",
+    "bitsandbytes": "0.49.2",
+    "accelerate": "1.14.0",
+    "numpy": "2.2.6"
+  },
+  "model": {
+    "id": "Qwen/Qwen3-4B-Instruct-2507",
+    "revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+    "adapter_checkpoint_tree_sha256": "175b5e7a1e249ec66283c7c92f4788191a26b2bc2b8fc2f78dce05a84075269e",
+    "adapter": {
+      "r": 4,
+      "lora_alpha": 8,
+      "target_modules": [
+        "v_proj",
+        "o_proj",
+        "k_proj",
+        "q_proj"
+      ]
+    },
+    "quantization": "NF4 double quantization; 4-bit compute dtype float16"
+  },
+  "fold_id": "l2-a01",
+  "taxonomy": {
+    "version": "fabsa_aspect_descriptions_minimal_v2",
+    "sha256": "fc93cf27efdb64ad335f39f4a0dbdbd3dad13b1aae5de0010280931867af7d4c",
+    "candidate_count": 12,
+    "heldout_aspects": [
+      "Account management: Account access"
+    ]
+  },
+  "shared_server_settings": {
+    "pair_batch_size": 4,
+    "max_batch_tokens": 4096,
+    "request_batch_size": 1,
+    "batch_wait_ms": 0.0,
+    "queue_size": 8,
+    "timeout_s": 120.0,
+    "logits_mode": "last_token"
+  },
+  "client_timeout_seconds": 130,
+  "warmup_requests_excluded_per_session": 3,
+  "max_prompt_lengths": {
+    "few_shot": 1024,
+    "qlora": 384
+  },
+  "frozen_thresholds": {
+    "few_shot": {
+      "aspect_threshold": 0.99999922514,
+      "runner_up_threshold": 0.99
+    },
+    "qlora": {
+      "aspect_threshold": 0.789099752903,
+      "runner_up_threshold": 0.402159124613
+    },
+    "hybrid": {
+      "aspect_threshold": 0.99999922514,
+      "runner_up_threshold": 0.402159124613
+    }
+  },
+  "local_base_integrity_scope": "Local three-shard SHA256 fingerprints were recorded. Ordinary local files did not supply trusted upstream reference hashes; this is not independent upstream verification.",
+  "memory_scope": "NVIDIA samples describe the entire device including other processes/display and driver use. PyTorch counters describe this server process allocator; allocated and reserved are different. Peak counters are cumulative from model load, not reset before the quality replay, and include warmup. Sampled device maxima are not continuous high-water marks.",
+  "clock_scope": "Driver cumulative limiting counters and sampled instantaneous flags measure different things. Counter increases alone do not prove continuous thermal throttling or a physically confirmed cause. Retain previously recorded anomalous-counter qualification.",
+  "startup_scope": "Three separate primary sessions. One startup observation each. HTTP quality replay follows 3 warmup requests; headline P50/P95 exclude model loading, server launch and warmup.",
+  "quality_profiles": {
+    "few_shot_on": {
+      "model_load_s": 18.591297700011637,
+      "launch_to_http_ready_s": 20.463622300012503,
+      "cuda_before_quality_mib": {
+        "cuda_allocated_mib": 2677.20166015625,
+        "cuda_reserved_mib": 3468.0,
+        "cuda_peak_allocated_mib": 3163.791015625,
+        "cuda_peak_reserved_mib": 3468.0
+      },
+      "cuda_after_quality_mib": {
+        "cuda_allocated_mib": 2677.20166015625,
+        "cuda_reserved_mib": 3728.0,
+        "cuda_peak_allocated_mib": 3372.3193359375,
+        "cuda_peak_reserved_mib": 3728.0
+      },
+      "telemetry_scope": "Approximately run-aligned by UTC: config.utc_start is recorded just before the client monotonic epoch; telemetry is sampled every few seconds. Includes client drain.",
+      "sampled_device_metrics": {
+        "gpu_memory_used_mib": {
+          "n": 171,
+          "mean": 3751.374269005848,
+          "min": 3585.0,
+          "max": 3843.0,
+          "p50": 3675.0,
+          "p95": 3843.0
+        },
+        "gpu_temperature_c": {
+          "n": 171,
+          "mean": 71.83040935672514,
+          "min": 64.0,
+          "max": 77.0,
+          "p50": 72.0,
+          "p95": 75.0
+        },
+        "gpu_power_draw_w": {
+          "n": 171,
+          "mean": 57.085730994152044,
+          "min": 31.36,
+          "max": 73.77,
+          "p50": 55.26,
+          "p95": 66.995
+        },
+        "gpu_sm_clock_mhz": {
+          "n": 171,
+          "mean": 2248.1403508771928,
+          "min": 1950.0,
+          "max": 2550.0,
+          "p50": 2257.0,
+          "p95": 2418.5
+        },
+        "gpu_memory_clock_mhz": {
+          "n": 171,
+          "mean": 9184.479532163743,
+          "min": 9001.0,
+          "max": 12026.0,
+          "p50": 9001.0,
+          "p95": 11026.0
+        }
+      },
+      "end_allocator_on_minus_off_mib": {
+        "cuda_allocated_mib": 114.1875,
+        "cuda_reserved_mib": 728.0,
+        "cuda_peak_allocated_mib": 453.71923828125,
+        "cuda_peak_reserved_mib": 728.0
+      }
+    },
+    "qlora_on": {
+      "model_load_s": 14.725466000032611,
+      "launch_to_http_ready_s": 16.814608699991368,
+      "cuda_before_quality_mib": {
+        "cuda_allocated_mib": 2563.01416015625,
+        "cuda_reserved_mib": 3000.0,
+        "cuda_peak_allocated_mib": 2918.60009765625,
+        "cuda_peak_reserved_mib": 3000.0
+      },
+      "cuda_after_quality_mib": {
+        "cuda_allocated_mib": 2563.01416015625,
+        "cuda_reserved_mib": 3000.0,
+        "cuda_peak_allocated_mib": 2918.60009765625,
+        "cuda_peak_reserved_mib": 3000.0
+      },
+      "telemetry_scope": "Approximately run-aligned by UTC: config.utc_start is recorded just before the client monotonic epoch; telemetry is sampled every few seconds. Includes client drain.",
+      "sampled_device_metrics": {
+        "gpu_memory_used_mib": {
+          "n": 218,
+          "mean": 3115.0,
+          "min": 3115.0,
+          "max": 3115.0,
+          "p50": 3115.0,
+          "p95": 3115.0
+        },
+        "gpu_temperature_c": {
+          "n": 218,
+          "mean": 72.9954128440367,
+          "min": 69.0,
+          "max": 75.0,
+          "p50": 73.0,
+          "p95": 74.0
+        },
+        "gpu_power_draw_w": {
+          "n": 218,
+          "mean": 61.00821100917432,
+          "min": 35.53,
+          "max": 76.59,
+          "p50": 60.995000000000005,
+          "p95": 66.7925
+        },
+        "gpu_sm_clock_mhz": {
+          "n": 218,
+          "mean": 2315.146788990826,
+          "min": 2100.0,
+          "max": 2445.0,
+          "p50": 2317.0,
+          "p95": 2400.0
+        },
+        "gpu_memory_clock_mhz": {
+          "n": 218,
+          "mean": 9001.0,
+          "min": 9001.0,
+          "max": 9001.0,
+          "p50": 9001.0,
+          "p95": 9001.0
+        }
+      }
+    },
+    "hybrid_on": {
+      "model_load_s": 15.84488990000682,
+      "launch_to_http_ready_s": 18.29877910000505,
+      "cuda_before_quality_mib": {
+        "cuda_allocated_mib": 2627.56103515625,
+        "cuda_reserved_mib": 3394.0,
+        "cuda_peak_allocated_mib": 3163.791015625,
+        "cuda_peak_reserved_mib": 3394.0
+      },
+      "cuda_after_quality_mib": {
+        "cuda_allocated_mib": 2627.56103515625,
+        "cuda_reserved_mib": 3640.0,
+        "cuda_peak_allocated_mib": 3322.6787109375,
+        "cuda_peak_reserved_mib": 3640.0
+      },
+      "telemetry_scope": "Approximately run-aligned by UTC: config.utc_start is recorded just before the client monotonic epoch; telemetry is sampled every few seconds. Includes client drain.",
+      "sampled_device_metrics": {
+        "gpu_memory_used_mib": {
+          "n": 171,
+          "mean": 3663.3040935672516,
+          "min": 3508.0,
+          "max": 3755.0,
+          "p50": 3586.0,
+          "p95": 3755.0
+        },
+        "gpu_temperature_c": {
+          "n": 171,
+          "mean": 71.55555555555556,
+          "min": 64.0,
+          "max": 75.0,
+          "p50": 72.0,
+          "p95": 73.0
+        },
+        "gpu_power_draw_w": {
+          "n": 171,
+          "mean": 58.62970760233918,
+          "min": 10.58,
+          "max": 74.05,
+          "p50": 59.87,
+          "p95": 65.09
+        },
+        "gpu_sm_clock_mhz": {
+          "n": 171,
+          "mean": 2300.6198830409357,
+          "min": 2055.0,
+          "max": 2482.0,
+          "p50": 2310.0,
+          "p95": 2415.0
+        },
+        "gpu_memory_clock_mhz": {
+          "n": 171,
+          "mean": 9143.105263157895,
+          "min": 9001.0,
+          "max": 11026.0,
+          "p50": 9001.0,
+          "p95": 11026.0
+        }
+      },
+      "end_allocator_on_minus_off_mib": {
+        "cuda_allocated_mib": 64.546875,
+        "cuda_reserved_mib": 640.0,
+        "cuda_peak_allocated_mib": 404.07861328125,
+        "cuda_peak_reserved_mib": 640.0
+      }
+    },
+    "few_shot_off": {
+      "model_load_s": 16.070606200024486,
+      "launch_to_http_ready_s": 18.308503200009,
+      "cuda_before_quality_mib": {
+        "cuda_allocated_mib": 2563.01416015625,
+        "cuda_reserved_mib": 3000.0,
+        "cuda_peak_allocated_mib": 2918.60009765625,
+        "cuda_peak_reserved_mib": 3000.0
+      },
+      "cuda_after_quality_mib": {
+        "cuda_allocated_mib": 2563.01416015625,
+        "cuda_reserved_mib": 3000.0,
+        "cuda_peak_allocated_mib": 2918.60009765625,
+        "cuda_peak_reserved_mib": 3000.0
+      },
+      "telemetry_scope": "Approximately run-aligned by UTC: config.utc_start is recorded just before the client monotonic epoch; telemetry is sampled every few seconds. Includes client drain.",
+      "sampled_device_metrics": {
+        "gpu_memory_used_mib": {
+          "n": 638,
+          "mean": 3115.0,
+          "min": 3115.0,
+          "max": 3115.0,
+          "p50": 3115.0,
+          "p95": 3115.0
+        },
+        "gpu_temperature_c": {
+          "n": 638,
+          "mean": 73.94200626959248,
+          "min": 67.0,
+          "max": 76.0,
+          "p50": 74.0,
+          "p95": 75.0
+        },
+        "gpu_utilisation_percent": {
+          "n": 638,
+          "mean": 97.57210031347962,
+          "min": 38.0,
+          "max": 100.0,
+          "p50": 100.0,
+          "p95": 100.0
+        },
+        "gpu_power_draw_w": {
+          "n": 638,
+          "mean": 69.63175548589341,
+          "min": 57.16,
+          "max": 80.72,
+          "p50": 69.88,
+          "p95": 72.4575
+        },
+        "gpu_sm_clock_mhz": {
+          "n": 638,
+          "mean": 2433.2852664576803,
+          "min": 1942.0,
+          "max": 2595.0,
+          "p50": 2441.0,
+          "p95": 2527.0
+        },
+        "gpu_memory_clock_mhz": {
+          "n": 638,
+          "mean": 9001.0,
+          "min": 9001.0,
+          "max": 9001.0,
+          "p50": 9001.0,
+          "p95": 9001.0
+        }
+      }
+    },
+    "hybrid_off": {
+      "model_load_s": 16.043375200009905,
+      "launch_to_http_ready_s": 18.29949599999236,
+      "cuda_before_quality_mib": {
+        "cuda_allocated_mib": 2563.01416015625,
+        "cuda_reserved_mib": 3000.0,
+        "cuda_peak_allocated_mib": 2918.60009765625,
+        "cuda_peak_reserved_mib": 3000.0
+      },
+      "cuda_after_quality_mib": {
+        "cuda_allocated_mib": 2563.01416015625,
+        "cuda_reserved_mib": 3000.0,
+        "cuda_peak_allocated_mib": 2918.60009765625,
+        "cuda_peak_reserved_mib": 3000.0
+      },
+      "telemetry_scope": "Approximately run-aligned by UTC: config.utc_start is recorded just before the client monotonic epoch; telemetry is sampled every few seconds. Includes client drain.",
+      "sampled_device_metrics": {
+        "gpu_memory_used_mib": {
+          "n": 603,
+          "mean": 3114.960199004975,
+          "min": 3114.0,
+          "max": 3115.0,
+          "p50": 3115.0,
+          "p95": 3115.0
+        },
+        "gpu_temperature_c": {
+          "n": 603,
+          "mean": 73.9436152570481,
+          "min": 66.0,
+          "max": 78.0,
+          "p50": 74.0,
+          "p95": 76.0
+        },
+        "gpu_utilisation_percent": {
+          "n": 603,
+          "mean": 95.67661691542288,
+          "min": 9.0,
+          "max": 100.0,
+          "p50": 100.0,
+          "p95": 100.0
+        },
+        "gpu_power_draw_w": {
+          "n": 603,
+          "mean": 68.23940298507463,
+          "min": 11.88,
+          "max": 84.51,
+          "p50": 69.76,
+          "p95": 75.711
+        },
+        "gpu_sm_clock_mhz": {
+          "n": 603,
+          "mean": 2414.0928689883913,
+          "min": 1942.0,
+          "max": 2752.0,
+          "p50": 2430.0,
+          "p95": 2550.0
+        },
+        "gpu_memory_clock_mhz": {
+          "n": 603,
+          "mean": 9004.358208955224,
+          "min": 9001.0,
+          "max": 11026.0,
+          "p50": 9001.0,
+          "p95": 9001.0
+        }
+      }
+    }
+  },
+  "server_source_hashes": {
+    "few_shot": {
+      "server.py": "0cf05f71f63bbe48c96f4617e30162700aa97b1c51d73a30ccd2fdf7ac13539f",
+      "inference.py": "f2130eec1eb5099cf99b3af4f2c1ee1bcd43ebfc592c0ce9ddf03153738a898f",
+      "prefix_cache.py": "fb6f8495db97e4468bd22c5e8740608f21a5bd8431353d48ba4acce26c82733b"
+    },
+    "hybrid": {
+      "server.py": "0cf05f71f63bbe48c96f4617e30162700aa97b1c51d73a30ccd2fdf7ac13539f",
+      "inference.py": "f2130eec1eb5099cf99b3af4f2c1ee1bcd43ebfc592c0ce9ddf03153738a898f",
+      "prefix_cache.py": "fb6f8495db97e4468bd22c5e8740608f21a5bd8431353d48ba4acce26c82733b"
+    },
+    "qlora": {
+      "server.py": "0cf05f71f63bbe48c96f4617e30162700aa97b1c51d73a30ccd2fdf7ac13539f",
+      "inference.py": "f2130eec1eb5099cf99b3af4f2c1ee1bcd43ebfc592c0ce9ddf03153738a898f",
+      "prefix_cache.py": "fb6f8495db97e4468bd22c5e8740608f21a5bd8431353d48ba4acce26c82733b"
+    },
+    "few_shot_common_rate": {
+      "server.py": "0cf05f71f63bbe48c96f4617e30162700aa97b1c51d73a30ccd2fdf7ac13539f",
+      "inference.py": "f2130eec1eb5099cf99b3af4f2c1ee1bcd43ebfc592c0ce9ddf03153738a898f",
+      "prefix_cache.py": "fb6f8495db97e4468bd22c5e8740608f21a5bd8431353d48ba4acce26c82733b"
+    },
+    "few_shot_prefix_off": {
+      "server.py": "0cf05f71f63bbe48c96f4617e30162700aa97b1c51d73a30ccd2fdf7ac13539f",
+      "inference.py": "f2130eec1eb5099cf99b3af4f2c1ee1bcd43ebfc592c0ce9ddf03153738a898f",
+      "prefix_cache.py": "fb6f8495db97e4468bd22c5e8740608f21a5bd8431353d48ba4acce26c82733b"
+    },
+    "hybrid_common_rate": {
+      "server.py": "0cf05f71f63bbe48c96f4617e30162700aa97b1c51d73a30ccd2fdf7ac13539f",
+      "inference.py": "f2130eec1eb5099cf99b3af4f2c1ee1bcd43ebfc592c0ce9ddf03153738a898f",
+      "prefix_cache.py": "fb6f8495db97e4468bd22c5e8740608f21a5bd8431353d48ba4acce26c82733b"
+    },
+    "hybrid_prefix_off": {
+      "server.py": "0cf05f71f63bbe48c96f4617e30162700aa97b1c51d73a30ccd2fdf7ac13539f",
+      "inference.py": "f2130eec1eb5099cf99b3af4f2c1ee1bcd43ebfc592c0ce9ddf03153738a898f",
+      "prefix_cache.py": "fb6f8495db97e4468bd22c5e8740608f21a5bd8431353d48ba4acce26c82733b"
+    },
+    "qlora_common_rate": {
+      "server.py": "0cf05f71f63bbe48c96f4617e30162700aa97b1c51d73a30ccd2fdf7ac13539f",
+      "inference.py": "f2130eec1eb5099cf99b3af4f2c1ee1bcd43ebfc592c0ce9ddf03153738a898f",
+      "prefix_cache.py": "fb6f8495db97e4468bd22c5e8740608f21a5bd8431353d48ba4acce26c82733b"
+    },
+    "hybrid_resilience": {
+      "server.py": "0cf05f71f63bbe48c96f4617e30162700aa97b1c51d73a30ccd2fdf7ac13539f",
+      "inference.py": "f2130eec1eb5099cf99b3af4f2c1ee1bcd43ebfc592c0ce9ddf03153738a898f",
+      "prefix_cache.py": "fb6f8495db97e4468bd22c5e8740608f21a5bd8431353d48ba4acce26c82733b"
+    },
+    "hybrid_operating_point_50pct": {
+      "server.py": "0cf05f71f63bbe48c96f4617e30162700aa97b1c51d73a30ccd2fdf7ac13539f",
+      "inference.py": "f2130eec1eb5099cf99b3af4f2c1ee1bcd43ebfc592c0ce9ddf03153738a898f",
+      "prefix_cache.py": "fb6f8495db97e4468bd22c5e8740608f21a5bd8431353d48ba4acce26c82733b"
+    }
+  }
+}

@@ -1,0 +1,116 @@
+{
+  "schema_version": "serving_public_manifest_v1",
+  "study_id": "serving_20261109",
+  "publication_scope": "Aggregate results only; source digests identify retained private evidence without exporting its payload.",
+  "source_artifacts": {
+    "primary_aggregate": {
+      "sha256": "81de4a6dbc4fe3a7160ce17a7cb94211630d565ba21340aad557effe4a17ba43"
+    },
+    "comparison_aggregate": {
+      "sha256": "ec96de6ca8d613a4322efc35ada26299bcbbb3011557b67e63ed82cbc9a1d936"
+    },
+    "resilience_aggregate": {
+      "sha256": "adf3c9924371f652c39f9dbbacb142697b8d04779be1c78b5eed27ac63c9360d"
+    },
+    "operating_point_50pct_aggregate": {
+      "sha256": "8444e9e1afe784c7730f25e2ec433aef149f158c9f3e787c71e474b2bc7dffe5"
+    },
+    "primary_state": {
+      "sha256": "eb775e43a3be760d536e45da20b949178d6a1b2d5bdb40c4e9bac0e6bffa2e6c"
+    },
+    "comparison_state": {
+      "sha256": "e156365e6ec099a7a6d9e1a64afe54ab6cc3d7cb5a544795690c26d99c82883b"
+    },
+    "resilience_state": {
+      "sha256": "2827e40a23e9d1ed4021e01faaed9a37d491031c5742c4b64e97bee1e6c1268e"
+    },
+    "operating_point_50pct_state": {
+      "sha256": "1284f4559150755a1ef4520c2f87d9a0dbeb24c3052b722618eb0a028f6ba944"
+    },
+    "final_quality_summary": {
+      "sha256": "2a17682f5acb2f8a73d16b6e2bc7bac70ed477de75cad17780ce92342c0ff085"
+    },
+    "final_quality_intervals": {
+      "sha256": "f8d55aaab5304ad244ce41a5ad447bc390b3605719c5cbf281562528d82e5f98"
+    },
+    "cache_comparison": {
+      "sha256": "6706344d2ba7794f22929b88e6dfbd5214aaeaed9339747537597a0adad0efa9"
+    },
+    "exploratory_cache_changes": {
+      "sha256": "6cae21c526ec754612d02edb33873ab55112b24397aa8941e0a37197e0d120ca"
+    },
+    "primary_quality_diagnostics": {
+      "sha256": "ab3812b9c3c648c4cb9699dc4c971cc46989c2e6f04e1cefa6fd24b82e89bb83"
+    },
+    "comparison_quality_diagnostics": {
+      "sha256": "f11e397d9d1bd0e2992a0fe1c2f19120c2c62758f86449753c1834a8e2c6604e"
+    },
+    "original_resilience_analysis": {
+      "sha256": "14897fb2d6b04586da3718c003a4f09aa16dcf5912a1cc0667281315b0048b27"
+    },
+    "additional_50pct_analysis": {
+      "sha256": "a3ead32e287c8a3beea20782abc2e3b327059068ae0a131ac1630dc959a0b196"
+    },
+    "original_repeat_consistency": {
+      "sha256": "131b5cb704fccf86118243de08603bf1770a767df0777fd152abc8ce4808ef41"
+    },
+    "additional_repeat_consistency": {
+      "sha256": "c92c4ebea46ae106f66c111288a2af2e69b3d5e55b9dfad28c2c81f762b648b4"
+    },
+    "online_observer_summary": {
+      "sha256": "75d847184a5a0fdfd5988db1641fabb0b50fe6a02f8f94c3863048a9e06b3c12"
+    },
+    "primary_startup_resources": {
+      "sha256": "fe237439588c0b607a367c23c48e3398ffe40b1fa799547c3bfeafa84992c7fd"
+    },
+    "cache_resources": {
+      "sha256": "c4c11109d132f31b3335514de772d14408b03cf0a86d3c2613990bcd54ab9c4a"
+    },
+    "common_absolute_rate_performance": {
+      "sha256": "0c23989e16b5a4b80bbc094e5c100dafd2622c513039be6b0bb85cd2c5c67369"
+    },
+    "frozen_artifact_manifest": {
+      "sha256": "b19677b9c6bca688085ae234f39cbcf2c0dc6eb3723aa9a88eef28c5b29d22b5"
+    },
+    "base_weight_integrity_record": {
+      "sha256": "06dfe41a512b6524e2c6f70dadda9c9e6ce4b7a0fb559883a39337c5aeb8b490"
+    },
+    "additional_50pct_registration": {
+      "sha256": "b793eebe4eae384390b6aaf042452d6833b6df075c41c3de8f99be32fde3595e"
+    }
+  },
+  "campaigns": {
+    "primary": {
+      "registered_runs": 87,
+      "completed_runs": 87,
+      "attempts_including_warmup": 7101,
+      "plan_sha256": "bb9f8d1fcb8d2fe707352f4e4a391a19cca7c5b0bc3d7b73455f323c75a25dff"
+    },
+    "comparison": {
+      "registered_runs": 16,
+      "completed_runs": 16,
+      "attempts_including_warmup": 2280,
+      "plan_sha256": "a7a014f78f3323dbf5fada092db974e123b8730467120c9f7ab76187d66d5cad"
+    },
+    "resilience": {
+      "registered_runs": 6,
+      "completed_runs": 6,
+      "attempts_including_warmup": 3643,
+      "plan_sha256": "c031ad56767d39ca746c18354ab70803009e55ccca66f1563a235628ba22f660"
+    },
+    "operating_point_50pct": {
+      "registered_runs": 2,
+      "completed_runs": 2,
+      "attempts_including_warmup": 2023,
+      "plan_sha256": "5e581c69a006ba990cec9404118fd4b9ac85269974a20e430fe84d9947877632"
+    }
+  },
+  "archived_nonwarmup_runs": 101,
+  "published_files_sha256": {
+    "cache.json": "6ec484e8e3aab5394b9d466d0b37813af7410ae69f7999cec4f818fd186b5d24",
+    "quality.json": "708d96b78e632ba195cb311eea8d8374c3ce25d8e0786fcf94c1a0bf6cb3d26f",
+    "resilience.json": "48ea89aa0dc8181ee99aadee2e86e6a0cca2a696f127c6f83581da357b0180d4",
+    "run_metrics.csv": "e8a18643daab720bf80dfe263dbcd1472e362ce4a098e37af12afb9098431352",
+    "runtime.json": "c380c886fc31291188c388e9421133cf74ac4b9439e7783b79b70ed37dd17745"
+  }
+}
