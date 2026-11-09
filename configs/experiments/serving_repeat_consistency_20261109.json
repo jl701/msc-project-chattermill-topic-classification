@@ -1,0 +1,11 @@
+{
+  "study_id": "serving_repeat_consistency_20261109",
+  "registered_utc": "2026-11-09T13:39:42Z",
+  "scope": "Additional CPU-only output consistency analysis registered before the resilience campaign begins; no new inference or label access",
+  "input": "Completed hybrid soak_60min client request journal",
+  "grouping": "Source review identity; order successful deliveries by client attempt index",
+  "measurement": "Compare the complete aspect-sentiment prediction set for every repeated successful delivery with the first successful delivery of that review",
+  "report": ["attempts", "failures", "unique attempted reviews", "unique successfully delivered reviews", "reviews with repeated successful deliveries", "reviews with any differing prediction set", "repeated deliveries differing from first"],
+  "boundaries": "Agreement is a within-configuration consistency observation on repeated development inputs, not evidence of accuracy, new independent quality samples, numeric score equivalence or general determinism. Failed attempts are retained separately. No threshold or system setting is selected from this result.",
+  "privacy": "Only counts and evidence hashes are exported; no review identities, text, gold labels or raw predictions"
+}
