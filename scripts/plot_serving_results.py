@@ -306,7 +306,7 @@ def quality_figure(plt, data):
             ax.annotate(f"{point['pair_f1']:.1f}", (x, high), xytext=(0, 6),
                         textcoords="offset points", ha="center", fontsize=8, color=COLORS[variant])
     ax.set_xticks(range(3), ["整体\nOverall", "训练见过的方面\nSeen", "训练未见的方面\nHeld-out"])
-    ax.set_ylabel("方面–情感 pair micro F1（0–100 标度）")
+    ax.set_ylabel("方面-情感 pair micro F1（0-100 标度）")
     ax.set_ylim(0, 108)
     ax.set_yticks(range(0, 101, 20))
     ax.set_xlim(-.5, 2.5)
@@ -330,7 +330,7 @@ def http_figure(plt, data):
                                             (.17, "p95_s", "#96BBCC", "P95")]:
             ax.barh(i + offset, row[field], height=.30, color=color, label=label if i == 0 else None)
             ax.text(row[field] + maximum * .015, i + offset, f"{row[field]:.2f}", va="center", fontsize=8)
-    ax.set_yticks(range(len(rows)), [LABELS[r["variant"]] + ("\n缓存开" if r["cache"] == "on" else "\n缓存关")
+    ax.set_yticks(range(len(rows)), [LABELS[r["variant"]] + ("\n无示例前缀复用" if r["variant"] == "qlora" else "\n缓存开" if r["cache"] == "on" else "\n缓存关")
                                     for r in rows])
     ax.invert_yaxis()
     ax.set_xlim(0, maximum * 1.18)
