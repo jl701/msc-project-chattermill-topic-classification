@@ -1,0 +1,154 @@
+{
+  "schema_version": "serving_prefix_diagnosis_aggregate_v1",
+  "unique_development_reviews": 100,
+  "cache_configuration": "frozen training-only exact-prefix KV reuse; NF4 weights and FP16 compute; no response caching",
+  "interpretation": "separately evaluated runtime candidate, not lossless or numerically equivalent acceleration",
+  "development_gate": {
+    "few_shot": {
+      "reviews": 100,
+      "changed_final_label_reviews": 0,
+      "maximum_aspect_probability_difference": 0.12068390846252441,
+      "maximum_common_selected_sentiment_difference": 0.04401874542236328,
+      "reviews_with_max_aspect_difference_above_0_01": 9,
+      "reviews_with_max_common_sentiment_difference_above_0_01": 4,
+      "closest_aspect_threshold_margin": 5.960426274764785e-08
+    },
+    "hybrid": {
+      "reviews": 100,
+      "changed_final_label_reviews": 0,
+      "maximum_aspect_probability_difference": 0.12068390846252441,
+      "maximum_common_selected_sentiment_difference": 0.0,
+      "reviews_with_max_aspect_difference_above_0_01": 9,
+      "reviews_with_max_common_sentiment_difference_above_0_01": 0,
+      "closest_aspect_threshold_margin": 5.960426274764785e-08
+    }
+  },
+  "diagnostic_groups": [
+    {
+      "diagnostic_group": 1,
+      "selection": "largest development aspect difference",
+      "candidate_prompts": 4,
+      "prompt_token_length_range": [
+        509,
+        514
+      ],
+      "cases": {
+        "A_full_repeat1": {
+          "maximum_presence_difference_from_complete": 0.0,
+          "maximum_yn_logit_margin_difference_from_complete": 0.0
+        },
+        "A_full_repeat2": {
+          "maximum_presence_difference_from_complete": 0.0,
+          "maximum_yn_logit_margin_difference_from_complete": 0.0
+        },
+        "B_cached_single_prefix": {
+          "maximum_presence_difference_from_complete": 0.12068390846252441,
+          "maximum_yn_logit_margin_difference_from_complete": 0.53125
+        },
+        "C_prefix_built_batch4": {
+          "maximum_presence_difference_from_complete": 0.06625378131866455,
+          "maximum_yn_logit_margin_difference_from_complete": 0.28125
+        },
+        "D_full_with_cache": {
+          "maximum_presence_difference_from_complete": 0.0,
+          "maximum_yn_logit_margin_difference_from_complete": 0.0
+        },
+        "D_suffix_from_full_prefill_KV": {
+          "maximum_presence_difference_from_complete": 0.06625378131866455,
+          "maximum_yn_logit_margin_difference_from_complete": 0.28125
+        },
+        "E_math_full": {
+          "maximum_presence_difference_from_complete": 0.07331639528274536,
+          "maximum_yn_logit_margin_difference_from_complete": 0.3125
+        },
+        "E_math_split": {
+          "maximum_presence_difference_from_complete": 0.07331639528274536,
+          "maximum_yn_logit_margin_difference_from_complete": 0.3125
+        }
+      },
+      "kv_single_vs_batch4": {
+        "maximum_key_difference": 0.25,
+        "maximum_value_difference": 0.22265625,
+        "first_layer_key_max": 0.25,
+        "first_layer_value_max": 0.00048828125,
+        "last_layer_key_mean": 0.0019840907771140337,
+        "last_layer_value_mean": 0.006591135635972023
+      },
+      "kv_single_vs_full_prefill": {
+        "maximum_key_difference": 0.25,
+        "maximum_value_difference": 0.2783203125,
+        "first_layer_key_max": 0.25,
+        "first_layer_value_max": 0.00048828125,
+        "last_layer_key_mean": 0.00196245894767344,
+        "last_layer_value_mean": 0.006463292054831982
+      }
+    },
+    {
+      "diagnostic_group": 2,
+      "selection": "closest development aspect threshold",
+      "candidate_prompts": 4,
+      "prompt_token_length_range": [
+        941,
+        946
+      ],
+      "cases": {
+        "A_full_repeat1": {
+          "maximum_presence_difference_from_complete": 0.0,
+          "maximum_yn_logit_margin_difference_from_complete": 0.0
+        },
+        "A_full_repeat2": {
+          "maximum_presence_difference_from_complete": 0.0,
+          "maximum_yn_logit_margin_difference_from_complete": 0.0
+        },
+        "B_cached_single_prefix": {
+          "maximum_presence_difference_from_complete": 1.1920928955078125e-07,
+          "maximum_yn_logit_margin_difference_from_complete": 0.09375
+        },
+        "C_prefix_built_batch4": {
+          "maximum_presence_difference_from_complete": 1.1920928955078125e-07,
+          "maximum_yn_logit_margin_difference_from_complete": 0.15625
+        },
+        "D_full_with_cache": {
+          "maximum_presence_difference_from_complete": 0.0,
+          "maximum_yn_logit_margin_difference_from_complete": 0.0
+        },
+        "D_suffix_from_full_prefill_KV": {
+          "maximum_presence_difference_from_complete": 0.0,
+          "maximum_yn_logit_margin_difference_from_complete": 0.0
+        },
+        "E_math_full": {
+          "maximum_presence_difference_from_complete": 1.1920928955078125e-07,
+          "maximum_yn_logit_margin_difference_from_complete": 0.0625
+        },
+        "E_math_split": {
+          "maximum_presence_difference_from_complete": 2.384185791015625e-07,
+          "maximum_yn_logit_margin_difference_from_complete": 0.3125
+        }
+      },
+      "kv_single_vs_batch4": {
+        "maximum_key_difference": 0.25,
+        "maximum_value_difference": 0.22265625,
+        "first_layer_key_max": 0.25,
+        "first_layer_value_max": 0.00048828125,
+        "last_layer_key_mean": 0.0019840907771140337,
+        "last_layer_value_mean": 0.006591135635972023
+      },
+      "kv_single_vs_full_prefill": {
+        "maximum_key_difference": 0.25,
+        "maximum_value_difference": 0.2783203125,
+        "first_layer_key_max": 0.25,
+        "first_layer_value_max": 0.00048828125,
+        "last_layer_key_mean": 0.00196245894767344,
+        "last_layer_value_mean": 0.006463292054831982
+      }
+    }
+  ],
+  "cpu_tiny": {
+    "model": "random two-layer Qwen3, CPU FP32 eager attention",
+    "max_abs_logits_difference": 5.960464477539063e-08,
+    "passed_at_1e_5": true,
+    "scope": "Checks cache positions, full attention mask and suffix-relative final logits with real Qwen code; does not prove quantized 4B equivalence."
+  },
+  "attention_implementation": "sdpa",
+  "evaluation_decision": "Compare cache-on and cache-off on the same locked 957-review replay; retain all quality and label changes; no threshold tuning or math-backend deployment."
+}

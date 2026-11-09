@@ -1,0 +1,66 @@
+{
+  "study_id": "serving_replay_20261109",
+  "scope": "Local single-GPU HTTP serving with genuine model inference; no production traffic or business outcome claim",
+  "source_commit": "a266b2d7a25d9d286aea2b4998ac05b86e89ff89",
+  "fold": "l2-a01",
+  "fold_selection_rule": "First registered L2 fold, selected before serving measurements; not selected for quality or latency",
+  "candidate_condition": "D",
+  "candidate_count": 12,
+  "variants": ["few_shot", "qlora", "hybrid"],
+  "model": "Qwen/Qwen3-4B-Instruct-2507",
+  "quantization": "4-bit NF4; frozen historical loader settings; runtime dependencies recorded",
+  "hardware": "NVIDIA GeForce RTX 5050 Laptop GPU, 8151 MiB; Windows WDDM",
+  "seed": 20261109,
+  "data": {
+    "source": "Existing FABSA validation partition (1057 unique reviews)",
+    "development": "First 100 reviews in deterministic seeded SHA-256 order",
+    "evaluation": "Remaining 957 reviews, disjoint identities; engineering replay, not a new blind test",
+    "thresholds": "Previously frozen per-method validation thresholds, unchanged",
+    "labels": "Separate file joined only after persisted responses; never API input",
+    "official_test": "Not used for serving development or new model selection",
+    "repeated_traffic": "May repeat reviews for load; quality aggregates deduplicate review identities"
+  },
+  "correctness_gates": {
+    "model_loading": "Verify selected adapter tree against inventory and fixed tokenizer/base revision",
+    "conditional_execution": "Compare selected-aspect sentiment with full candidate-grid reference",
+    "adapter_states": "Compare few-shot scores from disabled adapter to the frozen-base loader on smoke cases",
+    "batching": "Compare single-request and combined-request labels and score deviations, including threshold margins",
+    "invalid_inputs": ["missing text", "empty text", "oversize text", "malformed JSON", "oversize body"],
+    "response_cache": false
+  },
+  "performance": {
+    "unit": "One complete review over all 12 supplied candidates, including selected-aspect sentiment",
+    "initial_pair_batch_sizes": [1, 2, 4, 8],
+    "initial_request_batch_sizes": [1, 2, 4],
+    "request_batch_wait_ms_candidates": [0, 10, 25],
+    "closed_concurrency_candidates": [1, 2, 4, 8],
+    "open_arrival_fractions_of_measured_capacity": [0.25, 0.5, 0.75, 1.0, 1.25],
+    "tuning_rule": "Use development input shapes and measured stability only. Select few feasible settings, log changes before expanded runs; do not tune model quality on evaluation replay",
+    "repetitions": 3,
+    "main_metrics": ["client end-to-end P50/P95", "successful completed reviews per wall-clock second", "failure and timeout rate over all scheduled requests", "queue wait", "worker service time", "GPU stage time", "peak allocated and reserved VRAM"],
+    "cold_start": "Report separately from warmed inference",
+    "capacity_search": "Adaptive to measured single-request speed, with offered rate and achieved rate both recorded",
+    "soak": "Target 60 minutes at a sustainable selected configuration after smoke and capacity tests; extend only if drift or failures need diagnosis",
+    "burst": "Predeclared above-capacity burst followed by recovery window",
+    "generator": "Same-host client; report generation lag and scheduler misses"
+  },
+  "monitoring": {
+    "runtime": ["request rate", "status counts", "queue wait", "latency", "GPU memory and temperature"],
+    "unlabelled": ["input length distribution", "aspect selection distribution", "sentiment distribution", "score distribution"],
+    "labelled": ["presence micro precision/recall/F1", "pair micro precision/recall/F1", "seen and held-out breakdown", "conditional sentiment diagnostics"],
+    "shift_simulation": "Replay normal development mix then a preselected long-review or aspect-enriched segment, restore normal mix; observe alarm and later label report without claiming real-world robustness",
+    "confidence": "Restricted softmax scores are not assumed calibrated probabilities of correctness"
+  },
+  "safety": {
+    "bind": "127.0.0.1 only",
+    "gpu_jobs": "One root-controlled GPU process at a time",
+    "queue": "Bounded queue and request deadlines; no unbounded accumulation",
+    "thermal": "Record temperatures and clock/power observations; pause and diagnose sustained thermal limits or instability",
+    "existing_work": "New worktree; no edits to submitted thesis, frozen metrics, checkpoints, or original master"
+  },
+  "publishing": {
+    "commit": ["source", "synthetic tests", "registered configuration", "aggregate measurements and method notes"],
+    "local_only": ["raw reviews", "labels", "row-level predictions", "weights", "machine paths", "load logs"],
+    "final_report": "Detailed Chinese report with limitations, figures, recommended operating point and interview wording"
+  }
+}

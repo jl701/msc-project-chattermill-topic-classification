@@ -1,0 +1,25 @@
+{
+  "study_id": "serving_prefix_cache_20261109",
+  "registered_before_gpu_execution": true,
+  "motivation": "Initial GPU timing shows long few-shot prefills dominate complete-review processing. Fixed system and train-only demonstrations recur across requests.",
+  "scope": "Optional exact-prefix KV reuse for frozen few-shot stages only; no prediction-response cache and no inference-review cache",
+  "unchanged": ["model weights", "tokenizer", "full encoded prompt tokens", "frozen demonstrations", "truncation rules", "candidate definitions", "thresholds", "sentiment decoding"],
+  "cache_contract": {
+    "maximum_entries": 2,
+    "keys": ["model revision", "adapter disabled state", "mode", "exact prefix token IDs"],
+    "contents": "Only system and fixed training demonstrations before the query-review content",
+    "request_gate": "Exact token-prefix match after original segment-aware encoding; otherwise run uncached path",
+    "immutability": "Each forward receives its own cache view or copy; cached tensors and lengths cannot be updated by another request",
+    "qlora": "No cache reuse across base and adapted model states",
+    "accounting": "Record cache construction cost, prefix-token hit counts, suffix work, fallback count and GPU memory; classify as warm serving optimization"
+  },
+  "gates": {
+    "cpu": ["prefix mismatch fallback", "mode separation", "cached state immutability", "no query review stored in cache"],
+    "gpu_initial": "Same short/middle/long development inputs as primary correctness check; compare all aspect scores, selected sentiment scores and final labels",
+    "gpu_expanded": "Compare cache-off and cache-on on all 100 development inputs before using the optimization in main evaluation",
+    "admission": "No final-label changes on the development equivalence gate. Report every nonzero probability difference; if label changes occur, withhold this optimization from the equivalent primary service configuration and investigate rather than silently relaxing the gate."
+  },
+  "selection": "Select on development input shapes, exactness, measured latency and memory only; evaluation labels cannot be used for optimization selection",
+  "baseline": "Retain cache-off measurements and independently label cache-off versus prefix-cache warm results",
+  "stop_rule": "Stop this extension if compatibility or numerical discrepancies cannot be resolved with a small isolated implementation, or if no material practical gain is measured"
+}

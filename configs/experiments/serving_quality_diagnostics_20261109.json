@@ -1,0 +1,29 @@
+{
+  "analysis_id": "serving_quality_error_decomposition_20261109",
+  "registered_before_diagnostic_result_access": true,
+  "scope": "Read-only post-inference diagnostics of explicitly registered quality_evaluation runs in completed primary and comparison campaigns",
+  "selection_boundaries": {
+    "model_training": false,
+    "threshold_or_prompt_tuning": false,
+    "operating_point_selection_from_labels": false,
+    "official_test_accessed": false
+  },
+  "unit": "Unique evaluation review; first successful response by request start order, identical to monitoring deduplication",
+  "views": ["successful unique reviews only", "all unique attempted reviews with never-successful delivery treated as empty prediction"],
+  "scopes": ["overall", "seen", "heldout"],
+  "pair_false_positive_partition": [
+    "Predicted pair whose aspect is absent from gold aspects",
+    "Predicted pair whose aspect exists in gold but whose sentiment is incorrect or extra"
+  ],
+  "pair_false_negative_partition": [
+    "Gold pair whose aspect was not detected",
+    "Gold pair whose aspect was detected but whose sentiment is missing or incorrect"
+  ],
+  "invariants": "For every view and scope, the two FP components sum exactly to existing end-to-end pair FP and the two FN components sum exactly to existing end-to-end pair FN",
+  "conditional_sentiment": {
+    "population": "Only aspect instances in predicted-aspect intersection gold-aspect, aggregated by unique review and aspect",
+    "metrics": ["pair precision", "pair recall", "pair micro-F1", "gold pair support", "predicted pair support", "correctly detected aspect instances", "reviews with at least one correctly detected aspect"],
+    "limitation": "Missed and falsely detected aspects are excluded, so this conditional result cannot replace end-to-end quality or establish the benefit of a different pipeline"
+  },
+  "reporting": "Aggregate counts and metrics only, with coverage, failure-view semantics and no sample IDs, original text or machine paths. Existing validation replay remains non-blind. This descriptive decomposition does not make causal or significance claims."
+}

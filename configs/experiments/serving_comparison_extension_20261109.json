@@ -1,0 +1,42 @@
+{
+  "study_id": "serving_comparison_extension_20261109",
+  "registered_before_primary_evaluation": true,
+  "scope": "Additional local API comparisons with frozen weights, prompts, thresholds and evaluation identities; no training or quality-driven tuning",
+  "execution_order": "Generate an immutable executable plan only after the primary three-variant campaign is completed",
+  "prefix_off_quality_reference": {
+    "variants": ["few_shot", "hybrid"],
+    "prefix_cache": "off",
+    "warmup": {"split": "development", "requests": 3, "concurrency": 1, "excluded_from_headline": true},
+    "evaluation": {"split": "frozen validation evaluation replay", "unique_reviews": 957, "requests": 957, "concurrency": 1, "shuffle": false},
+    "configuration": "Copy each matching primary variant's server configuration and change only prefix_cache from on to off",
+    "comparison": "Pair by unique review identity against the matching prefix-on primary quality run; report label-set changes, all changed aspect/sentiment assignments, presence/pair F1 and latency. Do not assert equivalence from the 100-development-review gate alone.",
+    "timing_limit": "Sequential on/off runs can differ in thermal and clock conditions; record telemetry and do not call the observed ratio an isolated causal estimate",
+    "selection_rule": "Do not use the 957-review comparison to retune thresholds, prompts, weights or the primary operating point"
+  },
+  "common_absolute_arrival_rate": {
+    "variants": ["few_shot", "qlora", "hybrid"],
+    "prefix_cache": "on",
+    "capacity_reference_per_variant": ["closed_c1_r1", "closed_c1_r2", "closed_c1_r3"],
+    "reference_requirements": "Completed primary campaign, each reference noninterrupted with at least 99% success and positive finite complete-review throughput",
+    "rate_rule": "0.5 times the minimum across variants of their three C1-reference throughput medians",
+    "rate_units": "Complete review requests per second, identical absolute value for all variants",
+    "repetitions_per_variant": 3,
+    "arrival_seconds_per_repetition": 90,
+    "source": "Frozen 100-review label-free development replay",
+    "shuffle": true,
+    "repeat_seeds": [20261109, 20261110, 20261111],
+    "max_inflight": 64,
+    "warmup": {"requests": 3, "concurrency": 1, "excluded_from_headline": true},
+    "configuration": "Copy matching primary server configuration without other changes",
+    "interpretation": "Compare latency and successful delivery under the same absolute arrival schedule; this conservative rate is not a maximum-capacity estimate"
+  },
+  "data_boundaries": {
+    "labels_read_by_factory": false,
+    "quality_used_to_choose_rate": false,
+    "official_test_accessed": false,
+    "evaluation_is_new_blind_test": false,
+    "repeat_requests_are_independent_quality_samples": false
+  },
+  "provenance": "Executable plan records this registration hash, primary plan hash, capacity reference summary hashes, frozen artifact hash and replay hashes before any extension service starts",
+  "outputs": "Private raw evidence stays in ignored outputs; publish only aggregate performance, quality and paired label-change statistics with coverage"
+}

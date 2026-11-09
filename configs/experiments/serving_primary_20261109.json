@@ -1,0 +1,1320 @@
+{
+  "study_id": "serving_primary_20261109",
+  "registered_utc": "2026-11-09T10:47:08.381251+00:00",
+  "purpose": "Common engineering configuration across three frozen model pipelines",
+  "artifacts": "outputs/serving_20261109/artifacts.json",
+  "artifacts_sha256": "b19677b9c6bca688085ae234f39cbcf2c0dc6eb3723aa9a88eef28c5b29d22b5",
+  "prefix_gate_provenance": {
+    "status": "passed",
+    "gate_summary_sha256": "3df2ffb08fd2a0c0a6321b14cfec203c70d52e800f06b4d306e72b072db9c7a7",
+    "gate_journal_sha256": "869302cb5a6e7d671f4a56d9149342c1bcc64f1e8a49de4350792e3afaf47b70",
+    "artifacts_sha256": "b19677b9c6bca688085ae234f39cbcf2c0dc6eb3723aa9a88eef28c5b29d22b5",
+    "development_replay_sha256": "3eaa32533fab7546bf8cbe2a4bab004ece200c821f515bca1d477e83561f4842",
+    "development_request_id_sha256": "6e4186cb5c9bd02bab14f005dbaed24e65dd9e3f749103d9854961974aeaf90e",
+    "unique_development_reviews": 100,
+    "verified_variants": [
+      "few_shot",
+      "hybrid"
+    ],
+    "model_and_runtime": {
+      "fold_id": "l2-a01",
+      "model_id": "Qwen/Qwen3-4B-Instruct-2507",
+      "model_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+      "logits_mode": "last_token",
+      "pair_batch_size": 4,
+      "max_batch_tokens": 4096
+    },
+    "probability_differences": {
+      "few_shot": {
+        "aspect_max_abs_difference": 0.12068390846252441,
+        "sentiment_max_abs_difference": 0.04401874542236328
+      },
+      "hybrid": {
+        "aspect_max_abs_difference": 0.12068390846252441,
+        "sentiment_max_abs_difference": 0.0
+      }
+    },
+    "gate_meaning": "Final labels matched on all 100 development reviews and combined checks. This does not assert numerical score identity or evaluation-set equivalence.",
+    "source_binding_note": "Existing gate recorded artifact identity but not process-start source hashes. The following are admission-time fingerprints only; rerun the gate if inference/prefix implementation changed after the gate started.",
+    "source_sha256_at_admission": {
+      "scripts/check_serving_prefix_gpu.py": "b9966e1078e56d1fa91516eada767357bdf2f4462b8471fae2bf992e1ce41eee",
+      "src/msc_project/serving/inference.py": "f2130eec1eb5099cf99b3af4f2c1ee1bcd43ebfc592c0ce9ddf03153738a898f",
+      "src/msc_project/serving/prefix_cache.py": "fb6f8495db97e4468bd22c5e8740608f21a5bd8431353d48ba4acce26c82733b"
+    }
+  },
+  "operating_setting_reason": "Common pair batch 4 and request batch 1 preserve a straightforward matched comparison. Development screens found little further throughput benefit from combining requests, with greater response time per combined batch.",
+  "quality_scope": "957 historical validation reviews; engineering replay, not a fresh blind test. Same first L2 fold for all systems.",
+  "prefix_cache": "on",
+  "arrival_rate_rule": "Median measured c1 development throughput times the registered fraction; each resolved rate is saved before its run.",
+  "sessions": [
+    {
+      "name": "few_shot",
+      "server": {
+        "variant": "few_shot",
+        "port": 8765,
+        "pair_batch_size": 4,
+        "max_batch_tokens": 4096,
+        "request_batch_size": 1,
+        "batch_wait_ms": 0,
+        "queue_size": 8,
+        "timeout_s": 120,
+        "logits_mode": "last_token",
+        "prefix_cache": "on"
+      },
+      "runs": [
+        {
+          "name": "warmup",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 3,
+          "concurrency": 1,
+          "tag": "warmup_excluded_from_headline"
+        },
+        {
+          "name": "quality_evaluation",
+          "replay": "outputs/serving_20261109/replay_evaluation.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_evaluation.jsonl",
+          "mode": "closed",
+          "requests": 957,
+          "concurrency": 1,
+          "quality_evaluation": true,
+          "tag": "fixed_validation_engineering_replay"
+        },
+        {
+          "name": "closed_c1_r1",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 30,
+          "concurrency": 1,
+          "shuffle": true,
+          "seed": 20261109,
+          "tag": "closed_load"
+        },
+        {
+          "name": "closed_c1_r2",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 30,
+          "concurrency": 1,
+          "shuffle": true,
+          "seed": 20261110,
+          "tag": "closed_load"
+        },
+        {
+          "name": "closed_c1_r3",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 30,
+          "concurrency": 1,
+          "shuffle": true,
+          "seed": 20261111,
+          "tag": "closed_load"
+        },
+        {
+          "name": "closed_c2_r1",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 30,
+          "concurrency": 2,
+          "shuffle": true,
+          "seed": 20261109,
+          "tag": "closed_load"
+        },
+        {
+          "name": "closed_c2_r2",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 30,
+          "concurrency": 2,
+          "shuffle": true,
+          "seed": 20261110,
+          "tag": "closed_load"
+        },
+        {
+          "name": "closed_c2_r3",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 30,
+          "concurrency": 2,
+          "shuffle": true,
+          "seed": 20261111,
+          "tag": "closed_load"
+        },
+        {
+          "name": "closed_c4_r1",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 30,
+          "concurrency": 4,
+          "shuffle": true,
+          "seed": 20261109,
+          "tag": "closed_load"
+        },
+        {
+          "name": "closed_c4_r2",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 30,
+          "concurrency": 4,
+          "shuffle": true,
+          "seed": 20261110,
+          "tag": "closed_load"
+        },
+        {
+          "name": "closed_c4_r3",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 30,
+          "concurrency": 4,
+          "shuffle": true,
+          "seed": 20261111,
+          "tag": "closed_load"
+        },
+        {
+          "name": "closed_c8_r1",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 30,
+          "concurrency": 8,
+          "shuffle": true,
+          "seed": 20261109,
+          "tag": "closed_load"
+        },
+        {
+          "name": "closed_c8_r2",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 30,
+          "concurrency": 8,
+          "shuffle": true,
+          "seed": 20261110,
+          "tag": "closed_load"
+        },
+        {
+          "name": "closed_c8_r3",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 30,
+          "concurrency": 8,
+          "shuffle": true,
+          "seed": 20261111,
+          "tag": "closed_load"
+        },
+        {
+          "name": "open_f0p25_r1",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 0.25,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261109,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f0p25_r2",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 0.25,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261110,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f0p25_r3",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 0.25,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261111,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f0p5_r1",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 0.5,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261109,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f0p5_r2",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 0.5,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261110,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f0p5_r3",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 0.5,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261111,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f0p75_r1",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 0.75,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261109,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f0p75_r2",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 0.75,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261110,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f0p75_r3",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 0.75,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261111,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f1p0_r1",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 1.0,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261109,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f1p0_r2",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 1.0,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261110,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f1p0_r3",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 1.0,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261111,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f1p25_r1",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 1.25,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261109,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f1p25_r2",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 1.25,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261110,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f1p25_r3",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 1.25,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261111,
+          "tag": "independent_arrival_load"
+        }
+      ]
+    },
+    {
+      "name": "qlora",
+      "server": {
+        "variant": "qlora",
+        "port": 8765,
+        "pair_batch_size": 4,
+        "max_batch_tokens": 4096,
+        "request_batch_size": 1,
+        "batch_wait_ms": 0,
+        "queue_size": 8,
+        "timeout_s": 120,
+        "logits_mode": "last_token",
+        "prefix_cache": "on"
+      },
+      "runs": [
+        {
+          "name": "warmup",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 3,
+          "concurrency": 1,
+          "tag": "warmup_excluded_from_headline"
+        },
+        {
+          "name": "quality_evaluation",
+          "replay": "outputs/serving_20261109/replay_evaluation.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_evaluation.jsonl",
+          "mode": "closed",
+          "requests": 957,
+          "concurrency": 1,
+          "quality_evaluation": true,
+          "tag": "fixed_validation_engineering_replay"
+        },
+        {
+          "name": "closed_c1_r1",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 30,
+          "concurrency": 1,
+          "shuffle": true,
+          "seed": 20261109,
+          "tag": "closed_load"
+        },
+        {
+          "name": "closed_c1_r2",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 30,
+          "concurrency": 1,
+          "shuffle": true,
+          "seed": 20261110,
+          "tag": "closed_load"
+        },
+        {
+          "name": "closed_c1_r3",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 30,
+          "concurrency": 1,
+          "shuffle": true,
+          "seed": 20261111,
+          "tag": "closed_load"
+        },
+        {
+          "name": "closed_c2_r1",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 30,
+          "concurrency": 2,
+          "shuffle": true,
+          "seed": 20261109,
+          "tag": "closed_load"
+        },
+        {
+          "name": "closed_c2_r2",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 30,
+          "concurrency": 2,
+          "shuffle": true,
+          "seed": 20261110,
+          "tag": "closed_load"
+        },
+        {
+          "name": "closed_c2_r3",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 30,
+          "concurrency": 2,
+          "shuffle": true,
+          "seed": 20261111,
+          "tag": "closed_load"
+        },
+        {
+          "name": "closed_c4_r1",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 30,
+          "concurrency": 4,
+          "shuffle": true,
+          "seed": 20261109,
+          "tag": "closed_load"
+        },
+        {
+          "name": "closed_c4_r2",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 30,
+          "concurrency": 4,
+          "shuffle": true,
+          "seed": 20261110,
+          "tag": "closed_load"
+        },
+        {
+          "name": "closed_c4_r3",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 30,
+          "concurrency": 4,
+          "shuffle": true,
+          "seed": 20261111,
+          "tag": "closed_load"
+        },
+        {
+          "name": "closed_c8_r1",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 30,
+          "concurrency": 8,
+          "shuffle": true,
+          "seed": 20261109,
+          "tag": "closed_load"
+        },
+        {
+          "name": "closed_c8_r2",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 30,
+          "concurrency": 8,
+          "shuffle": true,
+          "seed": 20261110,
+          "tag": "closed_load"
+        },
+        {
+          "name": "closed_c8_r3",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 30,
+          "concurrency": 8,
+          "shuffle": true,
+          "seed": 20261111,
+          "tag": "closed_load"
+        },
+        {
+          "name": "open_f0p25_r1",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 0.25,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261109,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f0p25_r2",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 0.25,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261110,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f0p25_r3",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 0.25,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261111,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f0p5_r1",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 0.5,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261109,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f0p5_r2",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 0.5,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261110,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f0p5_r3",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 0.5,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261111,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f0p75_r1",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 0.75,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261109,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f0p75_r2",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 0.75,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261110,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f0p75_r3",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 0.75,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261111,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f1p0_r1",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 1.0,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261109,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f1p0_r2",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 1.0,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261110,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f1p0_r3",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 1.0,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261111,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f1p25_r1",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 1.25,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261109,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f1p25_r2",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 1.25,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261110,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f1p25_r3",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 1.25,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261111,
+          "tag": "independent_arrival_load"
+        }
+      ]
+    },
+    {
+      "name": "hybrid",
+      "server": {
+        "variant": "hybrid",
+        "port": 8765,
+        "pair_batch_size": 4,
+        "max_batch_tokens": 4096,
+        "request_batch_size": 1,
+        "batch_wait_ms": 0,
+        "queue_size": 8,
+        "timeout_s": 120,
+        "logits_mode": "last_token",
+        "prefix_cache": "on"
+      },
+      "runs": [
+        {
+          "name": "warmup",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 3,
+          "concurrency": 1,
+          "tag": "warmup_excluded_from_headline"
+        },
+        {
+          "name": "quality_evaluation",
+          "replay": "outputs/serving_20261109/replay_evaluation.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_evaluation.jsonl",
+          "mode": "closed",
+          "requests": 957,
+          "concurrency": 1,
+          "quality_evaluation": true,
+          "tag": "fixed_validation_engineering_replay"
+        },
+        {
+          "name": "closed_c1_r1",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 30,
+          "concurrency": 1,
+          "shuffle": true,
+          "seed": 20261109,
+          "tag": "closed_load"
+        },
+        {
+          "name": "closed_c1_r2",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 30,
+          "concurrency": 1,
+          "shuffle": true,
+          "seed": 20261110,
+          "tag": "closed_load"
+        },
+        {
+          "name": "closed_c1_r3",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 30,
+          "concurrency": 1,
+          "shuffle": true,
+          "seed": 20261111,
+          "tag": "closed_load"
+        },
+        {
+          "name": "closed_c2_r1",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 30,
+          "concurrency": 2,
+          "shuffle": true,
+          "seed": 20261109,
+          "tag": "closed_load"
+        },
+        {
+          "name": "closed_c2_r2",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 30,
+          "concurrency": 2,
+          "shuffle": true,
+          "seed": 20261110,
+          "tag": "closed_load"
+        },
+        {
+          "name": "closed_c2_r3",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 30,
+          "concurrency": 2,
+          "shuffle": true,
+          "seed": 20261111,
+          "tag": "closed_load"
+        },
+        {
+          "name": "closed_c4_r1",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 30,
+          "concurrency": 4,
+          "shuffle": true,
+          "seed": 20261109,
+          "tag": "closed_load"
+        },
+        {
+          "name": "closed_c4_r2",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 30,
+          "concurrency": 4,
+          "shuffle": true,
+          "seed": 20261110,
+          "tag": "closed_load"
+        },
+        {
+          "name": "closed_c4_r3",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 30,
+          "concurrency": 4,
+          "shuffle": true,
+          "seed": 20261111,
+          "tag": "closed_load"
+        },
+        {
+          "name": "closed_c8_r1",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 30,
+          "concurrency": 8,
+          "shuffle": true,
+          "seed": 20261109,
+          "tag": "closed_load"
+        },
+        {
+          "name": "closed_c8_r2",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 30,
+          "concurrency": 8,
+          "shuffle": true,
+          "seed": 20261110,
+          "tag": "closed_load"
+        },
+        {
+          "name": "closed_c8_r3",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 30,
+          "concurrency": 8,
+          "shuffle": true,
+          "seed": 20261111,
+          "tag": "closed_load"
+        },
+        {
+          "name": "open_f0p25_r1",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 0.25,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261109,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f0p25_r2",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 0.25,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261110,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f0p25_r3",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 0.25,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261111,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f0p5_r1",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 0.5,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261109,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f0p5_r2",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 0.5,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261110,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f0p5_r3",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 0.5,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261111,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f0p75_r1",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 0.75,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261109,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f0p75_r2",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 0.75,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261110,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f0p75_r3",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 0.75,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261111,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f1p0_r1",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 1.0,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261109,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f1p0_r2",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 1.0,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261110,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f1p0_r3",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 1.0,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261111,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f1p25_r1",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 1.25,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261109,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f1p25_r2",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 1.25,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261110,
+          "tag": "independent_arrival_load"
+        },
+        {
+          "name": "open_f1p25_r3",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "open",
+          "duration": 90,
+          "rate_fraction": 1.25,
+          "capacity_reference": [
+            "closed_c1_r1",
+            "closed_c1_r2",
+            "closed_c1_r3"
+          ],
+          "max_inflight": 64,
+          "shuffle": true,
+          "seed": 20261111,
+          "tag": "independent_arrival_load"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "study_id": "serving_http_smoke_20261109",
+  "purpose": "Input contract and real HTTP response identity smoke before expanded measurements; timings are not headline performance",
+  "artifacts": "outputs/serving_20261109/artifacts.json",
+  "sessions": [
+    {
+      "name": "hybrid_smoke",
+      "server": {
+        "variant": "hybrid",
+        "port": 8765,
+        "pair_batch_size": 4,
+        "max_batch_tokens": 4096,
+        "request_batch_size": 1,
+        "batch_wait_ms": 0,
+        "queue_size": 8,
+        "timeout_s": 120,
+        "logits_mode": "last_token"
+      },
+      "runs": [
+        {
+          "name": "warmup",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 3,
+          "concurrency": 1,
+          "tag": "warmup_excluded_from_headline"
+        },
+        {
+          "name": "http_identity",
+          "replay": "outputs/serving_20261109/replay_development.jsonl",
+          "metadata": "outputs/serving_20261109/metadata_development.jsonl",
+          "mode": "closed",
+          "requests": 6,
+          "concurrency": 2,
+          "tag": "http_identity_smoke"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "rule_id": "serving_resilience_analysis_20261109_v1",
+  "registered_before_resilience_execution": true,
+  "soak_window_seconds": 300,
+  "input_shift_window_seconds": 60,
+  "input_length_js_threshold_bits": 0.1,
+  "input_length_reference": "Primary hybrid closed_c1_r1/r2/r3 development request arrivals, using the fixed original character-length deciles",
+  "input_shift_minimum_sample_warning_below_attempts": 20,
+  "recovery": {
+    "baseline": "Same burst run's normal phase if at least 10 requests succeed; otherwise the primary hybrid closed C1 three-repeat reference",
+    "baseline_min_successful_requests": 10,
+    "latency_band": "1.10 times successful baseline client-latency P95",
+    "latency_margin_multiplier": 1.1,
+    "queue_band": "max(100 ms, 1.10 times successful baseline queue-wait P95)",
+    "queue_band_floor_ms": 100,
+    "consecutive_successful_requests_required": 3,
+    "request_order": "Scheduled arrival order within the recovery phase",
+    "failure_rule": "Any failed request or observation outside either band resets the sequence",
+    "time_report": "First request observed in band; confirmation only after all three consecutive in-band requests have completed",
+    "interpretation": "Three-request recovery is this experiment's declared operational observation rule, not a business SLA, statistical confidence interval, or proof of sustained future recovery. Low sample counts can leave recovery unconfirmed."
+  },
+  "label_use": "Labels are joined only after each run is completed, solely for development-replay diagnostics; never used to select the JS threshold, long-text examples or recovery bands",
+  "deduplication": "Quality uses unique source review identities within a reported scope; HTTP availability uses every attempted request. The same reviews can recur across windows, so window counts do not create independent new samples.",
+  "drift_interpretation": "Input or prediction distribution changes are proxy signals and cannot be equated with F1 degradation. F1 differences across phases may reflect input composition rather than changing model parameters.",
+  "f1_scale": "0-1 in raw aggregate outputs"
+}
