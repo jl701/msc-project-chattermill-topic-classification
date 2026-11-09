@@ -1,0 +1,33 @@
+{
+  "registered_utc": "2026-11-09T16:12:16.769956+00:00",
+  "selection": "After observing the original 70%-capacity one-hour soak: 2827/2827 successful, HTTP P95 2136.98 ms. Earlier 50% short runs motivated this separate validation.",
+  "objective": "Measure whether 50% of the frozen primary hybrid C1 capacity sustains the illustrative 95% of all attempts within 2 seconds over a full hour.",
+  "candidate_target": "At least 95% of all scheduled attempts succeed within 2 seconds from scheduled arrival. This is an illustrative engineering target, not a contractual business SLA.",
+  "selection_rule": "One new one-hour run at 50%; no model/prompt/threshold or runtime tuning; retain and report both 70% and 50% outcomes regardless of target attainment.",
+  "dataset": "Replay the same 100 historical validation-derived development reviews; seed 20261109. No label access or evaluation-based model selection during execution.",
+  "pipeline": "Fixed hybrid: few-shot aspect presence, QLoRA sentiment, Qwen3-4B-Instruct-2507 NF4 double quantization with FP16 compute; prefix cache on.",
+  "server": {
+    "variant": "hybrid",
+    "port": 8765,
+    "pair_batch_size": 4,
+    "max_batch_tokens": 4096,
+    "request_batch_size": 1,
+    "batch_wait_ms": 0,
+    "queue_size": 8,
+    "timeout_s": 120,
+    "logits_mode": "last_token",
+    "prefix_cache": "on"
+  },
+  "duration_seconds": 3600,
+  "warmup_requests_excluded": 3,
+  "reference_capacity_reviews_per_second": 1.1217266627835216,
+  "offered_reviews_per_second": 0.5608633313917608,
+  "capacity_fraction": 0.5,
+  "client_max_inflight": 64,
+  "telemetry_interval_seconds": 5,
+  "analysis": "Full-hour and 5-minute latency/queue/error/memory windows; all-attempt response budget; label-free repeated prediction-set consistency using the existing pre-registered checker.",
+  "sequential_gate": "The original followup_controller must complete all campaigns and aggregates, after its GPU servers stop.",
+  "private_plan_sha256": "5e581c69a006ba990cec9404118fd4b9ac85269974a20e430fe84d9947877632",
+  "source_resilience_plan_sha256": "c031ad56767d39ca746c18354ab70803009e55ccca66f1563a235628ba22f660",
+  "publication": "Safe aggregate statistics and hashes only; no texts, IDs, labels, per-review outputs, weights or workstation paths."
+}
