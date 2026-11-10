@@ -1,6 +1,6 @@
 # 情感阶段服务一致性：保留完整参考批次
 
-日期：2026-11-11。状态：实现、CPU 检查和4条×2方法真实 GPU 核验完成，100条×2方法 API 核验进行中。
+日期：2026-11-11。状态：实现、CPU 检查、4条×2方法真实 GPU 核验、100条×2方法 API 核验及真实模型故障检查均完成。
 
 ## 发现与证据范围
 
@@ -66,10 +66,33 @@ identical collated input IDs, attention masks and logits positions to its origin
 full-grid group. Selected sentiment vectors and final labels were exactly equal
 to the full-grid reference and the pinned historical sentiment anchor (maximum
 selected probability difference zero). This is an input/score consistency check,
-not classification accuracy. The fresh 100-review-per-method API gate remains
-separate and is in progress; no service performance result follows from this gate.
+not classification accuracy. No service performance result follows from this gate.
 
 Private evidence: `outputs/rag_20261111/canonical_sentiment_native_gate/summary.json`.
 Service plan: `service_final_v2`, SHA256
 `c7e4069ea2a72983ad4dfd8f6bde5dd4bcdade1eb616d336b0b5b85113f60a57`.
 
+## Completed API and fault gates
+
+Both methods completed all100 requests successfully with100/100 exact final
+label-set matches and no retrieval/prompt contract mismatch. Dynamic presence
+probabilities, raw margins and selected sentiment probabilities were exactly
+equal to the frozen offline reference. Fixed selected sentiment probabilities
+were also exact. Actual fixed sentiment prompts were592, including403 companion
+prompts; dynamic prompts were620, including390 companions. These are executed
+Stage2 prompts, not returned aspects.
+
+Fixed prefix caching changed presence probability values (maximum absolute
+difference0.12068390846252441) and raw margins (maximum1.0625), despite no changed
+final labels in this100-input gate. Therefore a separately registered fixed
+cache-on HTTP957-review deployment-quality replay will follow the frozen offline
+matrix. It cannot change classifier selection or thresholds. Old serving957
+results use a different prompt/scoring/execution path and are not a substitute.
+
+The real-model fault gate completed13 execution steps,6 paired comparisons and4
+pre-scoring rejection checks, all passing. It covered normal timed retrieval,
+exception/timeout/busy fallback, late-result recovery, altered legal index
+identity and restoration, with frozen fixed fallback thresholds. Evidence is
+under `service_final_v2/correctness/` and `service_final_v2/fault_gate/`.
+
+The957-review eight-method historical inference matrix started after these gates.

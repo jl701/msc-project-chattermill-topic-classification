@@ -37,7 +37,8 @@ def main(argv=None):
     parser=argparse.ArgumentParser(description=__doc__)
     for name in ("plan","development-replay","reference-anchor","output"):
         parser.add_argument("--"+name,type=Path,required=True)
-    parser.add_argument("--boundary-request-id",default="replay-049bc788e1010cf7ef57")
+    parser.add_argument("--boundary-request-id",required=True,
+        help="Private development boundary input ID supplied at invocation, never embedded in source")
     args=parser.parse_args(argv)
     plan=json.loads(args.plan.read_text(encoding="utf-8-sig"))
     settings=plan["server"]
