@@ -64,14 +64,17 @@ def recover_from_burst(rows, phase_spec, primary_reference):
         raise ValueError("Burst run must contain normal, burst and recovery phases")
     normal = [r for r in rows if r.get("phase") == "normal"]
     base_rows = [r for r in normal if r.get("success")]
+    normal_successes = len(base_rows)
     baseline_source = "same_run_normal_phase"
     if len(base_rows) < BASELINE_MIN_SUCCESS:
         base_rows = [r for r in primary_reference if r.get("success")]
-        baseline_source = "primary_hybrid_closed_c1_three_repeats_fallback"
+        baseline_source = ("primary_hybrid_closed_c1_three_repeats_fallback"
+                           if primary_reference else "no_baseline")
     base_latency = latency_summary(r.get("latency_ms") for r in base_rows)
     base_queue = latency_summary(queue_waits(base_rows))
-    threshold_latency = base_latency["p95_ms"] * LATENCY_MARGIN_MULTIPLIER if base_latency["p95_ms"] is not None else None
-    threshold_queue = max(QUEUE_MIN_BAND_MS, base_queue["p95_ms"] * LATENCY_MARGIN_MULTIPLIER) if base_queue["p95_ms"] is not None else None
+    enough_baseline = len(base_rows) >= BASELINE_MIN_SUCCESS
+    threshold_latency = base_latency["p95_ms"] * LATENCY_MARGIN_MULTIPLIER if enough_baseline and base_latency["p95_ms"] is not None else None
+    threshold_queue = max(QUEUE_MIN_BAND_MS, base_queue["p95_ms"] * LATENCY_MARGIN_MULTIPLIER) if enough_baseline and base_queue["p95_ms"] is not None else None
     recovery_start = float(phase_map["recovery"]["scheduled_start_s"])
     recovery_rows = sorted([r for r in rows if r.get("phase") == "recovery"],
                            key=lambda r: (r["scheduled_s"], r.get("attempt_index", 0)))
@@ -99,11 +102,11 @@ def recover_from_burst(rows, phase_spec, primary_reference):
         else:
             streak = []
     queue_missing = sum(r.get("success") and r.get("response", {}).get("timings_ms", {}).get("queue_wait") is None for r in recovery_rows)
-    if threshold_latency is None or threshold_queue is None:
-        status = "not_evaluable_missing_baseline_timing"
-    elif len(base_rows) < BASELINE_MIN_SUCCESS:
-        status = "not_confirmed_insufficient_baseline_requests"
+    if not enough_baseline:
+        status = "not_evaluable_insufficient_baseline_requests"
         confirmed = None
+    elif threshold_latency is None or threshold_queue is None:
+        status = "not_evaluable_missing_baseline_timing"
     elif confirmed:
         status = "confirmed_under_declared_request_rule"
     elif len(recovery_rows) < RECOVERY_CONSECUTIVE_REQUESTS:
@@ -122,6 +125,7 @@ def recover_from_burst(rows, phase_spec, primary_reference):
                        "completed_after_phase_end": sum(r["finished_s"] > phase["scheduled_end_s"] for r in subset)})
     return {
         "status": status, "baseline_source": baseline_source, "baseline_successful_requests": len(base_rows),
+        "normal_phase_successful_requests": normal_successes,
         "baseline_latency": base_latency, "baseline_queue": base_queue,
         "latency_band_ms": threshold_latency, "queue_band_ms": threshold_queue,
         "first_request_in_band": first_in_band, "confirmation": confirmed,

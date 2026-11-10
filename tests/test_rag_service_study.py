@@ -117,6 +117,44 @@ def test_burst_peak_is_candidate_capacity_and_no_interphase_drain(tmp_path):
     assert "--expected-variant" in argv
 
 
+@pytest.mark.parametrize("minimum_capacity,requested,expected_seconds", [
+    (.3, 60, 135), (.2, 60, 201), (.01, 60, 4001), (1, 60, 60), (.3, 200, 200)])
+def test_all_burst_cycles_have_capacity_derived_baseline_minimum(
+        tmp_path, minimum_capacity, requested, expected_seconds):
+    args = make_args(tmp_path)
+    args.baseline_seconds = requested
+    plan = study.prepare_plan(args)
+    baseline = study.burst_baseline_schedule(plan, minimum_capacity)
+    assert baseline["duration_seconds"] == expected_seconds
+    assert baseline["planned_requests"] >= 20
+    assert plan["burst_baseline_rule"]["historical_baseline_fallback"] is False
+    rates = {"minimum_capacity": minimum_capacity, "burst_peak_rate": 2 * minimum_capacity,
+             "burst_baseline": baseline}
+    runs = study.stage_runs("burst", "bm25", plan, rates)
+    assert len(runs) == 3
+    for run in runs:
+        normal, burst, recovery = run["phases"]
+        assert normal["duration"] == expected_seconds
+        assert study.scheduled_attempts(normal["duration"], normal["rate"]) >= 20
+        assert [burst["duration"], recovery["duration"]] == [30, 180]
+        assert normal["rate"] == recovery["rate"] == .5 * minimum_capacity
+    rates["burst_baseline"] = {**baseline, "duration_seconds": expected_seconds + 1}
+    with pytest.raises(ValueError, match="frozen"):
+        study.stage_runs("burst", "bm25", plan, rates)
+
+
+def test_capacity_freezes_burst_baseline_before_any_burst(tmp_path):
+    args = make_args(tmp_path)
+    plan = study.prepare_plan(args)
+    for method in ("fixed", "bm25"):
+        for repeat in range(1, 4):
+            completed_capacity(args.output, method, repeat, .3)
+    rates = study.freeze_common_rates(plan, args.output)
+    assert rates["burst_baseline"]["duration_seconds"] == 135
+    assert rates["burst_baseline"]["planned_requests"] == 21
+    assert study.read_json(args.output / "common_rates.json")["burst_baseline"] == rates["burst_baseline"]
+
+
 def test_paired_repeat_order_balances_methods_and_reloads_per_method_block(tmp_path):
     args = make_args(tmp_path)
     plan = study.prepare_plan(args)

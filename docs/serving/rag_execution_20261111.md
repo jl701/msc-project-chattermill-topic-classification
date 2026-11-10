@@ -52,6 +52,26 @@ No labels or classification outcomes inform this allocation. Burst peak is
 0.5x the lower method capacity, ensuring a genuine overload even if the dynamic
 method unexpectedly has higher capacity.
 
+Before any RAG service run, the burst normal-phase rule is registered as
+`max(requested_baseline_seconds, ceil(20 / baseline_rate) + 1)`, with the requested
+duration defaulting to60 seconds and `baseline_rate = 0.5 * minimum_C1_capacity`.
+The capacity-derived duration and planned arrivals are frozen in
+`common_rates.json` before burst execution; all three cycles use that same
+duration. This guarantees at least20 planned normal-phase arrivals even on a
+slow local service. For example, capacity0.3 reviews/s gives a normal-phase
+rate0.15 reviews/s, a135-second duration and21 planned arrivals. The burst and
+recovery durations remain30 and180 seconds. No label or observed burst outcome
+is used to extend the normal phase.
+
+Planned arrivals do not replace successful observations. Recovery still requires
+at least10 actual successful baseline requests with measured timing; otherwise
+its status is `not_evaluable_insufficient_baseline_requests`. This RAG study
+supplies no historical service fallback: missing usable normal-phase evidence is
+labelled `baseline_source=no_baseline`, with original phase successes/failures
+retained. An explicitly supplied historical fallback remains labelled as such
+for the separate historical resilience analysis. The recovery-analysis source
+hash is included in the immutable RAG service plan.
+
 The initial 20-review seven-configuration smoke completed in 603.81 seconds,
 with all140 scoring records successful. Presence-only mean time ranged from
 3.03 to3.72 seconds/review across configurations; these are offline component

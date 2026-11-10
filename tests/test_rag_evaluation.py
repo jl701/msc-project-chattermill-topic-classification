@@ -261,6 +261,7 @@ def test_disagreement_search_can_qualify_when_confidence_only_falls_back_to_revi
     assert confidence["fallback"] == "review_all_no_calibration_policy_passed"
     disagreement = select_policy(features, predictions, gold, rows, ASPECTS, "heldout", use_disagreement=True)
     assert "fallback" not in disagreement
-    assert disagreement["calibration_summary"]["quality_gate_passed"]
+    assert disagreement["calibration_summary"]["calibration_eligible"]
+    assert not disagreement["calibration_summary"]["quality_gate_passed"]  # final minimum remains100
     assert disagreement["calibration_summary"]["automatic_count_after_audit"] == 80
     assert disagreement["calibration_summary"]["additional_comparator_calls"] == 20

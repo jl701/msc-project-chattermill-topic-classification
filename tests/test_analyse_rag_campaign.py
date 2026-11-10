@@ -75,6 +75,47 @@ def test_selection_only_does_not_open_final_labels(tmp_path):
     assert result["selected_method"] == "fixed"
     assert (args.output / "review_routing_selection.json").is_file()
     assert not (args.output / "quality.json").exists()
+    frozen = json.loads((args.output / "review_routing_selection.json").read_text())
+    assert frozen["routing_config_sha256"] == analysis.sha256(args.routing_config)
+    assert frozen["routing_config"]["calibration"]["minimum_auto_after_audit"] == 30
+    assert frozen["primary_policy_name"] == "fixed__confidence"
+    assert frozen["primary_policy_selection_basis"]["selected_classifier_method"] == "fixed"
+    assert frozen["policies"]["fixed__confidence"]["role"] == "primary"
+    assert frozen["policies"]["bm25__confidence"]["role"] == "secondary_comparison"
+
+
+def test_evaluation_cannot_promote_a_better_secondary_policy(tmp_path):
+    args = fixture(tmp_path)
+    args.selection_only = True
+    analysis.run(args)
+    frozen = (args.output / "review_routing_selection.json").read_bytes()
+    jsonl(args.evaluation_root / "fixed.jsonl", [record(f"eval{i}", seen=.1) for i in range(200)])
+    args.selection_only = False
+    result = analysis.run(args)
+    routing = json.loads((args.output / "review_routing.json").read_text())
+    assert (args.output / "review_routing_selection.json").read_bytes() == frozen
+    assert result["review_routing_primary_policy_name"] == routing["primary_policy_name"] == "fixed__confidence"
+    assert routing["primary_evaluation"] == routing["evaluation"]["fixed__confidence"]
+    assert routing["primary_evaluation"]["qualified_review_item_reduction_percent"] == 0
+    assert routing["evaluation"]["bm25__confidence"]["qualified_review_item_reduction_percent"] == 95
+    assert routing["evaluation"]["bm25__confidence"]["role"] == "secondary_comparison"
+
+
+def test_frozen_routing_rejects_changed_config_before_any_label_access(tmp_path, monkeypatch):
+    args = fixture(tmp_path)
+    custom = tmp_path / "routing.json"
+    custom.write_bytes(args.routing_config.read_bytes())
+    args.routing_config = custom
+    args.selection_only = True
+    analysis.run(args)
+    frozen = (args.output / "review_routing_selection.json").read_bytes()
+    value = json.loads(custom.read_text())
+    value["registration_state"] += " changed"
+    dump(custom, value)
+    monkeypatch.setattr(analysis, "read_jsonl", lambda *a, **kw: pytest.fail("Labels or scores were read"))
+    with pytest.raises(ValueError, match="Frozen routing configuration changed"):
+        analysis.run(args)
+    assert (args.output / "review_routing_selection.json").read_bytes() == frozen
 
 
 def test_population_overlap_rejected(tmp_path):
@@ -89,7 +130,8 @@ def test_classification_only_never_accesses_routing_or_final_population(tmp_path
     args.classification_only = True
     args.evaluation_root = None
     args.evaluation_labels.unlink()
-    for name in ("risk_features", "select_policy", "comparator_predictions", "comparator_records"):
+    args.routing_config = tmp_path / "missing_routing_config.json"
+    for name in ("risk_features", "select_policy", "comparator_predictions", "comparator_records", "load_routing_config"):
         monkeypatch.setattr(analysis, name, lambda *a, **kw: pytest.fail("Routing was accessed"))
     result = analysis.run(args)
     assert result["selection_outcomes"] == "seen_aspects_only"

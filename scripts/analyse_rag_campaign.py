@@ -22,7 +22,8 @@ from msc_project.serving.rag_evaluation import (
     read_jsonl, records_by_id, select_threshold, successful, summarize_counts, validate_record_spaces,
 )
 from msc_project.serving.review_routing import (
-    assess_assignment, assign_review, call_manifest, comparator_call_accounting,
+    DEFAULT_ROUTING_CONFIG, load_routing_config,
+    assess_assignment, assign_review, call_manifest, choose_primary_policy, comparator_call_accounting,
     matched_random_assignment, risk_features, select_policy,
 )
 from msc_project.serving.annotation_workflow import load_reviewed_split
@@ -135,6 +136,17 @@ def operational_summary(records: dict, keys: list[str], predictions: dict, gold:
 
 
 def run(args: argparse.Namespace) -> dict:
+    routing_config, routing_hash = None, None
+    if not args.classification_only:
+        routing_hash = sha256(args.routing_config)
+        previous_routing = args.output / "review_routing_selection.json"
+        if previous_routing.exists():
+            previous = json.loads(previous_routing.read_text(encoding="utf-8"))
+            if previous.get("routing_config_sha256") != routing_hash:
+                raise ValueError("Frozen routing configuration changed; preserve evidence and use a new analysis output")
+        routing_config = load_routing_config(args.routing_config)
+        if args.seed != routing_config["unchanged_rules"]["seed"]:
+            raise ValueError("Analysis seed differs from registered routing seed")
     artifacts = json.loads(args.artifacts.read_text(encoding="utf-8"))
     aspects = [c["aspect"] for c in artifacts["taxonomy"]["candidates"]]
     heldouts = artifacts["taxonomy"]["heldout_aspects"]
@@ -224,7 +236,8 @@ def run(args: argparse.Namespace) -> dict:
         for disagreement in ([False, True] if comparator_dev is not None else [False]):
             policy_name = f"{name}__{'confidence_disagreement' if disagreement else 'confidence'}"
             policy = select_policy(feat_dev, dev_predictions[name], gold_dev, records_dev[name],
-                                   aspects, heldout, use_disagreement=disagreement, seed=args.seed)
+                                   aspects, heldout, use_disagreement=disagreement, seed=args.seed,
+                                   routing_config=routing_config)
             policy["presence_score_space"] = score_space
             assignment = assign_review(feat_dev, policy, seed=args.seed)
             frozen_routing[policy_name] = {"method": name, "policy": policy,
@@ -232,7 +245,15 @@ def run(args: argparse.Namespace) -> dict:
                     assignment, comparator_dev_records or {}, len(aspects))}
             if disagreement:
                 development_calls[policy_name] = call_manifest(feat_dev, assignment)
+    primary_selection = choose_primary_policy(frozen_routing, selected, routing_config=routing_config)
+    primary_policy_name = primary_selection["primary_policy_name"]
+    for policy_name, entry in frozen_routing.items():
+        entry["role"] = "primary" if policy_name == primary_policy_name else "secondary_comparison"
     write_json(args.output / "review_routing_selection.json", {
+        "primary_policy_name": primary_policy_name,
+        "primary_policy_selection_basis": primary_selection,
+        "routing_config_sha256": routing_hash,
+        "routing_config": routing_config,
         "classification_selection_sha256": sha256(args.output / "selection.json"),
         "calibration_labels": "complete_labels_after_strict_unseen_method_freeze",
         "comparator_sha256": sha256(args.comparator_development)
@@ -290,6 +311,7 @@ def run(args: argparse.Namespace) -> dict:
         "interpretation": "historically_exposed_validation_replay_not_new_blind_test"
         if args.scope == "historical_replay" else "reviewed_frozen_new_source_locked_population",
         "selected_method": selected, "heldout_aspect": heldout,
+        "review_routing_primary_policy_name": primary_policy_name,
         "bootstrap": {"draws": args.bootstrap_draws, "seed": args.seed,
                       "unit": "complete_review_paired", "interval": "percentile_95"},
         "methods": summaries, "old_threshold_diagnostics": old_threshold_summaries,
@@ -325,6 +347,7 @@ def run(args: argparse.Namespace) -> dict:
         assignment = assign_review(feat_eval, policy, seed=args.seed)
         result = assess_assignment(assignment, eval_predictions[name], gold_eval,
                                     records_eval[name], aspects, heldout)
+        result["role"] = entry["role"]
         result["comparator_cost"] = comparator_call_accounting(
             assignment, comparator_eval_records or {}, len(aspects))
         if policy["use_disagreement"]:
@@ -336,9 +359,13 @@ def run(args: argparse.Namespace) -> dict:
         routing_results[policy_name] = result
     write_json(args.output / "review_routing.json", {
         "schema_version": "rag_review_routing_v2_boundary", "scope": args.scope,
+        "routing_config_sha256": routing_hash,
+        "primary_policy_name": primary_policy_name,
+        "primary_policy_selection_basis": primary_selection,
+        "primary_evaluation": routing_results[primary_policy_name],
         "classification_selection_frozen_before_routing": True,
         "manual_workload_unit": "review_items_not_time", "gold_substitution_is_simulation": True,
-        "policy_comparison": "report_all_calibration_frozen_policies_no_evaluation_winner_selection",
+        "policy_comparison": "one_calibration_frozen_primary_other_policies_secondary_no_evaluation_reselection",
         "policies": frozen_routing, "evaluation": routing_results,
         "frozen_routing_selection_sha256": sha256(args.output / "review_routing_selection.json"),
         "comparator_available": comparator_dev is not None,
@@ -372,6 +399,8 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--selection-only", action="store_true")
     result.add_argument("--classification-only", action="store_true",
                         help="Write seen-only selection and stop before all review routing")
+    result.add_argument("--routing-config", type=Path, default=DEFAULT_ROUTING_CONFIG,
+                        help="Independently registered routing-selection and final-qualification rules")
     result.add_argument("--scope", choices=["historical_replay", "new_source_locked"],
                         default="historical_replay")
     result.add_argument("--bootstrap-draws", type=int, default=2000)

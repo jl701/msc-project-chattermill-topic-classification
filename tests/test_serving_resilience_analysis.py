@@ -66,6 +66,28 @@ def test_drift_signal_can_coexist_with_perfect_unique_quality_and_failed_attempt
     assert window['minimum_sample_warning']
 
 
+def test_planned_baseline_does_not_substitute_for_actual_successes_or_invent_fallback():
+    normal = [row(i, i * 2, success=i < 9) for i in range(20)]
+    recovery = [row(20 + i, 90 + i * 2, 'recovery') for i in range(3)]
+    result = recover_from_burst(normal + recovery, PHASES, [])
+    assert result['status'] == 'not_evaluable_insufficient_baseline_requests'
+    assert result['baseline_source'] == 'no_baseline'
+    assert result['normal_phase_successful_requests'] == 9
+    assert result['baseline_successful_requests'] == 0
+    assert result['confirmation'] is None
+    assert result['first_request_in_band'] is None
+    assert result['latency_band_ms'] is None
+    assert result['phases'][0]['attempts'] == 20
+    assert result['phases'][0]['failed'] == 11
+
+
+def test_no_normal_phase_and_no_external_reference_has_no_baseline():
+    result = recover_from_burst([], PHASES, [])
+    assert result['baseline_source'] == 'no_baseline'
+    assert result['status'].startswith('not_evaluable_')
+    assert result['normal_phase_successful_requests'] == 0
+
+
 def test_rules_are_frozen_in_tracked_configuration():
     path = Path(__file__).resolve().parents[1] / 'configs/experiments/serving_resilience_analysis_20261109.json'
     rules = json.loads(path.read_text(encoding='utf-8'))['recovery']

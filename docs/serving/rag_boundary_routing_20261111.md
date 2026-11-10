@@ -24,6 +24,12 @@ For every candidate manual-review margin threshold:
    calls, then higher manual margin. Evaluation never recomputes the boundary
    quantile and never changes the classifier or review thresholds.
 
+Development eligibility and final qualification are distinct under the separate
+`review_routing_20261111.json` registration; see
+`rag_routing_selection_20261111.md`. The boundary construction, candidate grid,
+tie order and audit remain unchanged. The original CP-based development choice
+is retained only as a descriptive sensitivity, never an evaluation-time option.
+
 Report additional full-review calls, candidate score requests, observed sentiment
 prompt counts, missing/failed comparator responses and the stable call manifest.
 An all-review fallback incurs zero comparator calls. A stored historical HTTP

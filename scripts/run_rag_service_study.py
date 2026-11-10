@@ -31,7 +31,8 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from run_serving_study import validate_completed_run
 from msc_project.serving.rag_evaluation import (
-    SENTIMENTS, decode_scores, read_jsonl, records_by_id, score_maps, successful,
+    SENTIMENTS, active_presence_threshold, decode_scores, finite_margin, presence_space,
+    read_jsonl, records_by_id, score_maps, successful, validate_record_spaces,
 )
 
 _OWNED_FAMILIES: dict[int, dict[int, float]] = {}
@@ -131,8 +132,12 @@ def length_stratified_rows(rows: list[dict], count: int, seed: int) -> list[dict
 def prepare_plan(args: argparse.Namespace) -> dict:
     output = args.output.resolve()
     selection = read_json(args.selection)
+    score_space = presence_space(selection)
     baseline, candidate = choose_methods(selection)
     artifacts = read_json(args.artifacts)
+    registered_artifacts = selection.get("input_sha256", {}).get("artifacts")
+    if registered_artifacts is not None and registered_artifacts != digest(args.artifacts):
+        raise ValueError("Service artifacts differ from frozen selection inputs")
     index = args.index.resolve()
     index_files = {path.name: digest(path) for path in sorted(index.iterdir()) if path.is_file()}
     if "manifest.json" not in index_files or "pool.jsonl" not in index_files:
@@ -159,11 +164,12 @@ def prepare_plan(args: argparse.Namespace) -> dict:
         if registered_hash is not None and source_hash != registered_hash:
             raise ValueError("Correctness scores differ from frozen development selection")
         records = records_by_id(read_jsonl(source))
+        validate_record_spaces(records, score_space)
         for row in correctness_rows:
             record = records.get(row["request_id"])
             if not successful(record):
                 raise ValueError("Every correctness review requires a successful offline score reference")
-            score_maps(record, aspects)
+            score_maps(record, aspects, presence_score_space=score_space)
         score_inputs[method] = {"source": str(source.resolve()), "sha256": source_hash,
             "frozen_path": str(output / "inputs" / f"development_{method}.jsonl")}
     if args.port == 8769 or not 1024 <= args.port <= 65535:
@@ -174,10 +180,12 @@ def prepare_plan(args: argparse.Namespace) -> dict:
     if any(not math.isfinite(float(value)) or value <= 0 for value in numeric):
         raise ValueError("All run counts and durations must be positive")
     sources = ["scripts/run_rag_service_study.py", "scripts/benchmark_serving.py",
+               "scripts/analyse_serving_resilience.py",
                "scripts/serve_chattermill.py", "src/msc_project/serving/server.py",
                "src/msc_project/serving/inference.py", "src/msc_project/serving/retrieval.py",
                "src/msc_project/serving/prefix_cache.py", "src/msc_project/serving/rag_evaluation.py",
-               "src/msc_project/serving/timed_retrieval.py"]
+               "src/msc_project/serving/timed_retrieval.py", "src/msc_project/serving/fallback_policy.py",
+               "src/msc_project/serving/presence_policy.py"]
     plan = {"schema_version": "rag_http_service_study_v1", "scope": "local_historical_replay",
         "input_hashes": {"artifacts": digest(args.artifacts), "selection": digest(args.selection),
                          "replay": digest(args.replay), "capacity_replay": digest(args.capacity_replay),
@@ -198,6 +206,7 @@ def prepare_plan(args: argparse.Namespace) -> dict:
             "timing_promotion_requires_pass": True},
         "index": str(index), "encoder_path": str(args.encoder_path.resolve()) if args.encoder_path else None,
         "baseline": baseline, "dynamic_candidate": candidate,
+        "presence_score_space": score_space,
         "candidate_promoted_by_quality": selection.get("selected_method") == candidate,
         "candidate_scope": "best_dynamic_compared_even_if_quality_did_not_promote_it",
         "methods": {}, "port": args.port, "seed": args.seed,
@@ -206,6 +215,12 @@ def prepare_plan(args: argparse.Namespace) -> dict:
         "open_rate_fractions": [.5, .75], "soak_seconds": args.soak_seconds,
         "soak_rate_fraction": .5, "burst_cycles": 3,
         "burst_phase_seconds": [args.baseline_seconds, args.burst_seconds, args.recovery_seconds],
+        "burst_baseline_rule": {
+            "formula": "max(requested_baseline_seconds, ceil(20 / baseline_rate) + 1)",
+            "minimum_planned_requests": 20,
+            "minimum_successful_requests_for_recovery_evaluation": 10,
+            "cycles": "same_capacity_derived_duration_for_all_three_cycles",
+            "historical_baseline_fallback": False},
         "burst_rate_fractions": [.5, 2.0, .5],
         "burst_peak_reference": "dynamic_candidate_C1_capacity",
         "capacity_definition": "independent_capacity_pool_minimum_of_two_method_C1_three_repeat_median_successful_QPS",
@@ -228,11 +243,19 @@ def prepare_plan(args: argparse.Namespace) -> dict:
     for method in (baseline, candidate):
         clone = json.loads(json.dumps(artifacts))
         selected = selection["thresholds"][method]
+        if presence_space(selected) != score_space:
+            raise ValueError("Selection mixes probability and logit-margin thresholds")
         for key in ("aspect_threshold", "runner_up_threshold"):
-            value = float(selected[key])
-            if not math.isfinite(value) or not 0 <= value <= 1:
+            value = finite_margin(selected[key])
+            if (key == "runner_up_threshold" or score_space == "probability") and not 0 <= value <= 1:
                 raise ValueError("Selected threshold outside [0,1]")
-            clone["variants"]["hybrid"][key] = value
+            if key != "aspect_threshold" or score_space == "probability":
+                clone["variants"]["hybrid"][key] = value
+        clone["variants"]["hybrid"]["presence_score_space"] = score_space
+        if score_space == "logit_margin":
+            clone["variants"]["hybrid"]["presence_margin_threshold"] = active_presence_threshold(selected)
+        else:
+            clone["variants"]["hybrid"].pop("presence_margin_threshold", None)
         clone["service_calibration"] = {"selection_sha256": digest(args.selection), "method": method}
         if method != baseline:
             baseline_path = Path(plan["methods"][baseline]["artifacts"])
@@ -242,6 +265,9 @@ def prepare_plan(args: argparse.Namespace) -> dict:
                 "runner_up_threshold": baseline_settings["runner_up_threshold"],
                 "source_artifacts_sha256": digest(baseline_path),
                 "source_artifacts_path": str(baseline_path.resolve())}
+            clone["retrieval_fallback_policy"]["presence_score_space"] = score_space
+            if score_space == "logit_margin":
+                clone["retrieval_fallback_policy"]["presence_margin_threshold"] = active_presence_threshold(baseline_settings)
         else:
             clone.pop("retrieval_fallback_policy", None)
         artifact_path = output / "inputs" / f"artifacts_{method}.json"
@@ -284,8 +310,26 @@ def freeze_common_rates(plan: dict, output: Path) -> dict:
              "common_rates": {str(f): f * minimum for f in plan["open_rate_fractions"]},
              "burst_peak_rate": 2 * medians[plan["dynamic_candidate"]],
              "definition": "same_absolute_arrival_rates_for_both_methods"}
+    rates["burst_baseline"] = burst_baseline_schedule(plan, minimum)
     save_json(output / "common_rates.json", rates)
     return rates
+
+
+def burst_baseline_schedule(plan: dict, minimum_capacity: float) -> dict:
+    """Freeze a label-blind normal phase with at least20 planned arrivals."""
+    rate = plan["burst_rate_fractions"][0] * minimum_capacity
+    requested = plan["burst_phase_seconds"][0]
+    if not math.isfinite(rate) or rate <= 0:
+        raise ValueError("Burst baseline requires positive finite measured capacity")
+    minimum = plan["burst_baseline_rule"]["minimum_planned_requests"]
+    duration = max(requested, math.ceil(minimum / rate) + 1)
+    planned = scheduled_attempts(duration, rate)
+    if planned < minimum:
+        raise ValueError("Burst baseline duration did not yield its registered minimum arrivals")
+    return {"requested_seconds": requested, "duration_seconds": duration,
+            "rate_reviews_per_second": rate, "planned_requests": planned,
+            "minimum_planned_requests": minimum,
+            "formula": plan["burst_baseline_rule"]["formula"]}
 
 
 def stage_runs(stage: str, method: str, plan: dict, rates: dict | None) -> list[dict]:
@@ -311,12 +355,16 @@ def stage_runs(stage: str, method: str, plan: dict, rates: dict | None) -> list[
             runs.append({**base, "name": f"soak__{method}", "mode": "open",
                 "rate": .5 * rates["minimum_capacity"], "duration": plan["soak_seconds"]})
         elif stage == "burst":
+            baseline = burst_baseline_schedule(plan, rates["minimum_capacity"])
+            if "burst_baseline" in rates and rates["burst_baseline"] != baseline:
+                raise ValueError("Burst baseline differs from its frozen capacity-derived schedule")
+            durations = [baseline["duration_seconds"], *plan["burst_phase_seconds"][1:]]
             for repeat in range(plan["burst_cycles"]):
                 phases = [{"name": name, "duration": duration,
                            "rate": rates["burst_peak_rate"] if name == "burst" else
                            fraction * rates["minimum_capacity"]}
                           for name, duration, fraction in zip(("normal", "burst", "recovery"),
-                              plan["burst_phase_seconds"], plan["burst_rate_fractions"])]
+                              durations, plan["burst_rate_fractions"])]
                 runs.append({**base, "name": f"burst__{method}__r{repeat + 1}", "mode": "open",
                              "phases": phases, "seed": plan["seed"] + repeat})
         else:
@@ -559,17 +607,27 @@ def run_benchmark(run: dict, directory: Path, plan: dict, output: Path, env: dic
 def compare_api_response(reference: dict, response: dict, aspects: list[str],
                          thresholds: dict) -> dict:
     """Compare all presence scores and available conditional sentiment scores."""
-    presence, sentiment = score_maps(reference, aspects)
-    expected = decode_scores(presence, sentiment, thresholds["aspect_threshold"],
+    score_space = presence_space(thresholds)
+    presence, sentiment = score_maps(reference, aspects, presence_score_space=score_space)
+    probabilities, _ = score_maps(reference, aspects)
+    expected = decode_scores(presence, sentiment, active_presence_threshold(thresholds),
                              thresholds["runner_up_threshold"])
     if response.get("request_id") != reference["request_id"] or response.get("variant") != "hybrid":
         raise ValueError("API identity or model variant differs from offline reference")
-    actual_presence = {}
+    if presence_space(response) != score_space:
+        raise ValueError("API presence score space differs from frozen policy")
+    actual_presence, actual_probabilities = {}, {}
     for item in response["aspect_scores"]:
         aspect, value = item["aspect"], float(item["score"])
         if aspect in actual_presence or not math.isfinite(value) or not 0 <= value <= 1:
             raise ValueError("Invalid or duplicate API presence score")
-        actual_presence[aspect] = value
+        actual_probabilities[aspect] = value
+        if score_space == "logit_margin":
+            if "presence_logit_margin" not in item:
+                raise ValueError("API response omitted presence_logit_margin")
+            actual_presence[aspect] = finite_margin(item["presence_logit_margin"])
+        else:
+            actual_presence[aspect] = value
     if set(actual_presence) != set(aspects):
         raise ValueError("API response lacks the complete presence grid")
     actual, seen, sentiment_deltas = set(), set(), []
@@ -588,7 +646,7 @@ def compare_api_response(reference: dict, response: dict, aspects: list[str],
             raise ValueError("Invalid API conditional sentiment probabilities")
         sentiment_deltas.extend(abs(a - b) for a, b in zip(scores, sentiment[aspect]))
     expected_present = {aspect for aspect, value in actual_presence.items()
-                        if value >= thresholds["aspect_threshold"]}
+                        if value >= active_presence_threshold(thresholds)}
     if seen != expected_present:
         raise ValueError("API predictions do not agree with its own frozen presence threshold")
     def prompt_contract(value):
@@ -603,7 +661,10 @@ def compare_api_response(reference: dict, response: dict, aspects: list[str],
             "retrieval_prompt_contract_match": contract_match,
             "offline_pair_count": len(expected), "api_pair_count": len(actual),
             "offline_only": sorted(expected - actual), "api_only": sorted(actual - expected),
-            "presence_probability_max_abs_delta": max(abs(presence[a] - actual_presence[a]) for a in aspects),
+            "presence_score_space": score_space,
+            "presence_probability_max_abs_delta": max(abs(probabilities[a] - actual_probabilities[a]) for a in aspects),
+            "presence_logit_margin_max_abs_delta": max(abs(presence[a] - actual_presence[a]) for a in aspects)
+                if score_space == "logit_margin" else None,
             "sentiment_probability_max_abs_delta": max(sentiment_deltas) if sentiment_deltas else None,
             "conditional_sentiment_probability_comparisons": len(sentiment_deltas)}
 
@@ -687,6 +748,8 @@ def run_correctness(method: str, plan: dict, output: Path, process: subprocess.P
         "exact_review_label_set_parity": matches / len(records),
         "presence_probability_max_abs_delta": max((row["presence_probability_max_abs_delta"]
             for row in records if row["success"]), default=None),
+        "presence_logit_margin_max_abs_delta": max((row["presence_logit_margin_max_abs_delta"]
+            for row in records if row["success"] and row["presence_logit_margin_max_abs_delta"] is not None), default=None),
         "sentiment_probability_max_abs_delta": max((row["sentiment_probability_max_abs_delta"]
             for row in records if row["success"] and row["sentiment_probability_max_abs_delta"] is not None), default=None),
         "retrieval_prompt_contract_mismatch_count": prompt_mismatches,

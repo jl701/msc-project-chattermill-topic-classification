@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import math
+from pathlib import Path
 from typing import Mapping, Sequence
 
 import numpy as np
@@ -12,6 +14,49 @@ from scipy.stats import beta
 from msc_project.serving.rag_evaluation import (
     count_tensor, decode_records, f1_from_counts, score_maps, successful,
 )
+
+DEFAULT_ROUTING_CONFIG = Path(__file__).resolve().parents[3] / "configs/experiments/review_routing_20261111.json"
+
+
+def load_routing_config(path: Path = DEFAULT_ROUTING_CONFIG) -> dict:
+    value = json.loads(path.read_text(encoding="utf-8-sig"))
+    validate_routing_config(value)
+    return value
+
+
+def validate_routing_config(value: Mapping) -> None:
+    """Reject unsupported rule changes rather than silently ignoring config fields."""
+    expected = {
+        "primary_policy": {"method_scope": "frozen_selected_classifier_method_only",
+            "allowed_variants": ["confidence", "confidence_disagreement"],
+            "objective": ["calibration_eligible_first", "maximum_automatic_count_after_audit",
+                          "minimum_additional_comparator_calls", "higher_minimum_margin",
+                          "prefer_confidence_on_exact_tie"],
+            "all_fallback": "selected_method_confidence_review_all",
+            "other_policies": "secondary_comparisons_not_evaluation_time_alternatives",
+            "freeze_before_evaluation_labels": True},
+        "calibration": {"minimum_auto_after_audit": 30,
+            "minimum_empirical_exact_set_accuracy": .95,
+            "minimum_oracle_corrected_pair_f1": .95,
+            "clopper_pearson_use": "descriptive_only_not_selection_gate",
+            "objective": ["maximum_automatic_count_after_audit", "minimum_additional_comparator_calls",
+                          "higher_minimum_margin"]},
+        "evaluation": {"minimum_auto_after_audit": 100,
+            "minimum_one_sided_95_clopper_pearson_lower": .95,
+            "minimum_oracle_corrected_pair_f1": .95, "failed_gate_qualified_reduction_percent": 0},
+        "sensitivity": {"minimum_auto_after_audit": 1,
+            "minimum_one_sided_95_clopper_pearson_lower": .95,
+            "minimum_oracle_corrected_pair_f1": .95,
+            "use": "development_descriptive_only_never_select_using_evaluation"},
+        "unchanged_rules": {"audit_fraction": .05, "audit_minimum": 10,
+            "seed": 20261111, "boundary_fraction": .20,
+            "margin_grid": "0_and_development_observable_margin_0_to_100_percentiles_deduplicated",
+            "boundary_rule": "per_threshold_nonmandatory_survivors_lowest_margin_then_stable_ID_hash_frozen_on_development",
+            "fallback": "review_all_if_no_calibration_candidate_is_eligible"}}
+    if value.get("schema_version") != "review_routing_selection_v1" or any(
+            value.get(section, {}).get(key) != expected_value
+            for section, entries in expected.items() for key, expected_value in entries.items()):
+        raise ValueError("Unsupported routing protocol; preserve registered calibration and final gates")
 
 
 def clopper_pearson_lower(correct: int, n: int, confidence: float = .95) -> float:
@@ -204,25 +249,43 @@ def assess_assignment(assignment: Mapping[str, set], predictions: Mapping[str, s
 
 def select_policy(features: Mapping[str, Mapping], predictions: Mapping[str, set],
                   gold: Mapping[str, set], records: Mapping[str, Mapping], aspects: Sequence[str],
-                  heldout: str, *, use_disagreement: bool = False, seed: int = 20261111) -> dict:
+                  heldout: str, *, use_disagreement: bool = False, seed: int = 20261111,
+                  routing_config: Mapping | None = None) -> dict:
+    config = load_routing_config() if routing_config is None else routing_config
+    validate_routing_config(config)
+    if seed != config["unchanged_rules"]["seed"]:
+        raise ValueError("Routing seed differs from registered audit and boundary seed")
+    calibration = config["calibration"]
     values = [f["margin"] for f in features.values() if math.isfinite(f["margin"])]
     candidates = sorted({0.0, *map(float, np.quantile(values, np.arange(0, 101) / 100))}) \
         if values else [0.0]
-    trials, curve = [], []
+    trials, legacy_trials, curve = [], [], []
     for threshold in candidates:
         policy = {"min_margin": threshold, "use_disagreement": use_disagreement}
         if use_disagreement:
             policy["boundary"] = freeze_boundary(features, threshold, seed=seed)
         assignment = assign_review(features, policy, seed=seed)
-        # The final evaluation requires 100 untouched cases. Calibration has only
-        # 100 historical reviews, so its separate criterion uses the same exact
-        # bound, without imposing the final sample-count requirement here.
+        # These searched development summaries are descriptive. Final qualification
+        # remains a separate unchanged test on frozen-policy evaluation outcomes.
         result = assess_assignment(assignment, predictions, gold, records, aspects, heldout,
-                                   minimum_auto=1)
+                                   minimum_auto=config["evaluation"]["minimum_auto_after_audit"])
+        result["interval_population"] = "calibration_automatic_after_audit_same_data_selection_descriptive"
+        result["calibration_eligible"] = (
+            result["automatic_count_after_audit"] >= calibration["minimum_auto_after_audit"] and
+            result["automatic_exact_set_accuracy"] >= calibration["minimum_empirical_exact_set_accuracy"] and
+            result["oracle_corrected_pair_f1"] >= calibration["minimum_oracle_corrected_pair_f1"])
+        result["prior_cp_calibration_eligible"] = (
+            result["automatic_count_after_audit"] >= config["sensitivity"]["minimum_auto_after_audit"] and
+            result["automatic_one_sided_95_clopper_pearson_lower"] >=
+            config["sensitivity"]["minimum_one_sided_95_clopper_pearson_lower"] and
+            result["oracle_corrected_pair_f1"] >= config["sensitivity"]["minimum_oracle_corrected_pair_f1"])
         curve.append({"min_margin": threshold, **result})
-        if result["quality_gate_passed"]:
-            trials.append((result["automatic_count_after_audit"],
-                           -result["additional_comparator_calls"], threshold, policy, result))
+        trial = (result["automatic_count_after_audit"],
+                 -result["additional_comparator_calls"], threshold, policy, result)
+        if result["calibration_eligible"]:
+            trials.append(trial)
+        if result["prior_cp_calibration_eligible"]:
+            legacy_trials.append(trial)
     if trials:
         _, _, _, policy, summary = max(trials, key=lambda item: (item[0], item[1], item[2]))
         policy = dict(policy, selected_on="calibration_only", audit_seed=seed,
@@ -237,7 +300,60 @@ def select_policy(features: Mapping[str, Mapping], predictions: Mapping[str, set
                   "fallback": "review_all_no_calibration_policy_passed"}
         if use_disagreement:
             policy["boundary"] = freeze_boundary(features, policy["min_margin"], seed=seed)
+    legacy = {"scope": "development_descriptive_only_not_an_evaluation_candidate",
+              "eligible_candidate_count": len(legacy_trials),
+              "fallback": "review_all_no_calibration_policy_passed"}
+    if legacy_trials:
+        _, _, _, legacy_policy, legacy_summary = max(legacy_trials, key=lambda item: (item[0], item[1], item[2]))
+        legacy = {"scope": legacy["scope"], "eligible_candidate_count": len(legacy_trials),
+                  "policy": legacy_policy, "calibration_summary": legacy_summary}
+    policy["calibration_criterion"] = dict(calibration)
+    policy["prior_cp_calibration_sensitivity"] = legacy
     return policy
+
+
+def choose_primary_policy(policies: Mapping[str, Mapping], selected_method: str,
+                          *, routing_config: Mapping | None = None) -> dict:
+    """Freeze one primary from calibration summaries, without evaluation inputs."""
+    config = load_routing_config() if routing_config is None else routing_config
+    validate_routing_config(config)
+    confidence_name = f"{selected_method}__confidence"
+    if confidence_name not in policies:
+        raise ValueError("Selected classifier requires its confidence routing policy")
+    candidates = {}
+    for variant in config["primary_policy"]["allowed_variants"]:
+        name = f"{selected_method}__{variant}"
+        if name not in policies:
+            continue
+        entry = policies[name]
+        policy = entry["policy"]
+        if entry["method"] != selected_method or policy["use_disagreement"] != (variant == "confidence_disagreement"):
+            raise ValueError("Primary routing policy identity differs from the selected classifier")
+        summary = policy.get("calibration_summary", {})
+        fallback = bool(policy.get("fallback"))
+        eligible = not fallback and bool(summary.get("calibration_eligible"))
+        if not eligible and not fallback:
+            raise ValueError("Routing policy is neither calibration eligible nor an all-review fallback")
+        candidates[name] = {"calibration_eligible": eligible,
+            "automatic_count_after_audit": summary["automatic_count_after_audit"] if eligible else 0,
+            "additional_comparator_calls": summary["additional_comparator_calls"] if eligible else 0,
+            "min_margin": policy["min_margin"], "confidence_tie_preference": name == confidence_name,
+            "fallback": fallback}
+    if not any(row["calibration_eligible"] for row in candidates.values()):
+        selected = confidence_name
+        reason = "all_selected_method_candidates_fallback_choose_confidence_review_all"
+    else:
+        selected = max(candidates, key=lambda name: (
+            candidates[name]["calibration_eligible"], candidates[name]["automatic_count_after_audit"],
+            -candidates[name]["additional_comparator_calls"], candidates[name]["min_margin"],
+            candidates[name]["confidence_tie_preference"]))
+        reason = "registered_calibration_order_with_confidence_final_tie_break"
+    return {"primary_policy_name": selected, "selected_classifier_method": selected_method,
+            "selected_on": "calibration_only_before_evaluation_labels",
+            "reason": reason, "objective": config["primary_policy"]["objective"],
+            "candidate_summaries": candidates,
+            "secondary_policy_names": sorted(set(policies) - {selected}),
+            "evaluation_reselection_allowed": False}
 
 
 def matched_random_assignment(features: Mapping[str, Mapping], manual_budget: int,
