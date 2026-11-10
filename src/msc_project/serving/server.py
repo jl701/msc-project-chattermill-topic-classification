@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 import hashlib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
+import math
 from pathlib import Path
 import queue
 import sys
@@ -263,8 +264,12 @@ def main(argv=None) -> int:
     parser.add_argument('--retrieval-seed', type=int, default=13)
     parser.add_argument('--retrieval-encoder', type=Path)
     parser.add_argument('--retrieval-fallback', choices=['error', 'fixed'], default='fixed')
+    parser.add_argument('--retrieval-timeout-s', type=float, default=10.0,
+                        help='Dynamic retrieval waiting limit; background CPU work is not cancelled')
     parser.add_argument('--output-dir', type=Path, required=True)
     args = parser.parse_args(argv)
+    if not math.isfinite(args.retrieval_timeout_s) or args.retrieval_timeout_s <= 0:
+        parser.error('--retrieval-timeout-s must be finite and positive')
     args.output_dir.mkdir(parents=True, exist_ok=True)
     import importlib.metadata
     import platform
@@ -276,11 +281,19 @@ def main(argv=None) -> int:
         args.artifacts, variant=args.variant, pair_batch_size=args.pair_batch_size,
         max_batch_tokens=args.max_batch_tokens, logits_mode=args.logits_mode,
         enable_prefix_cache=args.prefix_cache == 'on', device='cuda', local_files_only=True)
+    retriever = None
     if args.retrieval_index:
         from msc_project.serving.retrieval import DemonstrationRetriever
         retriever = DemonstrationRetriever(
             args.retrieval_index, method=args.retrieval_method, seed=args.retrieval_seed,
             fixed_demonstrations=engine.demonstrations['aspect'], encoder_path=args.retrieval_encoder)
+        if args.retrieval_method != 'fixed':
+            from msc_project.serving.timed_retrieval import TimedDemonstrationRetriever
+            cards = {str(c['text']): str(c['aspect']) for c in engine.candidates}
+            if len(cards) != len(engine.candidates):
+                raise ValueError('Candidate card text must be unique for timed retrieval')
+            retriever = TimedDemonstrationRetriever(
+                retriever, candidate_aspects=cards, timeout_s=args.retrieval_timeout_s)
         engine.set_retriever(retriever, fallback_on_error=args.retrieval_fallback == 'fixed')
     load_seconds = time.perf_counter() - start
     metadata = {'variant': args.variant, 'model_load_s': load_seconds,
@@ -293,7 +306,8 @@ def main(argv=None) -> int:
                               for k, v in vars(args).items()},
                 'engine': engine.metadata(),
                 'source_sha256': {name: hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest()
-                                  for name in ['server.py', 'inference.py', 'prefix_cache.py']}}
+                                  for name in ['server.py', 'inference.py', 'prefix_cache.py',
+                                               'retrieval.py', 'timed_retrieval.py']}}
     (args.output_dir / 'server_metadata.json').write_text(
         json.dumps(metadata, ensure_ascii=False, indent=2), encoding='utf-8')
     service = Service(engine, queue_size=args.queue_size,
@@ -306,6 +320,7 @@ def main(argv=None) -> int:
         'cuda_peak_allocated_bytes': torch.cuda.max_memory_allocated(),
         'cuda_peak_reserved_bytes': torch.cuda.max_memory_reserved(),
         'scope': 'resident process counters since model load; not isolated per-request peaks',
+        'retrieval': retriever.metadata() if retriever else None,
     }
     server = ThreadingHTTPServer(('127.0.0.1', args.port), handler_type(service))
     server.daemon_threads = True
@@ -315,6 +330,8 @@ def main(argv=None) -> int:
     finally:
         service.stop.set()
         service.worker.join(timeout=args.timeout_s + 10)
+        if retriever is not None and hasattr(retriever, 'close'):
+            retriever.close(wait=False)
         server.server_close()
         (args.output_dir / 'server_final_metrics.json').write_text(
             json.dumps(service.metrics(), ensure_ascii=False, indent=2), encoding='utf-8')

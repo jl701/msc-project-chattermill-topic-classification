@@ -59,3 +59,30 @@ times, not end-to-end service latency. Full development plus historical
 regression is provisionally around9 GPU-hours; final resource estimates will
 include service tests and optional new-input scoring separately. No new gold
 outcomes have been inspected at this checkpoint.
+
+## Dynamic retrieval waiting limit before service measurements
+
+The API applies a 10-second default waiting budget to dynamic retrieval through
+`TimedDemonstrationRetriever`; `--retrieval-timeout-s` can explicitly set another
+budget. Fixed demonstrations and offline quality scoring keep their existing
+execution paths. Retriever construction, index loading and cold E5 encoder
+initialisation are part of service startup, outside the per-request budget.
+
+One background CPU worker performs query preparation and all review/candidate
+selections for the request batch. It has at most one active future and no queued
+batches. When waiting exceeds the budget, the engine either explicitly records
+fixed-example fallback or fails according to `--retrieval-fallback`. While the
+timed-out computation is still running, later requests immediately take the same
+fallback/error path instead of piling up. Python threads do not safely support
+hard model-compute cancellation; this bounds request waiting, not background
+compute time. Shutdown likewise does not forcibly terminate running CPU work.
+
+Completed values stay local to their original future. Late completions are
+discarded, and each successful batch validates exact query/card keys, its batch
+identity, the index version and fingerprint, and the selected demonstration
+identities and 2Y2N answers. No query-result cache survives into another batch.
+The worker's selection work time is reported separately; engine preparation
+waiting and subsequent lookup time must not be summed with that work again.
+CPU fault tests cover timeout, repeated busy fallback, late-result isolation,
+exception recovery, metadata mismatch and explicit engine fallback. Real GPU
+fallback checks and service measurements remain separate execution gates.

@@ -9,7 +9,8 @@ from msc_project.serving.rag_evaluation import (
     records_by_id, score_maps, select_threshold, summarize_counts, threshold_candidates,
 )
 from msc_project.serving.review_routing import (
-    assess_assignment, assign_review, clopper_pearson_lower, matched_random_assignment,
+    assess_assignment, assign_review, call_manifest, clopper_pearson_lower,
+    comparator_call_accounting, comparator_call_ids, freeze_boundary, matched_random_assignment,
     risk_features, select_policy,
 )
 
@@ -168,5 +169,98 @@ def test_review_all_fallback_and_random_budget_are_reproducible():
 def test_disagreement_missing_comparator_requires_review():
     rows = {"a": record("a"), "b": record("b")}
     features = risk_features(rows, sorted(rows), ASPECTS, .5, .5, {"a": set()})
-    assignment = assign_review(features, {"min_margin": 0, "use_disagreement": True})
-    assert assignment["targeted_review"] == {"a", "b"}
+    policy = {"min_margin": 0, "use_disagreement": True, "boundary": freeze_boundary(features, 0)}
+    assignment = assign_review(features, policy)
+    assert len(assignment["comparator_calls"]) == 1
+    assert assignment["targeted_review"] == assignment["comparator_calls"]
+
+
+def fake_features(n=100):
+    return {str(i): {"margin": float(i), "mandatory": False,
+                     "comparator_available": True, "disagreement": False} for i in range(n)}
+
+
+def test_boundary_is_frozen_per_threshold_and_ignores_nonboundary_disagreement():
+    features = fake_features()
+    policy = {"min_margin": 10, "use_disagreement": True,
+              "boundary": freeze_boundary(features, 10)}
+    calls = comparator_call_ids(features, policy)
+    assert calls == {str(i) for i in range(10, 28)}
+    assert policy["boundary"]["calibration_eligible_reviews"] == 90
+    before = assign_review(features, policy)
+    for key in set(features) - calls:
+        features[key]["disagreement"] = True
+        features[key]["comparator_available"] = False
+    assert assign_review(features, policy) == before
+    features["12"]["comparator_available"] = False
+    after = assign_review(features, policy)
+    assert after["comparator_unavailable"] == {"12"}
+    assert "12" in after["targeted_review"]
+    # Evaluation shifts can change call coverage. The frozen boundary is NOT
+    # refit to keep an artificial20% evaluation quota.
+    shifted = {key: dict(value, margin=value["margin"] + 100) for key, value in features.items()}
+    assert not comparator_call_ids(shifted, policy)
+
+
+def test_boundary_ties_use_stable_hash_and_do_not_call_mandatory_reviews():
+    features = {key: dict(value, margin=1.) for key, value in fake_features().items()}
+    features["0"]["mandatory"] = True
+    band = freeze_boundary(features, 0, seed=17)
+    policy = {"min_margin": 0, "use_disagreement": True, "boundary": band}
+    calls = comparator_call_ids(features, policy)
+    assert len(calls) == 20 and "0" not in calls
+    assert freeze_boundary(dict(reversed(list(features.items()))), 0, seed=17) == band
+    assert comparator_call_ids(features, {**policy, "min_margin": 2}) == set()
+
+
+def test_boundary_cost_counts_missing_failures_and_keeps_runtime_scopes_distinct():
+    features = fake_features(20)
+    features["1"]["comparator_available"] = False
+    policy = {"min_margin": 0, "use_disagreement": True, "boundary": freeze_boundary(features, 0)}
+    assignment = assign_review(features, policy)
+    success = record("0")
+    success["response"]["diagnostics"]["sentiment_prompt_count"] = 2
+    success["latency_ms"] = 100
+    failure = {"success": False, "latency_ms": 200}
+    cost = comparator_call_accounting(assignment, {"0": success, "1": failure}, 12)
+    assert cost["additional_comparator_review_requests"] == 4
+    assert cost["additional_requested_presence_scores"] == 48
+    assert cost["stored_comparator_failures"] == 1 and cost["missing_comparator_records"] == 2
+    assert cost["observed_conditional_sentiment_prompts"] == 2
+    assert cost["runtime_proxies"]["historical_HTTP_latency_ms"]["sum_ms"] == 300
+    assert cost["runtime_proxies"]["offline_scorer_elapsed_ms"]["sum_ms"] == 2
+    assert not cost["combined_service_latency_measured"]
+    manifest = call_manifest(features, assignment)
+    assert sum(row["comparator_call_required"] for row in manifest) == 4
+    assert all(row["disagreement_used"] is None for row in manifest if not row["comparator_call_required"])
+
+
+def test_disagreement_review_all_fallback_makes_zero_extra_calls():
+    rows = records_by_id([record(str(i)) for i in range(100)])
+    predictions = decode_records(rows, sorted(rows), ASPECTS, .5, .5)
+    features = risk_features(rows, sorted(rows), ASPECTS, .5, .5, predictions)
+    policy = select_policy(features, predictions, {key: set() for key in rows}, rows,
+                           ASPECTS, "heldout", use_disagreement=True)
+    assert policy["fallback"] == "review_all_no_calibration_policy_passed"
+    assignment = assign_review(features, policy)
+    assert not assignment["comparator_calls"]
+    assert comparator_call_accounting(assignment, rows, 12)["additional_comparator_review_requests"] == 0
+
+
+def test_disagreement_search_can_qualify_when_confidence_only_falls_back_to_review_all():
+    rows = records_by_id([record(str(i)) for i in range(100)])
+    predictions = decode_records(rows, sorted(rows), ASPECTS, .5, .5)
+    original_features = risk_features(rows, sorted(rows), ASPECTS, .5, .5)
+    band = freeze_boundary(original_features, 0)
+    boundary = comparator_call_ids(original_features, {"min_margin": 0,
+        "use_disagreement": True, "boundary": band})
+    error_ids = set(sorted(boundary)[:10])
+    gold = {key: set() if key in error_ids else pairs for key, pairs in predictions.items()}
+    features = risk_features(rows, sorted(rows), ASPECTS, .5, .5, gold)
+    confidence = select_policy(features, predictions, gold, rows, ASPECTS, "heldout")
+    assert confidence["fallback"] == "review_all_no_calibration_policy_passed"
+    disagreement = select_policy(features, predictions, gold, rows, ASPECTS, "heldout", use_disagreement=True)
+    assert "fallback" not in disagreement
+    assert disagreement["calibration_summary"]["quality_gate_passed"]
+    assert disagreement["calibration_summary"]["automatic_count_after_audit"] == 80
+    assert disagreement["calibration_summary"]["additional_comparator_calls"] == 20
