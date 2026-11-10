@@ -30,7 +30,8 @@ $ServiceArgs = @(
   '--capacity-replay', 'outputs/rag_20261111/performance_pool/replay_capacity.jsonl',
   '--replay', 'outputs/rag_20261111/performance_pool/replay_benchmark.jsonl',
   '--output', $ServiceOutput,
-  '--port', '8766', '--retrieval-timeout-s', '10'
+  '--port', '8766', '--retrieval-timeout-s', '10',
+  '--sentiment-execution', 'canonical_full_grid_groups'
 )
 & $env:RAG_PYTHON @ServiceArgs --plan-only
 ```
@@ -71,6 +72,7 @@ Use the resulting clones for the separate registered real-model fault gate:
 $ServicePlan = Get-Content -LiteralPath "$ServiceOutput/plan.json" -Raw | ConvertFrom-Json
 $DynamicMethod = $ServicePlan.dynamic_candidate
 $DynamicPolicy = $ServicePlan.methods.$DynamicMethod.retrieval_selection_policy
+$SentimentExecution = $ServicePlan.server.sentiment_execution
 $DynamicArtifacts = $ServicePlan.methods.$DynamicMethod.artifacts
 $FixedArtifacts = $ServicePlan.methods.fixed.artifacts
 & $env:RAG_PYTHON scripts/check_rag_faults_gpu.py `
@@ -78,6 +80,7 @@ $FixedArtifacts = $ServicePlan.methods.fixed.artifacts
   --index 'outputs/rag_20261111/index_all_populations' `
   --encoder $env:RAG_E5_SNAPSHOT --method $DynamicMethod `
   --retrieval-selection-policy $DynamicPolicy `
+  --sentiment-execution $SentimentExecution `
   --development-replay 'outputs/serving_20261109/replay_development.jsonl' `
   --output-dir "$ServiceOutput/fault_gate" --normal-timeout-s 10
 ```
@@ -119,3 +122,22 @@ CPU validation for the burst update:50 focused synthetic tests passed across
 service scheduling, resilience analysis and margin integration. The CLI help was
 also checked without loading a model. No GPU service run was executed while
 preparing this record.
+
+The first conditional API gate is preserved under `service_final`: fixed matched
+100/100 and dynamic matched99/100, with a Stage2 full-grid/selected-only numerical
+batching discrepancy. The replacement study uses a fresh `service_final_v2`
+directory and explicitly selects `canonical_full_grid_groups` for both methods.
+It keeps the frozen classifier, thresholds, taxonomy and examples. Complete
+original full-grid microbatches containing a selected aspect are forwarded,
+including companion aspects; groups with no selected aspect are skipped. All
+actual companion compute remains in measured service latency and prompt counts.
+
+The service plan and both artifact clones freeze the execution policy and the
+shared grouping contract: ordered-candidate SHA256, pair batch size, padded token
+budget, logits mode, grouping rule and contract SHA256. Every API correctness
+response must match that contract and account for actual/companion/full-grid
+prompt counts. The replacement reruns all100 development inputs for both methods,
+not only the one failed record. The separate fault harness checks exact selected
+sentiment vectors against full-grid execution for both fixed and dynamic methods,
+then retains the existing failure/fallback/recovery checks. Legacy QLoRA comparator
+plans remain unchanged and use the default `selected_only` mode.

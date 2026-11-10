@@ -81,6 +81,22 @@ def test_label_in_performance_replay_rejected(tmp_path):
         study.prepare_plan(args)
 
 
+def test_canonical_execution_is_bound_in_both_clones_plan_and_server_command(tmp_path):
+    args = make_args(tmp_path)
+    args.sentiment_execution = "canonical_full_grid_groups"
+    plan = study.prepare_plan(args)
+    assert plan["server"]["sentiment_execution"] == "canonical_full_grid_groups"
+    for method in ("fixed", "bm25"):
+        clone = study.read_json(args.output / f"inputs/artifacts_{method}.json")
+        assert clone["service_execution"]["sentiment_execution"] == "canonical_full_grid_groups"
+        assert clone["service_execution"]["sentiment_group_contract"] == plan["sentiment_group_contract"]
+        command = study.server_command(method, plan, args.output / "synthetic_session")
+        assert command[command.index("--sentiment-execution") + 1] == "canonical_full_grid_groups"
+    args.sentiment_execution = "selected_only"
+    with pytest.raises(FileExistsError):
+        study.prepare_plan(args)
+
+
 def test_new_e5_method_keeps_distinct_clone_identity_and_passes_policy_to_server(tmp_path):
     args = make_args(tmp_path)
     selection = study.read_json(args.selection)
@@ -353,6 +369,40 @@ def test_correctness_tolerates_probability_rounding_only_when_label_sets_match()
     assert changed["api_only"] == [("seen", "positive")]
 
 
+def test_correctness_requires_registered_execution_and_actual_companion_counts():
+    reference = record("a")
+    response = api_response(reference)
+    thresholds = {"aspect_threshold": .8, "runner_up_threshold": .4}
+    with pytest.raises(ValueError, match="sentiment execution"):
+        study.compare_api_response(reference, response, ASPECTS, thresholds,
+                                   sentiment_execution="canonical_full_grid_groups")
+    response["diagnostics"] = {"sentiment_execution": "canonical_full_grid_groups",
+        "sentiment_prompt_count": 2, "sentiment_companion_prompt_count": 1,
+        "sentiment_full_grid_prompt_count": 2}
+    result = study.compare_api_response(reference, response, ASPECTS, thresholds,
+                                       sentiment_execution="canonical_full_grid_groups")
+    assert result["sentiment_prompt_count"] == 2
+    assert result["sentiment_companion_prompt_count"] == 1
+    response["diagnostics"]["sentiment_companion_prompt_count"] = 0
+    with pytest.raises(ValueError, match="companion accounting"):
+        study.compare_api_response(reference, response, ASPECTS, thresholds,
+                                   sentiment_execution="canonical_full_grid_groups")
+
+
+def test_correctness_rejects_different_candidate_order_or_group_parameters():
+    reference, response = record("a"), api_response(record("a"))
+    expected = study.build_sentiment_group_contract([{"aspect": a} for a in ASPECTS],
+        execution="selected_only", pair_batch_size=4, max_batch_tokens=4096, logits_mode="last_token")
+    response["diagnostics"] = {"sentiment_execution": "selected_only", "sentiment_group_contract": expected}
+    thresholds = {"aspect_threshold": .8, "runner_up_threshold": .4}
+    assert study.compare_api_response(reference, response, ASPECTS, thresholds,
+        sentiment_execution="selected_only", sentiment_group_contract=expected)["exact_label_set_match"]
+    response["diagnostics"]["sentiment_group_contract"] = {**expected, "pair_batch_size": 8}
+    with pytest.raises(ValueError, match="grouping parameters"):
+        study.compare_api_response(reference, response, ASPECTS, thresholds,
+            sentiment_execution="selected_only", sentiment_group_contract=expected)
+
+
 def test_correctness_rejects_wrong_identity_and_missing_presence_grid():
     reference = record("a")
     response = api_response(reference)
@@ -424,8 +474,10 @@ def test_correctness_reference_is_bound_to_frozen_selection(tmp_path):
 
 
 @pytest.mark.parametrize("inject_failure", [False, True])
-def test_correctness_preserves_all_requests_and_enforces_timing_gate(tmp_path, monkeypatch, inject_failure):
+@pytest.mark.parametrize("execution", ["selected_only", "canonical_full_grid_groups"])
+def test_correctness_preserves_all_requests_and_enforces_timing_gate(tmp_path, monkeypatch, inject_failure, execution):
     args = make_args(tmp_path)
+    args.sentiment_execution = execution
     plan = study.prepare_plan(args)
     seen_ids = []
     class Reply:
@@ -445,8 +497,14 @@ def test_correctness_preserves_all_requests_and_enforces_timing_gate(tmp_path, m
             assert set(payload) == {"request_id", "text"}
             if inject_failure and payload["request_id"] == "dev3":
                 raise TimeoutError("Synthetic timeout")
-            return Reply(api_response(record(payload["request_id"]),
-                         label="positive" if inject_failure and payload["request_id"] == "dev4" else "negative"))
+            response = api_response(record(payload["request_id"]),
+                         label="positive" if inject_failure and payload["request_id"] == "dev4" else "negative")
+            response["diagnostics"] = {"sentiment_execution": execution,
+                "sentiment_group_contract": plan["sentiment_group_contract"],
+                "sentiment_prompt_count": 2 if execution == "canonical_full_grid_groups" else 1,
+                "sentiment_companion_prompt_count": 1 if execution == "canonical_full_grid_groups" else 0,
+                "sentiment_full_grid_prompt_count": 2}
+            return Reply(response)
     monkeypatch.setattr(study.urllib.request, "build_opener", lambda *a: Opener())
     monkeypatch.setattr(study, "wait_idle", lambda *a, **kw: {"unfinished_tasks": 0})
     for method in plan["methods"]:

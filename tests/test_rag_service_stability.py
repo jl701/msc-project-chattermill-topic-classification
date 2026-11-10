@@ -7,6 +7,15 @@ import pytest
 from analyse_rag_service_stability import (
     analyse_campaign, fallback_counts, repeat_consistency, sha, time_windows, write_outputs,
 )
+from msc_project.serving.sentiment_execution import build_sentiment_group_contract
+
+
+def execution_contract(*, execution="canonical_full_grid_groups", pair_batch_size=4,
+                       max_batch_tokens=4096, logits_mode="last_token", candidates=None):
+    return build_sentiment_group_contract(
+        [{"aspect": "a"}, {"aspect": "b"}] if candidates is None else candidates,
+        execution=execution, pair_batch_size=pair_batch_size,
+        max_batch_tokens=max_batch_tokens, logits_mode=logits_mode)
 
 
 def dump(path, value):
@@ -21,6 +30,8 @@ def outcome(index, scheduled, *, success=True, finish=None, error=None, drop=Fal
         "predictions": [{"aspect": "aspect", "sentiments": [label]}],
         "diagnostics": {"effective_retrieval_method": "fixed" if fallback else "bm25",
                         "effective_retrieval_selection_policy": "global",
+                        "sentiment_execution": "canonical_full_grid_groups",
+                        "sentiment_group_contract": execution_contract(),
                         "effective_thresholds": {"aspect_threshold": threshold},
                         "retrieval_fallback": fallback},
         "timings_ms": {"queue_wait": 2}}
@@ -120,9 +131,57 @@ def test_missing_or_invalid_selection_identity_is_not_inferred_as_global(selecti
     assert result["policy_groups"][0]["repeated_successful_deliveries_after_first"] == 0
 
 
+@pytest.mark.parametrize("changes", [
+    {"execution": "selected_only"}, {"pair_batch_size": 8}, {"max_batch_tokens": 2048},
+    {"logits_mode": "full"}, {"candidates": [{"aspect": "b"}, {"aspect": "a"}]},
+])
+def test_repeat_sets_bind_execution_parameters_and_ordered_candidates(changes):
+    rows = [outcome(i, i, label="positive" if i < 2 else "negative") for i in range(4)]
+    changed = execution_contract(**changes)
+    for row in rows[2:]:
+        row["response"]["diagnostics"].update(
+            sentiment_execution=changed["execution"], sentiment_group_contract=changed)
+    # Keep model_version identical deliberately: the contract must independently
+    # separate execution policies/limits/order rather than rely on a name suffix.
+    result = repeat_consistency(rows, {"private-input": "private-text-hash"})
+    assert result["successful_attempts_missing_policy_identity"] == 0
+    assert len(result["policy_groups"]) == 2
+    assert len({g["sentiment_group_contract"]["contract_sha256"] for g in result["policy_groups"]}) == 2
+    assert all(g["repeated_successful_deliveries_after_first"] == 1 and
+               g["repeated_deliveries_differing_from_first"] == 0 for g in result["policy_groups"])
+
+
+@pytest.mark.parametrize("damage,reason", [
+    ("execution", "missing_execution"), ("contract", "missing_contract"),
+    ("hash", "invalid_contract"), ("malformed_field", "invalid_contract"),
+    ("contradiction", "execution_contract_mismatch"),
+])
+def test_unqualified_stage2_identity_keeps_success_denominator(damage, reason):
+    rows = [outcome(0, 0), outcome(1, 1)]
+    diag = rows[-1]["response"]["diagnostics"]
+    if damage == "execution":
+        del diag["sentiment_execution"]
+    elif damage == "contract":
+        del diag["sentiment_group_contract"]
+    elif damage == "hash":
+        diag["sentiment_group_contract"]["pair_batch_size"] = 8
+    elif damage == "malformed_field":
+        diag["sentiment_group_contract"]["logits_mode"] = []
+    else:
+        diag["sentiment_execution"] = "selected_only"
+    result = repeat_consistency(rows, {"private-input": "private-text-hash"})
+    assert result["successful_attempts"] == 2 and result["failed_attempts"] == 0
+    assert result["successful_attempts_missing_policy_identity"] == 1
+    assert result["successful_attempts_excluded_for_sentiment_identity"] == {reason: 1}
+    assert result["policy_groups"][0]["repeated_successful_deliveries_after_first"] == 0
+
+
 def synthetic_campaign(tmp_path):
     campaign = tmp_path / "campaign"
-    dump(campaign / "plan.json", {"schema_version": "rag_http_service_study_v1"})
+    dump(campaign / "plan.json", {"schema_version": "rag_http_service_study_v1",
+        "server": {"sentiment_execution": "canonical_full_grid_groups", "pair_batch_size": 4,
+                   "max_batch_tokens": 4096, "logits_mode": "last_token"},
+        "sentiment_group_contract": execution_contract()})
     run = campaign / "runs" / "soak__bm25"
     run.mkdir(parents=True)
     replay = campaign / "inputs" / "replay.jsonl"
@@ -168,6 +227,10 @@ def test_complete_campaign_resources_privacy_and_outputs(tmp_path, monkeypatch):
     result = analyse_campaign(campaign)
     run = result["runs"][0]
     assert result["labels_read"] is False
+    from analyse_rag_service_stability import ROOT
+    assert result["sentiment_contract_source_sha256"] == sha(ROOT / "src/msc_project/serving/sentiment_execution.py")
+    assert result["registered_sentiment_identity"]["sentiment_group_contract"] == execution_contract()
+    assert run["repeat_consistency"]["successful_attempts_excluded_for_sentiment_identity"] == {}
     assert run["full_five_minute_window_count"] == 2
     assert run["summary"]["planned_attempts"] == 12
     assert run["summary"]["timeout_failures"] == 1
@@ -183,6 +246,54 @@ def test_complete_campaign_resources_privacy_and_outputs(tmp_path, monkeypatch):
     assert (output / "stability.json").exists() and (output / "windows.csv").exists()
     with pytest.raises(FileExistsError):
         write_outputs(result, output)
+
+
+@pytest.mark.parametrize("damage,reason", [
+    ("execution", "missing_execution"), ("contract", "missing_contract"),
+    ("order", "registered_contract_mismatch"), ("limits", "registered_contract_mismatch"),
+    ("mode", "registered_contract_mismatch"),
+])
+def test_plan_binding_reports_response_disagreement_without_erasing_delivery(tmp_path, damage, reason):
+    campaign, run = synthetic_campaign(tmp_path)
+    rows = [json.loads(line) for line in (run / "requests.jsonl").read_text().splitlines()]
+    diag = rows[0]["response"]["diagnostics"]
+    if damage in {"execution", "contract"}:
+        del diag["sentiment_execution" if damage == "execution" else "sentiment_group_contract"]
+    else:
+        changes = {"order": {"candidates": [{"aspect": "b"}, {"aspect": "a"}]},
+                   "limits": {"pair_batch_size": 8}, "mode": {"execution": "selected_only"}}[damage]
+        contract = execution_contract(**changes)
+        diag.update(sentiment_execution=contract["execution"], sentiment_group_contract=contract)
+    (run / "requests.jsonl").write_text("\n".join(json.dumps(r) for r in rows))
+    result = analyse_campaign(campaign)["runs"][0]
+    assert result["summary"]["planned_attempts"] == 12 and result["summary"]["successful"] == 10
+    consistency = result["repeat_consistency"]
+    assert consistency["successful_attempts_missing_policy_identity"] == 1
+    assert consistency["successful_attempts_excluded_for_sentiment_identity"] == {reason: 1}
+    assert sum(g["successful_attempts"] for g in consistency["policy_groups"]) == 9
+
+
+@pytest.mark.parametrize("damage", ["execution", "parameters", "hash"])
+def test_plan_internal_stage2_contradiction_prevents_analysis(tmp_path, damage):
+    campaign, _ = synthetic_campaign(tmp_path)
+    plan = json.loads((campaign / "plan.json").read_text())
+    if damage == "execution":
+        plan["server"]["sentiment_execution"] = "selected_only"
+    elif damage == "parameters":
+        plan["server"]["max_batch_tokens"] = 2048
+    else:
+        plan["sentiment_group_contract"]["contract_sha256"] = "0" * 64
+    dump(campaign / "plan.json", plan)
+    with pytest.raises(ValueError, match="Registered sentiment execution/group contract"):
+        analyse_campaign(campaign)
+
+
+def test_legacy_plan_missing_identity_is_explicit_and_never_assumed_canonical(tmp_path):
+    campaign, _ = synthetic_campaign(tmp_path)
+    dump(campaign / "plan.json", {"schema_version": "rag_http_service_study_v1"})
+    result = analyse_campaign(campaign)
+    assert result["registered_sentiment_identity"]["available"] is False
+    assert result["runs"][0]["repeat_consistency"]["registered_sentiment_identity"]["available"] is False
 
 
 @pytest.mark.parametrize("damage", ["missing_attempt", "duplicate_attempt", "wrong_schedule", "wrong_scheduled_latency", "summary_changed", "interrupted"])

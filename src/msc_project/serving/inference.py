@@ -36,6 +36,7 @@ from msc_project.llm.qwen_two_stage_classifier import (
     validate_sentiment_verbalizer_token_ids,
 )
 from msc_project.serving.fallback_policy import validate_fallback_policy
+from msc_project.serving.sentiment_execution import SENTIMENT_EXECUTIONS, build_sentiment_group_contract
 from msc_project.serving.presence_policy import (
     LOGIT_MARGIN, presence_space, presence_selected, validated_presence_policy,
 )
@@ -87,6 +88,18 @@ def decode_sentiments(scores: Sequence[float], runner_up_threshold: float) -> li
     return [SENTIMENTS[index] for index in indices]
 
 
+def required_canonical_groups(batches: Sequence[Sequence[int]], required_positions: Sequence[int]):
+    """Keep complete original groups containing a required row, without repacking."""
+    required = set(required_positions)
+    valid = {i for batch in batches for i in batch}
+    if (len(required) != len(required_positions) or
+            any(isinstance(i, bool) or not isinstance(i, int) for i in required_positions) or
+            not required <= valid):
+        raise ValueError("Canonical required positions must be unique valid integer row indices")
+    kept = [j for j,batch in enumerate(batches) if any(i in required for i in batch)]
+    return [list(batches[j]) for j in kept], kept
+
+
 class QwenServingEngine:
     """Single resident quantized base and one immutable selected LoRA adapter."""
 
@@ -102,11 +115,17 @@ class QwenServingEngine:
         logits_mode: str = "full",
         startup_seconds: float = 0.0,
         enable_prefix_cache: bool = False,
+        sentiment_execution: str = "selected_only",
     ) -> None:
         if variant not in VARIANTS:
             raise ValueError(f"Unknown variant: {variant}")
         if logits_mode not in {"full", "last_token"}:
             raise ValueError("logits_mode must be full or last_token.")
+        if sentiment_execution not in SENTIMENT_EXECUTIONS:
+            raise ValueError("Unknown sentiment execution policy")
+        registered_execution = artifacts.get("service_execution", {}).get("sentiment_execution")
+        if registered_execution is not None and registered_execution != sentiment_execution:
+            raise ValueError("Sentiment execution differs from registered service artifacts")
         if pair_batch_size < 1 or max_batch_tokens < 1:
             raise ValueError("Batch limits must be positive.")
         self.artifacts = dict(artifacts)
@@ -119,6 +138,7 @@ class QwenServingEngine:
         self.logits_mode = logits_mode
         self.startup_seconds = startup_seconds
         self.enable_prefix_cache = bool(enable_prefix_cache)
+        self.sentiment_execution = sentiment_execution
         self.artifacts_fingerprint = hashlib.sha256(
             json.dumps(artifacts, sort_keys=True, ensure_ascii=False).encode("utf-8")
         ).hexdigest()
@@ -167,6 +187,7 @@ class QwenServingEngine:
         device: str = "cuda",
         local_files_only: bool = True,
         enable_prefix_cache: bool = False,
+        sentiment_execution: str = "selected_only",
     ) -> "QwenServingEngine":
         import torch
 
@@ -196,6 +217,7 @@ class QwenServingEngine:
             logits_mode=logits_mode,
             startup_seconds=time.perf_counter() - started,
             enable_prefix_cache=enable_prefix_cache,
+            sentiment_execution=sentiment_execution,
         )
         result.artifacts_sha256 = hashlib.sha256(path.read_bytes()).hexdigest()
         return result
@@ -211,6 +233,8 @@ class QwenServingEngine:
             "pair_batch_size": self.pair_batch_size,
             "max_batch_tokens": self.max_batch_tokens,
             "logits_mode": self.logits_mode,
+            "sentiment_execution": self.sentiment_execution,
+            "sentiment_group_contract": self.sentiment_group_contract(),
             "quantization": "NF4 double quantization, float16 compute",
             "prediction_cache": False,
             "kv_cache": self.enable_prefix_cache,
@@ -222,6 +246,11 @@ class QwenServingEngine:
             "artifacts_sha256": getattr(self, "artifacts_sha256", None),
         }
 
+    def sentiment_group_contract(self) -> dict[str, Any]:
+        """Identify the immutable full-grid ordering and microbatch planner limits."""
+        return build_sentiment_group_contract(self.candidates,execution=self.sentiment_execution,
+            pair_batch_size=self.pair_batch_size,max_batch_tokens=self.max_batch_tokens,logits_mode=self.logits_mode)
+
     def model_version(self, variant: str | None = None) -> str:
         digest = getattr(self, "artifacts_sha256", self.artifacts_fingerprint)
         retrieval_suffix = (f"-rag-{self.retriever.method}-{self.retriever.seed}-"
@@ -230,9 +259,11 @@ class QwenServingEngine:
         if self.retriever is not None and selection_policy != "global":
             retrieval_suffix += f"-{selection_policy}"
         margin_suffix = "-presence-margin" if presence_space(self.artifacts["variants"][variant or self.variant]) == LOGIT_MARGIN else ""
+        sentiment_suffix = ("-sentiment-canonicalgroups-" + self.sentiment_group_contract()["contract_sha256"][:12]
+                            if self.sentiment_execution == "canonical_full_grid_groups" else "")
         return (f"{self.artifacts['model']['revision'][:8]}-{self.artifacts['fold_id']}-"
                 f"{digest[:12]}-{variant or self.variant}-prefix"
-                f"{'on' if self.enable_prefix_cache else 'off'}{retrieval_suffix}{margin_suffix}")
+                f"{'on' if self.enable_prefix_cache else 'off'}{retrieval_suffix}{margin_suffix}{sentiment_suffix}")
 
     def set_variant(self, variant: str) -> None:
         if variant not in VARIANTS:
@@ -343,7 +374,10 @@ class QwenServingEngine:
         *,
         mode: str,
         use_adapter: bool,
+        required_positions: Sequence[int] | None = None,
     ) -> tuple[np.ndarray, dict[str, Any], list[int]]:
+        if required_positions is not None and mode != "sentiment":
+            raise ValueError("Canonical conditional groups apply only to sentiment")
         token_ids = ((self.aspect_ids.yes, self.aspect_ids.no)
                      if mode == "aspect" else self.sentiment_ids.ordered())
         start = time.perf_counter()
@@ -426,6 +460,12 @@ class QwenServingEngine:
             lengths, pair_batch_size=self.pair_batch_size,
             max_batch_tokens=self.max_batch_tokens,
         )
+        full_group_count = len(batches)
+        executed_group_indices = list(range(full_group_count))
+        if required_positions is not None:
+            batches, executed_group_indices = required_canonical_groups(batches, required_positions)
+        executed_positions = [i for batch in batches for i in batch]
+        executed_lengths = [lengths[i] for i in executed_positions]
         encode_seconds = time.perf_counter() - start
         self._synchronize()
         compute_start = time.perf_counter()
@@ -446,10 +486,11 @@ class QwenServingEngine:
         compute_seconds = time.perf_counter() - compute_start
         result = np.concatenate(outputs, axis=0) if outputs else np.empty((0, len(token_ids)))
         metrics = {
-            "prompt_count": len(items),
-            "input_tokens": sum(lengths),
+            "prompt_count": len(executed_positions),
+            "encoded_prompt_count": len(items),
+            "input_tokens": sum(executed_lengths),
             "padded_tokens": sum(max(lengths[i] for i in batch) * len(batch) for batch in batches),
-            "max_prompt_tokens": max(lengths, default=0),
+            "max_prompt_tokens": max(executed_lengths, default=0),
             "microbatch_count": len(batches),
             "encode_ms": encode_seconds * 1000,
             "compute_ms": compute_seconds * 1000,
@@ -459,7 +500,7 @@ class QwenServingEngine:
             "retrieval_prepare_ms": retrieval_prepare_ms,
             "retrieval": retrieval_diagnostics,
             "retrieval_fallback": retrieval_error is not None,
-            "prompt_truncation": prompt_truncation,
+            "prompt_truncation": [prompt_truncation[i] for i in executed_positions],
             "prefix_cache_configured": self.enable_prefix_cache,
             "prefix_cache_enabled": (self.enable_prefix_cache and not use_adapter
                                      and not (retrieval_active and self.retriever.method != "fixed")),
@@ -469,7 +510,14 @@ class QwenServingEngine:
                              "miss_prompts", "reused_prefix_tokens", "build_ms"]
             },
         }
-        return result, metrics, lengths
+        if required_positions is not None:
+            metrics.update(canonical_pair_positions=executed_positions,
+                           canonical_full_grid_group_count=full_group_count,
+                           executed_canonical_group_indices=executed_group_indices,
+                           canonical_execution_groups=batches,
+                           required_prompt_count=len(required_positions),
+                           companion_prompt_count=len(executed_positions)-len(required_positions))
+        return result, metrics, executed_lengths
 
     @staticmethod
     def _validate_requests(requests):
@@ -531,6 +579,8 @@ class QwenServingEngine:
                         self.candidates[pairs[i][1]]["aspect"]: metrics["prompt_truncation"][i]
                         for i in owned if metrics["prompt_truncation"][i]},
                     "diagnostics": {"scope": "full_sentiment_only_offline", "batch_sentiment": metrics,
+                        "sentiment_execution":self.sentiment_execution,
+                        "sentiment_group_contract":self.sentiment_group_contract(),
                         "sentiment_prompt_count": len(owned), "candidate_count": len(self.candidates),
                         "sentiment_input_tokens": sum(lengths[i] for i in owned),
                         "full_grid": True, "batch_request_count": len(requests)}})
@@ -569,11 +619,17 @@ class QwenServingEngine:
             selected = [presence_selected({"score":float(aspect[i,0]),
                          "presence_logit_margin":aspect_metrics["presence_logit_margins"][i]},
                          policy["effective_thresholds"]) for i in range(len(pairs))]
-            stage2_positions = [i for i, value in enumerate(selected) if value or full_grid]
+            required = [i for i,value in enumerate(selected) if value]
+            if self.sentiment_execution == "canonical_full_grid_groups" and not full_grid:
+                sentiment, sentiment_metrics, sentiment_lengths = self._score_stage(
+                    pairs, mode="sentiment", use_adapter=variant != "few_shot",
+                    required_positions=required)
+                stage2_positions = sentiment_metrics["canonical_pair_positions"]
+            else:
+                stage2_positions = list(range(len(pairs))) if full_grid else required
+                sentiment, sentiment_metrics, sentiment_lengths = self._score_stage(
+                    [pairs[i] for i in stage2_positions], mode="sentiment", use_adapter=variant != "few_shot")
             stage2_pairs = [pairs[i] for i in stage2_positions]
-            sentiment, sentiment_metrics, sentiment_lengths = self._score_stage(
-                stage2_pairs, mode="sentiment", use_adapter=variant != "few_shot",
-            )
             sentiment_by_position = dict(zip(stage2_positions, sentiment))
             result = []
             for ri, request in enumerate(requests):
@@ -614,6 +670,10 @@ class QwenServingEngine:
                         "candidate_count": len(self.candidates),
                         "selected_aspect_count": len(predictions),
                         "sentiment_prompt_count": len(stage2_owned),
+                        "sentiment_execution": self.sentiment_execution,
+                        "sentiment_group_contract": self.sentiment_group_contract(),
+                        "sentiment_companion_prompt_count": len(stage2_owned)-len(predictions),
+                        "sentiment_full_grid_prompt_count": len(owned),
                         "aspect_input_tokens": sum(aspect_lengths[i] for i in owned),
                         "sentiment_input_tokens": sum(sentiment_lengths[i] for i in stage2_owned),
                         "full_grid": bool(full_grid),

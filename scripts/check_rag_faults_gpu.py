@@ -25,6 +25,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 from msc_project.serving.presence_policy import validated_presence_policy
 from msc_project.serving.retrieval_policy import SELECTION_POLICIES, resolve_retrieval_method
+from msc_project.serving.sentiment_execution import build_sentiment_group_contract, SENTIMENT_EXECUTIONS
 
 
 def sha_file(path: Path) -> str:
@@ -186,6 +187,59 @@ def fault_retrieval_settings(method_id: str, artifacts: dict, *, seed: int | Non
     return settings
 
 
+def fault_sentiment_execution(dynamic: dict, fixed: dict, requested: str | None = None) -> str:
+    """Keep normal and verified fixed fallback under one explicit batching policy."""
+    values = [artifacts.get("service_execution", {}).get("sentiment_execution", "selected_only")
+              for artifacts in (dynamic, fixed)]
+    if values[0] != values[1] or values[0] not in ("selected_only", "canonical_full_grid_groups"):
+        raise ValueError("Dynamic and fixed clones differ in sentiment execution policy")
+    if requested is not None and requested != values[0]:
+        raise ValueError("Sentiment execution override differs from the frozen service clones")
+    for artifacts in (dynamic, fixed):
+        frozen = artifacts.get("service_execution", {}).get("sentiment_group_contract")
+        if values[0] == "canonical_full_grid_groups" or frozen is not None:
+            expected = build_sentiment_group_contract(artifacts["taxonomy"]["candidates"],
+                execution=values[0], pair_batch_size=4, max_batch_tokens=4096, logits_mode="last_token")
+            if frozen != expected:
+                raise ValueError("Fault group contract differs from frozen ordering or execution parameters")
+    return values[0]
+
+
+def compare_canonical_conditional(reference: dict, conditional: dict) -> dict:
+    """Exact selected-vector comparison, allowing unneeded full-grid groups to be skipped."""
+    left = {row["request_id"]: row for row in reference["responses"]}
+    right = {row["request_id"]: row for row in conditional["responses"]}
+    if set(left) != set(right) or len(left) != len(reference["responses"]) or len(right) != len(conditional["responses"]):
+        raise ValueError("Canonical comparison response identities differ or repeat")
+    differences, presence_equal, labels_equal, count = [], True, True, 0
+    for identity, ref in left.items():
+        row = right[identity]
+        if row.get("diagnostics", {}).get("sentiment_execution") != "canonical_full_grid_groups":
+            raise ValueError("Conditional response does not identify canonical sentiment execution")
+        contract = row.get("diagnostics", {}).get("sentiment_group_contract")
+        if not contract or contract != ref.get("diagnostics", {}).get("sentiment_group_contract"):
+            raise ValueError("Canonical full-grid and conditional grouping contracts differ")
+        grid = {item["aspect"]: item["sentiment_scores"] for item in ref["full_grid_scores"]}
+        reference_labels = {(item["aspect"], label) for item in ref["predictions"] for label in item["sentiments"]}
+        candidate_labels = {(item["aspect"], label) for item in row["predictions"] for label in item["sentiments"]}
+        labels_equal &= reference_labels == candidate_labels
+        presence_equal &= ref["aspect_scores"] == row["aspect_scores"]
+        for item in row["predictions"]:
+            expected = grid[item["aspect"]]
+            if set(item["sentiment_scores"]) != set(expected):
+                raise ValueError("Conditional sentiment vector keys differ")
+            for label, value in item["sentiment_scores"].items():
+                delta = abs(float(value) - float(expected[label]))
+                if not math.isfinite(delta):
+                    raise ValueError("Non-finite conditional sentiment score")
+                differences.append(delta)
+            count += 1
+    return {"reviews": len(left), "selected_aspects": count, "presence_scores_exact": presence_equal,
+            "label_sets_equal": labels_equal, "selected_sentiment_vectors_exact": all(v == 0 for v in differences),
+            "selected_sentiment_max_abs_delta": max(differences, default=0),
+            "passed": presence_equal and labels_equal and all(v == 0 for v in differences)}
+
+
 def compare_sentiment_anchors(reference: dict, candidate: dict, runner_thresholds: list[float]) -> dict:
     """Compare the complete adapter score grid, independent of presence gates."""
     from msc_project.serving.inference import decode_sentiments, SENTIMENTS
@@ -235,6 +289,8 @@ def main(argv=None) -> int:
     parser.add_argument("--seed", type=int)
     parser.add_argument("--retrieval-selection-policy", choices=SELECTION_POLICIES,
                         help="Optional assertion against the registered method-ID policy")
+    parser.add_argument("--sentiment-execution", choices=SENTIMENT_EXECUTIONS,
+                        help="Optional assertion against the frozen clone execution policy")
     parser.add_argument("--development-replay", required=True, type=Path)
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument("--normal-timeout-s", type=float, default=10.0)
@@ -245,6 +301,7 @@ def main(argv=None) -> int:
     dynamic_artifacts, fixed_artifacts = read_json(args.artifacts), read_json(args.fixed_artifacts)
     retrieval_settings = fault_retrieval_settings(args.method, dynamic_artifacts, seed=args.seed,
                                                   selection_policy=args.retrieval_selection_policy)
+    sentiment_execution = fault_sentiment_execution(dynamic_artifacts, fixed_artifacts, args.sentiment_execution)
     policy = validate_fixed_source(dynamic_artifacts, fixed_artifacts, args.fixed_artifacts)
     requests = select_inputs(args.development_replay)
     manifest = read_json(args.index / "manifest.json")
@@ -261,7 +318,8 @@ def main(argv=None) -> int:
     sources = ["scripts/check_rag_faults_gpu.py", "src/msc_project/serving/inference.py",
                "src/msc_project/serving/retrieval.py", "src/msc_project/serving/timed_retrieval.py",
                "src/msc_project/serving/fallback_policy.py", "src/msc_project/serving/presence_policy.py",
-               "src/msc_project/serving/prefix_cache.py", "src/msc_project/serving/retrieval_policy.py"]
+               "src/msc_project/serving/prefix_cache.py", "src/msc_project/serving/retrieval_policy.py",
+               "src/msc_project/serving/sentiment_execution.py"]
     input_hashes = {"dynamic_artifacts": sha_file(args.artifacts), "fixed_artifacts": sha_file(args.fixed_artifacts),
                     "development_replay": sha_file(args.development_replay),
                     "index": {p.name: sha_file(p) for p in args.index.iterdir() if p.is_file()}}
@@ -270,7 +328,8 @@ def main(argv=None) -> int:
                "selection": "three evenly spaced development character-length ranks; ID breaks ties",
                "samples": [{"request_id": r["request_id"], "characters": len(r["text"]),
                             "text_sha256": hashlib.sha256(r["text"].encode()).hexdigest()} for r in requests],
-               "method": args.method, "retrieval": retrieval_settings, "normal_timeout_s": args.normal_timeout_s,
+               "method": args.method, "retrieval": retrieval_settings,
+               "sentiment_execution": sentiment_execution, "normal_timeout_s": args.normal_timeout_s,
                "injected_timeout_s": args.fault_timeout_s, "input_sha256": input_hashes,
                "source_sha256": {p: sha_file(ROOT / p) for p in sources},
                "policy": policy, "steps": [], "comparisons": [], "rejection_gates": []}
@@ -303,6 +362,14 @@ def main(argv=None) -> int:
             handle.write(json.dumps(entry, ensure_ascii=False, allow_nan=False) + "\n")
         summary["steps"].append({k: v for k, v in entry.items() if k != "responses"})
         persist()
+        if any(row.get("diagnostics", {}).get("scope") != "full_sentiment_only_offline" and
+               row.get("diagnostics", {}).get("sentiment_execution", "selected_only") != sentiment_execution
+               for row in responses):
+            raise AssertionError("Fault response changed the registered sentiment execution mode")
+        expected_contract = dynamic_artifacts.get("service_execution", {}).get("sentiment_group_contract")
+        if expected_contract is not None and any(row.get("diagnostics", {}).get("sentiment_group_contract") != expected_contract
+                                                 for row in responses):
+            raise AssertionError("Fault response changed the registered sentiment grouping contract")
         print(f"DONE {name}", flush=True)
         return entry
 
@@ -332,14 +399,15 @@ def main(argv=None) -> int:
     try:
         engine = QwenServingEngine.from_artifacts(args.artifacts, variant="hybrid", pair_batch_size=4,
             max_batch_tokens=4096, logits_mode="last_token", enable_prefix_cache=False,
-            device="cuda", local_files_only=True)
+            device="cuda", local_files_only=True, sentiment_execution=sentiment_execution)
         engines.append(engine)
         attach_trace(engine)
         summary["engine"] = engine.metadata()
         summary["device"] = torch.cuda.get_device_name()
         persist()
         fixed_engine = QwenServingEngine(fixed_artifacts, engine.tokenizer, engine.model, variant="hybrid",
-            pair_batch_size=4, max_batch_tokens=4096, logits_mode="last_token", enable_prefix_cache=False)
+            pair_batch_size=4, max_batch_tokens=4096, logits_mode="last_token", enable_prefix_cache=False,
+            sentiment_execution=sentiment_execution)
         fixed_engine.artifacts_sha256 = input_hashes["fixed_artifacts"]
         engines.append(fixed_engine)
         attach_trace(fixed_engine)
@@ -363,8 +431,22 @@ def main(argv=None) -> int:
         fixed = DemonstrationRetriever(args.index, method="fixed", fixed_demonstrations=engine.demonstrations["aspect"])
         fixed_engine.set_retriever(fixed, fallback_on_error=False)
         baseline = measure("fixed_reference", lambda: fixed_engine.predict_batch(requests))
+        if sentiment_execution == "canonical_full_grid_groups":
+            fixed_full = measure("fixed_full_grid_canonical_reference", lambda: fixed_engine.predict_batch(requests, full_grid=True))
+            fixed_gate = compare_canonical_conditional(fixed_full, baseline)
+            summary["fixed_canonical_conditional_gate"] = fixed_gate
+            persist()
+            if not fixed_gate["passed"]:
+                raise AssertionError("Fixed canonical conditional scores differ from full-grid groups")
         engine.set_retriever(raw, fallback_on_error=False)
         normal = measure("raw_dynamic_reference", lambda: engine.predict_batch(requests))
+        if sentiment_execution == "canonical_full_grid_groups":
+            full = measure("dynamic_full_grid_canonical_reference", lambda: engine.predict_batch(requests, full_grid=True))
+            canonical_gate = compare_canonical_conditional(full, normal)
+            summary["canonical_conditional_gate"] = canonical_gate
+            persist()
+            if not canonical_gate["passed"]:
+                raise AssertionError("Canonical conditional scores differ from identical full-grid groups")
         timed = TimedDemonstrationRetriever(raw, candidate_aspects=cards, timeout_s=args.normal_timeout_s)
         wrappers.append(timed)
         engine.set_retriever(timed, fallback_on_error=True)
@@ -417,11 +499,13 @@ def main(argv=None) -> int:
         tampered = deepcopy(dynamic_artifacts)
         tampered["retrieval_fallback_policy"]["source_artifacts_sha256"] = "0" * 64
         reject("fallback_source_hash_tampering", lambda: QwenServingEngine(
-            tampered, engine.tokenizer, engine.model, variant="hybrid"), "ValueError")
+            tampered, engine.tokenizer, engine.model, variant="hybrid",
+            sentiment_execution=sentiment_execution), "ValueError")
         tampered = deepcopy(dynamic_artifacts)
         tampered["retrieval_fallback_policy"]["aspect_threshold"] = -0.5
         reject("fallback_threshold_tampering", lambda: QwenServingEngine(
-            tampered, engine.tokenizer, engine.model, variant="hybrid"), "ValueError")
+            tampered, engine.tokenizer, engine.model, variant="hybrid",
+            sentiment_execution=sentiment_execution), "ValueError")
 
         version_path = args.output_dir / "fault_subset_index"
         new_manifest = make_small_versioned_index(raw, version_path)

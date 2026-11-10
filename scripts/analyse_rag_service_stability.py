@@ -19,6 +19,9 @@ import csv
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 from msc_project.serving.monitoring import latency_summary, prediction_pairs
+from msc_project.serving.sentiment_execution import (
+    SENTIMENT_EXECUTIONS, build_sentiment_group_contract,
+)
 from summarise_serving_campaign import numeric_stats, telemetry_summary
 
 WINDOW_SECONDS = 300
@@ -105,41 +108,103 @@ def fallback_counts(rows):
             "unobserved_fallback_attempts": len(rows) - observed}
 
 
-def repeat_consistency(rows, input_hashes):
+def validated_sentiment_contract(value):
+    """Validate the shared contract without reading taxonomy text or models."""
+    if not isinstance(value, dict):
+        return None
+    execution = value.get("execution")
+    batch, tokens = value.get("pair_batch_size"), value.get("max_batch_tokens")
+    if (execution not in SENTIMENT_EXECUTIONS or
+            type(batch) is not int or batch < 1 or type(tokens) is not int or tokens < 1 or
+            value.get("logits_mode") not in ("full", "last_token") or
+            not isinstance(value.get("candidate_order_sha256"), str) or
+            not re.fullmatch(r"[0-9a-f]{64}", value["candidate_order_sha256"])):
+        return None
+    # Derive the field schema and fixed grouping/scope from the shared builder.
+    # Actual candidate text is private; its observed ordered hash is bound below
+    # and compared with the independently registered plan's complete contract.
+    template = build_sentiment_group_contract([], execution=execution,
+        pair_batch_size=batch, max_batch_tokens=tokens, logits_mode=value["logits_mode"])
+    if set(value) != set(template) or any(value[k] != template[k] for k in ("grouping", "scope")):
+        return None
+    payload = {k: v for k, v in value.items() if k != "contract_sha256"}
+    # Same sort_keys/default JSON encoding as build_sentiment_group_contract.
+    if value["contract_sha256"] != fingerprint(payload):
+        return None
+    return dict(value)
+
+
+def registered_sentiment_identity(plan):
+    server = plan.get("server") or {}
+    execution, contract = server.get("sentiment_execution"), plan.get("sentiment_group_contract")
+    if execution is None and contract is None:
+        return {"available": False, "reason": "No registered sentiment execution contract"}
+    checked = validated_sentiment_contract(contract)
+    if (checked is None or execution != checked["execution"] or
+            any(server.get(k) != checked[k] for k in ("pair_batch_size", "max_batch_tokens", "logits_mode"))):
+        raise ValueError("Registered sentiment execution/group contract differs from server configuration")
+    return {"available": True, "sentiment_execution": execution, "sentiment_group_contract": checked}
+
+
+def observed_sentiment_identity(diag, registered):
+    execution = diag.get("sentiment_execution")
+    if execution is None:
+        return None, "missing_execution"
+    if diag.get("sentiment_group_contract") is None:
+        return None, "missing_contract"
+    contract = validated_sentiment_contract(diag["sentiment_group_contract"])
+    if contract is None:
+        return None, "invalid_contract"
+    if execution not in SENTIMENT_EXECUTIONS or execution != contract["execution"]:
+        return None, "execution_contract_mismatch"
+    if registered and registered.get("available") and (
+            execution != registered["sentiment_execution"] or contract != registered["sentiment_group_contract"]):
+        return None, "registered_contract_mismatch"
+    return contract, None
+
+
+def repeat_consistency(rows, input_hashes, registered_identity=None):
     """Compare final sets only within identical observed model/threshold policy."""
     groups = defaultdict(list)
     input_policies = defaultdict(set)
     successful = [r for r in rows if r.get("success") is True]
     unqualified = 0
+    sentiment_exclusions = Counter()
     for row in successful:
         response = row.get("response") or {}
         diag = response.get("diagnostics") or {}
         thresholds = diag.get("effective_thresholds")
         method = diag.get("effective_retrieval_method")
         selection_policy = diag.get("effective_retrieval_selection_policy")
+        sentiment_contract, sentiment_error = observed_sentiment_identity(diag, registered_identity)
+        if sentiment_error:
+            sentiment_exclusions[sentiment_error] += 1
         if (not response.get("model_version") or not isinstance(thresholds, dict) or
                 not thresholds or method not in METHODS or
                 selection_policy not in SELECTION_POLICIES or
                 (selection_policy == "same_aspect_negative_seen" and method != "e5") or
+                sentiment_error is not None or
                 not isinstance(response.get("predictions"), list)):
             unqualified += 1
             continue
         policy = {"model_version": response["model_version"], "fold": response.get("fold_id"),
                   "variant": response.get("variant"), "thresholds": thresholds,
                   "method": method, "selection_policy": selection_policy,
+                  "sentiment_execution": sentiment_contract["execution"],
+                  "sentiment_group_contract": sentiment_contract,
                   "fallback": diag.get("retrieval_fallback"),
                   "fallback_policy_source_sha256": diag.get("fallback_policy_source_sha256")}
         key = fingerprint(policy)
         input_key = input_hashes[row["sample_id"]]
         input_policies[input_key].add(key)
         groups[key].append((row, input_key, frozenset(prediction_pairs(response)), method,
-                            selection_policy))
+                            selection_policy, sentiment_contract))
     result = []
     for key, items in sorted(groups.items()):
         first, variants = {}, defaultdict(set)
         counts = Counter(item[1] for item in items)
         disagreements = repeats = 0
-        for row, input_key, pairs, method, selection_policy in sorted(
+        for row, input_key, pairs, method, selection_policy, sentiment_contract in sorted(
                 items, key=lambda item: item[0]["attempt_index"]):
             if input_key in first:
                 repeats += 1
@@ -149,6 +214,8 @@ def repeat_consistency(rows, input_hashes):
             variants[input_key].add(pairs)
         result.append({"observed_policy_sha256": key, "effective_retrieval_method": method,
             "effective_retrieval_selection_policy": selection_policy,
+            "sentiment_execution": sentiment_contract["execution"],
+            "sentiment_group_contract": sentiment_contract,
             "successful_attempts": len(items), "unique_inputs": len(first),
             "inputs_with_repeated_successes": sum(n > 1 for n in counts.values()),
             "repeated_successful_deliveries_after_first": repeats,
@@ -158,9 +225,12 @@ def repeat_consistency(rows, input_hashes):
         "failed_attempts": len(rows) - len(successful),
         "unique_attempted_inputs": len({input_hashes[r["sample_id"]] for r in rows}),
         "successful_attempts_missing_policy_identity": unqualified,
+        "successful_attempts_excluded_for_sentiment_identity": dict(sorted(sentiment_exclusions.items())),
+        "registered_sentiment_identity": registered_identity or {
+            "available": False, "reason": "Observed contracts only; no registered plan supplied"},
         "same_input_observed_under_multiple_policies": sum(len(p) > 1 for p in input_policies.values()),
         "policy_groups": result,
-        "interpretation": "Within this run only, exact input text and observed model/threshold/retrieval method/selection/fallback policy define a group. Different policies are never pooled. Missing identity, including an absent effective retrieval selection policy, is excluded from consistency claims, but remains in delivery counts. Agreement of final label sets is not correctness, score equivalence, independent sample growth or universal determinism."}
+        "interpretation": "Within this run only, exact input text and observed model/threshold/retrieval method/selection/fallback/Stage2 execution contract define a group. Stage2 identity includes batch limits, logits mode and the ordered candidate fingerprint. Different policies are never pooled. Missing or invalid identity and disagreement with an available registered Stage2 contract are excluded from consistency claims, but remain in delivery counts. An absent execution is never assumed to be canonical. Agreement of final label sets is not correctness, score equivalence, independent sample growth or universal determinism."}
 
 
 def planned_schedule(registered, config, campaign):
@@ -313,7 +383,7 @@ def time_windows(rows, schedule, horizon, wall, telemetry, begin):
     return result
 
 
-def analyse_run(directory, campaign):
+def analyse_run(directory, campaign, registered_identity=None):
     registered, config, summary, rows, schedule, horizon, wall, input_hashes = verify_run(directory, campaign)
     begin = stamp(config["utc_start"])
     telemetry, resource_scope = session_telemetry(campaign, begin, begin + wall)
@@ -325,7 +395,7 @@ def analyse_run(directory, campaign):
         "wall_seconds_including_drain": wall, "full_five_minute_window_count": len(full),
         "summary": cohort_metrics(rows, len(schedule)),
         "successful_reviews_per_second_including_drain": summary["successful"] / wall,
-        "repeat_consistency": repeat_consistency(rows, input_hashes),
+        "repeat_consistency": repeat_consistency(rows, input_hashes, registered_identity),
         "resource_alignment": resource_scope, "whole_run_sampled_resources": telemetry_summary(telemetry),
         "range_of_full_window_gpu_memory_maxima_mib": [min(peaks), max(peaks)] if peaks else None,
         "windows": windows,
@@ -338,6 +408,7 @@ def analyse_campaign(campaign, prefixes=("soak__",)):
     plan = read_json(campaign / "plan.json")
     if plan.get("schema_version") != "rag_http_service_study_v1":
         raise ValueError("Expected this RAG HTTP service schema; earlier serving campaigns are not accepted")
+    registered_identity = registered_sentiment_identity(plan)
     runs, incomplete = [], []
     for directory in sorted((campaign / "runs").glob("*")):
         if not directory.is_dir() or not any(directory.name.startswith(p) for p in prefixes):
@@ -345,12 +416,14 @@ def analyse_campaign(campaign, prefixes=("soak__",)):
         if not (directory / "complete.json").exists():
             incomplete.append(safe_name(directory.name))
         else:
-            runs.append(analyse_run(directory, campaign))
+            runs.append(analyse_run(directory, campaign, registered_identity))
     if not runs:
         raise ValueError("No completed matching runs; no stability result can be produced")
     return {"schema_version": "rag_service_stability_v1", "generated_utc": datetime.now(timezone.utc).isoformat(),
         "plan_sha256": sha(campaign / "plan.json"), "labels_read": False,
+        "registered_sentiment_identity": registered_identity,
         "analysis_source_sha256": sha(Path(__file__)), "window_seconds": WINDOW_SECONDS,
+        "sentiment_contract_source_sha256": sha(ROOT / "src/msc_project/serving/sentiment_execution.py"),
         "analysed_complete_run_count": len(runs), "incomplete_matching_runs": incomplete,
         "scope": "Only selected completed runs in this RAG campaign; not a declaration that every campaign stage is complete.",
         "window_scope": "Arrival cohorts retain every scheduled attempt, including 429/503/504/timeouts and unsent drops. Successful latency quantiles exclude failures; success and response-budget fractions retain all planned attempts. Completion-window throughput includes earlier backlog. Partial arrival and drain-only tails are separate, never described as full five-minute windows.",

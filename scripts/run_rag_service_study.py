@@ -35,6 +35,7 @@ from msc_project.serving.rag_evaluation import (
     read_jsonl, records_by_id, score_maps, successful, validate_record_spaces,
 )
 from msc_project.serving.retrieval_policy import resolve_retrieval_method
+from msc_project.serving.sentiment_execution import build_sentiment_group_contract, SENTIMENT_EXECUTIONS
 
 _OWNED_FAMILIES: dict[int, dict[int, float]] = {}
 
@@ -187,7 +188,8 @@ def prepare_plan(args: argparse.Namespace) -> dict:
                "src/msc_project/serving/inference.py", "src/msc_project/serving/retrieval.py",
                "src/msc_project/serving/prefix_cache.py", "src/msc_project/serving/rag_evaluation.py",
                "src/msc_project/serving/timed_retrieval.py", "src/msc_project/serving/fallback_policy.py",
-               "src/msc_project/serving/presence_policy.py", "src/msc_project/serving/retrieval_policy.py"]
+               "src/msc_project/serving/presence_policy.py", "src/msc_project/serving/retrieval_policy.py",
+               "src/msc_project/serving/sentiment_execution.py"]
     plan = {"schema_version": "rag_http_service_study_v1", "scope": "local_historical_replay",
         "input_hashes": {"artifacts": digest(args.artifacts), "selection": digest(args.selection),
                          "replay": digest(args.replay), "capacity_replay": digest(args.capacity_replay),
@@ -230,6 +232,7 @@ def prepare_plan(args: argparse.Namespace) -> dict:
         "server": {"variant": "hybrid", "pair_batch_size": 4, "max_batch_tokens": 4096,
                    "request_batch_size": 1, "queue_size": 8, "timeout_s": 120,
                    "logits_mode": "last_token", "retrieval_fallback": "fixed",
+                   "sentiment_execution": args.sentiment_execution,
                    "retrieval_timeout_s": args.retrieval_timeout_s},
         "client": {"timeout": 130, "max_inflight": 64, "metrics_interval": 5},
         "environment": {"OMP_NUM_THREADS": "4", "MKL_NUM_THREADS": "4",
@@ -242,6 +245,9 @@ def prepare_plan(args: argparse.Namespace) -> dict:
             -1 if ((repeat % 2 == 1) != (stage == "closed")) else 1]}
         for repeat in range(args.repeats)] for stage in ("capacity", "closed", "open")}
     plan["session_policy"] = "reload_per_paired_repeat_method_block_with_three_excluded_warmups"
+    plan["sentiment_group_contract"] = build_sentiment_group_contract(artifacts["taxonomy"]["candidates"],
+        execution=args.sentiment_execution, pair_batch_size=plan["server"]["pair_batch_size"],
+        max_batch_tokens=plan["server"]["max_batch_tokens"], logits_mode=plan["server"]["logits_mode"])
     for method in (baseline, candidate):
         retrieval_settings = resolve_retrieval_method(method)
         clone = json.loads(json.dumps(artifacts))
@@ -261,6 +267,8 @@ def prepare_plan(args: argparse.Namespace) -> dict:
             clone["variants"]["hybrid"].pop("presence_margin_threshold", None)
         clone["service_calibration"] = {"selection_sha256": digest(args.selection), "method": method,
                                         "retrieval": retrieval_settings}
+        clone["service_execution"] = {"sentiment_execution": args.sentiment_execution,
+                                      "sentiment_group_contract": plan["sentiment_group_contract"]}
         if method != baseline:
             baseline_path = Path(plan["methods"][baseline]["artifacts"])
             baseline_settings = read_json(baseline_path)["variants"]["hybrid"]
@@ -611,7 +619,8 @@ def run_benchmark(run: dict, directory: Path, plan: dict, output: Path, env: dic
 
 
 def compare_api_response(reference: dict, response: dict, aspects: list[str],
-                         thresholds: dict) -> dict:
+                         thresholds: dict, *, sentiment_execution: str | None = None,
+                         sentiment_group_contract: dict | None = None) -> dict:
     """Compare all presence scores and available conditional sentiment scores."""
     score_space = presence_space(thresholds)
     presence, sentiment = score_maps(reference, aspects, presence_score_space=score_space)
@@ -622,6 +631,22 @@ def compare_api_response(reference: dict, response: dict, aspects: list[str],
         raise ValueError("API identity or model variant differs from offline reference")
     if presence_space(response) != score_space:
         raise ValueError("API presence score space differs from frozen policy")
+    observed_execution = response.get("diagnostics", {}).get("sentiment_execution", "selected_only")
+    if sentiment_execution is not None and observed_execution != sentiment_execution:
+        raise ValueError("API sentiment execution differs from registered service policy")
+    observed_contract = response.get("diagnostics", {}).get("sentiment_group_contract")
+    if sentiment_group_contract is not None and observed_contract != sentiment_group_contract:
+        raise ValueError("API sentiment grouping parameters or candidate order differ from registered contract")
+    if sentiment_execution == "canonical_full_grid_groups":
+        diagnostics = response.get("diagnostics", {})
+        counts = [diagnostics.get(key) for key in ("sentiment_prompt_count",
+                  "sentiment_companion_prompt_count", "sentiment_full_grid_prompt_count")]
+        if any(type(value) is not int for value in counts):
+            raise ValueError("Canonical sentiment execution omitted actual prompt counts")
+        actual_count, companion_count, full_count = counts
+        if not (0 <= companion_count <= actual_count <= full_count == len(aspects)) or \
+                actual_count - companion_count != len(response["predictions"]):
+            raise ValueError("Canonical sentiment companion accounting is inconsistent")
     actual_presence, actual_probabilities = {}, {}
     for item in response["aspect_scores"]:
         aspect, value = item["aspect"], float(item["score"])
@@ -670,6 +695,11 @@ def compare_api_response(reference: dict, response: dict, aspects: list[str],
             "offline_pair_count": len(expected), "api_pair_count": len(actual),
             "offline_only": sorted(expected - actual), "api_only": sorted(actual - expected),
             "presence_score_space": score_space,
+            "sentiment_execution": observed_execution,
+            "sentiment_group_contract": observed_contract,
+            "sentiment_prompt_count": response.get("diagnostics", {}).get("sentiment_prompt_count"),
+            "sentiment_companion_prompt_count": response.get("diagnostics", {}).get("sentiment_companion_prompt_count"),
+            "sentiment_full_grid_prompt_count": response.get("diagnostics", {}).get("sentiment_full_grid_prompt_count"),
             "presence_probability_max_abs_delta": max(abs(probabilities[a] - actual_probabilities[a]) for a in aspects),
             "presence_logit_margin_max_abs_delta": max(abs(presence[a] - actual_presence[a]) for a in aspects)
                 if score_space == "logit_margin" else None,
@@ -736,7 +766,9 @@ def run_correctness(method: str, plan: dict, output: Path, process: subprocess.P
                     record["http_status"] = reply.status
                     response = json.loads(reply.read())
                 record["response"] = response
-                record.update(compare_api_response(references[key], response, config["aspects"], thresholds))
+                record.update(compare_api_response(references[key], response, config["aspects"], thresholds,
+                              sentiment_execution=plan["server"]["sentiment_execution"],
+                              sentiment_group_contract=plan["sentiment_group_contract"]))
                 record["success"] = True
             except (OSError, urllib.error.URLError, ValueError, KeyError, TypeError) as error:
                 record["error"] = f"{type(error).__name__}: {error}"
@@ -751,6 +783,11 @@ def run_correctness(method: str, plan: dict, output: Path, process: subprocess.P
     prompt_mismatches = sum(row["success"] and
         row.get("retrieval_prompt_contract_match") is False for row in records)
     summary = {"method": method, "attempts": len(records),
+        "sentiment_execution": plan["server"]["sentiment_execution"],
+        "sentiment_group_contract": plan["sentiment_group_contract"],
+        "sentiment_prompt_count_coverage_reviews": sum(row["success"] and row.get("sentiment_prompt_count") is not None for row in records),
+        "actual_sentiment_prompts": sum(row.get("sentiment_prompt_count") or 0 for row in records if row["success"]),
+        "sentiment_companion_prompts": sum(row.get("sentiment_companion_prompt_count") or 0 for row in records if row["success"]),
         "successful": sum(row["success"] for row in records), "exact_matches": matches,
         "mismatched_or_failed_reviews": len(records) - matches,
         "exact_review_label_set_parity": matches / len(records),
@@ -1044,6 +1081,8 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--recovery-seconds", type=float, default=180)
     result.add_argument("--startup-timeout", type=float, default=300)
     result.add_argument("--retrieval-timeout-s", type=float, default=10)
+    result.add_argument("--sentiment-execution", choices=SENTIMENT_EXECUTIONS,
+                        default="selected_only", help="Explicit Stage2 batching contract; canonical groups preserve full-grid companions")
     return result
 
 

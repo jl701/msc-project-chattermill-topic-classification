@@ -254,6 +254,7 @@ def main() -> int:
             "src/msc_project/serving/inference.py", "src/msc_project/serving/retrieval.py",
             "src/msc_project/serving/fallback_policy.py",
             "src/msc_project/serving/retrieval_policy.py",
+            "src/msc_project/serving/sentiment_execution.py",
             "src/msc_project/serving/presence_policy.py", "src/msc_project/serving/prefix_cache.py",
             "src/msc_project/llm/qwen_two_stage_classifier.py", "scripts/run_rag_quality.py"]},
     }

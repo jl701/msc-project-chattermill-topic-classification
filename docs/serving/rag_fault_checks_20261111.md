@@ -78,3 +78,14 @@ The isolated version-switch fixture now retains the first eight legal Y rows,
 the first eight N rows for each candidate aspect, and every fixed demonstration.
 This preserves per-aspect negative support for the new policy, with embedding
 rows kept aligned; it is a resilience fixture and does not enter quality results.
+
+The replacement service's `service_execution.sentiment_execution` and
+`sentiment_group_contract` are bound into both clones. The fault harness resolves
+that same mode for fixed and dynamic engines and rejects a CLI override, candidate
+order or batching-parameter mismatch before GPU loading. With
+`canonical_full_grid_groups`, it additionally compares the three input-only
+reviews under full-grid and conditional execution for each engine: selected
+sentiment vectors and presence scores must be exactly equal, and final label
+sets must agree. Skipped groups need not appear in the conditional trace. This is
+a grouping-correctness check, not additional quality selection. Failures retain
+their response evidence, and no threshold is adjusted to hide a mismatch.

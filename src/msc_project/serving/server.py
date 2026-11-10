@@ -278,6 +278,7 @@ def main(argv=None) -> int:
     parser.add_argument('--queue-size', type=int, default=8)
     parser.add_argument('--timeout-s', type=float, default=120)
     parser.add_argument('--logits-mode', choices=['full', 'last_token'], default='last_token')
+    parser.add_argument('--sentiment-execution', choices=['selected_only', 'canonical_full_grid_groups'], default='selected_only')
     parser.add_argument('--prefix-cache', choices=['off', 'on'], default='off')
     parser.add_argument('--retrieval-index', type=Path)
     parser.add_argument('--retrieval-method', choices=['fixed', 'random', 'bm25', 'e5', 'rrf'], default='fixed')
@@ -305,6 +306,7 @@ def main(argv=None) -> int:
     engine = QwenServingEngine.from_artifacts(
         args.artifacts, variant=args.variant, pair_batch_size=args.pair_batch_size,
         max_batch_tokens=args.max_batch_tokens, logits_mode=args.logits_mode,
+        sentiment_execution=args.sentiment_execution,
         enable_prefix_cache=args.prefix_cache == 'on', device='cuda', local_files_only=True)
     retriever = None
     if args.retrieval_index:

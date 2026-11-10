@@ -9,10 +9,12 @@ import pytest
 
 from check_rag_faults_gpu import (
     check_policy, compare_sentiment_anchors, make_small_versioned_index, select_inputs,
-    sha_file, validate_fixed_source, fault_retrieval_settings,
+    sha_file, validate_fixed_source, fault_retrieval_settings, fault_sentiment_execution,
+    compare_canonical_conditional,
 )
 from msc_project.llm.qwen_two_stage_classifier import TwoStageDemonstration
 from msc_project.serving.retrieval import DemonstrationRetriever, digest
+from msc_project.serving.sentiment_execution import build_sentiment_group_contract
 
 
 def test_length_selection_rejects_labels_and_duplicate_identities(tmp_path):
@@ -113,6 +115,43 @@ def test_fault_method_id_locks_new_policy_and_rejects_mismatched_clone_or_overri
         fault_retrieval_settings("e5_negative_seen", bad)
     legacy = {"service_calibration": {"method": "bm25"}}
     assert fault_retrieval_settings("bm25", legacy)["selection_policy"] == "global"
+
+
+def test_fault_execution_is_identical_for_dynamic_and_fixed_clones():
+    candidates = [{"aspect": "A"}]
+    contract = build_sentiment_group_contract(candidates, execution="canonical_full_grid_groups",
+        pair_batch_size=4, max_batch_tokens=4096, logits_mode="last_token")
+    policy = {"taxonomy": {"candidates": candidates}, "service_execution": {
+        "sentiment_execution": "canonical_full_grid_groups", "sentiment_group_contract": contract}}
+    assert fault_sentiment_execution(policy, policy) == "canonical_full_grid_groups"
+    assert fault_sentiment_execution({}, {}) == "selected_only"
+    with pytest.raises(ValueError, match="differ in sentiment"):
+        fault_sentiment_execution(policy, {})
+    with pytest.raises(ValueError, match="override differs"):
+        fault_sentiment_execution(policy, policy, "selected_only")
+    altered = deepcopy(policy)
+    altered["service_execution"]["sentiment_group_contract"]["pair_batch_size"] = 8
+    with pytest.raises(ValueError, match="group contract"):
+        fault_sentiment_execution(altered, policy)
+
+
+def test_canonical_fault_gate_requires_exact_vectors_even_if_labels_are_unchanged():
+    sentiment = {"negative": .8, "neutral": .1, "positive": .1}
+    contract = build_sentiment_group_contract([{"aspect": "A"}, {"aspect": "B"}],
+        execution="canonical_full_grid_groups", pair_batch_size=4, max_batch_tokens=4096, logits_mode="last_token")
+    response = {"request_id": "a", "aspect_scores": [{"aspect": "A", "score": 1., "presence_logit_margin": 30.}],
+        "predictions": [{"aspect": "A", "sentiments": ["negative"], "sentiment_scores": sentiment}],
+        "diagnostics": {"sentiment_execution": "canonical_full_grid_groups", "sentiment_group_contract": contract}}
+    full = {"responses": [{**deepcopy(response), "full_grid_scores": [
+        {"aspect": "A", "sentiment_scores": deepcopy(sentiment)},
+        {"aspect": "B", "sentiment_scores": deepcopy(sentiment)}]}]}
+    conditional = {"responses": [deepcopy(response)]}
+    assert compare_canonical_conditional(full, conditional)["passed"]
+    conditional["responses"][0]["predictions"][0]["sentiment_scores"]["negative"] += .00001
+    result = compare_canonical_conditional(full, conditional)
+    assert result["label_sets_equal"]
+    assert not result["selected_sentiment_vectors_exact"]
+    assert not result["passed"]
 
 
 def test_fault_gate_requires_new_policy_only_for_seen_candidates():

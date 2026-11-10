@@ -97,6 +97,39 @@ lacking this policy identity, including a missing selection field, remain in
 delivery counts but are excluded from qualified consistency comparisons; missing
 selection is never inferred to be `global`.
 
+Stage2 sentiment execution also belongs to this identity. The analyser reads
+the explicit `diagnostics.sentiment_execution` and complete
+`diagnostics.sentiment_group_contract` from each successful response. It uses
+the shared `sentiment_execution.build_sentiment_group_contract` schema and
+canonical JSON hash convention, without rebuilding a different candidate hash.
+The summary records both this analyser's SHA256 and the shared contract builder
+source SHA256 for reproducibility.
+The contract binds execution (`selected_only` or `canonical_full_grid_groups`),
+ordered candidate SHA256, pair batch size, padded token budget, logits mode,
+grouping rule and scope. Identical model names alone cannot merge different
+execution contracts. The canonical mode's model-version suffix is supporting
+metadata, not a substitute for the contract.
+
+For registered campaigns, `plan.server.sentiment_execution`, its batch/token/
+logits settings and `plan.sentiment_group_contract` must agree internally.
+An internally contradictory registered plan prevents analysis. Each observed
+contract is then compared with that complete registered contract, including the
+ordered candidate fingerprint and all parameters. Missing or invalid response
+identity, or disagreement with registration, is counted by exclusion reason:
+these successes remain in delivery/latency denominators but cannot contribute
+to the qualified repeat-consistency claim. Missing execution is never inferred
+as canonical. Legacy plans with no execution registration are explicitly marked
+unavailable; any valid observed-only grouping is not a registration-compliance
+claim. A missing observed field cannot join even such an observed-only group.
+
+`sentiment_prompt_count` denotes actual per-request forward prompts, including
+canonical-group companion candidates; it must not be interpreted as the number
+of final selected aspects. `sentiment_companion_prompt_count` and
+`sentiment_full_grid_prompt_count` are also per-request diagnostics. This script
+does not infer computational savings from final label counts or from the execution
+mode alone. All earlier failed service-gate evidence remains untouched; a new
+execution policy requires its own gate and service measurements.
+
 For each policy group, the analyser counts successful repetitions after the first,
 inputs with different final aspect-sentiment sets and repetitions differing from
 the first successful set. Order of aspects or labels does not create a false
