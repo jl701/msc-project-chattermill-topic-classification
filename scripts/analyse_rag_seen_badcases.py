@@ -291,7 +291,7 @@ def cases_markdown(method: str, cases: list[dict]) -> str:
 
 def observations_markdown(result: dict) -> str:
     lines = ["# 已见主题开发诊断", "", "只使用清除留出主题后的标签与分数；所有评论都保留。",
-        "七组已全部完成，可据这些诊断讨论最多两轮改进。" if result["matrix_complete"] else
+        "全部注册方案已完成；改进次数按预先登记的预算执行。" if result["matrix_complete"] else
         "七组尚未全部完成。本文件只作已完成方法的阶段画像，不选择改进方案。", "",
         "| 方法 | pair F1 | 主题误检 | 主题漏检 | 完整集合正确 |", "| --- | ---: | ---: | ---: | ---: |"]
     for method, item in result["methods"].items():
