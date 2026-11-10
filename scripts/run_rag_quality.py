@@ -6,9 +6,11 @@ inference code. Timings are offline profiling, never HTTP service latency.
 from __future__ import annotations
 
 import argparse
+from copy import deepcopy
 from datetime import datetime, timezone
 import hashlib
 import json
+import math
 from pathlib import Path
 import subprocess
 import sys
@@ -17,6 +19,7 @@ import time
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 _ACTIVE_OUTPUT: Path | None = None
+from msc_project.serving.presence_policy import LOGIT_MARGIN, presence_space, presence_selected
 
 
 def digest(path: Path) -> str:
@@ -67,9 +70,10 @@ def response_from_scores(presence: dict, grid: list[dict], artifacts: dict, meth
     sentiment = {row["aspect"]: row["sentiment_scores"] for row in grid}
     predictions = []
     for row in presence["aspect_scores"]:
-        if row["score"] >= thresholds["aspect_threshold"]:
+        if presence_selected(row, thresholds):
             scores = sentiment[row["aspect"]]
             predictions.append({"aspect": row["aspect"], "aspect_score": row["score"],
+                                **({"presence_logit_margin":row["presence_logit_margin"]} if "presence_logit_margin" in row else {}),
                                 "sentiment_scores": scores,
                                 "sentiments": decode_sentiments(
                                     [scores[name] for name in ("negative", "neutral", "positive")],
@@ -105,6 +109,68 @@ def validate_registration(config: dict, artifacts: dict, manifest: dict, replay_
         raise ValueError("Replay is not covered by index duplicate-exclusion audit; rebuild/audit index first")
     if config["inference"]["quality_prefix_cache"] is not False:
         raise ValueError("Offline quality comparison requires prefix cache off")
+    presence_space(config["inference"])
+
+
+def runtime_artifacts(artifacts: dict, config: dict) -> dict:
+    result = deepcopy(artifacts)
+    if presence_space(config["inference"]) == LOGIT_MARGIN:
+        settings = result["variants"]["hybrid"]
+        old = float(settings["aspect_threshold"])
+        reference = math.log(old/(1-old)) if 0 < old < 1 else 0.0
+        settings.update(presence_score_space=LOGIT_MARGIN, presence_margin_threshold=reference)
+        result["presence_reference_policy"] = {"purpose":"uncalibrated_offline_reference_only",
+            "selection":"logit(legacy threshold) when strictly interior, otherwise zero; seen-only calibration follows"}
+    return result
+
+
+def verified_anchor_reuse(path: Path, *, artifacts_sha: str, replay_sha: str, expected: set[str],
+                          aspects: list[str], config: dict, required_sha: str | None = None):
+    source_sha = digest(path)
+    if required_sha is not None and source_sha != required_sha:
+        raise ValueError("Reusable sentiment anchor SHA differs from the pinned source")
+    parent = path.parent
+    identity_path, runtime_path, state_path = parent/"identity.json", parent/"runtime.json", parent/"state.json"
+    identity = json.loads(identity_path.read_text(encoding="utf-8-sig"))
+    runtime = json.loads(runtime_path.read_text(encoding="utf-8-sig"))["engine"]
+    state = json.loads(state_path.read_text(encoding="utf-8-sig"))
+    if state.get("status") != "complete" or identity.get("artifacts") != artifacts_sha or identity.get("replay") != replay_sha:
+        raise ValueError("Reusable sentiment source must be complete with identical original artifacts/replay")
+    source_ids = identity.get("request_ids", [])
+    if len(source_ids) != len(set(source_ids)) or not expected <= set(source_ids):
+        raise ValueError("Reusable sentiment source does not cover the requested IDs")
+    for key, expected_value in (("pair_batch_size",config["inference"]["pair_batch_size"]),
+            ("max_batch_tokens",config["inference"]["max_batch_tokens"]),
+            ("logits_mode",config["inference"]["logits_mode"]), ("variant","hybrid"),
+            ("candidate_count",len(aspects)), ("prefix_cache_enabled",False),
+            ("artifacts_sha256",artifacts_sha)):
+        if runtime.get(key) != expected_value:
+            raise ValueError(f"Reusable sentiment source Stage2 setting differs: {key}")
+    encoder_source = "src/msc_project/llm/qwen_two_stage_classifier.py"
+    if identity.get("inference_code",{}).get(encoder_source) != digest(ROOT/encoder_source):
+        raise ValueError("Reusable sentiment source prompt encoder changed")
+    rows = checked_anchors(read_lines(path), set(source_ids), set(aspects))
+    if set(rows) != set(source_ids):
+        raise ValueError("Reusable sentiment source grid is incomplete")
+    for row in rows.values():
+        response = row["response"]
+        if [r["aspect"] for r in response["full_grid_scores"]] != aspects:
+            raise ValueError("Reusable sentiment candidate order differs")
+        stage = response.get("diagnostics",{}).get("batch_sentiment",{})
+        if stage.get("adapter_enabled") is not True or stage.get("prompt_count") != len(aspects):
+            raise ValueError("Reusable sentiment grid is not a full frozen-adapter grid")
+        if set(response.get("sentiment_truncation_by_aspect",{})) != set(aspects):
+            raise ValueError("Reusable sentiment grid lacks its truncation audit")
+        for item in response["full_grid_scores"]:
+            scores = item.get("sentiment_scores",{})
+            if set(scores) != {"negative","neutral","positive"} or any(
+                    not math.isfinite(float(v)) or not 0 <= float(v) <= 1 for v in scores.values()):
+                raise ValueError("Reusable sentiment grid has invalid probability vectors")
+    receipt = {"source":str(path.resolve()),"anchor_sha256":source_sha,
+        "identity_sha256":digest(identity_path),"runtime_sha256":digest(runtime_path),"state_sha256":digest(state_path),
+        "source_reviews":len(rows),"reused_reviews":len(expected),
+        "scope":"immutable common Stage2 scores; source elapsed times are not new-run timings"}
+    return {key:rows[key] for key in expected},receipt
 
 
 def checked_anchors(rows: list[dict], expected: set[str], aspects: set[str]) -> dict:
@@ -140,6 +206,8 @@ def main() -> int:
     parser.add_argument("--methods", default="fixed,random_13,random_37,random_73,bm25,e5,rrf")
     parser.add_argument("--limit", type=int)
     parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--reuse-sentiment-anchor", type=Path)
+    parser.add_argument("--reuse-sentiment-anchor-sha256")
     args = parser.parse_args()
     config = json.loads(args.config.read_text(encoding="utf-8"))
     definitions = {entry["id"]: entry for entry in config["methods"]}
@@ -152,15 +220,36 @@ def main() -> int:
     artifacts = json.loads(args.artifacts.read_text(encoding="utf-8"))
     manifest = json.loads((args.index / "manifest.json").read_text(encoding="utf-8"))
     validate_registration(config, artifacts, manifest, digest(args.replay))
+    expected = {row["request_id"] for row in requests}
+    reusable, reuse_receipt = {}, None
+    if args.reuse_sentiment_anchor:
+        reusable, reuse_receipt = verified_anchor_reuse(args.reuse_sentiment_anchor,
+            artifacts_sha=digest(args.artifacts),replay_sha=digest(args.replay),expected=expected,
+            aspects=[c["aspect"] for c in artifacts["taxonomy"]["candidates"]],config=config,
+            required_sha=args.reuse_sentiment_anchor_sha256)
+    elif args.reuse_sentiment_anchor_sha256:
+        raise ValueError("Pinned anchor SHA requires --reuse-sentiment-anchor")
     args.output.mkdir(parents=True, exist_ok=True)
+    effective_artifacts = runtime_artifacts(artifacts,config)
+    model_artifacts_path = args.artifacts
+    if effective_artifacts != artifacts:
+        model_artifacts_path = args.output/"_inference_artifacts.json"
+        if model_artifacts_path.exists():
+            if json.loads(model_artifacts_path.read_text(encoding="utf-8")) != effective_artifacts:
+                raise ValueError("Existing inference artifact differs from registered score policy")
+        else:
+            write_json(model_artifacts_path,effective_artifacts)
     index_files = sorted(path for path in args.index.rglob("*") if path.is_file())
     fingerprint = {
         "artifacts": digest(args.artifacts), "replay": digest(args.replay),
         "config": digest(args.config), "methods": methods,
+        "runtime_artifacts":digest(model_artifacts_path), "sentiment_anchor_reuse":reuse_receipt,
         "request_ids": [row["request_id"] for row in requests],
         "index_files": {str(path.relative_to(args.index)): digest(path) for path in index_files},
         "inference_code": {name: digest(ROOT / name) for name in [
             "src/msc_project/serving/inference.py", "src/msc_project/serving/retrieval.py",
+            "src/msc_project/serving/fallback_policy.py",
+            "src/msc_project/serving/presence_policy.py", "src/msc_project/serving/prefix_cache.py",
             "src/msc_project/llm/qwen_two_stage_classifier.py", "scripts/run_rag_quality.py"]},
     }
     identity_path = args.output / "identity.json"
@@ -178,22 +267,30 @@ def main() -> int:
     from msc_project.serving.inference import QwenServingEngine
     from msc_project.serving.retrieval import DemonstrationRetriever
     engine = QwenServingEngine.from_artifacts(
-        args.artifacts, variant="hybrid", pair_batch_size=config["inference"]["pair_batch_size"],
+        model_artifacts_path, variant="hybrid", pair_batch_size=config["inference"]["pair_batch_size"],
         max_batch_tokens=config["inference"]["max_batch_tokens"],
         logits_mode=config["inference"]["logits_mode"], enable_prefix_cache=False)
     write_json(args.output / "runtime.json", {"engine": engine.metadata(),
         "python": sys.version, "executable": sys.executable,
         "git_head": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
         "scope": "offline_scores_not_service_latency", "run_start_utc": datetime.now(timezone.utc).isoformat()})
-    expected = {row["request_id"] for row in requests}
     anchor_path = args.output / "_sentiment_anchor.jsonl"
     anchors = checked_anchors(read_lines(anchor_path), expected, {c["aspect"] for c in engine.candidates})
+    if reusable:
+        for request in requests:
+            key = request["request_id"]
+            if key in anchors and anchors[key] != reusable[key]:
+                raise ValueError("Existing destination anchor differs from pinned reused values")
+            if key not in anchors:
+                append(anchor_path,reusable[key])
+                anchors[key] = reusable[key]
+        write_json(args.output/"sentiment_anchor_reuse.json",reuse_receipt)
     engine.set_retriever(None)
     for position, request in enumerate(requests, 1):
         if request["request_id"] in anchors:
             continue
         call_start = time.perf_counter()
-        response = engine.predict_batch([request], full_grid=True)[0]
+        response = engine.score_full_sentiment([request])[0]
         if len(response.get("full_grid_scores", [])) != len(engine.candidates):
             raise RuntimeError("Full sentiment grid is missing; cannot fairly rethreshold.")
         row = {"request_id": request["request_id"], "response": response,
@@ -223,7 +320,7 @@ def main() -> int:
             call_start = time.perf_counter()
             presence = engine.score_presence([request])[0]
             grid = anchors[request["request_id"]]["response"]["full_grid_scores"]
-            response = response_from_scores(presence, grid, artifacts, method,
+            response = response_from_scores(presence, grid, effective_artifacts, method,
                 anchors[request["request_id"]]["response"].get("sentiment_truncation_by_aspect"))
             row = {"request_id":request["request_id"], "status":"ok", "response":response,
                    "elapsed_ms":1000*(time.perf_counter()-call_start),

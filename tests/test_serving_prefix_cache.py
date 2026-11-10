@@ -96,14 +96,20 @@ def test_prefix_scores_match_full_with_variable_length_and_cache_is_immutable(se
     items = [encoded(tokenizer, demos, "aspect", value) for value in ["short", "a longer private review"]]
     kwargs = dict(mode="aspect", fingerprint="frozen-model-tokenizer", adapter_enabled=False)
     result = cache.score_if_compatible(items, [0, 1], **kwargs)
+    cached_margins = cache.last_logit_margins.copy()
     stored = cache._prefixes["aspect"]
     snapshot = tuple((k.clone(), v.clone()) for k, v in stored.key_values)
     batch = cache.collator(items)
     output = model(**batch, use_cache=False)
     expected = restricted_probabilities_from_logits(output.logits, batch["attention_mask"], [0, 1]).numpy()
     np.testing.assert_array_equal(result, expected)
+    from msc_project.llm.qwen_pair_classifier import last_nonpad_indices
+    last = output.logits[torch.arange(len(items)),last_nonpad_indices(batch["attention_mask"])]
+    expected_margins = (last[:,0].double()-last[:,1].double()).numpy()
+    np.testing.assert_array_equal(cached_margins,expected_margins)
     second = cache.score_if_compatible(list(reversed(items)), [0, 1], **kwargs)
     np.testing.assert_array_equal(second, expected[::-1])
+    np.testing.assert_array_equal(cache.last_logit_margins,expected_margins[::-1])
     for (key, value), (old_key, old_value) in zip(stored.key_values, snapshot):
         assert torch.equal(key, old_key) and torch.equal(value, old_value)
         assert key.shape[-2] == len(stored.ids)
@@ -122,6 +128,7 @@ def test_mismatch_falls_back_without_scoring_or_replacing_prefix(setup_cache):
     mutated = {key: list(value) for key, value in item.items()}
     mutated["input_ids"][5] += 1
     assert cache.score_if_compatible([mutated], [0, 1], **kwargs) is None
+    assert cache.last_logit_margins is None
     assert model.calls == before
     assert cache.stats()["miss_reasons"]["exact_token_prefix_mismatch"] == 1
     assert cache.score_if_compatible([item], [0, 1], **{**kwargs, "adapter_enabled": True}) is None

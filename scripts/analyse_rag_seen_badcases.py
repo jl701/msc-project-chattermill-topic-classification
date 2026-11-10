@@ -19,8 +19,9 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from msc_project.serving.rag_evaluation import (
-    decode_scores, gold_by_id, read_jsonl, records_by_id, score_maps, successful,
-    threshold_candidates,
+    active_presence_threshold, decode_scores, gold_by_id, margin_threshold_candidates,
+    presence_space, read_jsonl, records_by_id, score_maps, successful,
+    threshold_candidates, validate_record_spaces,
 )
 
 
@@ -63,6 +64,7 @@ def strip_nonseen(row: dict, seen: set[str]) -> dict:
     response = row.get("response") or {}
     retrieval = response.get("diagnostics", {}).get("batch_aspect", {}).get("retrieval", [])
     filtered = {"request_id": response.get("request_id", row["request_id"]),
+        "presence_score_space": presence_space(response),
         "aspect_scores": [item for item in response.get("aspect_scores", []) if item["aspect"] in seen],
         "full_grid_scores": [item for item in response.get("full_grid_scores", []) if item["aspect"] in seen],
         "retrieval": [item for item in retrieval if item.get("candidate_aspect") in seen],
@@ -72,9 +74,12 @@ def strip_nonseen(row: dict, seen: set[str]) -> dict:
             "success": successful(row), "response": filtered}
 
 
-def calibrate_seen(records: dict, gold: dict, aspects: list[str], old: float, runner: float) -> dict:
-    maps = {key: score_maps(record, aspects) for key, record in records.items() if successful(record)}
-    candidates = threshold_candidates([p for presence, _ in maps.values() for p in presence.values()], old)
+def calibrate_seen(records: dict, gold: dict, aspects: list[str], old: float, runner: float, *,
+                   presence_score_space: str = "probability") -> dict:
+    maps = {key: score_maps(record, aspects, presence_score_space=presence_score_space)
+            for key, record in records.items() if successful(record)}
+    generator = margin_threshold_candidates if presence_score_space == "logit_margin" else threshold_candidates
+    candidates = generator([p for presence, _ in maps.values() for p in presence.values()], old)
     trials = []
     for threshold in candidates:
         predicted = {key: decode_scores(*maps[key], threshold, runner) if key in maps else set() for key in gold}
@@ -82,14 +87,19 @@ def calibrate_seen(records: dict, gold: dict, aspects: list[str], old: float, ru
         calls = sum(len({a for a, _ in pairs}) for pairs in predicted.values())
         trials.append((counts["pair"]["f1"], counts["presence"]["f1"], -calls, threshold))
     best = max(trials)
-    return {"aspect_threshold": best[3], "runner_up_threshold": runner,
+    result = {"aspect_threshold": best[3], "runner_up_threshold": runner,
             "old_aspect_threshold": old, "candidate_count": len(candidates),
             "seen_pair_f1": best[0], "seen_presence_f1": best[1], "seen_aspect_calls": -best[2],
             "selection_scope": "sanitized_seen_labels_and_seen_scores_only"}
+    if presence_score_space == "logit_margin":
+        result.update(presence_score_space="logit_margin", presence_margin_threshold=best[3],
+                      aspect_threshold=old)
+    return result
 
 
-def decode(records: dict, gold: dict, aspects: list[str], threshold: float, runner: float) -> dict:
-    return {key: decode_scores(*score_maps(records[key], aspects), threshold, runner)
+def decode(records: dict, gold: dict, aspects: list[str], threshold: float, runner: float, *,
+           presence_score_space: str = "probability") -> dict:
+    return {key: decode_scores(*score_maps(records[key], aspects, presence_score_space=presence_score_space), threshold, runner)
             if successful(records[key]) else set() for key in gold}
 
 
@@ -209,7 +219,8 @@ def training_conflict_profile(records: dict, predictions: dict, gold: dict,
 
 def profile_method(records: dict, gold: dict, aspects: list[str], thresholds: dict,
                    text: dict[str, str], max_cases: int) -> tuple[dict, dict, list[dict]]:
-    predicted = decode(records, gold, aspects, thresholds["aspect_threshold"], thresholds["runner_up_threshold"])
+    predicted = decode(records, gold, aspects, active_presence_threshold(thresholds), thresholds["runner_up_threshold"],
+                       presence_score_space=presence_space(thresholds))
     counts = score_counts(predicted, gold)
     themes = {}
     for aspect in aspects:
@@ -340,10 +351,12 @@ def run(args: argparse.Namespace) -> dict:
         if hashes[method] != completed["methods"][method]["file_sha256"]:
             raise ValueError("Method score file is not the registered completed artifact")
         records = records_by_id([strip_nonseen(row, set(aspects)) for row in read_jsonl(path)])
+        validate_record_spaces(records, args.presence_score_space)
         if set(records) != set(gold) or sha256(path) != hashes[method]:
             raise ValueError("Method population is incomplete or changed while reading")
         old = artifacts["variants"]["hybrid"]
-        thresholds = calibrate_seen(records, gold, aspects, old["aspect_threshold"], old["runner_up_threshold"])
+        thresholds = calibrate_seen(records, gold, aspects, old["aspect_threshold"], old["runner_up_threshold"],
+                                    presence_score_space=args.presence_score_space)
         summaries[method], predictions[method], cases[method] = profile_method(
             records, gold, aspects, thresholds, text, args.max_cases)
         if conflict_groups is not None:
@@ -353,6 +366,7 @@ def run(args: argparse.Namespace) -> dict:
         summaries[method]["versus_fixed"] = compare_fixed(summaries[method], predictions[method],
                                                          summaries["fixed"], predictions["fixed"], gold)
     result = {"scope": "historically_exposed_development_seen_only_diagnostics",
+        "presence_score_space": args.presence_score_space,
         "matrix_complete": matrix_complete, "all_registered_methods": identity["methods"],
         "profiled_methods": methods, "improvement_selected": False,
         "heldout_predictions_and_labels_used": False,
@@ -378,6 +392,7 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--replay", type=Path, required=True)
     result.add_argument("--development-root", type=Path, required=True)
     result.add_argument("--method", action="append")
+    result.add_argument("--presence-score-space", choices=["probability", "logit_margin"], default="probability")
     result.add_argument("--training-conflicts", type=Path,
                         help="Private training-only conflict group audit with seen labels only")
     result.add_argument("--output", type=Path, required=True)

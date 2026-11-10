@@ -1,0 +1,213 @@
+{
+  "schema_version": "chattermill_rag_campaign_v1",
+  "study_id": "serving_rag_margin_20261111",
+  "approved_on": "2026-11-11",
+  "approval": "User approved execution on local GPU; notify when human annotation is ready and continue independent work",
+  "source_commit": "6da0148392cb254292a58eccbc2de661069b6ef2",
+  "fold": "l2-a01",
+  "condition": "D",
+  "heldout_aspect": "Account management: Account access",
+  "model_id": "Qwen/Qwen3-4B-Instruct-2507",
+  "model_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+  "quantization": "NF4 double quantization float16 compute",
+  "variant": "hybrid",
+  "stage2": "frozen_shared_qlora_sentiment",
+  "gpu_jobs_serial": true,
+  "paid_resources": false,
+  "methods": [
+    {
+      "id": "fixed",
+      "method": "fixed",
+      "seed": 13
+    },
+    {
+      "id": "random_13",
+      "method": "random",
+      "seed": 13
+    },
+    {
+      "id": "random_37",
+      "method": "random",
+      "seed": 37
+    },
+    {
+      "id": "random_73",
+      "method": "random",
+      "seed": 73
+    },
+    {
+      "id": "bm25",
+      "method": "bm25",
+      "seed": 13
+    },
+    {
+      "id": "e5",
+      "method": "e5",
+      "seed": 13
+    },
+    {
+      "id": "rrf",
+      "method": "rrf",
+      "seed": 13
+    }
+  ],
+  "demonstrations": {
+    "positive": 2,
+    "negative": 2,
+    "order": [
+      "Y",
+      "Y",
+      "N",
+      "N"
+    ],
+    "pool": "official_train_only_excluding_heldout_reviews_and_aspect",
+    "exclude_evaluation_near_duplicates": true
+  },
+  "retrieval": {
+    "bm25_k1": 1.2,
+    "bm25_b": 0.75,
+    "rrf_c": 60,
+    "rrf_weights": [
+      1,
+      1
+    ],
+    "e5_id": "intfloat/e5-base-v2",
+    "e5_revision": "f52bf8ec8c7124536f0efb74aca902b2995e5bcd",
+    "e5_device": "cpu",
+    "model_max_length": 256,
+    "shortlist_per_class": 256
+  },
+  "inference": {
+    "pair_batch_size": 4,
+    "max_batch_tokens": 4096,
+    "request_batch_size": 1,
+    "fewshot_max_length": 1024,
+    "qlora_max_length": 384,
+    "quality_prefix_cache": false,
+    "logits_mode": "last_token",
+    "smoke_reviews": 20,
+    "presence_score_space": "logit_margin"
+  },
+  "autonomous_track": {
+    "scope": "historical_validation_replay_not_new_blind_evidence",
+    "development_count": 100,
+    "evaluation_count": 957,
+    "official_test_access": false,
+    "stage2_score_reuse": "Reuse verified100-review common sentiment grid from development; source artifacts/replay/Stage2 settings and file hash must match. For new populations score full12 sentiment grid only, without discarded Stage1.",
+    "selection_labels": "seen_aspects_only",
+    "max_badcase_iterations": 2,
+    "heldout_labels_allowed_for": "Strict classification: pool exclusion, support counting, final evaluation only. Separate business review-routing calibration may use complete calibration labels only after classifier selection is frozen; it cannot feed back into classifier tuning."
+  },
+  "new_data": {
+    "target_count": 800,
+    "adaptation": 200,
+    "calibration": 200,
+    "locked_evaluation": 400,
+    "challenge_max": 200,
+    "human_confirmed_gold_required": true,
+    "never_use_machine_labels_as_human_gold": true
+  },
+  "selection": {
+    "probability_grid": "0,1,old_threshold,and 1..99 percentiles of seen calibration scores; deduplicate <=102",
+    "objective": [
+      "seen_pair_f1",
+      "seen_presence_f1",
+      "lower_seen_call_rate",
+      "higher_threshold"
+    ],
+    "promotion_gain_f1_points": 0.5,
+    "badcase_max_regression_f1_points": 0.5,
+    "margin_grid": "Seen raw Y-N margin1..99 percentile points; finite float64 nextafter below minimum/above maximum; original legacy threshold logit only when strictly inside(0,1); deduplicate <=102 candidates.",
+    "legacy_diagnostic": "Recalibrate each method using its probability32 from the same forward separately; never compare margin E5 only to legacy fixed."
+  },
+  "evaluation": {
+    "bootstrap_unit": "complete_review",
+    "bootstrap_draws": 2000,
+    "bootstrap_seed": 20261111,
+    "metrics": [
+      "overall_pair_micro_f1",
+      "seen_pair_micro_f1",
+      "heldout_pair_micro_f1",
+      "presence_fp",
+      "presence_fn",
+      "complete_review_label_set_accuracy"
+    ]
+  },
+  "review_routing": {
+    "labels_not_in_router": true,
+    "random_audit_fraction": 0.05,
+    "random_audit_min": 10,
+    "seed": 20261111,
+    "min_final_autopass": 100,
+    "autopass_accuracy_lower_bound_min": 0.95,
+    "interval": "one_sided_95_Clopper_Pearson",
+    "hybrid_system_pair_f1_min": 0.95,
+    "manual_denominator_includes_audits": true,
+    "gold_correction": "offline_simulation_not_observed_labour_time"
+  },
+  "service": {
+    "closed_concurrency": [
+      1,
+      2,
+      4,
+      8
+    ],
+    "repeats": 3,
+    "requests_per_closed_run": 30,
+    "open_load_fractions_of_min_capacity": [
+      0.5,
+      0.75
+    ],
+    "open_duration_s": 90,
+    "soak_duration_s": 3600,
+    "burst_cycles": 3,
+    "burst_baseline_min_planned_requests": 20,
+    "burst_baseline_duration_rule": "max(requested_baseline_seconds, ceil(20 / baseline_rate_rps) + 1); frozen from capacity pilots before burst outcomes",
+    "failures_in_denominator": true
+  },
+  "budget": {
+    "gpu_hours_planning_max": 30,
+    "human_hours_estimate": [
+      16,
+      30
+    ],
+    "calendar_days_estimate": [
+      7,
+      10
+    ]
+  },
+  "private_output_root": "outputs/rag_20261111",
+  "publish": "code,synthetic_tests,configs,aggregate_results_only",
+  "do_not_publish": [
+    "review_text",
+    "row_ids",
+    "individual_labels",
+    "individual_predictions",
+    "private_paths",
+    "weights",
+    "raw_telemetry"
+  ],
+  "parent_study_id": "serving_rag_20261111",
+  "development_improvement_round": 1,
+  "numerical_evidence": {
+    "source": "outputs/rag_20261111/numeric_probe20/summary.json",
+    "scope": "20 input-only length strata; seen candidate numeric decisions, no gold or heldout outcomes",
+    "fixed_saturated_pairs": 31,
+    "fixed_distinct_saturated_margins": 31,
+    "e5_saturated_pairs": 45,
+    "e5_distinct_saturated_margins": 44,
+    "e5_float64_still_saturated_pairs": 1,
+    "sentiment_only_gate_max_abs_delta": 0.0
+  },
+  "frozen_controls": [
+    "model and checkpoint",
+    "quantization",
+    "all candidate definitions",
+    "same example index and methods",
+    "2Y2N ordering",
+    "prompt truncation and length budgets",
+    "pair microbatch4 and token budget4096",
+    "Stage2 prompts, probabilities and runner-up threshold"
+  ],
+  "interpretation": "Preserve information lost by saturated float32 probability output; no assumed accuracy benefit. This is improvement1; at most one further directed example-policy iteration after seen-only results."
+}

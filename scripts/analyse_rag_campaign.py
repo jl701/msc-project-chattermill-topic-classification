@@ -18,8 +18,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from msc_project.serving.rag_evaluation import (
-    bootstrap_weights, count_tensor, decode_records, gold_by_id, paired_contrast,
-    read_jsonl, records_by_id, select_threshold, successful, summarize_counts,
+    active_presence_threshold, bootstrap_weights, count_tensor, decode_records, gold_by_id, paired_contrast,
+    read_jsonl, records_by_id, select_threshold, successful, summarize_counts, validate_record_spaces,
 )
 from msc_project.serving.review_routing import (
     assess_assignment, assign_review, call_manifest, comparator_call_accounting,
@@ -142,6 +142,7 @@ def run(args: argparse.Namespace) -> dict:
         raise ValueError("This registered campaign requires one heldout aspect")
     heldout = heldouts[0]
     old = artifacts["variants"]["hybrid"]
+    score_space = args.presence_score_space
     development = method_paths(args.development, args.development_root)
     evaluation = method_paths(args.evaluation, args.evaluation_root)
     if args.baseline not in development:
@@ -155,13 +156,15 @@ def run(args: argparse.Namespace) -> dict:
     keys_dev = sorted(gold_dev)
     records_dev = {name: records_by_id(read_jsonl(path)) for name, path in development.items()}
     selections, dev_predictions, dev_summaries = {}, {}, {}
+    legacy_selections, legacy_dev_summaries = {}, {}
     for name, records in records_dev.items():
         population_check(records, gold_dev)
+        validate_record_spaces(records, score_space)
         selections[name] = select_threshold(records, gold_dev, aspects, heldout,
-                                             old["aspect_threshold"], old["runner_up_threshold"])
-        threshold = selections[name]["aspect_threshold"]
+            old["aspect_threshold"], old["runner_up_threshold"], presence_score_space=score_space)
+        threshold = active_presence_threshold(selections[name])
         dev_predictions[name] = decode_records(records, keys_dev, aspects, threshold,
-                                                old["runner_up_threshold"])
+            old["runner_up_threshold"], presence_score_space=score_space)
         # Development summaries are restricted to seen outcomes; heldout outcomes
         # must not guide the next improvement round.
         seen_gold = {key: {p for p in pairs if p[0] != heldout} for key, pairs in gold_dev.items()}
@@ -169,6 +172,13 @@ def run(args: argparse.Namespace) -> dict:
         dev_summaries[name] = {"review_count": len(keys_dev),
             "seen": summarize_counts(counts)["scopes"]["seen"],
             "failed_or_missing_reviews": sum(not successful(records.get(k)) for k in keys_dev)}
+        if score_space == "logit_margin":
+            legacy_selections[name] = select_threshold(records, gold_dev, aspects, heldout,
+                                                       old["aspect_threshold"], old["runner_up_threshold"])
+            legacy_prediction = decode_records(records, keys_dev, aspects,
+                legacy_selections[name]["aspect_threshold"], old["runner_up_threshold"])
+            legacy_dev_summaries[name] = {"review_count": len(keys_dev), "seen": summarize_counts(
+                count_tensor(keys_dev, legacy_prediction, seen_gold, aspects, heldout))["scopes"]["seen"]}
     candidates = args.candidate or [name for name in development if name != args.baseline and
                                     not name.lower().startswith("random")]
     if set(candidates) - set(development):
@@ -180,6 +190,7 @@ def run(args: argparse.Namespace) -> dict:
             selections[args.baseline]["seen_pair_f1"]) if best_dynamic else None
     selected = best_dynamic if gain is not None and gain >= .005 else args.baseline
     selection = {"schema_version": "rag_selection_v1", "scope": args.scope,
+        "presence_score_space": score_space,
         "baseline": args.baseline, "selected_method": selected,
         "best_dynamic_method": best_dynamic, "best_dynamic_seen_gain_points":
         100 * gain if gain is not None else None,
@@ -189,6 +200,10 @@ def run(args: argparse.Namespace) -> dict:
         "input_sha256": {"artifacts": sha256(args.artifacts),
                          "development_labels": sha256(args.development_labels),
                          "development_scores": {n: sha256(p) for n, p in development.items()}}}
+    if score_space == "logit_margin":
+        selection["legacy_probability_recalibration"] = {
+            "scope": "same_forward_preserved_float32_probability_seen_only_calibration",
+            "thresholds": legacy_selections, "development": legacy_dev_summaries}
     if reviewed_calibration:
         selection["reviewed_calibration_provenance"] = reviewed_calibration["provenance"]
     # Persist method/threshold decisions BEFORE opening evaluation labels.
@@ -203,13 +218,14 @@ def run(args: argparse.Namespace) -> dict:
     for name in dict.fromkeys([args.baseline, selected, best_dynamic]):
         if name is None:
             continue
-        threshold = selections[name]["aspect_threshold"]
+        threshold = active_presence_threshold(selections[name])
         feat_dev = risk_features(records_dev[name], keys_dev, aspects, threshold,
-                                old["runner_up_threshold"], comparator_dev)
+            old["runner_up_threshold"], comparator_dev, presence_score_space=score_space)
         for disagreement in ([False, True] if comparator_dev is not None else [False]):
             policy_name = f"{name}__{'confidence_disagreement' if disagreement else 'confidence'}"
             policy = select_policy(feat_dev, dev_predictions[name], gold_dev, records_dev[name],
                                    aspects, heldout, use_disagreement=disagreement, seed=args.seed)
+            policy["presence_score_space"] = score_space
             assignment = assign_review(feat_dev, policy, seed=args.seed)
             frozen_routing[policy_name] = {"method": name, "policy": policy,
                 "calibration_comparator_cost": comparator_call_accounting(
@@ -242,10 +258,13 @@ def run(args: argparse.Namespace) -> dict:
     records_eval = {n: records_by_id(read_jsonl(p)) for n, p in evaluation.items()}
     weights = bootstrap_weights(len(keys_eval), args.bootstrap_draws, args.seed)
     tensors, eval_predictions, summaries, old_threshold_summaries = {}, {}, {}, {}
+    legacy_tensors, legacy_eval_summaries = {}, {}
     for name, records in records_eval.items():
         population_check(records, gold_eval)
+        validate_record_spaces(records, score_space)
         predictions = decode_records(records, keys_eval, aspects,
-            selections[name]["aspect_threshold"], old["runner_up_threshold"])
+            active_presence_threshold(selections[name]), old["runner_up_threshold"],
+            presence_score_space=score_space)
         eval_predictions[name] = predictions
         tensors[name] = count_tensor(keys_eval, predictions, gold_eval, aspects, heldout)
         summaries[name] = summarize_counts(tensors[name], weights)
@@ -255,12 +274,19 @@ def run(args: argparse.Namespace) -> dict:
                              old["runner_up_threshold"])
         old_threshold_summaries[name] = summarize_counts(
             count_tensor(keys_eval, raw, gold_eval, aspects, heldout))
+        if score_space == "logit_margin":
+            legacy_prediction = decode_records(records, keys_eval, aspects,
+                legacy_selections[name]["aspect_threshold"], old["runner_up_threshold"])
+            legacy_tensors[name] = count_tensor(keys_eval, legacy_prediction, gold_eval, aspects, heldout)
+            legacy_eval_summaries[name] = summarize_counts(legacy_tensors[name], weights)
     contrasts = {f"{name}_vs_{args.baseline}": paired_contrast(tensor, tensors[args.baseline], weights)
                  for name, tensor in tensors.items() if name != args.baseline}
     for specification in args.compare:
         new, baseline = specification.split(":", 1)
         contrasts[f"{new}_vs_{baseline}"] = paired_contrast(tensors[new], tensors[baseline], weights)
     summary = {"schema_version": "rag_evaluation_v1", "scope": args.scope,
+        "presence_score_space": score_space,
+        "primary_comparison": "all_methods_vs_matched_fixed_in_the_same_presence_score_space",
         "interpretation": "historically_exposed_validation_replay_not_new_blind_test"
         if args.scope == "historical_replay" else "reviewed_frozen_new_source_locked_population",
         "selected_method": selected, "heldout_aspect": heldout,
@@ -270,6 +296,14 @@ def run(args: argparse.Namespace) -> dict:
         "contrasts": contrasts, "selection_sha256": sha256(args.output / "selection.json"),
         "input_sha256": {"evaluation_labels": sha256(args.evaluation_labels),
                          "evaluation_scores": {n: sha256(p) for n, p in evaluation.items()}}}
+    if score_space == "logit_margin":
+        summary["legacy_probability_recalibration"] = {
+            "scope": "same_forward_preserved_float32_probability_with_separate_frozen_seen_thresholds",
+            "methods": legacy_eval_summaries,
+            "contrasts_vs_fixed": {f"{name}_vs_{args.baseline}": paired_contrast(tensor,
+                legacy_tensors[args.baseline], weights) for name, tensor in legacy_tensors.items() if name != args.baseline},
+            "postprocessing_margin_vs_probability": {name: paired_contrast(tensors[name], legacy_tensors[name], weights)
+                                                    for name in tensors}}
     if reviewed_evaluation:
         summary["reviewed_evaluation_provenance"] = reviewed_evaluation["provenance"]
         summary["prediction_coverage_policy"] = "full_registered_gold_population_with_explicit_and_missing_predictions_counted_as_failures"
@@ -285,9 +319,9 @@ def run(args: argparse.Namespace) -> dict:
     routing_results, evaluation_calls = {}, {}
     for policy_name, entry in frozen_routing.items():
         name, policy = entry["method"], entry["policy"]
-        threshold = selections[name]["aspect_threshold"]
+        threshold = active_presence_threshold(selections[name])
         feat_eval = risk_features(records_eval[name], keys_eval, aspects, threshold,
-                                 old["runner_up_threshold"], comparator_eval)
+            old["runner_up_threshold"], comparator_eval, presence_score_space=score_space)
         assignment = assign_review(feat_eval, policy, seed=args.seed)
         result = assess_assignment(assignment, eval_predictions[name], gold_eval,
                                     records_eval[name], aspects, heldout)
@@ -332,6 +366,7 @@ def parser() -> argparse.ArgumentParser:
                         help="Required for new_source_locked: immutable reviewed release with split/history hashes")
     result.add_argument("--output", type=Path, required=True)
     result.add_argument("--baseline", default="fixed")
+    result.add_argument("--presence-score-space", choices=["probability", "logit_margin"], default="probability")
     result.add_argument("--candidate", action="append", default=[])
     result.add_argument("--compare", action="append", default=[], metavar="NEW:BASELINE")
     result.add_argument("--selection-only", action="store_true")

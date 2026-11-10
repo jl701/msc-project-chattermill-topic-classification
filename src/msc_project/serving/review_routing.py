@@ -27,9 +27,11 @@ def _logit(value: float) -> float:
 
 def risk_features(records: Mapping[str, Mapping], keys: Sequence[str], aspects: Sequence[str],
                   aspect_threshold: float, runner_threshold: float,
-                  comparator_predictions: Mapping[str, set] | None = None) -> dict[str, dict]:
+                  comparator_predictions: Mapping[str, set] | None = None, *,
+                  presence_score_space: str = "probability") -> dict[str, dict]:
     """Uses input/output diagnostics, NEVER labels or annotation flags."""
-    predictions = decode_records(records, keys, aspects, aspect_threshold, runner_threshold)
+    predictions = decode_records(records, keys, aspects, aspect_threshold, runner_threshold,
+                                 presence_score_space=presence_score_space)
     result = {}
     for key in keys:
         record = records.get(key)
@@ -38,8 +40,9 @@ def risk_features(records: Mapping[str, Mapping], keys: Sequence[str], aspects: 
         if not successful(record):
             reasons.append("inference_failure_or_missing")
         else:
-            presence, sentiment = score_maps(record, aspects)
-            margins = [abs(_logit(p) - _logit(aspect_threshold)) for p in presence.values()]
+            presence, sentiment = score_maps(record, aspects, presence_score_space=presence_score_space)
+            margins = [abs(p - aspect_threshold) if presence_score_space == "logit_margin" else
+                       abs(_logit(p) - _logit(aspect_threshold)) for p in presence.values()]
             selected = {a for a, _ in predictions[key]}
             if not selected:
                 reasons.append("empty_aspect_output")
@@ -58,6 +61,7 @@ def risk_features(records: Mapping[str, Mapping], keys: Sequence[str], aspects: 
                 reasons.append("selected_sentiment_left_truncated")
         comparator_available = comparator_predictions is not None and key in comparator_predictions
         result[key] = {"margin": margin, "mandatory": bool(reasons), "reasons": reasons,
+                       "presence_score_space": presence_score_space,
                        "disagreement": comparator_available and predictions[key] !=
                        comparator_predictions[key], "comparator_available": comparator_available}
     return result
@@ -96,6 +100,10 @@ def comparator_call_ids(features: Mapping[str, Mapping], policy: Mapping) -> set
 
 def assign_review(features: Mapping[str, Mapping], policy: Mapping,
                   *, seed: int = 20261111) -> dict[str, set]:
+    if "presence_score_space" in policy and any(
+            value.get("presence_score_space", "probability") != policy["presence_score_space"]
+            for value in features.values()):
+        raise ValueError("Review policy and risk features have different presence score spaces")
     keys = sorted(features)
     comparator_calls = comparator_call_ids(features, policy)
     unavailable = {key for key in comparator_calls if not features[key]["comparator_available"]}

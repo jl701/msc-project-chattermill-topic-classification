@@ -110,6 +110,7 @@ class FrozenFewShotPrefixCache:
                        "miss_microbatches": 0, "miss_prompts": 0,
                        "reused_prefix_tokens": 0, "build_ms": 0.0}
         self._miss_reasons: dict[str, int] = {}
+        self.last_logit_margins: np.ndarray | None = None
         self.collator = CandidatePairBatchCollator(tokenizer, padding_side="right")
 
     def _miss(self, reason: str, count: int):
@@ -187,6 +188,7 @@ class FrozenFewShotPrefixCache:
         import torch
         from transformers import DynamicCache
 
+        self.last_logit_margins = None
         if not items:
             return np.empty((0, len(token_ids)))
         if adapter_enabled:
@@ -235,6 +237,11 @@ class FrozenFewShotPrefixCache:
             relative = torch.searchsorted(kept_positions, final_positions)
             final = logits[torch.arange(len(items), device=logits.device), relative]
             probabilities = torch.softmax(final[:, list(token_ids)].float(), dim=-1)
+            if mode == "aspect":
+                margins = final[:, token_ids[0]].to(torch.float64) - final[:, token_ids[1]].to(torch.float64)
+                self.last_logit_margins = margins.detach().cpu().numpy()
+                if not np.isfinite(self.last_logit_margins).all():
+                    raise RuntimeError("Non-finite logit margins after prefix reuse")
         values = probabilities.detach().cpu().numpy().astype(float, copy=False)
         if not np.isfinite(values).all():
             raise RuntimeError("Non-finite scores after prefix reuse.")

@@ -307,7 +307,7 @@ def main(argv=None) -> int:
                 'engine': engine.metadata(),
                 'source_sha256': {name: hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest()
                                   for name in ['server.py', 'inference.py', 'prefix_cache.py',
-                                               'retrieval.py', 'timed_retrieval.py']}}
+                                               'retrieval.py', 'timed_retrieval.py', 'fallback_policy.py', 'presence_policy.py']}}
     (args.output_dir / 'server_metadata.json').write_text(
         json.dumps(metadata, ensure_ascii=False, indent=2), encoding='utf-8')
     service = Service(engine, queue_size=args.queue_size,

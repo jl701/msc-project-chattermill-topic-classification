@@ -14,6 +14,10 @@ from typing import Any, Mapping, Sequence
 
 import numpy as np
 
+from msc_project.serving.presence_policy import (
+    active_presence_threshold, finite_margin, presence_space, presence_value,
+)
+
 SENTIMENTS = ("negative", "neutral", "positive")
 SCOPES = ("overall", "seen", "heldout")
 METRICS = ("presence", "pair")
@@ -71,14 +75,24 @@ def _probability(value: Any) -> float:
     return value
 
 
-def score_maps(record: Mapping[str, Any], aspects: Sequence[str]) -> tuple[dict, dict]:
+def validate_record_spaces(records: Mapping[str, Mapping], expected: str) -> None:
+    presence_space({"presence_score_space": expected})
+    for record in records.values():
+        if successful(record) and presence_space(record["response"]) != expected:
+            raise ValueError("Mixed or unexpected presence score space in method records")
+
+
+def score_maps(record: Mapping[str, Any], aspects: Sequence[str], *,
+               presence_score_space: str = "probability") -> tuple[dict, dict]:
+    presence_space({"presence_score_space": presence_score_space})
     response = record["response"]
     presence = {}
     for item in response["aspect_scores"]:
         aspect = str(item["aspect"])
         if aspect in presence:
             raise ValueError("Duplicate aspect score")
-        presence[aspect] = _probability(item["score"])
+        _probability(item["score"])
+        presence[aspect] = presence_value(item, presence_score_space)
     sentiment = {}
     for item in response.get("full_grid_scores", []):
         aspect = str(item["aspect"])
@@ -111,14 +125,16 @@ def decode_scores(presence: Mapping[str, float], sentiment: Mapping[str, Sequenc
 
 
 def decode_records(records: Mapping[str, Mapping], keys: Sequence[str], aspects: Sequence[str],
-                   aspect_threshold: float, runner_threshold: float) -> dict[str, set]:
-    _probability(aspect_threshold)
+                   aspect_threshold: float, runner_threshold: float, *,
+                   presence_score_space: str = "probability") -> dict[str, set]:
+    presence_space({"presence_score_space": presence_score_space})
+    (finite_margin if presence_score_space == "logit_margin" else _probability)(aspect_threshold)
     _probability(runner_threshold)
     result = {}
     for key in keys:
         record = records.get(key)
         if successful(record):
-            presence, sentiment = score_maps(record, aspects)
+            presence, sentiment = score_maps(record, aspects, presence_score_space=presence_score_space)
             result[key] = decode_scores(presence, sentiment, aspect_threshold, runner_threshold)
         else:
             result[key] = set()
@@ -132,6 +148,24 @@ def threshold_candidates(scores: Sequence[float], old_threshold: float) -> list[
         raise ValueError("Invalid calibration scores")
     quantiles = np.quantile(values, np.arange(1, 100) / 100) if values.size else []
     return sorted({0.0, 1.0, old, *map(float, quantiles)})
+
+
+def margin_threshold_candidates(scores: Sequence[float], old_probability: float) -> list[float]:
+    old = finite_margin(old_probability)
+    values = np.asarray(scores, dtype=np.float64)
+    if values.size and not np.isfinite(values).all():
+        raise ValueError("Invalid finite calibration margins")
+    if values.size:
+        endpoints = [float(np.nextafter(values.min(), -np.inf)),
+                     float(np.nextafter(values.max(), np.inf))]
+        quantiles = np.quantile(values, np.arange(1, 100) / 100)
+    else:
+        endpoints, quantiles = [-1.0, 1.0], []
+    old_margin = [math.log(old) - math.log1p(-old)] if 0 < old < 1 else []
+    result = sorted({*endpoints, *map(float, quantiles), *old_margin})
+    if not all(math.isfinite(value) for value in result) or len(result) > 102:
+        raise ValueError("Margin grid requires at most102 finite thresholds")
+    return result
 
 
 def count_tensor(keys: Sequence[str], predictions: Mapping[str, set], gold: Mapping[str, set],
@@ -159,8 +193,9 @@ def f1_from_counts(counts: np.ndarray) -> np.ndarray:
 
 def select_threshold(records: Mapping[str, Mapping], gold: Mapping[str, set],
                      aspects: Sequence[str], heldout: str, old_threshold: float,
-                     runner_threshold: float) -> dict:
+                     runner_threshold: float, *, presence_score_space: str = "probability") -> dict:
     """No heldout label or heldout candidate score enters candidate/objective selection."""
+    presence_space({"presence_score_space": presence_score_space})
     if set(records) - set(gold):
         raise ValueError("Prediction IDs outside registered calibration population")
     keys = sorted(gold)
@@ -168,10 +203,11 @@ def select_threshold(records: Mapping[str, Mapping], gold: Mapping[str, set],
     if heldout not in aspects or not seen:
         raise ValueError("Expected heldout and seen aspects")
     seen_gold = {key: {p for p in gold[key] if p[0] in seen} for key in keys}
-    maps = {key: score_maps(record, aspects) for key, record in records.items()
+    maps = {key: score_maps(record, aspects, presence_score_space=presence_score_space) for key, record in records.items()
             if successful(record)}
     values = [value for p, _ in maps.values() for a, value in p.items() if a in seen]
-    candidates = threshold_candidates(values, old_threshold)
+    candidates = (margin_threshold_candidates if presence_score_space == "logit_margin"
+                  else threshold_candidates)(values, old_threshold)
     objectives = []
     for threshold in candidates:
         tp_pair = fp_pair = fn_pair = tp_aspect = fp_aspect = fn_aspect = calls = 0
@@ -192,12 +228,18 @@ def select_threshold(records: Mapping[str, Mapping], gold: Mapping[str, set],
         presence_f1 = float(f1_from_counts(np.array([tp_aspect, fp_aspect, fn_aspect])))
         objectives.append((pair_f1, presence_f1, -calls, threshold))
     best = max(objectives)
-    return {"aspect_threshold": best[3], "runner_up_threshold": runner_threshold,
+    result = {"aspect_threshold": best[3], "runner_up_threshold": runner_threshold,
             "old_aspect_threshold": old_threshold, "candidate_count": len(candidates),
             "candidates": candidates, "seen_pair_f1": best[0], "seen_presence_f1": best[1],
             "seen_aspect_calls": -best[2], "calibration_review_count": len(keys),
             "selection_labels": "seen_aspects_only", "heldout_used_for_selection": False,
             "tie_rule": "pair_f1,presence_f1,fewer_seen_calls,higher_threshold"}
+    if presence_score_space == "logit_margin":
+        result.update(presence_score_space="logit_margin", presence_margin_threshold=best[3],
+                      aspect_threshold=old_threshold,
+                      candidate_space="logit_margin_float64",
+                      endpoint_scope="finite_all_accept_all_reject_on_seen_calibration_margins")
+    return result
 
 
 def bootstrap_weights(n: int, draws: int = 2000, seed: int = 20261111) -> np.ndarray:

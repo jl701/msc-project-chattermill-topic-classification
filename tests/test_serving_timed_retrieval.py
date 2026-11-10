@@ -189,12 +189,13 @@ def test_fixed_mode_and_ambiguous_candidate_mapping_are_rejected():
         TimedDemonstrationRetriever(inner, candidate_aspects={"A card": "A"})
 
 
-def test_engine_explicit_fixed_fallback_on_timeout_and_busy_then_recovers():
+def test_engine_explicit_fixed_fallback_on_timeout_and_busy_then_recovers(tmp_path):
     # Reuse the existing tiny CPU tokenizer/model without loading pretrained weights.
-    from test_serving_inference import artifacts as artifact_fixture, Model, Tokenizer
+    from test_serving_inference import artifacts as artifact_fixture, configured_fallback, Model, Tokenizer
     from msc_project.serving.inference import QwenServingEngine
 
     artifacts = artifact_fixture.__wrapped__()
+    artifacts, _ = configured_fallback(artifacts, tmp_path)
     engine = QwenServingEngine(artifacts, Tokenizer(), Model(), variant="hybrid")
     release = threading.Event()
     inner = Retriever(release=release)

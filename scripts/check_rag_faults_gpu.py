@@ -23,6 +23,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
+from msc_project.serving.presence_policy import validated_presence_policy
 
 
 def sha_file(path: Path) -> str:
@@ -71,6 +72,8 @@ def validate_fixed_source(dynamic: dict, fixed: dict, fixed_path: Path) -> dict:
     for key in ("aspect_threshold", "runner_up_threshold"):
         if policy.get(key) != fixed["variants"]["hybrid"][key]:
             raise ValueError(f"Fallback {key} differs from its hashed source")
+    if validated_presence_policy(policy) != validated_presence_policy(fixed["variants"]["hybrid"]):
+        raise ValueError("Fallback score space or margin threshold differs from hashed fixed source")
     return policy
 
 
@@ -139,7 +142,9 @@ def check_policy(responses, *, fallback: bool, method: str, thresholds: dict,
             raise AssertionError("Wrong effective fallback flag")
         if diagnostics.get("effective_retrieval_method") != method:
             raise AssertionError("Wrong effective retrieval method")
-        if diagnostics.get("effective_thresholds") != thresholds:
+        actual_thresholds = diagnostics.get("effective_thresholds",{})
+        if (validated_presence_policy(actual_thresholds) != validated_presence_policy(thresholds) or
+                actual_thresholds.get("runner_up_threshold") != thresholds["runner_up_threshold"]):
             raise AssertionError("Wrong effective inference thresholds")
         if fallback and diagnostics.get("fallback_policy_source_sha256") != source_sha:
             raise AssertionError("Fallback did not identify its verified source")
@@ -219,7 +224,9 @@ def main(argv=None) -> int:
     from msc_project.serving.timed_retrieval import TimedDemonstrationRetriever
 
     sources = ["scripts/check_rag_faults_gpu.py", "src/msc_project/serving/inference.py",
-               "src/msc_project/serving/retrieval.py", "src/msc_project/serving/timed_retrieval.py"]
+               "src/msc_project/serving/retrieval.py", "src/msc_project/serving/timed_retrieval.py",
+               "src/msc_project/serving/fallback_policy.py", "src/msc_project/serving/presence_policy.py",
+               "src/msc_project/serving/prefix_cache.py"]
     input_hashes = {"dynamic_artifacts": sha_file(args.artifacts), "fixed_artifacts": sha_file(args.fixed_artifacts),
                     "development_replay": sha_file(args.development_replay),
                     "index": {p.name: sha_file(p) for p in args.index.iterdir() if p.is_file()}}
@@ -302,9 +309,10 @@ def main(argv=None) -> int:
         engines.append(fixed_engine)
         attach_trace(fixed_engine)
         cards = {str(c["text"]): str(c["aspect"]) for c in engine.candidates}
-        dynamic_thresholds = {k: float(dynamic_artifacts["variants"]["hybrid"][k])
-                              for k in ("aspect_threshold", "runner_up_threshold")}
-        fixed_thresholds = {k: float(fixed_artifacts["variants"]["hybrid"][k]) for k in dynamic_thresholds}
+        dynamic_thresholds = {**validated_presence_policy(dynamic_artifacts["variants"]["hybrid"]),
+                              "runner_up_threshold":float(dynamic_artifacts["variants"]["hybrid"]["runner_up_threshold"])}
+        fixed_thresholds = {**validated_presence_policy(fixed_artifacts["variants"]["hybrid"]),
+                            "runner_up_threshold":float(fixed_artifacts["variants"]["hybrid"]["runner_up_threshold"])}
         legacy_anchor = measure("legacy_full_grid_sentiment_anchor",
                                 lambda: engine.predict_batch(requests, full_grid=True))
         sentiment_only = measure("sentiment_only_anchor", lambda: engine.score_full_sentiment(requests))
