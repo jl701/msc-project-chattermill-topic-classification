@@ -226,6 +226,9 @@ class QwenServingEngine:
         digest = getattr(self, "artifacts_sha256", self.artifacts_fingerprint)
         retrieval_suffix = (f"-rag-{self.retriever.method}-{self.retriever.seed}-"
                             f"{self.retriever.fingerprint[:12]}-demofirst1") if self.retriever else ""
+        selection_policy = getattr(self.retriever, "selection_policy", "global")
+        if self.retriever is not None and selection_policy != "global":
+            retrieval_suffix += f"-{selection_policy}"
         margin_suffix = "-presence-margin" if presence_space(self.artifacts["variants"][variant or self.variant]) == LOGIT_MARGIN else ""
         return (f"{self.artifacts['model']['revision'][:8]}-{self.artifacts['fold_id']}-"
                 f"{digest[:12]}-{variant or self.variant}-prefix"
@@ -270,6 +273,8 @@ class QwenServingEngine:
                 source = getattr(self, "artifacts_sha256", self.artifacts_fingerprint)
         presence_policy = validated_presence_policy(thresholds)
         return {"retrieval_fallback": fallback, "effective_retrieval_method": method,
+                "effective_retrieval_selection_policy": ("global" if fallback else
+                    getattr(self.retriever, "selection_policy", "global")),
                 **{k:v for k,v in presence_policy.items() if k != "aspect_threshold"},
                 "effective_thresholds": {**presence_policy, "runner_up_threshold":float(thresholds["runner_up_threshold"])},
                 "fallback_policy_source_sha256": source}
@@ -381,6 +386,7 @@ class QwenServingEngine:
                 retrieval_selections = []
                 for _, aspect_index, _ in pairs:
                     selected = {**self.retriever.metadata(), "fallback": True,
+                                "effective_selection_policy": "global",
                                 "fallback_scope": "entire_request_batch", "error_type": retrieval_error,
                                 "candidate_aspect": self.candidates[aspect_index]["aspect"],
                                 "selected_ids": [d.row_uid + "|" + d.candidate_aspect for d in self.retriever.fixed],

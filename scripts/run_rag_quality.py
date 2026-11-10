@@ -20,6 +20,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 _ACTIVE_OUTPUT: Path | None = None
 from msc_project.serving.presence_policy import LOGIT_MARGIN, presence_space, presence_selected
+from msc_project.serving.retrieval_policy import validate_method_definition
 
 
 def digest(path: Path) -> str:
@@ -211,6 +212,9 @@ def main() -> int:
     args = parser.parse_args()
     config = json.loads(args.config.read_text(encoding="utf-8"))
     definitions = {entry["id"]: entry for entry in config["methods"]}
+    if len(definitions) != len(config["methods"]):
+        raise ValueError("Registered method IDs must be unique")
+    resolved_definitions = {name: validate_method_definition(entry) for name,entry in definitions.items()}
     methods = args.methods.split(",")
     if len(set(methods)) != len(methods) or set(methods) - definitions.keys():
         raise ValueError("Unknown or duplicated method.")
@@ -249,6 +253,7 @@ def main() -> int:
         "inference_code": {name: digest(ROOT / name) for name in [
             "src/msc_project/serving/inference.py", "src/msc_project/serving/retrieval.py",
             "src/msc_project/serving/fallback_policy.py",
+            "src/msc_project/serving/retrieval_policy.py",
             "src/msc_project/serving/presence_policy.py", "src/msc_project/serving/prefix_cache.py",
             "src/msc_project/llm/qwen_two_stage_classifier.py", "scripts/run_rag_quality.py"]},
     }
@@ -304,9 +309,9 @@ def main() -> int:
             print(json.dumps(progress), flush=True)
     summaries = {}
     for method in methods:
-        definition = definitions[method]
-        retriever = DemonstrationRetriever(args.index, method=definition["method"],
-            seed=definition["seed"], fixed_demonstrations=engine.demonstrations["aspect"],
+        definition = resolved_definitions[method]
+        retriever = DemonstrationRetriever(args.index, **definition,
+            fixed_demonstrations=engine.demonstrations["aspect"],
             encoder_path=args.encoder_path)
         engine.set_retriever(retriever)
         output_path = args.output / f"{method}.jsonl"

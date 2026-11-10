@@ -34,6 +34,7 @@ from msc_project.serving.rag_evaluation import (
     SENTIMENTS, active_presence_threshold, decode_scores, finite_margin, presence_space,
     read_jsonl, records_by_id, score_maps, successful, validate_record_spaces,
 )
+from msc_project.serving.retrieval_policy import resolve_retrieval_method
 
 _OWNED_FAMILIES: dict[int, dict[int, float]] = {}
 
@@ -100,8 +101,9 @@ def choose_methods(selection: dict) -> tuple[str, str]:
     if baseline != "fixed":
         raise ValueError("This study requires the fixed demonstration baseline")
     candidate = selection.get("best_dynamic_method") or "bm25"
-    if candidate not in {"bm25", "e5", "rrf"}:
-        raise ValueError("Selected dynamic method must be bm25, e5 or rrf")
+    if candidate not in {"bm25", "e5", "rrf", "e5_negative_seen"}:
+        raise ValueError("Selected dynamic method must be a registered BM25, E5 or RRF method ID")
+    resolve_retrieval_method(candidate)
     if any(method not in selection["thresholds"] for method in (baseline, candidate)):
         raise ValueError("Both methods require frozen calibrated thresholds")
     return baseline, candidate
@@ -185,7 +187,7 @@ def prepare_plan(args: argparse.Namespace) -> dict:
                "src/msc_project/serving/inference.py", "src/msc_project/serving/retrieval.py",
                "src/msc_project/serving/prefix_cache.py", "src/msc_project/serving/rag_evaluation.py",
                "src/msc_project/serving/timed_retrieval.py", "src/msc_project/serving/fallback_policy.py",
-               "src/msc_project/serving/presence_policy.py"]
+               "src/msc_project/serving/presence_policy.py", "src/msc_project/serving/retrieval_policy.py"]
     plan = {"schema_version": "rag_http_service_study_v1", "scope": "local_historical_replay",
         "input_hashes": {"artifacts": digest(args.artifacts), "selection": digest(args.selection),
                          "replay": digest(args.replay), "capacity_replay": digest(args.capacity_replay),
@@ -241,6 +243,7 @@ def prepare_plan(args: argparse.Namespace) -> dict:
         for repeat in range(args.repeats)] for stage in ("capacity", "closed", "open")}
     plan["session_policy"] = "reload_per_paired_repeat_method_block_with_three_excluded_warmups"
     for method in (baseline, candidate):
+        retrieval_settings = resolve_retrieval_method(method)
         clone = json.loads(json.dumps(artifacts))
         selected = selection["thresholds"][method]
         if presence_space(selected) != score_space:
@@ -256,7 +259,8 @@ def prepare_plan(args: argparse.Namespace) -> dict:
             clone["variants"]["hybrid"]["presence_margin_threshold"] = active_presence_threshold(selected)
         else:
             clone["variants"]["hybrid"].pop("presence_margin_threshold", None)
-        clone["service_calibration"] = {"selection_sha256": digest(args.selection), "method": method}
+        clone["service_calibration"] = {"selection_sha256": digest(args.selection), "method": method,
+                                        "retrieval": retrieval_settings}
         if method != baseline:
             baseline_path = Path(plan["methods"][baseline]["artifacts"])
             baseline_settings = read_json(baseline_path)["variants"]["hybrid"]
@@ -273,7 +277,9 @@ def prepare_plan(args: argparse.Namespace) -> dict:
         artifact_path = output / "inputs" / f"artifacts_{method}.json"
         save_json(artifact_path, clone)
         plan["methods"][method] = {"artifacts": str(artifact_path),
-            "artifacts_sha256": digest(artifact_path), "retrieval_method": method,
+            "artifacts_sha256": digest(artifact_path), "retrieval_method": retrieval_settings["method"],
+            "retrieval_seed": retrieval_settings["seed"],
+            "retrieval_selection_policy": retrieval_settings["selection_policy"],
             "prefix_cache": "on" if method == baseline else "off"}
     copy_immutable(args.replay, output / "inputs" / "replay.jsonl")
     copy_immutable(args.capacity_replay, output / "inputs" / "capacity_replay.jsonl")
@@ -653,6 +659,8 @@ def compare_api_response(reference: dict, response: dict, aspects: list[str],
         retrieval = value.get("diagnostics", {}).get("batch_aspect", {}).get("retrieval", [])
         return [{"aspect": row.get("candidate_aspect"),
                  "demonstration_sha256": row.get("demonstration_sha256"),
+                 "selection_policy": row.get("selection_policy", "global"),
+                 "effective_selection_policy": row.get("effective_selection_policy", "global"),
                  "truncation": row.get("truncation")} for row in retrieval]
     offline_contract = prompt_contract(reference["response"])
     api_contract = prompt_contract(response)
@@ -762,22 +770,28 @@ def run_correctness(method: str, plan: dict, output: Path, process: subprocess.P
     return summary
 
 
+def server_command(method: str, plan: dict, directory: Path) -> list[str]:
+    method_cfg = plan["methods"][method]
+    argv = [sys.executable, "-u", str(ROOT / "scripts/serve_chattermill.py"),
+            "--artifacts", method_cfg["artifacts"], "--output-dir", str(directory),
+            "--port", str(plan["port"]), "--prefix-cache", method_cfg["prefix_cache"],
+            "--retrieval-index", plan["index"], "--retrieval-method", method_cfg["retrieval_method"],
+            "--retrieval-seed", str(method_cfg["retrieval_seed"]),
+            "--retrieval-selection-policy", method_cfg["retrieval_selection_policy"]]
+    for key, value in plan["server"].items():
+        argv.extend(["--" + key.replace("_", "-"), str(value)])
+    if plan["encoder_path"]:
+        argv.extend(["--retrieval-encoder", plan["encoder_path"]])
+    return argv
+
+
 @contextmanager
 def server_session(stage: str, method: str, plan: dict, output: Path):
     ensure_port_free(plan["port"])
     directory = output / "sessions" / f"{stage}_{method}_{uuid.uuid4().hex[:12]}"
     directory.mkdir(parents=True, exist_ok=False)
     env = dict(os.environ, **plan["environment"])
-    method_cfg = plan["methods"][method]
-    argv = [sys.executable, "-u", str(ROOT / "scripts/serve_chattermill.py"),
-            "--artifacts", method_cfg["artifacts"], "--output-dir", str(directory),
-            "--port", str(plan["port"]), "--prefix-cache", method_cfg["prefix_cache"],
-            "--retrieval-index", plan["index"], "--retrieval-method", method,
-            "--retrieval-seed", "13"]
-    for key, value in plan["server"].items():
-        argv.extend(["--" + key.replace("_", "-"), str(value)])
-    if plan["encoder_path"]:
-        argv.extend(["--retrieval-encoder", plan["encoder_path"]])
+    argv = server_command(method, plan, directory)
     save_json(directory / "launch.json", {"argv": argv, "environment": plan["environment"],
               "plan_sha256": digest(output / "plan.json"), "registered_utc": utc()})
     append_command(output, argv, f"server {stage}/{method}")

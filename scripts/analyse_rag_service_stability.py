@@ -23,6 +23,7 @@ from summarise_serving_campaign import numeric_stats, telemetry_summary
 
 WINDOW_SECONDS = 300
 METHODS = {"fixed", "random", "bm25", "e5", "rrf"}
+SELECTION_POLICIES = {"global", "same_aspect_negative_seen"}
 
 
 def read_json(path):
@@ -115,25 +116,31 @@ def repeat_consistency(rows, input_hashes):
         diag = response.get("diagnostics") or {}
         thresholds = diag.get("effective_thresholds")
         method = diag.get("effective_retrieval_method")
+        selection_policy = diag.get("effective_retrieval_selection_policy")
         if (not response.get("model_version") or not isinstance(thresholds, dict) or
                 not thresholds or method not in METHODS or
+                selection_policy not in SELECTION_POLICIES or
+                (selection_policy == "same_aspect_negative_seen" and method != "e5") or
                 not isinstance(response.get("predictions"), list)):
             unqualified += 1
             continue
         policy = {"model_version": response["model_version"], "fold": response.get("fold_id"),
                   "variant": response.get("variant"), "thresholds": thresholds,
-                  "method": method, "fallback": diag.get("retrieval_fallback"),
+                  "method": method, "selection_policy": selection_policy,
+                  "fallback": diag.get("retrieval_fallback"),
                   "fallback_policy_source_sha256": diag.get("fallback_policy_source_sha256")}
         key = fingerprint(policy)
         input_key = input_hashes[row["sample_id"]]
         input_policies[input_key].add(key)
-        groups[key].append((row, input_key, frozenset(prediction_pairs(response)), method))
+        groups[key].append((row, input_key, frozenset(prediction_pairs(response)), method,
+                            selection_policy))
     result = []
     for key, items in sorted(groups.items()):
         first, variants = {}, defaultdict(set)
         counts = Counter(item[1] for item in items)
         disagreements = repeats = 0
-        for row, input_key, pairs, method in sorted(items, key=lambda item: item[0]["attempt_index"]):
+        for row, input_key, pairs, method, selection_policy in sorted(
+                items, key=lambda item: item[0]["attempt_index"]):
             if input_key in first:
                 repeats += 1
                 disagreements += pairs != first[input_key]
@@ -141,6 +148,7 @@ def repeat_consistency(rows, input_hashes):
                 first[input_key] = pairs
             variants[input_key].add(pairs)
         result.append({"observed_policy_sha256": key, "effective_retrieval_method": method,
+            "effective_retrieval_selection_policy": selection_policy,
             "successful_attempts": len(items), "unique_inputs": len(first),
             "inputs_with_repeated_successes": sum(n > 1 for n in counts.values()),
             "repeated_successful_deliveries_after_first": repeats,
@@ -152,7 +160,7 @@ def repeat_consistency(rows, input_hashes):
         "successful_attempts_missing_policy_identity": unqualified,
         "same_input_observed_under_multiple_policies": sum(len(p) > 1 for p in input_policies.values()),
         "policy_groups": result,
-        "interpretation": "Within this run only, exact input text and observed model/threshold/retrieval/fallback policy define a group. Different policies are never pooled. Missing identity is excluded from consistency claims, but remains in delivery counts. Agreement of final label sets is not correctness, score equivalence, independent sample growth or universal determinism."}
+        "interpretation": "Within this run only, exact input text and observed model/threshold/retrieval method/selection/fallback policy define a group. Different policies are never pooled. Missing identity, including an absent effective retrieval selection policy, is excluded from consistency claims, but remains in delivery counts. Agreement of final label sets is not correctness, score equivalence, independent sample growth or universal determinism."}
 
 
 def planned_schedule(registered, config, campaign):

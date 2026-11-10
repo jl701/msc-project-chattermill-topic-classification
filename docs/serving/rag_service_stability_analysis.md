@@ -83,10 +83,19 @@ measurement notes preserved.
 Exact frozen replay text is hashed internally to identify repeated inputs; hashes
 are not published per input. Within a single run, comparisons are further grouped
 by the response's model version, fold, variant, effective thresholds, effective
-retrieval method and fallback policy. The same input under different thresholds
-or fallback configurations is never pooled into one consistency claim. Successful
-responses lacking this policy identity remain in delivery counts but are excluded
-from qualified consistency comparisons.
+retrieval method, effective retrieval selection policy and fallback policy.
+`e5_negative_seen` still reports underlying retrieval method `e5`; the additional
+`diagnostics.effective_retrieval_selection_policy` distinguishes
+`same_aspect_negative_seen` from E5 `global` selection. The response-level policy
+defines the group: its seen candidates use the new selection policy and held-out
+candidates intentionally retain global selection. These per-entry differences
+do not create artificial configuration changes. A fixed fallback reports effective
+method `fixed` and selection `global` and remains separate from successful dynamic
+retrieval. The same input under different thresholds or selection/fallback
+configurations is never pooled into one consistency claim. Successful responses
+lacking this policy identity, including a missing selection field, remain in
+delivery counts but are excluded from qualified consistency comparisons; missing
+selection is never inferred to be `global`.
 
 For each policy group, the analyser counts successful repetitions after the first,
 inputs with different final aspect-sentiment sets and repetitions differing from

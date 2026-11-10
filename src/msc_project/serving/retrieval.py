@@ -19,6 +19,9 @@ import unicodedata
 import numpy as np
 
 from msc_project.llm.qwen_two_stage_classifier import TwoStageDemonstration
+from msc_project.serving.retrieval_policy import (
+    GLOBAL, SAME_ASPECT_NEGATIVE_SEEN, validate_selection_policy,
+)
 
 METHODS = ("fixed", "random", "bm25", "e5", "rrf")
 E5_REVISION = "f52bf8ec8c7124536f0efb74aca902b2995e5bcd"
@@ -189,9 +192,10 @@ def encode_pool(pool: Sequence[dict], encoder: E5Encoder) -> np.ndarray:
 class DemonstrationRetriever:
     def __init__(self, index_dir: str | Path, *, method: str = "bm25", seed: int = 13,
                  fixed_demonstrations: Sequence[TwoStageDemonstration] = (),
-                 encoder_path: str | Path | None = None):
+                 encoder_path: str | Path | None = None, selection_policy: str = GLOBAL):
         if method not in METHODS:
             raise ValueError(f"Unknown retrieval method {method}")
+        self.selection_policy = validate_selection_policy(method, selection_policy)
         self.index_dir, self.method, self.seed = Path(index_dir), method, int(seed)
         self.manifest = json.loads((self.index_dir / "manifest.json").read_text(encoding="utf-8"))
         self.pool = [json.loads(line) for line in (self.index_dir / "pool.jsonl").read_text(
@@ -218,6 +222,7 @@ class DemonstrationRetriever:
         self._normal_texts = [normalise_text(r["review_text"]) for r in self.pool]
         self._class = {label: np.array([i for i,r in enumerate(self.pool) if r["answer"] == label])
                        for label in ("Y", "N")}
+        self._candidate_aspects = np.array([r["candidate_aspect"] for r in self.pool], dtype=object)
         if any(len(i) < 2 for i in self._class.values()):
             raise ValueError("Index needs two examples of each answer class")
         if method in ("bm25", "rrf"):
@@ -246,6 +251,7 @@ class DemonstrationRetriever:
 
     def metadata(self) -> dict:
         return {"method": self.method, "seed": self.seed, "pool_sha256": self.fingerprint,
+                "selection_policy": self.selection_policy,
                 "pool_pairs": len(self.pool), "index_version": self.manifest["schema_version"],
                 "e5_revision": self.manifest.get("e5_revision"),
                 "query_embedding_cache": "within_current_request_batch_only"}
@@ -290,6 +296,8 @@ class DemonstrationRetriever:
 
     def select(self, text: str, candidate_aspect: str, candidate_text: str):
         started = time.perf_counter()
+        restrict_negative = (self.selection_policy == SAME_ASPECT_NEGATIVE_SEEN and
+                             candidate_aspect != self.manifest["heldout_aspect"])
         if self.method == "fixed":
             if any(normalise_text(d.review_text) == normalise_text(text) for d in self.fixed):
                 raise ValueError("Current query duplicates a fixed demonstration")
@@ -302,6 +310,11 @@ class DemonstrationRetriever:
             query_normal = normalise_text(text)
             for answer in ("Y", "N"):
                 indices = self._class[answer]
+                # The registered final iteration changes only the N candidate
+                # universe. Y ranking/selection and held-out prompts stay exact.
+                # Cross-class review reuse deliberately follows the old policy.
+                if restrict_negative and answer == "N":
+                    indices = indices[self._candidate_aspects[indices] == candidate_aspect]
                 order = indices[np.argsort(-scores[indices], kind="stable")]
                 # Full ranking allows runtime query-self exclusion before shortlist.
                 order = [int(i) for i in order if self._normal_texts[i] != query_normal][:256]
@@ -322,6 +335,7 @@ class DemonstrationRetriever:
                     raise ValueError("Insufficient diverse query-safe retrieval examples")
                 selected.extend(chosen)
         return selected, {**self.metadata(), "candidate_aspect": candidate_aspect,
+                          "effective_selection_policy": (SAME_ASPECT_NEGATIVE_SEEN if restrict_negative else GLOBAL),
                           "selected_ids": [d.row_uid + "|" + d.candidate_aspect for d in selected],
                           "selected_answers": [d.answer for d in selected],
                           "demonstration_sha256": digest([asdict(d) for d in selected]),

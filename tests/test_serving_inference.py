@@ -206,12 +206,18 @@ def test_dynamic_retrieval_bypasses_fixed_prefix_and_fallback_is_explicit(artifa
     out = engine.predict_batch(request)[0]
     assert not any(r["fallback"] for r in out["diagnostics"]["batch_aspect"]["retrieval"])
     assert "rag-random" in out["model_version"]
+    retriever.selection_policy = "same_aspect_negative_seen"
+    policy_version = engine.model_version()
+    assert "same_aspect_negative_seen" in policy_version
+    assert engine._effective_policy({},"hybrid")["effective_retrieval_selection_policy"] == "same_aspect_negative_seen"
     retriever.fail = True
     with pytest.raises(OSError):
         engine.score_presence(request)
     engine.set_retriever(retriever, fallback_on_error=True)
     out = engine.score_presence(request)[0]
     assert all(r["fallback"] for r in out["diagnostics"]["batch_aspect"]["retrieval"])
+    assert out["diagnostics"]["effective_retrieval_selection_policy"] == "global"
+    assert all(r["effective_selection_policy"] == "global" for r in out["diagnostics"]["batch_aspect"]["retrieval"])
 
 
 def test_late_selection_failure_switches_all_aspects_and_both_thresholds(artifacts, tmp_path):

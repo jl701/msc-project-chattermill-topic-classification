@@ -64,3 +64,17 @@ score differences are reported separately without inventing a tolerance gate.
 The harness records source/input hashes before model loading, preserves failures,
 and verifies the original index is unchanged. The ordinary 10-second service
 deadline bounds waiting only; it does not cancel a running CPU model thread.
+
+For the final registered example-policy iteration, `--method e5_negative_seen`
+uses the shared method resolver: E5, seed13, `same_aspect_negative_seen`. Optional
+`--retrieval-selection-policy` asserts that mapping rather than overriding it.
+The method ID and resolved settings must agree with the service clone before GPU
+code is imported. Normal, restored and version-switched retrievers all use the
+same resolved settings. Response checks require the new policy for seen
+candidates, global selection for the heldout candidate, and complete global fixed
+policy on fallback. The model-version and example-identity gates remain in force.
+
+The isolated version-switch fixture now retains the first eight legal Y rows,
+the first eight N rows for each candidate aspect, and every fixed demonstration.
+This preserves per-aspect negative support for the new policy, with embedding
+rows kept aligned; it is a resilience fixture and does not enter quality results.

@@ -103,3 +103,26 @@ def test_logging_failure_does_not_replace_completed_response(tmp_path):
     finally:
         service.stop.set()
         service.worker.join(2)
+
+
+@pytest.mark.parametrize("declared,body", [(131073,b"x"), (10**12,b"")])
+def test_oversize_slow_or_incomplete_body_rejection_is_time_bounded(declared,body):
+    import socket
+    service=Service(Engine())
+    server=ThreadingHTTPServer(('127.0.0.1',0),handler_type(service))
+    thread=threading.Thread(target=server.serve_forever,daemon=True)
+    thread.start()
+    try:
+        with socket.create_connection(('127.0.0.1',server.server_port),timeout=2) as client:
+            request=(f'POST /predict HTTP/1.1\r\nHost: localhost\r\nContent-Length: {declared}\r\n\r\n').encode()+body
+            started=time.monotonic()
+            client.sendall(request)
+            reply=client.recv(4096)
+            assert b' 413 ' in reply.split(b'\r\n',1)[0]
+            assert time.monotonic()-started < 1.5
+        assert service.metrics()['accepted'] == 0
+    finally:
+        server.shutdown()
+        server.server_close()
+        service.stop.set()
+        service.worker.join(2)

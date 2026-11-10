@@ -43,6 +43,14 @@ clone path and SHA256. Original artifacts are unchanged. The fixed comparator
 uses prefix caching; the chosen dynamic method bypasses it. Legacy probability
 values remain present alongside the explicit raw-margin policy.
 
+The registered final-iteration method ID `e5_negative_seen` resolves to underlying
+retriever `e5`, seed13 and `same_aspect_negative_seen`. This mapping is stored in
+the clone and plan and passed through `--retrieval-selection-policy`; the method
+ID remains distinct in output paths and calibration identity. The fixed fallback
+retains `global` selection and its separately frozen thresholds. Existing E5,
+BM25 and RRF IDs continue to resolve to `global`. Correctness checks also compare
+requested/effective selection policies, treating absent legacy metadata as global.
+
 After inspecting that immutable plan, run the100-development-review API gate:
 
 ```powershell
@@ -62,12 +70,14 @@ Use the resulting clones for the separate registered real-model fault gate:
 ```powershell
 $ServicePlan = Get-Content -LiteralPath "$ServiceOutput/plan.json" -Raw | ConvertFrom-Json
 $DynamicMethod = $ServicePlan.dynamic_candidate
+$DynamicPolicy = $ServicePlan.methods.$DynamicMethod.retrieval_selection_policy
 $DynamicArtifacts = $ServicePlan.methods.$DynamicMethod.artifacts
 $FixedArtifacts = $ServicePlan.methods.fixed.artifacts
 & $env:RAG_PYTHON scripts/check_rag_faults_gpu.py `
   --artifacts $DynamicArtifacts --fixed-artifacts $FixedArtifacts `
   --index 'outputs/rag_20261111/index_all_populations' `
   --encoder $env:RAG_E5_SNAPSHOT --method $DynamicMethod `
+  --retrieval-selection-policy $DynamicPolicy `
   --development-replay 'outputs/serving_20261109/replay_development.jsonl' `
   --output-dir "$ServiceOutput/fault_gate" --normal-timeout-s 10
 ```

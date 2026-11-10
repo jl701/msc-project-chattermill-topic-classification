@@ -9,7 +9,7 @@ import pytest
 
 from check_rag_faults_gpu import (
     check_policy, compare_sentiment_anchors, make_small_versioned_index, select_inputs,
-    sha_file, validate_fixed_source,
+    sha_file, validate_fixed_source, fault_retrieval_settings,
 )
 from msc_project.llm.qwen_two_stage_classifier import TwoStageDemonstration
 from msc_project.serving.retrieval import DemonstrationRetriever, digest
@@ -93,6 +93,60 @@ def test_fault_response_gate_rejects_mixed_policy_and_wrong_thresholds():
     diagnostics["effective_thresholds"] = {"aspect_threshold": .6, "runner_up_threshold": .3}
     with pytest.raises(AssertionError, match="thresholds"):
         check_policy([response], fallback=True, method="fixed", thresholds=thresholds, source_sha="source")
+
+
+def test_fault_method_id_locks_new_policy_and_rejects_mismatched_clone_or_override():
+    settings = {"method": "e5", "seed": 13, "selection_policy": "same_aspect_negative_seen"}
+    artifacts = {"service_calibration": {"method": "e5_negative_seen", "retrieval": settings}}
+    assert fault_retrieval_settings("e5_negative_seen", artifacts) == settings
+    assert fault_retrieval_settings("e5_negative_seen", artifacts,
+        selection_policy="same_aspect_negative_seen", seed=13) == settings
+    with pytest.raises(ValueError, match="selection policy conflicts"):
+        fault_retrieval_settings("e5_negative_seen", artifacts, selection_policy="global")
+    with pytest.raises(ValueError, match="seed conflicts"):
+        fault_retrieval_settings("e5_negative_seen", artifacts, seed=37)
+    with pytest.raises(ValueError, match="method ID differs"):
+        fault_retrieval_settings("e5", artifacts)
+    bad = deepcopy(artifacts)
+    bad["service_calibration"]["retrieval"]["selection_policy"] = "global"
+    with pytest.raises(ValueError, match="settings differ"):
+        fault_retrieval_settings("e5_negative_seen", bad)
+    legacy = {"service_calibration": {"method": "bm25"}}
+    assert fault_retrieval_settings("bm25", legacy)["selection_policy"] == "global"
+
+
+def test_fault_gate_requires_new_policy_only_for_seen_candidates():
+    thresholds = {"aspect_threshold": .4, "runner_up_threshold": .3}
+    diagnostics = {"retrieval_fallback": False, "effective_retrieval_method": "e5",
+        "effective_retrieval_selection_policy": "same_aspect_negative_seen",
+        "effective_thresholds": thresholds, "batch_aspect": {"retrieval": [
+            {"candidate_aspect": "A", "effective_selection_policy": "same_aspect_negative_seen"},
+            {"candidate_aspect": "H", "effective_selection_policy": "global"}]}}
+    check_policy([{"diagnostics": diagnostics}], fallback=False, method="e5", thresholds=thresholds,
+                 selection_policy="same_aspect_negative_seen", heldout_aspect="H")
+    diagnostics["batch_aspect"]["retrieval"][1]["effective_selection_policy"] = "same_aspect_negative_seen"
+    with pytest.raises(AssertionError, match="per-candidate"):
+        check_policy([{"diagnostics": diagnostics}], fallback=False, method="e5", thresholds=thresholds,
+                     selection_policy="same_aspect_negative_seen", heldout_aspect="H")
+
+
+def test_versioned_fault_subset_keeps_negative_support_for_each_seen_aspect(tmp_path):
+    source = tmp_path / "source"
+    source.mkdir()
+    pool = [{"row_uid": f"row-{aspect}-{answer}-{i}", "candidate_aspect": aspect,
+             "review_text": f"Legal {aspect} {answer} training review {i}",
+             "aspect_candidate": f"{aspect} card", "answer": answer}
+            for aspect in ("A", "B", "C") for answer in ("Y", "N") for i in range(12)]
+    fixed = [TwoStageDemonstration(**pool[i]) for i in (10,11,22,23)]
+    original = SimpleNamespace(fixed=fixed, pool=pool, index_dir=source,
+        fingerprint=digest(pool), manifest={"schema_version": "test", "pool_sha256": digest(pool),
+                                          "heldout_aspect": "H"})
+    target = tmp_path / "subset"
+    make_small_versioned_index(original, target)
+    rows = [json.loads(line) for line in (target / "pool.jsonl").read_text().splitlines()]
+    for aspect in ("A", "B", "C"):
+        assert sum(row["candidate_aspect"] == aspect and row["answer"] == "N" for row in rows) >= 8
+    assert len(rows) < len(pool)
 
 
 def test_sentiment_anchor_gate_compares_all_vectors_inputs_and_decoded_labels():

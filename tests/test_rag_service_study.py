@@ -81,6 +81,34 @@ def test_label_in_performance_replay_rejected(tmp_path):
         study.prepare_plan(args)
 
 
+def test_new_e5_method_keeps_distinct_clone_identity_and_passes_policy_to_server(tmp_path):
+    args = make_args(tmp_path)
+    selection = study.read_json(args.selection)
+    selection.update(best_dynamic_method="e5_negative_seen", selected_method="e5_negative_seen")
+    selection["thresholds"]["e5_negative_seen"] = selection["thresholds"].pop("bm25")
+    args.selection.write_text(json.dumps(selection))
+    (args.development_score_root / "e5_negative_seen.jsonl").write_bytes(
+        (args.development_score_root / "bm25.jsonl").read_bytes())
+    plan = study.prepare_plan(args)
+    config = plan["methods"]["e5_negative_seen"]
+    assert config["retrieval_method"] == "e5"
+    assert config["retrieval_seed"] == 13
+    assert config["retrieval_selection_policy"] == "same_aspect_negative_seen"
+    assert config["prefix_cache"] == "off"
+    clone = study.read_json(args.output / "inputs/artifacts_e5_negative_seen.json")
+    assert clone["service_calibration"]["method"] == "e5_negative_seen"
+    assert clone["service_calibration"]["retrieval"] == {
+        "method": "e5", "seed": 13, "selection_policy": "same_aspect_negative_seen"}
+    fixed = study.read_json(args.output / "inputs/artifacts_fixed.json")
+    assert fixed["service_calibration"]["retrieval"]["selection_policy"] == "global"
+    assert clone["retrieval_fallback_policy"]["source_artifacts_sha256"] == study.digest(
+        args.output / "inputs/artifacts_fixed.json")
+    argv = study.server_command("e5_negative_seen", plan, args.output / "session")
+    assert argv[argv.index("--retrieval-method") + 1] == "e5"
+    assert argv[argv.index("--retrieval-selection-policy") + 1] == "same_aspect_negative_seen"
+    assert "src/msc_project/serving/retrieval_policy.py" in plan["source_hashes"]
+
+
 def test_closed_counts_and_matched_common_rates(tmp_path):
     args = make_args(tmp_path)
     plan = study.prepare_plan(args)
@@ -350,6 +378,23 @@ def test_correctness_detects_different_retrieval_even_if_labels_agree():
     check = study.compare_api_response(reference, response, ASPECTS, thresholds)
     assert check["exact_label_set_match"]
     assert check["retrieval_prompt_contract_match"] is False
+
+
+def test_correctness_normalizes_legacy_global_metadata_but_rejects_policy_mismatch():
+    reference = record("a")
+    response = api_response(reference)
+    contract = {"batch_aspect": {"retrieval": [{"candidate_aspect": "seen",
+        "demonstration_sha256": "same"}]}}
+    reference["response"]["diagnostics"] = contract
+    response["diagnostics"] = json.loads(json.dumps(contract))
+    row = response["diagnostics"]["batch_aspect"]["retrieval"][0]
+    row.update(selection_policy="global", effective_selection_policy="global")
+    thresholds = {"aspect_threshold": .8, "runner_up_threshold": .4}
+    assert study.compare_api_response(reference, response, ASPECTS, thresholds)["retrieval_prompt_contract_match"]
+    row.update(selection_policy="same_aspect_negative_seen", effective_selection_policy="same_aspect_negative_seen")
+    result = study.compare_api_response(reference, response, ASPECTS, thresholds)
+    assert result["exact_label_set_match"]
+    assert result["retrieval_prompt_contract_match"] is False
 
 
 def test_stratified_correctness_covers_length_range_without_labels():

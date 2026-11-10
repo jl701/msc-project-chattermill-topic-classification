@@ -20,6 +20,7 @@ def outcome(index, scheduled, *, success=True, finish=None, error=None, drop=Fal
     response = {"request_id": f"private-attempt-{index}", "model_version": "synthetic-model", "variant": "hybrid", "fold_id": "synthetic-fold",
         "predictions": [{"aspect": "aspect", "sentiments": [label]}],
         "diagnostics": {"effective_retrieval_method": "fixed" if fallback else "bm25",
+                        "effective_retrieval_selection_policy": "global",
                         "effective_thresholds": {"aspect_threshold": threshold},
                         "retrieval_fallback": fallback},
         "timings_ms": {"queue_wait": 2}}
@@ -73,6 +74,50 @@ def test_repeat_sets_never_pool_different_thresholds_or_fallback_policies():
     observed = fallback_counts(rows)
     assert observed["fallback_attempts"] == 1
     assert observed["unobserved_fallback_attempts"] == 1
+
+
+def test_repeat_sets_separate_e5_global_from_negative_seen_selection():
+    rows = [outcome(i, i, label="positive" if i < 2 else "negative") for i in range(4)]
+    for i, row in enumerate(rows):
+        diag = row["response"]["diagnostics"]
+        diag["effective_retrieval_method"] = "e5"
+        if i >= 2:
+            diag["effective_retrieval_selection_policy"] = "same_aspect_negative_seen"
+            # Held-out candidates intentionally retain global selection within
+            # this policy. Entry ordering must not create another policy group.
+            diag["batch_aspect"] = {"retrieval": [
+                {"candidate_aspect": "seen", "effective_selection_policy": "same_aspect_negative_seen"},
+                {"candidate_aspect": "heldout", "effective_selection_policy": "global"},
+            ][::1 if i == 2 else -1]}
+    fallback = outcome(4, 4, fallback=True)
+    rows.extend([fallback, outcome(5, 5, fallback=True)])
+    result = repeat_consistency(rows, {"private-input": "private-text-hash"})
+    assert result["successful_attempts_missing_policy_identity"] == 0
+    assert result["same_input_observed_under_multiple_policies"] == 1
+    assert len(result["policy_groups"]) == 3
+    by_policy = {(g["effective_retrieval_method"], g["effective_retrieval_selection_policy"]): g
+                 for g in result["policy_groups"]}
+    assert set(by_policy) == {("e5", "global"), ("e5", "same_aspect_negative_seen"),
+                              ("fixed", "global")}
+    for group in by_policy.values():
+        assert group["repeated_successful_deliveries_after_first"] == 1
+        assert group["repeated_deliveries_differing_from_first"] == 0
+    assert "private-" not in json.dumps(result)
+
+
+@pytest.mark.parametrize("selection", [None, "unknown", "same_aspect_negative_seen"])
+def test_missing_or_invalid_selection_identity_is_not_inferred_as_global(selection):
+    rows = [outcome(0, 0), outcome(1, 1)]
+    diag = rows[-1]["response"]["diagnostics"]
+    if selection is None:
+        del diag["effective_retrieval_selection_policy"]
+    else:
+        diag["effective_retrieval_selection_policy"] = selection  # bm25 cannot use E5-only policy
+    result = repeat_consistency(rows, {"private-input": "private-text-hash"})
+    assert result["successful_attempts"] == 2
+    assert result["successful_attempts_missing_policy_identity"] == 1
+    assert len(result["policy_groups"]) == 1
+    assert result["policy_groups"][0]["repeated_successful_deliveries_after_first"] == 0
 
 
 def synthetic_campaign(tmp_path):

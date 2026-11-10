@@ -68,9 +68,11 @@ class TimedDemonstrationRetriever:
             if field not in self._base_metadata:
                 raise ValueError(f"Retriever metadata requires {field}")
         self.method = inner.method
+        self.selection_policy = getattr(inner, "selection_policy", "global")
         self.seed = inner.seed
         self.fingerprint = inner.fingerprint
         if (self._base_metadata["method"] != self.method or
+                self._base_metadata.get("selection_policy", "global") != self.selection_policy or
                 self._base_metadata["seed"] != self.seed or
                 self._base_metadata["pool_sha256"] != self.fingerprint):
             raise RetrievalIdentityError("Retriever attributes disagree with index metadata")
@@ -115,6 +117,8 @@ class TimedDemonstrationRetriever:
                 for field in ("method", "seed", "pool_sha256", "index_version"):
                     if info.get(field) != self._base_metadata[field]:
                         raise RetrievalIdentityError(f"Selection {field} differs from loaded index")
+                if info.get("selection_policy", "global") != self.selection_policy:
+                    raise RetrievalIdentityError("Selection policy differs from loaded retriever")
                 ids = [d.row_uid + "|" + d.candidate_aspect for d in demonstrations]
                 answers = [d.answer for d in demonstrations]
                 if (info.get("candidate_aspect") != aspect or

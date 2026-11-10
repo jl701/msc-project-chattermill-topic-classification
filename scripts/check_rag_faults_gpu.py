@@ -24,6 +24,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 from msc_project.serving.presence_policy import validated_presence_policy
+from msc_project.serving.retrieval_policy import SELECTION_POLICIES, resolve_retrieval_method
 
 
 def sha_file(path: Path) -> str:
@@ -89,8 +90,11 @@ def make_small_versioned_index(original, target: Path) -> dict:
     target.mkdir(parents=True, exist_ok=False)
     fixed = {json.dumps(asdict(d), sort_keys=True) for d in original.fixed}
     indices = {i for i, row in enumerate(original.pool) if json.dumps(row, sort_keys=True) in fixed}
-    for answer in ("Y", "N"):
-        candidates = [i for i, row in enumerate(original.pool) if row["answer"] == answer]
+    indices.update([i for i, row in enumerate(original.pool) if row["answer"] == "Y"][:8])
+    negative_aspects = sorted({row["candidate_aspect"] for row in original.pool if row["answer"] == "N"})
+    for aspect in negative_aspects:
+        candidates = [i for i, row in enumerate(original.pool)
+                      if row["answer"] == "N" and row["candidate_aspect"] == aspect]
         indices.update(candidates[:8])
     indices = sorted(indices)
     if len(indices) >= len(original.pool):
@@ -102,7 +106,7 @@ def make_small_versioned_index(original, target: Path) -> dict:
     manifest.update(pool_sha256=digest(pool), pool_pairs=len(pool),
                     schema_version=str(manifest["schema_version"]) + "/fault_subset_v1",
                     fault_check_only=True, source_pool_sha256=original.fingerprint,
-                    selection="fixed demos plus first eight legal pool rows per answer class")
+                    selection="fixed demos plus first eight Y rows and first eight N rows per candidate aspect")
     if (original.index_dir / "embeddings.npy").exists():
         values = np.load(original.index_dir / "embeddings.npy", mmap_mode="r")
         np.save(target / "embeddings.npy", np.asarray(values[indices]))
@@ -135,13 +139,16 @@ class FaultInjector:
 
 
 def check_policy(responses, *, fallback: bool, method: str, thresholds: dict,
-                 source_sha: str | None = None, error_type: str | None = None) -> None:
+                 source_sha: str | None = None, error_type: str | None = None,
+                 selection_policy: str = "global", heldout_aspect: str | None = None) -> None:
     for response in responses:
         diagnostics = response["diagnostics"]
         if diagnostics.get("retrieval_fallback") is not fallback:
             raise AssertionError("Wrong effective fallback flag")
         if diagnostics.get("effective_retrieval_method") != method:
             raise AssertionError("Wrong effective retrieval method")
+        if diagnostics.get("effective_retrieval_selection_policy", "global") != selection_policy:
+            raise AssertionError("Wrong effective retrieval selection policy")
         actual_thresholds = diagnostics.get("effective_thresholds",{})
         if (validated_presence_policy(actual_thresholds) != validated_presence_policy(thresholds) or
                 actual_thresholds.get("runner_up_threshold") != thresholds["runner_up_threshold"]):
@@ -151,8 +158,32 @@ def check_policy(responses, *, fallback: bool, method: str, thresholds: dict,
         selections = diagnostics["batch_aspect"]["retrieval"]
         if not selections or any(item.get("fallback", False) != fallback for item in selections):
             raise AssertionError("Mixed or missing retrieval policy within a request batch")
+        for item in selections:
+            expected = "global" if fallback or item.get("candidate_aspect") == heldout_aspect else selection_policy
+            if item.get("effective_selection_policy", "global") != expected:
+                raise AssertionError("Wrong per-candidate effective selection policy")
         if error_type and any(item.get("error_type") != error_type for item in selections):
             raise AssertionError("Fault type was not preserved in fallback evidence")
+
+
+def fault_retrieval_settings(method_id: str, artifacts: dict, *, seed: int | None = None,
+                             selection_policy: str | None = None) -> dict:
+    """Validate method identity and constructor policy before importing GPU code."""
+    resolved_id = f"random_{seed or 13}" if method_id == "random" else method_id
+    settings = resolve_retrieval_method(resolved_id)
+    if settings["method"] == "fixed":
+        raise ValueError("Fault harness requires a dynamic retrieval method")
+    if seed is not None and seed != settings["seed"]:
+        raise ValueError("Explicit retrieval seed conflicts with registered method ID")
+    if selection_policy is not None and selection_policy != settings["selection_policy"]:
+        raise ValueError("Explicit retrieval selection policy conflicts with registered method ID")
+    calibration = artifacts.get("service_calibration", {})
+    if calibration.get("method") != resolved_id:
+        raise ValueError("Fault method ID differs from the frozen service clone")
+    frozen = calibration.get("retrieval")
+    if frozen != settings and (frozen is not None or settings["selection_policy"] != "global"):
+        raise ValueError("Fault retrieval settings differ from the frozen service clone")
+    return settings
 
 
 def compare_sentiment_anchors(reference: dict, candidate: dict, runner_thresholds: list[float]) -> dict:
@@ -200,8 +231,10 @@ def main(argv=None) -> int:
     parser.add_argument("--fixed-artifacts", required=True, type=Path)
     parser.add_argument("--index", required=True, type=Path)
     parser.add_argument("--encoder", type=Path)
-    parser.add_argument("--method", choices=["random", "bm25", "e5", "rrf"], required=True)
-    parser.add_argument("--seed", type=int, default=13)
+    parser.add_argument("--method", choices=["random", "random_13", "random_37", "random_73", "bm25", "e5", "rrf", "e5_negative_seen"], required=True)
+    parser.add_argument("--seed", type=int)
+    parser.add_argument("--retrieval-selection-policy", choices=SELECTION_POLICIES,
+                        help="Optional assertion against the registered method-ID policy")
     parser.add_argument("--development-replay", required=True, type=Path)
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument("--normal-timeout-s", type=float, default=10.0)
@@ -210,6 +243,8 @@ def main(argv=None) -> int:
     if any(not math.isfinite(v) or v <= 0 for v in (args.normal_timeout_s, args.fault_timeout_s)):
         parser.error("Timeouts must be finite and positive")
     dynamic_artifacts, fixed_artifacts = read_json(args.artifacts), read_json(args.fixed_artifacts)
+    retrieval_settings = fault_retrieval_settings(args.method, dynamic_artifacts, seed=args.seed,
+                                                  selection_policy=args.retrieval_selection_policy)
     policy = validate_fixed_source(dynamic_artifacts, fixed_artifacts, args.fixed_artifacts)
     requests = select_inputs(args.development_replay)
     manifest = read_json(args.index / "manifest.json")
@@ -226,7 +261,7 @@ def main(argv=None) -> int:
     sources = ["scripts/check_rag_faults_gpu.py", "src/msc_project/serving/inference.py",
                "src/msc_project/serving/retrieval.py", "src/msc_project/serving/timed_retrieval.py",
                "src/msc_project/serving/fallback_policy.py", "src/msc_project/serving/presence_policy.py",
-               "src/msc_project/serving/prefix_cache.py"]
+               "src/msc_project/serving/prefix_cache.py", "src/msc_project/serving/retrieval_policy.py"]
     input_hashes = {"dynamic_artifacts": sha_file(args.artifacts), "fixed_artifacts": sha_file(args.fixed_artifacts),
                     "development_replay": sha_file(args.development_replay),
                     "index": {p.name: sha_file(p) for p in args.index.iterdir() if p.is_file()}}
@@ -235,7 +270,7 @@ def main(argv=None) -> int:
                "selection": "three evenly spaced development character-length ranks; ID breaks ties",
                "samples": [{"request_id": r["request_id"], "characters": len(r["text"]),
                             "text_sha256": hashlib.sha256(r["text"].encode()).hexdigest()} for r in requests],
-               "method": args.method, "normal_timeout_s": args.normal_timeout_s,
+               "method": args.method, "retrieval": retrieval_settings, "normal_timeout_s": args.normal_timeout_s,
                "injected_timeout_s": args.fault_timeout_s, "input_sha256": input_hashes,
                "source_sha256": {p: sha_file(ROOT / p) for p in sources},
                "policy": policy, "steps": [], "comparisons": [], "rejection_gates": []}
@@ -323,7 +358,7 @@ def main(argv=None) -> int:
         if (not anchor_gate["encoded_sentiment_inputs_equal"] or
                 not anchor_gate["sentiment_truncation_equal"] or anchor_gate["label_changed_aspects"]):
             raise AssertionError("Sentiment-only optimization changed inputs, truncation or decoded labels")
-        raw = DemonstrationRetriever(args.index, method=args.method, seed=args.seed,
+        raw = DemonstrationRetriever(args.index, **retrieval_settings,
             fixed_demonstrations=engine.demonstrations["aspect"], encoder_path=args.encoder)
         fixed = DemonstrationRetriever(args.index, method="fixed", fixed_demonstrations=engine.demonstrations["aspect"])
         fixed_engine.set_retriever(fixed, fallback_on_error=False)
@@ -334,7 +369,8 @@ def main(argv=None) -> int:
         wrappers.append(timed)
         engine.set_retriever(timed, fallback_on_error=True)
         wrapped = measure("timed_dynamic_normal", lambda: engine.predict_batch(requests))
-        check_policy(wrapped["responses"], fallback=False, method=args.method, thresholds=dynamic_thresholds)
+        check_policy(wrapped["responses"], fallback=False, method=retrieval_settings["method"], thresholds=dynamic_thresholds,
+                     selection_policy=retrieval_settings["selection_policy"], heldout_aspect=manifest["heldout_aspect"])
         compare("raw_vs_timed_normal", normal, wrapped, dynamic_thresholds)
 
         injected = FaultInjector(raw, error=OSError("Injected unavailable retrieval"))
@@ -371,7 +407,8 @@ def main(argv=None) -> int:
         deadline._future.result(timeout=120)
         deadline.timeout_s = args.normal_timeout_s
         recovered = measure("recovered_after_late_completion", lambda: engine.predict_batch(requests))
-        check_policy(recovered["responses"], fallback=False, method=args.method, thresholds=dynamic_thresholds)
+        check_policy(recovered["responses"], fallback=False, method=retrieval_settings["method"], thresholds=dynamic_thresholds,
+                     selection_policy=retrieval_settings["selection_policy"], heldout_aspect=manifest["heldout_aspect"])
         compare("recovered_vs_dynamic_reference", normal, recovered, dynamic_thresholds)
         if deadline.metadata()["timed_retrieval_counters"]["late_discarded"] != 1:
             raise AssertionError("Late result was not discarded")
@@ -388,14 +425,15 @@ def main(argv=None) -> int:
 
         version_path = args.output_dir / "fault_subset_index"
         new_manifest = make_small_versioned_index(raw, version_path)
-        versioned = DemonstrationRetriever(version_path, method=args.method, seed=args.seed,
+        versioned = DemonstrationRetriever(version_path, **retrieval_settings,
             fixed_demonstrations=engine.demonstrations["aspect"], encoder_path=args.encoder)
         changed = TimedDemonstrationRetriever(versioned, candidate_aspects=cards, timeout_s=args.normal_timeout_s)
         wrappers.append(changed)
         previous_version = engine.model_version()
         engine.set_retriever(changed, fallback_on_error=True)
         versioned_result = measure("changed_legal_index_version", lambda: engine.predict_batch(requests))
-        check_policy(versioned_result["responses"], fallback=False, method=args.method, thresholds=dynamic_thresholds)
+        check_policy(versioned_result["responses"], fallback=False, method=retrieval_settings["method"], thresholds=dynamic_thresholds,
+                     selection_policy=retrieval_settings["selection_policy"], heldout_aspect=manifest["heldout_aspect"])
         if engine.model_version() == previous_version:
             raise AssertionError("Changing the index content did not change model version")
         for response in versioned_result["responses"]:
@@ -405,10 +443,11 @@ def main(argv=None) -> int:
         new_manifest["pool_sha256"] = "f" * 64
         write_json(version_path / "manifest.json", new_manifest)
         reject("tampered_index_rejected", lambda: DemonstrationRetriever(version_path,
-            method=args.method, fixed_demonstrations=engine.demonstrations["aspect"], encoder_path=args.encoder), "ValueError")
+            **retrieval_settings, fixed_demonstrations=engine.demonstrations["aspect"], encoder_path=args.encoder), "ValueError")
         engine.set_retriever(timed, fallback_on_error=True)
         restored = measure("original_index_restored", lambda: engine.predict_batch(requests))
-        check_policy(restored["responses"], fallback=False, method=args.method, thresholds=dynamic_thresholds)
+        check_policy(restored["responses"], fallback=False, method=retrieval_settings["method"], thresholds=dynamic_thresholds,
+                     selection_policy=retrieval_settings["selection_policy"], heldout_aspect=manifest["heldout_aspect"])
         compare("restored_vs_dynamic_reference", normal, restored, dynamic_thresholds)
         if {p.name: sha_file(p) for p in args.index.iterdir() if p.is_file()} != input_hashes["index"]:
             raise AssertionError("Source campaign index changed during fault checks")

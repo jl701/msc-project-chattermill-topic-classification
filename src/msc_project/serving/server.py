@@ -212,6 +212,25 @@ def handler_type(service: Service, *, max_chars: int = 20000, max_body_bytes: in
             else:
                 self.reply(404, {'error': 'not_found'})
 
+        def discard_rejected_body(self, length: int) -> None:
+            # Closing a Windows socket with already-sent unread bytes can reset
+            # it before the client sees our 413. Drain only a bounded prefix,
+            # never an arbitrarily large/slow body and never a GPU worker.
+            remaining = min(max(0, length), max_body_bytes + 1)
+            deadline = time.monotonic() + 0.25
+            while remaining > 0:
+                wait = deadline - time.monotonic()
+                if wait <= 0:
+                    break
+                self.connection.settimeout(wait)
+                try:
+                    chunk = self.rfile.read1(min(remaining, 65536))
+                except (TimeoutError, ConnectionError, OSError):
+                    break
+                if not chunk:
+                    break
+                remaining -= len(chunk)
+
         def do_POST(self):
             if self.path == '/shutdown':
                 self.reply(200, {'stopping': True})
@@ -223,6 +242,7 @@ def handler_type(service: Service, *, max_chars: int = 20000, max_body_bytes: in
             try:
                 length = int(self.headers.get('Content-Length', '0'))
                 if not 0 < length <= max_body_bytes:
+                    self.discard_rejected_body(length)
                     self.reply(413, {'error': 'invalid_body_size'})
                     return
                 self.connection.settimeout(15)
@@ -261,6 +281,7 @@ def main(argv=None) -> int:
     parser.add_argument('--prefix-cache', choices=['off', 'on'], default='off')
     parser.add_argument('--retrieval-index', type=Path)
     parser.add_argument('--retrieval-method', choices=['fixed', 'random', 'bm25', 'e5', 'rrf'], default='fixed')
+    parser.add_argument('--retrieval-selection-policy', choices=['global', 'same_aspect_negative_seen'], default='global')
     parser.add_argument('--retrieval-seed', type=int, default=13)
     parser.add_argument('--retrieval-encoder', type=Path)
     parser.add_argument('--retrieval-fallback', choices=['error', 'fixed'], default='fixed')
@@ -270,6 +291,10 @@ def main(argv=None) -> int:
     args = parser.parse_args(argv)
     if not math.isfinite(args.retrieval_timeout_s) or args.retrieval_timeout_s <= 0:
         parser.error('--retrieval-timeout-s must be finite and positive')
+    from msc_project.serving.retrieval_policy import validate_selection_policy
+    validate_selection_policy(args.retrieval_method, args.retrieval_selection_policy)
+    if args.retrieval_selection_policy != 'global' and args.retrieval_index is None:
+        parser.error('A retrieval selection policy requires --retrieval-index')
     args.output_dir.mkdir(parents=True, exist_ok=True)
     import importlib.metadata
     import platform
@@ -286,6 +311,7 @@ def main(argv=None) -> int:
         from msc_project.serving.retrieval import DemonstrationRetriever
         retriever = DemonstrationRetriever(
             args.retrieval_index, method=args.retrieval_method, seed=args.retrieval_seed,
+            selection_policy=args.retrieval_selection_policy,
             fixed_demonstrations=engine.demonstrations['aspect'], encoder_path=args.retrieval_encoder)
         if args.retrieval_method != 'fixed':
             from msc_project.serving.timed_retrieval import TimedDemonstrationRetriever

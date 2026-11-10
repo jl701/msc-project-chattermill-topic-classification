@@ -48,6 +48,16 @@ class Retriever:
         return demos, info
 
 
+def test_selection_policy_identity_is_not_silently_relabelled():
+    inner=Retriever(tamper={"selection_policy":"same_aspect_negative_seen"})
+    wrapper=TimedDemonstrationRetriever(inner,candidate_aspects={"A card":"A"})
+    try:
+        with pytest.raises(RetrievalIdentityError,match="policy"):
+            wrapper.prepare(["query"],["A card"])
+    finally:
+        wrapper.close(wait=True)
+
+
 def test_exact_query_card_and_index_identity_no_cross_request_result_cache():
     inner = Retriever()
     wrapper = TimedDemonstrationRetriever(inner, candidate_aspects={"A card": "A", "B card": "B"})
