@@ -1,0 +1,26 @@
+{
+  "study_id": "rag_public_collection_20261111",
+  "status": "registered_before_collection",
+  "approval": "User approved Chattermill experiments on 2026-11-11; human labels requested when ready",
+  "sources": [
+    {"app": "Monzo", "app_id": "1052238659", "country": "gb"},
+    {"app": "Starling", "app_id": "956806430", "country": "gb"}
+  ],
+  "endpoint": "https://itunes.apple.com/{country}/rss/customerreviews/page={page}/id={app_id}/sortby=mostrecent/json",
+  "maximum_pages_per_source": 10,
+  "request_delay_seconds": 1,
+  "timeout_seconds": 30,
+  "maximum_attempts_per_page": 2,
+  "sample_target": 800,
+  "split_targets": {"adaptation": 200, "calibration": 200, "locked": 400},
+  "pilot_adaptation_count": 50,
+  "seed": 20261111,
+  "deduplication": "NFKC casefold whitespace normalized exact; token trigrams Jaccard>=0.9 with length ratio>=0.9 for texts>=8 tokens; union transitive groups before sampling",
+  "historical_reference": "FABSA train and validation text only; official test is not opened",
+  "language": "UK storefront is not a language guarantee; source candidates assessed automatically where available, then human language confirmation",
+  "labels": "No rating-to-sentiment conversion or model-generated gold labels",
+  "privacy": "Raw feeds private ignored output; exported reviews omit authors, usernames and profile links; redact email and phone-like identifiers",
+  "sampling": "deterministic source-proportional random sample after duplicate removal, not outcome-based selection",
+  "raw_outputs": "outputs/rag_20261111/new_reviews",
+  "public_outputs": "code, configuration, tests and aggregate counts only"
+}

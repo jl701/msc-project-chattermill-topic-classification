@@ -258,6 +258,11 @@ def main(argv=None) -> int:
     parser.add_argument('--timeout-s', type=float, default=120)
     parser.add_argument('--logits-mode', choices=['full', 'last_token'], default='last_token')
     parser.add_argument('--prefix-cache', choices=['off', 'on'], default='off')
+    parser.add_argument('--retrieval-index', type=Path)
+    parser.add_argument('--retrieval-method', choices=['fixed', 'random', 'bm25', 'e5', 'rrf'], default='fixed')
+    parser.add_argument('--retrieval-seed', type=int, default=13)
+    parser.add_argument('--retrieval-encoder', type=Path)
+    parser.add_argument('--retrieval-fallback', choices=['error', 'fixed'], default='fixed')
     parser.add_argument('--output-dir', type=Path, required=True)
     args = parser.parse_args(argv)
     args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -271,6 +276,12 @@ def main(argv=None) -> int:
         args.artifacts, variant=args.variant, pair_batch_size=args.pair_batch_size,
         max_batch_tokens=args.max_batch_tokens, logits_mode=args.logits_mode,
         enable_prefix_cache=args.prefix_cache == 'on', device='cuda', local_files_only=True)
+    if args.retrieval_index:
+        from msc_project.serving.retrieval import DemonstrationRetriever
+        retriever = DemonstrationRetriever(
+            args.retrieval_index, method=args.retrieval_method, seed=args.retrieval_seed,
+            fixed_demonstrations=engine.demonstrations['aspect'], encoder_path=args.retrieval_encoder)
+        engine.set_retriever(retriever, fallback_on_error=args.retrieval_fallback == 'fixed')
     load_seconds = time.perf_counter() - start
     metadata = {'variant': args.variant, 'model_load_s': load_seconds,
                 'platform': platform.platform(), 'python': platform.python_version(),

@@ -152,6 +152,60 @@ def test_no_aspects_selected_skips_all_sentiment_forwards(artifacts):
     assert not any(engine.model.trace)
 
 
+def test_presence_only_and_full_grid_allow_threshold_replay(artifacts):
+    engine = QwenServingEngine(artifacts, Tokenizer(), Model(), variant="hybrid")
+    requests = [{"request_id":"x", "text":"Example current review"}]
+    presence = engine.score_presence(requests)[0]
+    response = engine.predict_batch(requests, full_grid=True)[0]
+    assert presence["aspect_scores"] == response["aspect_scores"]
+    assert {r["aspect"] for r in response["full_grid_scores"]} == {"one","two"}
+    assert all(set(r["sentiment_scores"]) == {"negative","neutral","positive"}
+               for r in response["full_grid_scores"])
+    with pytest.raises(ValueError, match="labels"):
+        engine.score_presence([{"request_id":"x", "text":"x", "labels":[]}])
+
+
+def test_dynamic_retrieval_bypasses_fixed_prefix_and_fallback_is_explicit(artifacts, monkeypatch):
+    engine = QwenServingEngine(artifacts, Tokenizer(), Model(), variant="hybrid", enable_prefix_cache=True)
+    class Retriever:
+        method, seed, fingerprint, prepare_ms = "random", 13, "test-fingerprint", 0.0
+        fixed = engine.demonstrations["aspect"]
+        fail = False
+        def metadata(self):
+            return {"method":self.method, "pool_sha256":self.fingerprint}
+        def prepare(self,texts,cards):
+            if self.fail:
+                raise OSError("Synthetic unavailable index")
+        def select(self,text,aspect,card):
+            return self.fixed, {"fallback":False,"retrieval_ms":0.0}
+    retriever = Retriever()
+    engine.set_retriever(retriever)
+    def forbidden_cache(*args, **kwargs):
+        raise AssertionError("Dynamic aspect prompts must not use frozen-demo prefix")
+    monkeypatch.setattr(engine.prefix_cache,"score_if_compatible",forbidden_cache)
+    request = [{"request_id":"x","text":"Current review"}]
+    out = engine.predict_batch(request)[0]
+    assert not any(r["fallback"] for r in out["diagnostics"]["batch_aspect"]["retrieval"])
+    assert "rag-random" in out["model_version"]
+    retriever.fail = True
+    with pytest.raises(OSError):
+        engine.score_presence(request)
+    engine.set_retriever(retriever, fallback_on_error=True)
+    out = engine.score_presence(request)[0]
+    assert all(r["fallback"] for r in out["diagnostics"]["batch_aspect"]["retrieval"])
+
+
+def test_adapter_left_truncation_is_audited_without_changing_tokens(artifacts):
+    config = deepcopy(artifacts)
+    config["qlora"]["max_length"] = 30
+    engine = QwenServingEngine(config, Tokenizer(), Model(), variant="hybrid")
+    response = engine.predict_batch([{"request_id":"x", "text":"long text "*100}], full_grid=True)[0]
+    audit = response["sentiment_truncation_by_aspect"]
+    assert set(audit) == {"one","two"}
+    assert all(v["left_truncated"] and v["retained_prompt_tokens"] == 30 for v in audit.values())
+    assert all(v["original_prompt_tokens"] > 30 for v in audit.values())
+
+
 def test_request_contract_rejects_labels_empty_text_duplicate_ids(artifacts):
     engine = QwenServingEngine(artifacts, Tokenizer(), Model())
     with pytest.raises(ValueError, match="labels"):
