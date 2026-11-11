@@ -551,16 +551,21 @@ def load_reviewed_split(data: Path, release_dir: Path, split: str, *,
                 "adjudication_count_in_split": len(disagree & identities), "files": files}}
 
 
-def export_feedback(data: Path, release_dir: Path, output: Path) -> dict:
+def export_feedback(data: Path, release_dir: Path, output: Path, *, policy) -> dict:
     """Export adaptation-only candidates; explicitly retain their actual origin.
 
     Returned candidates match the five-field serving demonstration schema, but
     are a separate proposed feedback pool. This does not modify the live index.
     """
-    verified = load_reviewed_split(data, release_dir, "adaptation", require_complete=False)
-    rows, taxonomy, annotations = verified["rows"], verified["taxonomy"], verified["annotations"]
+    from msc_project.serving.adaptation_use import load_adaptation_use
+
+    verified = load_adaptation_use(data, release_dir,
+        purpose="demonstration_feedback_or_example_selection", policy=policy, require_complete=False)
+    rows, taxonomy = read_dataset(data)
+    annotations = verified["annotations"]
     manifest = read_json(release_dir / "release_manifest.json")
     candidates, skipped, provenance = [], Counter(), {}
+    skipped["adaptation_use_policy"] = verified["use_audit"]["excluded_reviewed_count"]
     non_adaptation = sum(rows[identity]["split"] != "adaptation" for identity in manifest["scope_ids"])
     if non_adaptation:
         skipped["non_adaptation"] = non_adaptation
@@ -599,6 +604,7 @@ def export_feedback(data: Path, release_dir: Path, output: Path) -> dict:
     result = {"schema": "human_adaptation_feedback_candidates_v1", "strict_unseen": True,
               "heldout_aspect": HELDOUT, "review_count": len(accepted), "pair_count": len(pool),
               "skipped": dict(skipped), "duplicate_audit": duplicate_audit,
+              "adaptation_use_audit": verified["use_audit"],
               "source_dataset_sha256": manifest["source_dataset_sha256"],
               "release_manifest_sha256": sha(release_dir / "release_manifest.json"),
               "feedback_pool_sha256": sha(output / "feedback_pool.jsonl"),

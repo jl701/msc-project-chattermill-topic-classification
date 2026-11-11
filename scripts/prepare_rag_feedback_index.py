@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from msc_project.serving.feedback_index import append_feedback_index, encode_immutable_index
+from msc_project.serving.adaptation_use import add_policy_arguments, policy_from_args
 
 
 def main(argv=None) -> int:
@@ -20,6 +21,7 @@ def main(argv=None) -> int:
         append.add_argument("--"+name, type=Path, required=True)
     append.add_argument("--parent-exclusion-replay", type=Path, action="append", default=[])
     append.add_argument("--extra-protected-replay", type=Path, action="append", default=[])
+    add_policy_arguments(append)
     encode = commands.add_parser("encode", help="Encode a validated pool into another immutable index version")
     for name in ("source", "output", "encoder-path"):
         encode.add_argument("--"+name, type=Path, required=True)
@@ -28,6 +30,7 @@ def main(argv=None) -> int:
     if args.command == "append":
         result = append_feedback_index(parent=args.parent, data=args.data, release=args.release,
             feedback=args.feedback, artifacts=args.artifacts, output=args.output,
+            policy=policy_from_args(args),
             parent_replays=args.parent_exclusion_replay, extra_protected_replays=args.extra_protected_replay)
         report = {k: result[k] for k in ("pool_pairs", "legal_reviews", "reviews_by_origin", "encoded",
                                        "adaptation_evaluation_certified_disjoint", "parent_index_modified")}

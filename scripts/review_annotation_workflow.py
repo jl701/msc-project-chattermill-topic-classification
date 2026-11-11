@@ -9,6 +9,9 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 from msc_project.serving.annotation_workflow import compare_blind, export_feedback, prepare_blind, release_labels
+from msc_project.serving.adaptation_use import (
+    PURPOSES, add_policy_arguments, export_adaptation_use, policy_from_args,
+)
 
 
 def main() -> None:
@@ -33,6 +36,13 @@ def main() -> None:
     feedback.add_argument("--data", type=Path, required=True)
     feedback.add_argument("--release", type=Path, required=True)
     feedback.add_argument("--output", type=Path, required=True)
+    add_policy_arguments(feedback)
+    use = commands.add_parser("export-adaptation-use", help="Private eligible error-analysis/model-improvement view")
+    for name in ("data", "release", "output"):
+        use.add_argument("--" + name, type=Path, required=True)
+    use.add_argument("--purpose", choices=PURPOSES, required=True)
+    use.add_argument("--predictions", type=Path)
+    add_policy_arguments(use)
     args = parser.parse_args()
     if args.command == "prepare-blind":
         result = prepare_blind(args.data, args.output, group=args.group, seed=args.seed, mode=args.mode, delay_hours=args.delay_hours)
@@ -40,8 +50,11 @@ def main() -> None:
         result = compare_blind(args.queue, args.output)
     elif args.command == "release":
         result = release_labels(args.data, args.comparison, args.decisions, args.output)
+    elif args.command == "export-feedback":
+        result = export_feedback(args.data, args.release, args.output, policy=policy_from_args(args))
     else:
-        result = export_feedback(args.data, args.release, args.output)
+        result = export_adaptation_use(args.data, args.release, args.output,
+            purpose=args.purpose, policy=policy_from_args(args), predictions=args.predictions)
     print(json.dumps(result, ensure_ascii=False))
 
 

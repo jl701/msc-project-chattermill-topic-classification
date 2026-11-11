@@ -57,10 +57,18 @@ New releases also freeze per-split primary labels and revision histories, resolv
 ## Prepare example feedback from adaptation only
 
 ```powershell
-python scripts/review_annotation_workflow.py export-feedback --data PATH_TO_NEW_REVIEWS --release PATH_TO_LABEL_RELEASE_V1 --output PATH_TO_FEEDBACK_V1
+python scripts/review_annotation_workflow.py export-feedback --data PATH_TO_NEW_REVIEWS --release PATH_TO_LABEL_RELEASE_V1 --output PATH_TO_FEEDBACK_V1 --adaptation-use-policy PATH_TO_PRIVATE_POLICY --adaptation-use-policy-sha256 REGISTERED_POLICY_SHA256 --policy-source-root PATH_TO_SOURCE_REPOSITORY
 ```
 
 Eligibility is checked against the frozen dataset, never an annotation-supplied split field. Calibration and locked-evaluation comments are excluded. The strict-unseen export additionally excludes every review containing the Account access theme, excludes that theme as a demonstration candidate, and removes exact/near duplicates of non-adaptation inputs. Confirmed reviews flagged as outside scope or incomplete are also excluded from feedback.
+
+The required purpose policy is checked before reviewed adaptation gold is opened.
+It excludes registered nonempty retrieval-normalised protected matches from this
+use while preserving every annotation/review/release record. The expected hash
+must come from the registered policy, not a hash recomputed from a changed file.
+The policy and all source-bound files must remain available. See
+[purpose-bound adaptation use](adaptation_use_policy_20261111.md) for the guarded
+error-analysis/model-improvement entry point and migration requirements.
 
 The output contains the five-field demonstration schema (`row_uid`, `candidate_aspect`, `review_text`, `aspect_candidate`, `answer`) plus a separate provenance record. Its real origin remains **new-source adaptation data**; it is not relabelled as official training data. This is a proposed feedback pool, not an automatic live-index replacement. Integrating it requires a separately versioned index, encoder identity, and regression evaluation, preserving the previous index for comparison.
 

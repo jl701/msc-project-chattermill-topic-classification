@@ -12,6 +12,7 @@ from msc_project.serving.annotation_workflow import (
 )
 from msc_project.serving.review_data import write_jsonl
 from serve_review_adjudication import AdjudicationStore, EXTRA_SCRIPT
+from adaptation_policy_fixture import synthetic_policy
 
 
 @pytest.fixture
@@ -153,11 +154,12 @@ def test_changed_primary_or_dataset_rejected(dataset, tmp_path):
 
 
 def test_feedback_adaptation_only_heldout_and_duplicate_exclusion(dataset, tmp_path):
+    policy = synthetic_policy(dataset)
     _, _, release = make_release(dataset, tmp_path)
     output = tmp_path / "feedback"
-    summary = export_feedback(dataset, release, output)
+    summary = export_feedback(dataset, release, output, policy=policy)
     assert summary["review_count"] == 3  # r0,r1,r2; r3 heldout, r4 duplicates locked r8.
-    assert summary["skipped"] == {"heldout_review": 1, "non_adaptation": 5}
+    assert summary["skipped"] == {"heldout_review": 1, "non_adaptation": 5, "adaptation_use_policy": 1}
     assert summary["live_index_modified"] is False
     pool = [json.loads(line) for line in (output / "feedback_pool.jsonl").read_text().splitlines()]
     assert {r["row_uid"] for r in pool} == {"r0", "r1", "r2"}
@@ -165,22 +167,23 @@ def test_feedback_adaptation_only_heldout_and_duplicate_exclusion(dataset, tmp_p
     provenance = read_json(output / "provenance.json")
     assert all(r["original_split"] == "adaptation" for r in provenance.values())
     with pytest.raises(ValueError, match="Output exists"):
-        export_feedback(dataset, release, output)
+        export_feedback(dataset, release, output, policy=policy)
 
 
 def test_feedback_rejects_forged_split_or_modified_labels(dataset, tmp_path):
+    policy = synthetic_policy(dataset)
     _, _, release = make_release(dataset, tmp_path)
     path = release / "resolved_adaptation.json"
     labels = read_json(path)
     labels["r0"]["split"] = "locked"
     write_json(path, labels)
     with pytest.raises(ValueError, match="artifact changed"):
-        export_feedback(dataset, release, tmp_path / "feedback")
+        export_feedback(dataset, release, tmp_path / "feedback", policy=policy)
     manifest = read_json(release / "release_manifest.json")
     manifest["split_artifacts"]["adaptation"][path.name] = sha(path)
     write_json(release / "release_manifest.json", manifest)
     with pytest.raises(ValueError, match="ID/split"):
-        export_feedback(dataset, release, tmp_path / "feedback")
+        export_feedback(dataset, release, tmp_path / "feedback", policy=policy)
 
 
 @pytest.mark.parametrize("name", ["annotation_reviews.jsonl", "annotation_taxonomy.json", "references.json"])

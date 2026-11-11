@@ -60,7 +60,7 @@ def grouped_pool(pool: list[dict], candidates: dict[str, str]) -> dict[str, list
     return dict(groups)
 
 
-def verified_feedback(data: Path, release: Path, feedback: Path):
+def verified_feedback(data: Path, release: Path, feedback: Path, *, policy):
     """Re-export from the reviewed source to validate all current release gates."""
     manifest = read_json(feedback / "feedback_manifest.json")
     if manifest.get("feedback_pool_sha256") != sha_file(feedback / "feedback_pool.jsonl"):
@@ -72,7 +72,7 @@ def verified_feedback(data: Path, release: Path, feedback: Path):
         if owned.parent != Path(tempfile.gettempdir()).resolve():
             raise RuntimeError("Unexpected verification temporary-directory boundary")
         expected = owned / "expected"
-        export_feedback(data, release, expected)
+        export_feedback(data, release, expected, policy=policy)
         for name in ("feedback_pool.jsonl", "provenance.json", "feedback_manifest.json"):
             loader = read_jsonl if name.endswith("jsonl") else read_json
             if loader(feedback / name) != loader(expected / name):
@@ -82,6 +82,7 @@ def verified_feedback(data: Path, release: Path, feedback: Path):
 
 def append_feedback_index(*, parent: Path, data: Path, release: Path, feedback: Path,
                           artifacts: Path, output: Path, parent_replays: Sequence[Path],
+                          policy,
                           extra_protected_replays: Sequence[Path] = ()) -> dict:
     if output.exists():
         raise FileExistsError("Output index already exists; use a new version directory")
@@ -89,7 +90,7 @@ def append_feedback_index(*, parent: Path, data: Path, release: Path, feedback: 
     parent_pool = read_jsonl(parent / "pool.jsonl")
     if digest(parent_pool) != parent_manifest.get("pool_sha256"):
         raise ValueError("Parent pool fingerprint mismatch")
-    feedback_pool, feedback_provenance, feedback_manifest = verified_feedback(data, release, feedback)
+    feedback_pool, feedback_provenance, feedback_manifest = verified_feedback(data, release, feedback, policy=policy)
     dataset, taxonomy = read_dataset(data)
     config = read_json(artifacts)
     heldout = parent_manifest["heldout_aspect"]
@@ -210,6 +211,7 @@ def append_feedback_index(*, parent: Path, data: Path, release: Path, feedback: 
         "parent_pool_sha256": parent_manifest["pool_sha256"],
         "base_index_audit": parent_manifest,
         "feedback": {"reviewed_release_manifest_sha256": sha_file(release / "release_manifest.json"),
+            "adaptation_use_audit": feedback_manifest["adaptation_use_audit"],
             "feedback_manifest_sha256": sha_file(feedback / "feedback_manifest.json"),
             "feedback_pool_sha256": sha_file(feedback / "feedback_pool.jsonl"),
             "provenance_sha256": sha_file(feedback / "provenance.json"),

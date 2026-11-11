@@ -13,6 +13,9 @@ python scripts/prepare_rag_feedback_index.py append
   --data <frozen-annotation-dataset>
   --release <reviewed-human-release>
   --feedback <export-feedback-directory>
+  --adaptation-use-policy <registered-private-policy.json>
+  --adaptation-use-policy-sha256 <registered-policy-sha256>
+  --policy-source-root <repository-containing-bound-source-files>
   --artifacts <frozen-model-artifacts.json>
   --parent-exclusion-replay <historical-development-inputs.jsonl>
   --parent-exclusion-replay <historical-evaluation-inputs.jsonl>
@@ -27,6 +30,14 @@ operation re-exports feedback from its reviewed human source through the current
 annotation validation gates and compares the manifest, demonstrations and
 provenance. It verifies the frozen split and taxonomy, complete seen-aspect grids,
 held-out-review exclusion and eligibility of the original fixed examples.
+
+The append command requires the same registered adaptation-use policy as the
+candidate export. Revalidation rejects legacy candidate manifests lacking its
+audit and rejects a reinserted excluded candidate even if its pool hash is
+updated. Export a new immutable candidate version; never retrofit an old one.
+The final index records the policy audit and retains the existing protected-input
+duplicate checks. Policy eligibility alone does not establish feedback acceptance.
+See [purpose-bound adaptation use](adaptation_use_policy_20261111.md).
 
 The original all-800-input exclusion certificate is a statement about the
 official-train pool. Once adaptation examples are added, that complete input file

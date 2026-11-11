@@ -9,6 +9,7 @@ from msc_project.serving.annotation_workflow import export_feedback, read_json, 
 from msc_project.serving.feedback_index import append_feedback_index, encode_immutable_index, sha_file
 from msc_project.serving.retrieval import DemonstrationRetriever, digest, E5_REVISION
 from msc_project.serving.review_data import write_jsonl
+from adaptation_policy_fixture import synthetic_policy
 
 
 @pytest.fixture
@@ -33,7 +34,8 @@ def campaign(tmp_path):
     write_json(data / "annotation_manifest.json", frozen_manifest)
     _, _, release = make_release(data, tmp_path)
     feedback = tmp_path / "feedback"
-    export_feedback(data, release, feedback)
+    policy = synthetic_policy(data)
+    export_feedback(data, release, feedback, policy=policy)
     rows = [json.loads(s) for s in (data / "annotation_reviews.jsonl").read_text().splitlines()]
     full = tmp_path / "all_new_inputs.jsonl"
     historical = tmp_path / "historical_inputs.jsonl"
@@ -58,7 +60,7 @@ def campaign(tmp_path):
     write_json(artifacts, {"taxonomy": {"candidates": [{"aspect": c["aspect"], "text": c["definition"]} for c in taxonomy]},
                            "few_shot": {"demonstrations": {"aspect": pool}}})
     return dict(parent=parent, data=data, release=release, feedback=feedback, artifacts=artifacts,
-                output=tmp_path / "combined", parent_replays=[full,historical])
+                output=tmp_path / "combined", parent_replays=[full,historical], policy=policy)
 
 
 def test_reviewed_adaptation_append_preserves_origin_and_reissues_exclusion_certificate(campaign):
@@ -67,6 +69,8 @@ def test_reviewed_adaptation_append_preserves_origin_and_reissues_exclusion_cert
     output = campaign["output"]
     assert result["reviews_by_origin"] == {"official_train":4, "human_reviewed_adaptation":3}
     assert result["feedback"]["added_reviews"] == 3
+    assert result["feedback"]["adaptation_use_audit"]["policy_sha256"] == campaign["policy"].expected_sha256
+    assert result["feedback"]["adaptation_use_audit"]["excluded_reviewed_count"] == 1
     assert not result["encoded"] and not (output / "embeddings.npy").exists()
     assert not result["adaptation_evaluation_certified_disjoint"]
     origins = read_json(output / "origin_by_review.json")

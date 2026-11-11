@@ -1,0 +1,8 @@
+{
+  "schema": "registered_adaptation_use_policies_v1",
+  "policies_by_source_sha256": {
+    "cce94209905e6db69a11bd34f2ad4fe5562c66160df0156f0b33ec663a73ba83": "48a90d0f82f5711dc4fdd9ee71408be3fdfcdd4de96ac325a68424df75073284"
+  },
+  "scope": "Prospective adaptation-use validation; complete immutable annotation release and calibration/locked evaluation populations are preserved.",
+  "validation": "CPU synthetic tests only; no real labels/predictions or model runs."
+}
