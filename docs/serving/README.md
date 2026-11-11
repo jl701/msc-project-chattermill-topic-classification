@@ -1,5 +1,11 @@
 # Local aspect and sentiment service
 
+The completed [2026-11-11 dynamic few-shot and service study](results_20261111.md)
+reports the frozen quality comparison, all 46 service runs, burst recovery and
+the remaining human-label requirements. Its [completion ledger](execution_completion_20261111.md)
+and [aggregate evidence](evidence/rag_20261111_aggregate.json) preserve the
+negative quality result as well as successful execution checks.
+
 This service turns the frozen two-stage Qwen classification workflow into a loopback HTTP API. Each request analyses one complete review against the twelve candidate aspects stored in the selected artifact bundle. The service returns selected aspects and one or at most two sentiments for each selected aspect. The caller does not provide labels or change the taxonomy during a run.
 
 The three configurations are `few_shot` (frozen Qwen for both stages with demonstrations), `qlora` (the selected shared two-task adapter for both stages), and `hybrid` (frozen few-shot detection followed by adapted sentiment). They use their own previously frozen thresholds. A single resident base model and one adapter are serialised by one GPU worker; concurrent HTTP requests enter a bounded queue.

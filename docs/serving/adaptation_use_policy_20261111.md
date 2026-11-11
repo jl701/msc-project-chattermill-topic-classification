@@ -125,3 +125,20 @@ Do not integrate, push, run real feedback export or change current selections
 while the original 13-job frozen campaign is active. After that queue completes,
 the coordinator may integrate this isolated commit and use it for future
 human-reviewed work. No feedback-quality or model-improvement result is claimed.
+
+### Integrated after campaign completion
+
+The original serial campaign completed all 13 stages with exit code zero on
+2026-11-11. The 46-run service evidence and 16-run stability source bindings
+were audited before integration, and an aggregate snapshot was extracted.
+Commit `6c1b3779a01d218d2caafaf5390f071aed677950` was then fast-forwarded into
+the campaign branch. The same focused suite passed again: **77 tests in
+24.64 seconds**; Ruff and whitespace checks passed.
+
+A real-input-only preflight called `validate_policy` for all four purposes,
+without loading a human release. All source bindings and the pinned policy
+hash matched, each purpose excluded one adaptation record, and the original
+`retrieval.py` byte hash remained
+`324a82d7715c687d85e6efd2a441b611c484a9f02035c0e0a5c4aca46e14ea45`.
+The annotation and protected evaluation populations were unchanged. Actual
+reviewed feedback export and any resulting quality gain still await labels.
